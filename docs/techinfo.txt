@@ -1,0 +1,145 @@
+КРАТКОЕ ОПИСАНИЕ ИСПОЛЬЗУЕМЫХ ФАЙЛОВ И ФОРМАТОВ
+====
+Файл base\palette.pal -файл палитры.
+Обязательно  должен  присутствовать, в противном случае игра выдаст сообщение об
+ошибке  и  не  будет  запущена.
+файл бинарный.
+формат:
+R,G,B,R,G,B,R,G,B,...
+по 3 байта на каждый цвет палитры.
+Всего 256 цветов => 768 байт под палитру.
+====
+Файл base\maps.lst - список карт.
+Обязательно  должен  присутствовать, в противном случае игра выдаст сообщение об
+ошибке  и  не  будет  запущена.  Так  же  файл  не должен быть пуст, иначе будет
+сообщение об ошибке и игра не запустится.
+формат:
+ <имя_файла_карты> "<название_карты>"
+
+При чем <название_карты> может не совпадать с внутренним названием карты.
+Некорректные форматные строки игнорируются.
+Файл  карты  может  отсутствовать,  но при обращении к несуществующей карте игра
+выдаст сообщение об ошибке.
+====
+Файл base\config.cfg - файл конфигурации.
+Может отсутствовать, но тогда он будет создан при первом запуске игры.
+====
+директория base\saves - директория с записями
+Может отсутствовать, но тогда она будет создана при первом-же сохранении игры.
+====
+карты лежат в base\maps
+
+формат карты:
+
+//карта
+c_MAPext        :array[0..4]of char='.MUT'+#00;                       //расширение
+c_MAPheader     :array[0..2]of char='MUT' ;                           //Map Ubivat Tank -идентификатор
+c_MAP_sx        =66;                                                  //размер карты OX
+c_MAP_sy        =50;                                                  //размер карты OY
+//имена объектов
+c_MAP_s_player  :array[00..12]of char='SPAWN.PLAYER'+#00;             //игрок
+c_MAP_s_enemy   :array[00..11]of char='SPAWN.ENEMY' +#00;             //враг
+c_MAP_s_boss    :array[00..10]of char='SPAWN.BOSS'  +#00;             //босс
+c_MAP_i_health  :array[00..11]of char='ITEM.HEALTH' +#00;             //аптечка
+c_MAP_i_armor   :array[00..10]of char='ITEM.ARMOR'  +#00;             //броня
+c_MAP_i_star    :array[00..09]of char='ITEM.STAR'   +#00;             //звезда
+c_MAP_i_rocket  :array[00..11]of char='ITEM.ROCKET' +#00;             //ракеты
+c_MAP_i_mine    :array[00..09]of char='ITEM.MINE'   +#00;             //мины
+c_MAP_o_exit    :array[00..08]of char='OBJ.EXIT'    +#00;             //объект-выход с уровня
+c_MAP_o_mess    :array[00..08]of char='OBJ.MESS'    +#00;             //объект-мессагер
+//флажки стен
+c_m_w_w0        =$01                      ;                           //броня0                 00000001b
+c_m_w_w1        =$02                      ;                           //броня1                 00000010b
+c_m_w_brick     =$04                      ;                           //кирпич                 00000100b
+c_m_water       =$08                      ;                           //вода                   00001000b
+c_m_f_clip      =$10                      ;                           //флаг присутствия стены 00010000b
+
+//карта(begin)
+type
+
+
+/********************************************************************/
+TMAPmatrix      =array[0..c_MAP_sy-1,0..c_MAP_sx-1]of byte;           //66x50=3300 матрица карты
+ //по краю всегда значение c_m_f_clip+c_m_w_w0=$10+$01
+Tmap            =record                                               //карта
+ MAPheader      :array[0..2]of char;                                  //заголовок        (3 байта)
+ name           :array[0..16]of char;                                 //название карты   (17)
+ brief          :array[0..128]of char;                                //краткое описание (129)
+ map            :TMAPmatrix;
+ end;
+//после массива карты следуют объекты и их описание.
+TMAPorig        =record                                               //координаты (2+2=4 байта)
+ x,y            :integer;                                             //
+ end;
+
+Так  как  длина  имени  объекта  не  фиксирована,  предлагаю  след. алгоритм для
+считывания имени:
+
+/********чтение класса предмета********/
+function map_file_class_get(var F:file;class:Pchar):Pchar;
+var
+ch:char;
+count:dword:=0;
+ begin
+ repeat
+  blockread(F,ch,1);
+  class[count]:=ch;
+  count+:=1;
+ until(eof(F))or(ch=#00);
+ map_file_class_get:=class;
+ end;
+
+/********************************************************************/
+для спавнпоинтов:
+c_MAP_s_player  :array[00..12]of char='SPAWN.PLAYER'+#00;             //игрок
+c_MAP_s_enemy   :array[00..11]of char='SPAWN.ENEMY' +#00;             //враг
+c_MAP_s_boss    :array[00..10]of char='SPAWN.BOSS'  +#00;             //босс
+TDATAspawn      =record                                               //точка респавнинга
+ orig           :TMAPorig;                                            //позиция         (4)
+ scores         :longint;                                             //очки            (4)
+ health         :integer;                                             //здоровье у танка(2)
+ armor          :integer;                                             //броня у танка   (2)
+ end;
+/*
+blockread(F,DATA.orig.x,2);
+blockread(F,DATA.orig.y,2);
+blockread(F,DATA.scores,4);
+blockread(F,DATA.health,2);
+blockread(F,DATA.armor ,2);
+*/
+
+/********************************************************************/
+для предметов:
+c_MAP_i_health  :array[00..11]of char='ITEM.HEALTH' +#00;             //аптечка
+c_MAP_i_armor   :array[00..10]of char='ITEM.ARMOR'  +#00;             //броня
+c_MAP_i_star    :array[00..09]of char='ITEM.STAR'   +#00;             //звезда
+c_MAP_i_rocket  :array[00..11]of char='ITEM.ROCKET' +#00;             //ракеты
+c_MAP_i_mine    :array[00..09]of char='ITEM.MINE'   +#00;             //мины
+TDATAitem       =record                                               //предметы
+ orig           :TMAPorig;                                            //координаты   (4)
+ amount         :integer;                                             //количество   (2)
+ end;
+/*
+blockread(F,DATA.orig.x,2);
+blockread(F,DATA.orig.y,2);
+blockread(F,DATA.amount,2);
+*/
+/********************************************************************/
+//для объектов
+c_MAP_o_exit    :array[00..08]of char='OBJ.EXIT'    +#00;             //объект-выход с уровня
+c_MAP_o_mess    :array[00..08]of char='OBJ.MESS'    +#00;             //объект-мессагер
+TDATAobj        =record                                               //объект
+ orig           :TMAPorig;                                            //координаты (4)
+ message        :array[0..64]of char;                                 //сообщение  (65)
+ end;
+blockread(F,DATA.orig.x,2);
+blockread(F,DATA.orig.y,2);
+blockread(F,DATA.message,65);
+везде где структура типа array[ .. ]of char; используются ASCIIZ строки(ну, почти везде).
+//карта(end)
+
+При написании редактора лучше не заменть строковый ID объектов на цифровой ID,
+т.к. так будет проще.
+Так  же  для  спавн-поинтов, предметов и объектов лучше НЕ создавать отдельные
+списки, как это сделано в игре, а загонять все в один список.
+Смотри иЦходники, там все написано.

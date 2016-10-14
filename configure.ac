@@ -1,0 +1,16 @@
+AC_PREREQ(2.69)
+# AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT([visd], [1.0], [mastersan_mh@list.ru])
+AM_CONFIG_HEADER(src/config.h)
+AC_CONFIG_SRCDIR(src/main.c)
+
+AM_INIT_AUTOMAKE(1.13 foreign no-define)
+
+# Checks compiler
+AC_PROG_CC
+ 
+AC_CONFIG_FILES([
+Makefile
+src/Makefile
+])
+AC_OUTPUT
