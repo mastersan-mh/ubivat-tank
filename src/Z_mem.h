@@ -21,6 +21,9 @@ ATTR_MALLOC;
 void * Z_calloc(size_t count, size_t eltsize)
 ATTR_MALLOC;
 
+void * Z_realloc(void *__ptr, size_t __size)
+__THROW __attribute_warn_unused_result__;
+
 char * Z_strdup(const char * str);
 
 void Z_free(void * ptr);

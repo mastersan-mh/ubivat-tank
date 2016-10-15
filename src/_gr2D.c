@@ -444,9 +444,15 @@ je      @gr2D_setline_transp                                          //если
 @gr2D_setline_}:
 */
 }
-/********вывод байтового образа bytemap размерами full_x,full_y, в позицию
-        out_x,out_y на экран с позиции get_x,get_y, размером sx,sy       ********/
-void gr2D_setimage0(int out_x, int out_y, int full_sx, int full_sy, char * bytemap)
+/*
+ * вывод байтового образа bytemap размерами full_x,full_y, в позицию
+ * out_x,out_y на экран с позиции get_x,get_y, размером sx,sy
+ */
+void gr2D_setimage0(
+	int out_x,
+	int out_y,
+	item_img_t * image
+	)
 {
 /*var
 
@@ -464,7 +470,15 @@ c,y:dword;
 
 /********вывод байтового образа bytemap размерами full_x,full_y, в позицию
         out_x,out_y на экран с позиции get_x,get_y, размером sx,sy       ********/
-void gr2D_setimage1(int out_x, int out_y, int full_sx, int full_sy, int get_x, int get_y, int sx, int sy, char * bytemap)
+void gr2D_setimage1(
+	int out_x,
+	int out_y,
+	item_img_t * image,
+	int get_x,
+	int get_y,
+	int sx,
+	int sy
+	)
 {
 /*
 

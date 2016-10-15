@@ -27,6 +27,14 @@ map_t map;
 
 void map_close();
 
+void map_init()
+{
+	map.HEADspawn   = NULL;
+	map.HEADitem    = NULL;
+	map.HEADobj     = NULL;
+}
+
+
 /*
  * добавление точки спавна
  */
@@ -95,7 +103,7 @@ static int map_item_add(TDATAitem * DATA)
 	case c_i_mine  : i = 4; break;
 	default: return 0;
 	};
-	item->img = IMG_connect(game.HEADimg, itemList[i]);
+	item->img = IMG_connect(itemList[i]);
 	item->next   = map.HEADitem;
 	map.HEADitem = item;
 	return -1;
@@ -124,7 +132,7 @@ static void map_obj_add(obj_data_t * DATA)
 	memcpy(&obj->data, DATA, sizeof(*obj));
 	switch(DATA->class)
 	{
-	case c_o_exit: obj->img = IMG_connect(game.HEADimg, "O_EXIT");break;
+	case c_o_exit: obj->img = IMG_connect("O_EXIT");break;
 	case c_o_mess: obj->img = NULL                               ;break;
 	};
 	obj->next   = map.HEADobj;
@@ -515,9 +523,7 @@ void map_draw(camera_t * cam)
 			gr2D_setimage0(
 					round(cam->x+item->data.orig.x-(cam->orig.x-cam->sx/2))+c_i_MDL_pos,
 					round(cam->y-item->data.orig.y+(cam->orig.y+cam->sy/2))+c_i_MDL_pos,
-					item->img->IMG.sx,
-					item->img->IMG.sy,
-					item->img->IMG.pic
+					item->img
 			);
 		}
 		item = item->next;
@@ -534,9 +540,7 @@ void map_draw(camera_t * cam)
 			gr2D_setimage0(
 					round(cam->x+obj->data.orig.x-(cam->orig.x-cam->sx/2))+c_o_MDL_pos,
 					round(cam->y-obj->data.orig.y+(cam->orig.y+cam->sy/2))+c_o_MDL_pos,
-					obj->img->IMG.sx,
-					obj->img->IMG.sy,
-					obj->img->IMG.pic
+					obj->img
 			);
 		};
 		obj = obj->next;
@@ -558,24 +562,24 @@ void map_draw(camera_t * cam)
 			map_block = map.map[y][x] & 0x0F;
 			if(map_block==c_m_w_w0   ) {
 				gr2D_setimage0(
-						round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
-						game.w_w0->IMG.sx,game.w_w0->IMG.sy,game.w_w0->IMG.pic
+					round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
+					game.w_w0
 				);
 			}
 			else
 				if(map_block==c_m_w_w1   )
 				{
 					gr2D_setimage0(
-							round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
-							game.w_w1->IMG.sx,game.w_w1->IMG.sy,game.w_w1->IMG.pic
+						round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
+						game.w_w1
 					);
 				}
 				else
 					if(map_block==c_m_w_brick)
 					{
 						gr2D_setimage0(
-								round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
-								game.w_brick->IMG.sx,game.w_brick->IMG.sy,game.w_brick->IMG.pic
+							round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
+							game.w_brick
 						);
 					}
 					else
@@ -583,7 +587,7 @@ void map_draw(camera_t * cam)
 						{
 							gr2D_setimage0(
 									round(cam->x+(x)*8-(cam->orig.x-cam->sx/2)),round(cam->y-(y+1)*8+(cam->orig.y+cam->sy/2)),
-									game.w_water[0]->IMG.sx,game.w_water[0]->IMG.sy,game.w_water[xrand(3)]->IMG.pic
+									game.w_water[xrand(3)]
 							);
 						};
 		};
@@ -638,21 +642,23 @@ void map_list_removeall()
 /*
  * чтение из файла списка карт
  */
-int map_load_list()
+void map_load_list()
 {
+	printf("Maps list loading: ");
+
 	FILE *fconf;
 
 	size_t str_size = 256;
 	char * str = Z_calloc(1, str_size);
 	if(!str)
 	{
-		return -1;
+		game_halt("Maps list is empty");
 	}
 	char * map = NULL;
 
 	if ((fconf = fopen(BASEDIR FILENAME_MAPSLIST, "r")) == NULL)
 	{
-		return -1;
+		game_halt("Could not load %s", FILENAME_MAPSLIST);
 	}
 
 	mapList = NULL;
@@ -663,7 +669,7 @@ int map_load_list()
 		size_t str_len = strlen(str);
 		if(str_size <= str_len + 1)
 		{
-			char * tmp = realloc(str, str_size + 256);
+			char * tmp = Z_realloc(str, str_size + 256);
 			if (tmp)
 			{
 				str = tmp;
@@ -671,10 +677,9 @@ int map_load_list()
 			}
 			else
 			{
-				//netsnmp_config_error("Failed to allocate memory\n");
 				Z_free(str);
 				fclose(fconf);
-				return -1;
+				game_halt("Failed to allocate memory\n");
 			}
 		}
 
@@ -691,7 +696,7 @@ int map_load_list()
 				default:
 					if(str)Z_free(str);
 					fclose(fconf);
-					return -1;
+					game_halt("File \"%s\" format error.\n", FILENAME_MAPSLIST);
 			}
 		}
 		else
@@ -709,7 +714,7 @@ int map_load_list()
 					map = Z_strdup(str);
 					if(!map)
 					{
-						return -1;
+						game_halt("Failed to allocate memory\n");
 					}
 					str[0] = 0;
 				}
@@ -728,7 +733,7 @@ int map_load_list()
 	if(map)Z_free(map);
 	if(isString)
 	{
-		return -1;
+		game_halt("File \"%s\" format error.\n", FILENAME_MAPSLIST);
 	}
-	return 0;
+	printf("OK\n");
 }

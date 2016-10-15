@@ -24,7 +24,9 @@ typedef struct
 	long count;
 }TAIbrain;
 
-void ctrl_human         (int Pnum, struct player_s * player);
+void ctrl_human(int Pnum, struct player_s * player);
+void ctrl_enemy(struct player_s * player);
+
 void ctrl_AI_init       (TAIbrain * brain);
 void ctrl_AI_done       (TAIbrain * brain);
 void ctrl_AI_checkdanger(struct player_s * player);

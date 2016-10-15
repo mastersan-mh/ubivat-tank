@@ -17,7 +17,7 @@ int menu_case();
 int menu_options();
 int menu_about();
 int menu_prelv();
-int menu_interlv();
+int menu_interlevel();
 
 
 #endif /* SRC_MENU_H_ */
