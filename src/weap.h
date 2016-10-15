@@ -9,6 +9,7 @@
 #define SRC_WEAP_H_
 
 #include <defs.h>
+#include <img.h>
 
 /*
  * оружие

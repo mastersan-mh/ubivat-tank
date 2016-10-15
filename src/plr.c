@@ -272,20 +272,16 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 			gr2D_setimage1(
 					round(cam->x+player->move.orig.x-(cam->orig.x-cam->sx/2))+c_p_MDL_pos,
 					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
-					player->Ibase->IMG.sx,
-					player->Ibase->IMG.sy,
+					player->Ibase,
 					0,
 					c_p_MDL_box*((player->move.dir * 4)+round(player->Fbase)),
 					c_p_MDL_box,
-					c_p_MDL_box,
-					player->Ibase->IMG.pic
+					c_p_MDL_box
 			);//база
 			gr2D_setimage0(
 					round(cam->x+player->move.orig.x-(cam->orig.x-cam->sx/2))+c_p_MDL_pos,
 					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
-					player->Iflag->IMG.sx,
-					player->Iflag->IMG.sy,
-					player->Iflag->IMG.pic
+					player->Iflag
 			);//флаг
 			gr2D.WIN.x0 = 0;
 			gr2D.WIN.x1 = gr2D_SCR_sx-1;
@@ -465,9 +461,9 @@ void player_control(player_t * player)
 						bullList->frame    = 0;
 						switch(player->w.attack)
 						{                                          //присоединяем изображение пули
-						case 1:bullList->image = IMG_connect(game.HEADimg, "B_BULL"  );break;
-						case 2:bullList->image = IMG_connect(game.HEADimg, "B_ROCKET");break;
-						case 3:bullList->image = IMG_connect(game.HEADimg, "B_MINE"  );break;
+						case 1:bullList->image = IMG_connect("B_BULL"  );break;
+						case 2:bullList->image = IMG_connect("B_ROCKET");break;
+						case 3:bullList->image = IMG_connect("B_MINE"  );break;
 						};
 						if(
 								(wtable[player->w.attack-1].ammo>0) && //если пули у оружия не бесконечны и
@@ -552,14 +548,14 @@ int player_connect(int status)
 	};
 	if((!error)||(error==2))
 	{
-		if(player->charact.status==c_p_BOSS) player->Iflag = IMG_connect(game.HEADimg,"F_USA");//флаг
+		if(player->charact.status==c_p_BOSS) player->Iflag = IMG_connect("F_USA");//флаг
 		else
-			if(player->charact.status==c_p_ENEMY) player->Iflag = IMG_connect(game.HEADimg,"F_WHITE");//флаг
+			if(player->charact.status==c_p_ENEMY) player->Iflag = IMG_connect("F_WHITE");//флаг
 			else {
 				if(player->charact.status==c_p_P0) game.P0 = player;
 				if(player->charact.status==c_p_P1) game.P1 = player;
 				player->charact.frags = 0;
-				player->Iflag = IMG_connect(game.HEADimg,"F_RUS");//флаг
+				player->Iflag = IMG_connect("F_RUS");//флаг
 			};
 		player->charact.spawned   = false;
 	};
@@ -785,29 +781,17 @@ void player_draw_status(camera_t * cam, player_t *player)
 	gr2D_setimage0(
 		cam->x + 32 * 0,
 		cam->y + cam->sy - 16,
-		game.i_health->IMG.sx, game.i_health->IMG.sy, game.i_health->IMG.pic
+		game.i_health
 	);
-	gr2D_setimage0(cam->x+32*3,cam->y+cam->sy-16,
-		game.i_armor->IMG.sx,game.i_armor->IMG.sy,game.i_armor->IMG.pic
-	);
+	gr2D_setimage0(cam->x+32*3,cam->y+cam->sy-16, game.i_armor);
 	gr2D_setimage1(
 		cam->x+32*0,cam->y+cam->sy,
-		player->Ibase->IMG.sx,
-		player->Ibase->IMG.sy,
-		0,0,c_p_MDL_box,c_p_MDL_box,
-		player->Ibase->IMG.pic
+		player->Ibase,
+		0,0,c_p_MDL_box,c_p_MDL_box
 	);
-	gr2D_setimage0(cam->x+32*2,cam->y+cam->sy,
-		wtable[0].icon->IMG.sx,
-		wtable[0].icon->IMG.sy,
-		wtable[0].icon->IMG.pic
-	);
-	gr2D_setimage0(cam->x+32*3,cam->y+cam->sy,
-		wtable[1].icon->IMG.sx,wtable[1].icon->IMG.sy,wtable[1].icon->IMG.pic
-	);
-	gr2D_setimage0(cam->x+32*4,cam->y+cam->sy,
-		wtable[2].icon->IMG.sx,wtable[2].icon->IMG.sy,wtable[2].icon->IMG.pic
-	);
+	gr2D_setimage0(cam->x+32*2, cam->y+cam->sy, wtable[0].icon);
+	gr2D_setimage0(cam->x+32*3, cam->y+cam->sy, wtable[1].icon);
+	gr2D_setimage0(cam->x+32*4, cam->y+cam->sy, wtable[2].icon);
 }
 
 /*
@@ -829,7 +813,7 @@ void player_class_init(player_t * player)
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = c_p_WEAP_notused;
 			player->w.ammo[2] = c_p_WEAP_notused;
-			player->Ibase = IMG_connect(game.HEADimg,"TANK0");                    //база
+			player->Ibase = IMG_connect("TANK0");                    //база
 			break;
 		case 1:
 			player->charact.healthmax = 100;                                      //здоровье max
@@ -838,7 +822,7 @@ void player_class_init(player_t * player)
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = c_p_WEAP_notused;
 			player->w.ammo[2] = c_p_WEAP_notused;
-			player->Ibase = IMG_connect(game.HEADimg,"TANK1");                    //база
+			player->Ibase = IMG_connect("TANK1");                    //база
 			break;
 		case 2:
 			player->charact.healthmax = 100;                                      //здоровье max
@@ -849,7 +833,7 @@ void player_class_init(player_t * player)
 				player->w.ammo[1] = 99;
 			else if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
 			player->w.ammo[2] = c_p_WEAP_notused;
-			player->Ibase = IMG_connect(game.HEADimg,"TANK2");                    //база
+			player->Ibase = IMG_connect("TANK2");                    //база
 			break;
 		case 3:
 			player->charact.healthmax = 200;                                      //здоровье max
@@ -861,7 +845,7 @@ void player_class_init(player_t * player)
 			else
 				if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
 			player->w.ammo[2] = c_p_WEAP_notused;
-			player->Ibase = IMG_connect(game.HEADimg,"TANK3");                    //база
+			player->Ibase = IMG_connect("TANK3");                    //база
 			break;
 		case 4:
 			player->charact.healthmax = 200;                                      //здоровье max
@@ -876,7 +860,7 @@ void player_class_init(player_t * player)
 				player->w.ammo[2] = 99;
 			else
 				if(player->w.ammo[2]<0) player->w.ammo[2] = 0;
-			player->Ibase = IMG_connect(game.HEADimg,"TANK4");                    //база
+			player->Ibase = IMG_connect("TANK4");                    //база
 			break;
 	};
 	if(player->charact.status==c_p_BOSS) {

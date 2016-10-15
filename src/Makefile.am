@@ -3,10 +3,10 @@ MAINTAINERCLEANFILES = Makefile.in
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = ubivat-tank
-SUBDIRS = 
+SUBDIRS =
 
-ubivat_tank_CFLAGS = -Wall
-ubivat_tank_LDFLAGS = -lm
+ubivat_tank_CFLAGS = -std=c11 -Wall -D_GNU_SOURCE
+ubivat_tank_LDFLAGS =
 
 ubivat_tank_SOURCES = \
 Z_mem.c \

@@ -21,8 +21,8 @@
 weapon_info_t wtable[3];
 
 //список пуль
-bull_t * bullList;
-explode_t * explList;
+bull_t * bullList = NULL;
+explode_t * explList = NULL;
 
 extern player_t * playerList;
 
@@ -112,14 +112,15 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 	int mdlbox;                                                          //размер кадра X,Y
 	int Fmax;
 
-	mdlbox = bull->image->IMG.sx;
-	Fmax   = ((bull->image->IMG.sy)/ mdlbox)>> 2;                      //количество кадров
+	mdlbox = bull->image->IMG->sx;
+	Fmax   = ((bull->image->IMG->sy)/ mdlbox)>> 2;                      //количество кадров
 	if(play)
 	{
 		bull->frame = bull->frame+c_bull_FPS*bull->time.delta/100;
 		if((bull->frame<0)||(Fmax<=bull->frame)) bull->frame = 0;
 	};
-	if (
+	if
+	(
 			(cam->orig.x-cam->sx/2<=bull->orig.x+(mdlbox >> 1)) && (bull->orig.x-(mdlbox >> 1)<=cam->orig.x+cam->sx/2) &&
 			(cam->orig.y-cam->sy/2<=bull->orig.y+(mdlbox >> 1)) && (bull->orig.y-(mdlbox >> 1)<=cam->orig.y+cam->sy/2)
 	)
@@ -129,13 +130,11 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 		gr2D_setimage1(
 				roundf(cam->x+bull->orig.x-(cam->orig.x-cam->sx/2))-(mdlbox >> 1),
 				roundf(cam->y-bull->orig.y+(cam->orig.y+cam->sy/2))-(mdlbox >> 1),
-				bull->image->IMG.sx,
-				bull->image->IMG.sy,
+				bull->image,
 				0,
 				mdlbox*(bull->dir*Fmax+trunc(bull->frame)),
 				mdlbox,
-				mdlbox,
-				bull->image->IMG.pic
+				mdlbox
 		);
 		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
 		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;
@@ -212,11 +211,11 @@ void bull_control()
 					bull_draw(&game.P0cam, bull, true);
 					if(game.P1) bull_draw(&game.P1cam, bull, false);
 					bull = bull->next;
-				};
-			};
-		};
-	};
-};
+				}
+			}
+		}
+	}
+}
 /*
  * добавление взрыва
  */
@@ -239,9 +238,9 @@ void explode_add(bull_t * bull, float Xexpl, float Yexpl)
 	};
 	p->frame  = -1;                                                       //№ кадра
 	switch(bull->_weap_){                                                 //изображение взрыва
-	case 0  :p->image = IMG_connect(game.HEADimg,"E_SMALL"    );break;
+	case 0: p->image = IMG_connect("E_SMALL"    );break;
 	case 1:
-	case 2:p->image = IMG_connect(game.HEADimg,"E_BIG"      );break;
+	case 2: p->image = IMG_connect("E_BIG"      );break;
 	};
 	p->next       = explList;
 	explList = p;
@@ -300,7 +299,7 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 {
 	int mdlbox;
 
-	mdlbox = explode->image->IMG.sx;
+	mdlbox = explode->image->IMG->sx;
 	if(play) explode->frame = explode->frame+c_explode_FPS*explode->time.delta/100;
 	if(
 			(cam->orig.x-cam->sx/2<=explode->orig.x+(mdlbox >> 1)) &&
@@ -314,13 +313,11 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 		gr2D_setimage1(
 				roundf(cam->x+explode->orig.x-(cam->orig.x-cam->sx/2))-(mdlbox >> 1),
 				roundf(cam->y-explode->orig.y+(cam->orig.y+cam->sy/2))-(mdlbox >> 1),
-				explode->image->IMG.sx,
-				explode->image->IMG.sy,
+				explode->image,
 				0,
 				mdlbox*trunc(explode->frame),
 				mdlbox,
-				mdlbox,
-				explode->image->IMG.pic
+				mdlbox
 		);
 		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
 		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;

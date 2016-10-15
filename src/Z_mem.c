@@ -44,6 +44,38 @@ void * Z_calloc(size_t count, size_t eltsize)
 	return block->ptr;
 }
 
+
+void * Z_realloc(void * ptr, size_t size)
+{
+	if(!ptr)return NULL;
+	Z_block_t * block;
+	Z_block_t * prev = NULL;
+	block = Z_block;
+	while(block)
+	{
+		if(block->ptr == ptr)
+		{
+			void *tmp = realloc(ptr, size);
+			if(!tmp)
+			{
+				if(prev)
+					prev->next = block->next;
+				else
+					Z_block = block->next;
+				free(block->ptr); // ?????
+				free(block);
+				return NULL;
+			}
+			block->ptr = tmp;
+			return tmp;
+		}
+		prev = block;
+		block = block->next;
+	}
+	return NULL;
+}
+
+
 void Z_free(void * ptr)
 {
 	if(!ptr)return;

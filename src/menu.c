@@ -4,6 +4,7 @@
  * by Master San
  */
 #include <defs.h>
+#include <menu.h>
 #include <game.h>
 #include <img.h>
 #include <_gr2D.h>
@@ -11,8 +12,6 @@
 #include <x10_time.h>
 #include <x10_str.h>
 #include <x10_kbrd.h>
-
-int menu_prelv();
 
 /*
  * считывание статуса меню
@@ -81,37 +80,37 @@ int menu_main()
 	int menu_cur = 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	while(!quit)
 	{
-		gr2D_setimage0(0    ,0            ,game.m_i_conback->IMG.sx,game.m_i_conback->IMG.sy,game.m_i_conback->IMG.pic);
-		gr2D_setimage0(277  ,159          ,game.m_i_logo->IMG.sx   ,game.m_i_logo->IMG.sy   ,game.m_i_logo->IMG.pic   );
+		gr2D_setimage0(0    ,0      ,game.m_i_conback);
+		gr2D_setimage0(277  ,159    ,game.m_i_logo);
 		gr2D.color.current = 1;
 		gr2Don_settextZ(1     ,183          ,c_strTITLE);
 		gr2Don_settextZ(1     ,191          ,c_strCORP);
-		gr2D_setimage0(120,30+23*0        ,game.m_i_game   ->IMG.sx,game.m_i_game   ->IMG.sy,game.m_i_game   ->IMG.pic);
-		gr2D_setimage0(120,30+23*1        ,game.m_i_case   ->IMG.sx,game.m_i_case   ->IMG.sy,game.m_i_case   ->IMG.pic);
-		gr2D_setimage0(120,30+23*2        ,game.m_i_options->IMG.sx,game.m_i_options->IMG.sy,game.m_i_options->IMG.pic);
-		gr2D_setimage0(120,30+23*3        ,game.m_i_about  ->IMG.sx,game.m_i_about  ->IMG.sy,game.m_i_about  ->IMG.pic);
+		gr2D_setimage0(120, 30+23*0 ,game.m_i_game);
+		gr2D_setimage0(120, 30+23*1 ,game.m_i_case);
+		gr2D_setimage0(120, 30+23*2 ,game.m_i_options);
+		gr2D_setimage0(120, 30+23*3 ,game.m_i_about);
 		if(game.created)
-			gr2D_setimage0(120,30+23*4        ,game.m_i_abort  ->IMG.sx,game.m_i_abort  ->IMG.sy,game.m_i_abort  ->IMG.pic);
-		gr2D_setimage0(120,30+23*5        ,game.m_i_quit   ->IMG.sx,game.m_i_quit   ->IMG.sy,game.m_i_quit   ->IMG.pic);
-		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0   ->IMG.sx,game.m_i_cur_0  ->IMG.sy,game.m_i_cur_0  ->IMG.pic);
+			gr2D_setimage0(120,30+23*4 ,game.m_i_abort);
+		gr2D_setimage0(120,30+23*5  ,game.m_i_quit);
+		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0);
 		state = menu_getmenustatus(6, &menu_cur);
 		if(state == 1)
 		{
-			ret = (menu_cur+1)*0x10;
+			menu = (menu_cur+1)*0x10;
 			quit = true;
 		};
 		if(state == 2) {
-			ret = c_m_main;
+			menu = c_m_main;
 			game.allowpress = false;
 			if(game.created) game.ingame = true;
 			quit = true;
 		};
 		gr2D_BUFcurrent2screen();
 	}
-	return ret;
+	return menu;
 }
 /*
  * меню "ИГРА"
@@ -124,12 +123,12 @@ int menu_game()
 	int ret;
 	while(!quit)
 	{
-		gr2D_setimage0(0  ,0             ,game.m_i_conback ->IMG.sx,game.m_i_conback ->IMG.sy,game.m_i_conback ->IMG.pic);
-		gr2D_setimage0(120,30-23*1       ,game.m_i_game    ->IMG.sx,game.m_i_game    ->IMG.sy,game.m_i_game    ->IMG.pic);
-		gr2D_setimage0(120,30+23*0       ,game.m_i_g_new_p1->IMG.sx,game.m_i_g_new_p1->IMG.sy,game.m_i_g_new_p1->IMG.pic);
-		gr2D_setimage0(120,30+23*1       ,game.m_i_g_new_p2->IMG.sx,game.m_i_g_new_p2->IMG.sy,game.m_i_g_new_p2->IMG.pic);
-		gr2D_setimage0(120,30+23*2       ,game.m_i_g_load  ->IMG.sx,game.m_i_g_load  ->IMG.sy,game.m_i_g_load  ->IMG.pic);
-		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0   ->IMG.sx,game.m_i_cur_0   ->IMG.sy,game.m_i_cur_0   ->IMG.pic);
+		gr2D_setimage0(0  ,0             ,game.m_i_conback );
+		gr2D_setimage0(120,30-23*1       ,game.m_i_game    );
+		gr2D_setimage0(120,30+23*0       ,game.m_i_g_new_p1);
+		gr2D_setimage0(120,30+23*1       ,game.m_i_g_new_p2);
+		gr2D_setimage0(120,30+23*2       ,game.m_i_g_load  );
+		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0   );
 		state = menu_getmenustatus(3, &menu_cur);
 		if(state==1)
 		{
@@ -151,59 +150,60 @@ int menu_game()
  */
 int menu_load()
 {
+	int ret;
 	int menu_cur = 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	int c,cl;
 	game_record_getsaves();
 	while(!quit)
 	{
-		gr2D_setimage0(0  ,0              ,game.m_i_conback->IMG.sx,game.m_i_conback->IMG.sy,game.m_i_conback->IMG.pic);
-		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_g_load ->IMG.sx,game.m_i_g_load ->IMG.sy,game.m_i_g_load ->IMG.pic);
+		gr2D_setimage0(0  ,0              ,game.m_i_conback);
+		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_g_load );
 		for(cl = 0; cl < 8; cl++)
 		{
-			gr2D_setimage0(97+23          ,30+cl*15,game.m_i_lineL->IMG.sx,game.m_i_lineL->IMG.sy,game.m_i_lineL->IMG.pic);
+			gr2D_setimage0(97+23          ,30+cl*15,game.m_i_lineL);
 			for(c = 0; c<=16;c++)
-				gr2D_setimage0(97+23+4+8*c    ,30+cl*15,game.m_i_lineM->IMG.sx,game.m_i_lineM->IMG.sy,game.m_i_lineM->IMG.pic);
-			gr2D_setimage0(97+23+4+8*(c+1),30+cl*15,game.m_i_lineR->IMG.sx,game.m_i_lineR->IMG.sy,game.m_i_lineR->IMG.pic);
+				gr2D_setimage0(97+23+4+8*c    ,30+cl*15,game.m_i_lineM);
+			gr2D_setimage0(97+23+4+8*(c+1),30+cl*15,game.m_i_lineR);
 			gr2D.color.current = 7;
 			if(game.saveslist[cl].Hname[0] == 0xFF) gr2Don_settextZ(97+23+4,33+cl*15,"---===EMPTY===---");
 			else
 			{
 				gr2Don_settextZ(97+23+4,33+cl*15,game.saveslist[cl].Hname);
 				//отображение статуса сохраненной игры
-				gr2D_setimage0(98+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS->IMG.sx,game.m_i_flagRUS->IMG.sy,game.m_i_flagRUS->IMG.pic);
+				gr2D_setimage0(98+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS);
 				if(game.saveslist[cl].flags & c_g_f_2PLAYERS)
 				{
-					gr2D_setimage0(110+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS->IMG.sx,game.m_i_flagRUS->IMG.sy,game.m_i_flagRUS->IMG.pic);
+					gr2D_setimage0(110+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS);
 				};
 			};
 		};
-		gr2D_setimage0(97,30+15*menu_cur+2,game.m_i_cur_1   ->IMG.sx,game.m_i_cur_1  ->IMG.sy,game.m_i_cur_1  ->IMG.pic);
+		gr2D_setimage0(97,30+15*menu_cur+2,game.m_i_cur_1);
 		state = menu_getmenustatus(8, &menu_cur);
 		if(state==1)
 		{
-			if(game.created) ret = c_m_main;
+			if(game.created) menu = c_m_main;
 			else
 			{
-				game.error = game_record_load(&game.saveslist[menu_cur]);
-				if(!game.error) menu_prelv();
+				ret = game_record_load(&game.saveslist[menu_cur]);
+				if(!ret) menu_prelv();
 				else {
-					if(2<=game.error) game_msg_error(game.error+10);
+					if(2<=ret) game_msg_error(ret+10);
 				};
-				ret = c_m_main;
+				menu = c_m_main;
 			};
 			quit = true;
 		};
 		if(state == 2)
 		{
-			ret = c_m_game;
+			menu = c_m_game;
 			quit = true;
 		}
 		gr2D_BUFcurrent2screen();
 	}
-	return ret;
+	return menu;
 }
 /*
  * меню "СОХРАНЕНИЕ"
@@ -219,30 +219,30 @@ int menu_save()
 	bool f_input = false;
 	char ch;
 	long l;
-	int ret;
+	int menu;
 
 	game_record_getsaves();
 	while(!quit)
 	{
-		gr2D_setimage0(0  ,0              ,game.m_i_conback->IMG.sx,game.m_i_conback->IMG.sy,game.m_i_conback->IMG.pic);
-		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_g_save ->IMG.sx,game.m_i_g_save ->IMG.sy,game.m_i_g_save ->IMG.pic);
-		if(!f_input) gr2D_setimage0(97,30+15*menu_cur+2,game.m_i_cur_1   ->IMG.sx,game.m_i_cur_1  ->IMG.sy,game.m_i_cur_1->IMG.pic);
+		gr2D_setimage0(0  ,0              ,game.m_i_conback);
+		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_g_save );
+		if(!f_input) gr2D_setimage0(97,30+15*menu_cur+2,game.m_i_cur_1);
 		for(cl = 0; cl < 8; cl++)
 		{
-			gr2D_setimage0(97+23          ,30+cl*15,game.m_i_lineL->IMG.sx,game.m_i_lineL->IMG.sy,game.m_i_lineL->IMG.pic);
+			gr2D_setimage0(97+23          ,30+cl*15,game.m_i_lineL);
 			for(c = 0; c<=16; c++)
-				gr2D_setimage0(97+23+4+8*c    ,30+cl*15,game.m_i_lineM->IMG.sx,game.m_i_lineM->IMG.sy,game.m_i_lineM->IMG.pic);
-			gr2D_setimage0(97+23+4+8*(c+1),30+cl*15,game.m_i_lineR->IMG.sx,game.m_i_lineR->IMG.sy,game.m_i_lineR->IMG.pic);
+				gr2D_setimage0(97+23+4+8*c    ,30+cl*15,game.m_i_lineM);
+			gr2D_setimage0(97+23+4+8*(c+1),30+cl*15,game.m_i_lineR);
 			gr2D.color.current = 7;
 			if(game.saveslist[cl].Hname[0]==0xFF) gr2Don_settextZ(97+23+4,33+cl*15,"---===EMPTY===---");
 			else
 			{
 				gr2Don_settextZ(97+23+4,33+cl*15,game.saveslist[cl].Hname);
 				//отображение статуса сохраненной игры
-				gr2D_setimage0( 98+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS->IMG.sx,game.m_i_flagRUS->IMG.sy,game.m_i_flagRUS->IMG.pic);
+				gr2D_setimage0( 98+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS);
 				if(game.saveslist[cl].flags & c_g_f_2PLAYERS)
 				{
-					gr2D_setimage0(110+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS->IMG.sx,game.m_i_flagRUS->IMG.sy,game.m_i_flagRUS->IMG.pic);
+					gr2D_setimage0(110+23+4+8*(c+1),29+cl*15,game.m_i_flagRUS);
 				}
 			}
 		}
@@ -300,7 +300,7 @@ int menu_save()
 			}
 			else
 			{
-				ret = 0;
+				menu = 0;
 				game.allowpress = false;
 				if(game.created)
 				{
@@ -312,7 +312,7 @@ int menu_save()
 		}
 		gr2D_BUFcurrent2screen();
 	}
-	return ret;
+	return menu;
 }
 /*
  * меню "ВЫБОР"
@@ -322,28 +322,28 @@ int menu_case()
 	int menu_cur= 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	while(!quit)
 	{
-		gr2D_setimage0(0  ,0             ,game.m_i_conback ->IMG.sx,game.m_i_conback ->IMG.sy,game.m_i_conback ->IMG.pic);
-		gr2D_setimage0(120,30-23*1       ,game.m_i_case    ->IMG.sx,game.m_i_case    ->IMG.sy,game.m_i_case    ->IMG.pic);
-		gr2D_setimage0(120,30+23*0       ,game.m_i_arrowL  ->IMG.sx,game.m_i_arrowL  ->IMG.sy,game.m_i_arrowL  ->IMG.pic);
-		gr2D_setimage0(260,30+23*0       ,game.m_i_arrowR  ->IMG.sx,game.m_i_arrowR  ->IMG.sy,game.m_i_arrowR  ->IMG.pic);
-		gr2D_setimage0(120,30+23*1       ,game.m_i_g_new_p1->IMG.sx,game.m_i_g_new_p1->IMG.sy,game.m_i_g_new_p1->IMG.pic);
-		gr2D_setimage0(120,30+23*2       ,game.m_i_g_new_p2->IMG.sx,game.m_i_g_new_p2->IMG.sy,game.m_i_g_new_p2->IMG.pic);
-		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0   ->IMG.sx,game.m_i_cur_0   ->IMG.sy,game.m_i_cur_0   ->IMG.pic);
+		gr2D_setimage0(0  ,0             ,game.m_i_conback );
+		gr2D_setimage0(120,30-23*1       ,game.m_i_case    );
+		gr2D_setimage0(120,30+23*0       ,game.m_i_arrowL  );
+		gr2D_setimage0(260,30+23*0       ,game.m_i_arrowR  );
+		gr2D_setimage0(120,30+23*1       ,game.m_i_g_new_p1);
+		gr2D_setimage0(120,30+23*2       ,game.m_i_g_new_p2);
+		gr2D_setimage0( 97,30+23*menu_cur,game.m_i_cur_0   );
 		gr2D.color.current = 25;
 		gr2Don_settextZ(133,33+23*0,game.casemap->map);
 		gr2Don_settextZ(133,41+23*0,game.casemap->name);
 		state = menu_getmenustatus(3, &menu_cur);
 		if(state == 1)
 		{
-			ret = menu_cur+1+c_m_case;
+			menu = menu_cur+1+c_m_case;
 			quit = true;
 		};
 		if(state == 2)
 		{
-			ret = 0;
+			menu = 0;
 			quit = true;
 		};
 		if(menu_cur == 0) {
@@ -358,7 +358,7 @@ int menu_case()
 		}
 		gr2D_BUFcurrent2screen();
 	}
-	return ret;
+	return menu;
 }
 /*
  * меню "НАСТРОЙКИ"
@@ -368,17 +368,17 @@ int menu_options()
 	int menu_cur= 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	int cur_pl = 0;
 	bool wait_a_key = false;
 	char s[32];
 
 	while(!quit)
 	{
-		gr2D_setimage0(0  ,0              ,game.m_i_conback->IMG.sx,game.m_i_conback->IMG.sy,game.m_i_conback->IMG.pic);
-		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_options->IMG.sx,game.m_i_options->IMG.sy,game.m_i_options->IMG.pic);
+		gr2D_setimage0(0  ,0              ,game.m_i_conback);
+		gr2D_setimage0(120,30+23*(-1)     ,game.m_i_options);
 		if(!wait_a_key)
-			gr2D_setimage0(58+cur_pl*131,30+12+12*menu_cur+1,game.m_i_cur_1   ->IMG.sx,game.m_i_cur_1  ->IMG.sy,game.m_i_cur_1  ->IMG.pic);
+			gr2D_setimage0(58+cur_pl*131,30+12+12*menu_cur+1,game.m_i_cur_1);
 		gr2D.color.current = 25;
 		gr2Don_settext( 58+131*0, 30+9*0, 0, "ИГРОК1");
 		gr2Don_settext( 58+131*1, 30+9*0, 0, "ИГРОК2");
@@ -426,7 +426,7 @@ int menu_options()
 		{
 			if(state == 2)
 			{
-				ret = 0;
+				menu = 0;
 				quit = true;
 			};
 			if(state == 3) cur_pl = 0;
@@ -435,7 +435,7 @@ int menu_options()
 		gr2D_BUFcurrent2screen();
 	};
 	game_cfg_save();
-	return ret;
+	return menu;
 };
 /*
  * меню "О ИГРЕ"
@@ -445,16 +445,11 @@ int menu_about()
 	int menu_cur= 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 
 	while(!quit)
 	{
-		gr2D_setimage0(
-				0,0,
-				game.m_i_interlv->IMG.sx,
-				game.m_i_interlv->IMG.sy,
-				game.m_i_interlv->IMG.pic
-		);
+		gr2D_setimage0( 0, 0, game.m_i_interlv);
 		gr2D.color.current = 13;
 		gr2Don_settextZ( 8,10* 1,c_strTITLE);
 		gr2Don_settextZ(56,10* 2,c_strCORP);
@@ -479,12 +474,12 @@ int menu_about()
 
 		state = menu_getmenustatus(1, &menu_cur);
 		if(state==2) {
-			ret = c_m_main;
+			menu = c_m_main;
 			quit = true;
 		};
 		gr2D_BUFcurrent2screen();
 	};
-	return ret;
+	return menu;
  };
 /*
  * информация об уровне
@@ -494,13 +489,13 @@ int menu_prelv()
 	int menu_cur= 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	int count;
 
 	game.allowpress = false;
 	while(!quit)
 	{
-		gr2D_setimage0(0,0,game.m_i_interlv->IMG.sx,game.m_i_interlv->IMG.sy,game.m_i_interlv->IMG.pic);
+		gr2D_setimage0(0,0,game.m_i_interlv);
 		gr2D.color.current = 15;
 		gr2Don_settextZ(160-06*4,8*5,"КАРТА:");
 		gr2D.color.current = 15;
@@ -516,48 +511,41 @@ int menu_prelv()
 		state = menu_getmenustatus(0, &menu_cur);
 		if(state==2)
 		{
-			ret = c_m_main;
+			menu = c_m_main;
 			quit = true;
 		}
 		else {
 			kbrd_readport();
 			if(kbrd.port==KP0_SPACE_1) {
-				ret = c_m_main;
+				menu = c_m_main;
 				quit = true;
 			};
 		};
 		gr2D_BUFcurrent2screen();
 	};
-	return ret;
+	return menu;
 };
 /*
  * заставка между уровнями
  */
-int menu_interlv()
+int menu_interlevel()
 {
 	int menu_cur= 0;
 	bool quit = false;
 	int state;
-	int ret;
+	int menu;
 	game.allowpress = true;
 	char s[32];
 	while(!quit)
 	{
-		gr2D_setimage0(
-				0,0,
-				game.m_i_interlv->IMG.sx,
-				game.m_i_interlv->IMG.sy,
-				game.m_i_interlv->IMG.pic
-		);
+		gr2D_setimage0(0, 0, game.m_i_interlv);
 		gr2D.color.current = 15;
 		gr2Don_settext(108,191,0,"НАЖМИ ПРОБЕЛ");
 		if(!game.P1)
 		{                                           //один игрок
 			gr2D_setimage1(26,92,
-					game.P0->Ibase->IMG.sx,
-					game.P0->Ibase->IMG.sy,
-					0,0,c_p_MDL_box,c_p_MDL_box,
-					game.P0->Ibase->IMG.pic
+					game.P0->Ibase,
+					0,0,c_p_MDL_box,c_p_MDL_box
 			);
 			gr2D.color.current = 15;
 			gr2Don_settext(48+8*00,84      ,0,"ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
@@ -568,16 +556,12 @@ int menu_interlv()
 		else
 		{                                                          //два игрока
 			gr2D_setimage1(26,84+18*0-1,
-					game.P0->Ibase->IMG.sx,
-					game.P0->Ibase->IMG.sy,
-					0,0,c_p_MDL_box,c_p_MDL_box,
-					game.P0->Ibase->IMG.pic
+					game.P0->Ibase,
+					0,0,c_p_MDL_box,c_p_MDL_box
 			);
 			gr2D_setimage1(26,84+18*1+1,
-					game.P1->Ibase->IMG.sx,
-					game.P1->Ibase->IMG.sy,
-					0,0,c_p_MDL_box,c_p_MDL_box,
-					game.P1->Ibase->IMG.pic
+					game.P1->Ibase,
+					0,0,c_p_MDL_box,c_p_MDL_box
 			);
 			gr2D.color.current = 15;
 			gr2Don_settext(48+8*00,76      -1,0,"ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
@@ -591,7 +575,7 @@ int menu_interlv()
 		state = menu_getmenustatus(0, &menu_cur);
 		if(state == 2)
 		{
-			ret = c_m_main;
+			menu = c_m_main;
 			quit = true;
 		}
 		else
@@ -599,12 +583,12 @@ int menu_interlv()
 			kbrd_readport();
 			if(kbrd.port == KP0_SPACE_1)
 			{
-				ret = 0;
+				menu = 0;
 				game.allowpress = false;
 				quit = true;
 			}
 		}
 		gr2D_BUFcurrent2screen();
 	}
-	return ret;
+	return menu;
 }

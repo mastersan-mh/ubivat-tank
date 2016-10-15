@@ -12,8 +12,26 @@
 #include <plr.h>
 #include <map.h>
 
+#define GAME_LOGO \
+		"          _____    ______              __     ______ \n"\
+		"||    || |  __ \\  |__  __| ||    ||   /  \\   |__  __|\n"\
+		"||    || | |  \\ |    ||    ||    ||  / /\\ \\     ||   \n"\
+		"||    || | |__//     ||    ||    || | |__| |    ||   \n"\
+		"||    || | |  \\\\     ||    ||    || | ____ |    ||   \n"\
+		"\\\\____|| | |__/ |  __||__   \\\\__//  ||    ||    ||   \n"\
+		" \\_____| |_____/  |______|   \\__/   ||    ||    ||   \n"\
+		"\n"\
+		"                       T A N K\n"\
+		"\n"
+
 #define GAME_SAVESNUM (8)
 
+
+struct image_table_ent_s
+{
+	char * filename;
+	char * id;
+};
 
 typedef int control_t[14];
 
@@ -41,7 +59,7 @@ typedef struct
 	player_t * P0;
 	//PTR игрока 1
 	player_t * P1;
-	char * mess;
+	char * msg;
 
 	//флаги состояния игры
 	int flags;
@@ -53,13 +71,11 @@ typedef struct
 
 	//игрок победил
 	bool _win_;
-	//выход($FF -выходим из игры)
+
 	bool quit;
 
 	//разрешение нажатия клавиш на клавиатуре
 	bool allowpress;
-	//список изображений
-	item_img_t * HEADimg;
 
 	maplist_t * gamemap;
 	maplist_t * casemap;
@@ -100,23 +116,29 @@ typedef struct
 	gamesave_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
 	int menu;
-	int error;
 } game_t;
 
 
 extern game_t game;
 
-void game_cfg_save();
-void game_CFG_new();
-void game_cfg_load();
-bool game_PAL_get();
+void game_init();
+void game_done();
+void game_main();
+
+void game_mainproc();
+
+void game_nextmap();
+
+int game_cfg_save();
+int game_cfg_new();
+int game_cfg_load();
+int game_pal_get();
 void game_time_reset();
 void game_record_getsaves();
 bool game_record_save(gamesave_t * rec);
 int game_record_load(gamesave_t * rec);
 int game_create();
 void game_abort();
-void game_msg_error_fatal(int error);
 void game_msg_error  (int error);
 
 void game_message_send(const char * mess);

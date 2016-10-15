@@ -28,9 +28,9 @@ typedef enum {
 }bool;
 #endif
 
-#define c_CFGname "config.cfg"
+#define FILENAME_CONFIG "config.cfg"
 #define FILENAME_MAPSLIST "maps.lst"
-#define c_PALname "palette.pal"
+#define FILENAME_PALETTE "palette.pal"
 #define c_SAVext  ".sav"
 //коды
 #define code_levelup "IAMSUPERTANK"
@@ -56,8 +56,6 @@ typedef enum {
 #define c_m_about       0x40
 #define c_m_abort       0x50
 #define c_m_quit        0x60
-// заголовок формата BII
-#define c_BIIheader     "bii"
 // карта
 #define c_MAPext        ".mut"
 // Map Ubivat Tank
@@ -187,17 +185,6 @@ typedef enum {
 //директория карт
 #define MAPSDIR        "maps/"
 
-//рисунок
-typedef struct
-{
-	//рисунок
-	void * pic;
-	//размер_рисунка_X
-	int sx;
-	//размер_рисунка_Y
-	int sy;
-} TBIIpic;
-
 typedef char Tstring11[11];
 typedef char Tstring16[16];
 
@@ -227,17 +214,6 @@ typedef struct time_s
 } Ttime;
 
 
-/*
- * изображение
- */
-typedef struct image_s
-{
-	struct image_s *next;
-	/* идентификатор рисунка */
-	TstrZ11 IMGname;
-	//изображение
-	TBIIpic IMG;
-} item_img_t;
 
 
 //координаты

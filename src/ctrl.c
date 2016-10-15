@@ -87,6 +87,48 @@ void ctrl_human(int Pnum, player_t * player)
 		break;
 	}
 };
+
+/*
+ * управление вражеским игроком
+ */
+void ctrl_enemy(struct player_s * player)
+{
+	if(0<player->charact.health)
+	{
+		ctrl_AI_checkdanger(player);
+		if(!player->brain.danger)
+		{
+			if(!game.P1)
+			{
+				if(game.P0->charact.health<=0) player->w.attack = 0;
+				else {
+					if(!player->bull &&  !player->w.attack) ctrl_AI_findenemy(player, game.P0);
+					ctrl_AI_attack(player,game.P0);
+				};
+			}
+			else
+			{
+				if(xrand(2)==0)
+				{
+					if(0<game.P0->charact.health)
+					{
+						if( !player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P0);
+						ctrl_AI_attack(player,game.P0);
+					}
+				}
+				else
+				{
+					if(0 < game.P1->charact.health)
+					{
+						if(!player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P1);
+						ctrl_AI_attack(player,game.P1);
+					}
+				}
+			}
+		}
+	}
+}
+
 /*
  * инициализация AI
  */

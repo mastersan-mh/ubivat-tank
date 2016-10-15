@@ -117,6 +117,8 @@ extern map_t map;
 
 extern maplist_t * mapList;
 
+void map_init();
+
 int map_spawn_checkspawnpoints();
 
 void map_clip_find(
@@ -142,7 +144,7 @@ void map_close();
 void map_draw(camera_t * cam);
 void map_list_add(const char * map,const char * name);
 void map_list_removeall();
-int map_load_list();
+void map_load_list();
 
 
 #endif /* SRC_MAP_H_ */
