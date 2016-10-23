@@ -3,12 +3,12 @@
  *        обработка меню
  * by Master San
  */
-#include <defs.h>
 #include <menu.h>
 #include <game.h>
 #include <img.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
+#include <types.h>
 #include <x10_time.h>
 #include <x10_str.h>
 #include <x10_kbrd.h>
@@ -72,6 +72,29 @@ int menu_getmenustatus(int maxmenu, int * menu_cur)
 	}
 	return 0;
 }
+
+
+/*
+ * главное меню
+ */
+void menu_main_draw(int * menu_cur)
+{
+	gr2D_setimage0(0    ,0      ,game.m_i_conback);
+	gr2D_setimage0(277  ,159    ,game.m_i_logo);
+	gr2D.color.current = 1;
+	gr2Don_settextZ(1     ,183          ,c_strTITLE);
+	gr2Don_settextZ(1     ,191          ,c_strCORP);
+	gr2D_setimage0(120, 30+23*0 ,game.m_i_game);
+	gr2D_setimage0(120, 30+23*1 ,game.m_i_case);
+	gr2D_setimage0(120, 30+23*2 ,game.m_i_options);
+	gr2D_setimage0(120, 30+23*3 ,game.m_i_about);
+	if(game.created)
+		gr2D_setimage0(120,30+23*4 ,game.m_i_abort);
+	gr2D_setimage0(120,30+23*5  ,game.m_i_quit);
+	gr2D_setimage0( 97,30+23*(*menu_cur),game.m_i_cur_0);
+}
+
+
 /*
  * главное меню
  */

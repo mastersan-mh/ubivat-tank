@@ -8,7 +8,7 @@
 #ifndef SRC_CTRL_H_
 #define SRC_CTRL_H_
 
-#include <defs.h>
+#include <types.h>
 //искуственный интеллект
 typedef struct
 {

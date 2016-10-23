@@ -4,7 +4,7 @@
  * by Master San
  */
 
-#include <defs.h>
+#include <video.h>
 #include <game.h>
 #include <img.h>
 #include <_gr2D.h>
@@ -18,6 +18,7 @@
 #include <fcntl.h>
 
 #include <string.h>
+#include <types.h>
 
 //список карт
 maplist_t * mapList;
@@ -593,9 +594,9 @@ void map_draw(camera_t * cam)
 		};
 	};
 	gr2D.WIN.x0 = 0;
-	gr2D.WIN.x1 = gr2D_SCR_sx-1;
+	gr2D.WIN.x1 = VIDEO_MODE_W-1;
 	gr2D.WIN.y0 = 0;
-	gr2D.WIN.y1 = gr2D_SCR_sy-1;
+	gr2D.WIN.y1 = VIDEO_MODE_H-1;
 };
 /*
  * добавление карты в список

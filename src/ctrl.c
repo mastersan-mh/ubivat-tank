@@ -3,15 +3,15 @@
  *        управление игроками
  * by Master San
  */
-#include <defs.h>
 #include <game.h>
 #include <weap.h>
-#include <plr.h>
 #include <map.h>
+#include <player.h>
 #include <x10_time.h>
 #include <x10_kbrd.h>
 
 #include <stdlib.h>
+#include <types.h>
 
 /*
  * управление игроком

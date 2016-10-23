@@ -5,12 +5,12 @@
  */
 
 
-#include <defs.h>
 #include <game.h>
+#include <actions.h>
 #include <menu.h>
 #include <map.h>
 #include <weap.h>
-#include <plr.h>
+#include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <x10_str.h>
@@ -27,7 +27,9 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
+#include <player.h>
 #include <stdarg.h>
+#include <types.h>
 
 //состояние игры
 game_t game;
@@ -111,7 +113,6 @@ void game_init()
 	game.allowpress = true;
 	game.quit       = false;
 	game.ingame     = false;
-	game.menu       = c_m_main;
 
 	randomize();
 	printf("%s\n", c_strTITLE);
@@ -119,59 +120,18 @@ void game_init()
 	printf(GAME_LOGO);
 	map_init();
 	map_load_list();
+
+	printf("ENTERING GRAPHIC...\n");
+	if(video_init())
+		game_halt("Video init failed");
+	video_transparent_set(255);
+
+
+	if(game_pal_get())
+		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
 	printf("Images loading...\n");
 	pics_load();
-	//чтение конфига
-	printf("Config init...\n");
-	if(game_cfg_load())
-	{
-		game_halt("config read error.");
-	}
-	printf("OK\n");
-	//инициализация оружий
-	printf("Weapons init...");
-	strcpy(wtable[0].name, "Pulki");                                     //название оружия
-	wtable[0].damage     = 15;                                          //повреждение
-	wtable[0].selfdamage = 7;//0;                                       //повреждение
-	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
-	wtable[0].radius     = 7;                                           //радиус действия
-	wtable[0].range      = -1;                                          //дальность
-	wtable[0].bullspeed  = 750;                                         //скорость пули
-	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
-	strcpy(wtable[1].name, "Rocket");                                    //название оружия
-	wtable[1].damage     = 100;                                         //повреждение
-	wtable[1].selfdamage = 50;                                          //повреждение
-	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[1].radius     = 11;                                          //радиус действия
-	wtable[1].range      = -1;                                          //дальность
-	wtable[1].bullspeed  = 800;                                         //скорость пули
-	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
-	strcpy(wtable[2].name, "Mine");                                      //название оружия
-	wtable[2].damage     = 200;                                         //повреждение
-	wtable[2].selfdamage = 100;                                         //повреждение
-	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[2].radius     = 11;                                          //радиус действия
-	wtable[2].range      = 100;                                         //дальность
-	wtable[2].bullspeed  = -800;                                        //скорость пули
-	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
-	//инициализация графики
-	printf("ENTERING GRAPHIC...\n");
-	gr2D_init320X200X8();
-	if(game_pal_get())
-	{
-		gr2D_close();
-		game_halt("Error load palette %s.", FILENAME_PALETTE);
-		return;
-	};
-	gr2D_setRGBpal(&gr2D.PAL);
-	gr2D.color.current = 0;
-	//очищаем буфер
-	gr2D_BUFcurrentfill();
-	gr2D.color.transparent = 255;
 	game.m_i_logo     = IMG_connect("M_LOGO"     );
 	game.m_i_conback  = IMG_connect("M_CONBACK"  );
 	game.m_i_interlv  = IMG_connect("M_I_INTERLV");
@@ -203,9 +163,50 @@ void game_init()
 	game.i_health     = IMG_connect("I_HEALTH"   );
 	game.i_armor      = IMG_connect("I_ARMOR"    );
 	game.i_star       = IMG_connect("I_STAR"     );
-	//опустошим буфер клавы
-	kbrd_readport();
-	kbrd.port = 0;
+
+	//чтение конфига
+	printf("Config init...\n");
+	if(game_cfg_load())
+	{
+		game_halt("config read error.");
+	}
+	action_init();
+
+	//инициализация оружий
+	printf("Weapons init...\n");
+	strcpy(wtable[0].name, "Pulki");                                     //название оружия
+	wtable[0].damage     = 15;                                          //повреждение
+	wtable[0].selfdamage = 7;//0;                                       //повреждение
+	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
+	wtable[0].radius     = 7;                                           //радиус действия
+	wtable[0].range      = -1;                                          //дальность
+	wtable[0].bullspeed  = 750;                                         //скорость пули
+	wtable[0].bullbox    = 2;                                           //bodybox
+	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
+	strcpy(wtable[1].name, "Rocket");                                    //название оружия
+	wtable[1].damage     = 100;                                         //повреждение
+	wtable[1].selfdamage = 50;                                          //повреждение
+	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
+	wtable[1].radius     = 11;                                          //радиус действия
+	wtable[1].range      = -1;                                          //дальность
+	wtable[1].bullspeed  = 800;                                         //скорость пули
+	wtable[1].bullbox    = 8;                                           //bodybox
+	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
+	strcpy(wtable[2].name, "Mine");                                      //название оружия
+	wtable[2].damage     = 200;                                         //повреждение
+	wtable[2].selfdamage = 100;                                         //повреждение
+	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
+	wtable[2].radius     = 11;                                          //радиус действия
+	wtable[2].range      = 100;                                         //дальность
+	wtable[2].bullspeed  = -800;                                        //скорость пули
+	wtable[2].bullbox    = 8;                                           //bodybox
+	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
+	//инициализация графики
+
+
+	gr2D.color.current = 0;
+	//очищаем буфер
+	gr2D_BUFcurrentfill();
 
 }
 
@@ -214,7 +215,7 @@ void game_init()
  */
 void game_done()
 {
-	gr2D_close();
+	video_done();
 	//прекратим игру
 	game_abort();
 	//очистим список карт
@@ -228,10 +229,38 @@ void game_done()
  */
 void game_main()
 {
-	int ret;
-
-	while(!game.quit)
+	bool quit = false;
+	menu_selector_t menu = c_m_main;
+	int menu_cur = 0;
+	while(!quit)
 	{
+
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			printf("event.type = %d\n", event.type);
+			switch(event.type)
+			{
+			case SDL_QUIT:quit = true;break;
+			}
+			// handle your event here
+		}
+		if(quit)break;
+		video_scree_draw_begin();
+
+
+		switch(menu)
+		{
+		case c_m_main : menu_main_draw(&menu_cur);break;
+		default: ;
+		}
+
+		//video_draw();
+
+
+		video_scree_draw_end();
+
+/*
 		switch(game.menu)
 		{
 		case c_m_main      : game.menu = menu_main();break;
@@ -320,6 +349,7 @@ void game_main()
 			};
 		};
 		gr2D_BUFcurrent2screen();
+		*/
 	};
 }
 
@@ -392,7 +422,7 @@ void game_mainproc()
 				if(game.allowpress)
 				{
 					game.ingame     = false;
-					game.menu       = c_m_main;
+					//game.menu       = c_m_main;
 					game.allowpress = false;
 				};
 				break;
@@ -436,7 +466,7 @@ void game_nextmap()
 		if(ret != 0) {
 			game_msg_error(ret);
 			game_abort();
-			game.menu = c_m_main;
+			//game.menu = c_m_main;
 			game.allowpress = false;
 		}
 		else
@@ -444,7 +474,7 @@ void game_nextmap()
 			ret = game_create();
 			if(!ret)
 			{
-				game.menu = menu_save();       //сохраним игру в начале уровня
+				//game.menu = menu_save();       //сохраним игру в начале уровня
 				menu_prelv();
 				game_time_reset();
 			}
@@ -454,7 +484,7 @@ void game_nextmap()
 	{
 		game.gamemap = mapList;
 		player_disconnect_all();                //дисконнект всех монстров
-		game.menu = c_m_main;
+		//game.menu = c_m_main;
 		game.allowpress = false;
 	}
 }
@@ -894,7 +924,7 @@ void game_abort()
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
-	game.menu       = c_m_main;
+	//game.menu       = c_m_main;
 	game.allowpress = false;
 }
 

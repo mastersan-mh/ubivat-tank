@@ -9,6 +9,9 @@
 #define SRC_MENU_H_
 
 int menu_getmenustatus(int maxmenu, int * menu_cur);
+
+void menu_main_draw(int * menu_cur);
+
 int menu_main();
 int menu_game();
 int menu_load();

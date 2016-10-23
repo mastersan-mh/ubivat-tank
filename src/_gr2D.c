@@ -1,52 +1,12 @@
 
 #include <_gr2D.h>
+#include <video.h>
 
 Tgr2D gr2D;
 
 /********************************************************************/
 
 
-/********инициализация графического режима 320X200X8********/
-//gr2D_init320X200X8=0 успешно
-//gr2D_init320X200X8=1 графика уже инициализирована
-//gr2D_init320X200X8=2 ошибка выделения памяти
-int gr2D_init320X200X8()
-{
-/*
- if(gr2D.BUFdefault != NULL) { gr2D_init320X200X8 = 1;exit;}
- getmem(gr2D.BUFdefault,gr2D_SCR_sx*gr2D_SCR_sy);
- if(gr2D.BUFdefault=NULL) { gr2D_init320X200X8 = 2;exit;}
- gr2D.BUFcurrent = NULL;
- gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
- gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;
- gr2D.BUFcurrent        = gr2D.BUFdefault;
- gr2D.color.current     = 0;
- gr2D.color.transparent = -1;
- asm
-  mov    eax,13h
-  int    10h
-  }
-*/
-	return 0;
-}
-/********инициализация текстового режима 80X25X8********/
-/********закрытие режима 320X200X8********/
-//gr2D_close=0 успешно
-//gr2D_close=1 графика не была инициализирована
-int gr2D_close()
-{
-/*
- if(gr2D.BUFdefault=NULL) { gr2D_close = 1;exit;}
- if(gr2D.BUFcurrent=gr2D.BUFdefault) gr2D.BUFcurrent = NULL;
- freemem(gr2D.BUFdefault,gr2D_SCR_sx*gr2D_SCR_sy);
- gr2D.BUFdefault = NULL;
- asm
-  mov    eax,3h
-  int    10h
-  }
-*/
-	return 0;
-}
 /********заполнение gr2D.BUFcurrent цветом gr2D.color.current********/
 void gr2D_BUFcurrentfill()
 {
@@ -85,7 +45,7 @@ asm
  cmp    ax,gr2D.color.transparent
  je     @quit                                                         //если цвет прозрачный
  mov    edi,[x]
- cmp    edi,gr2D_SCR_sx
+ cmp    edi,
  jae    @quit
  mov    eax,[y]
  cmp    eax,gr2D_SCR_sy
@@ -139,7 +99,7 @@ asm
  mov    ebx,1                                                         //считаем что ошибка есть
  xor    eax,eax
  mov    edi,[x]
- cmp    edi,gr2D_SCR_sx
+ cmp    edi,
  jae    @quit
  mov    eax,[y]
  cmp    eax,gr2D_SCR_sy
@@ -204,23 +164,6 @@ asm
  in     al,dx
  mov    [edi],al
  sti                                                                  //разрешить прерывания
-*/
-}
-
-/********установка палитры********/
-void gr2D_setRGBpal (T2Dpal * p)
-{
-/*	var c:byte;
- for c = 0 to 255 do gr2D_setRGBcolor(c,p[c].r,p[c].g,p[c].b);
-*/
-}
-/********получение палитры********/
-void gr2D_getRGBpal (T2Dpal * p)
-{
-/*
-	var c:byte;
-
- for c = 0 to 255 do gr2D_getRGBcolor(c,p[c].r,p[c].g,p[c].b);
 */
 }
 
@@ -293,15 +236,15 @@ void gr2D_line_h (int x0, int x1, int y)
 @next0:                                                               //edi=[x0] ecx=[x1]
  cmp    ecx,0                                                         //x1<0 => выход
  jl     @quit
- cmp    edi,gr2D_SCR_sx                                               //gr3D_SCR_sy<x0 => выход
+ cmp    edi,                                               //gr3D_SCR_sy<x0 => выход
  jg     @quit
  cmp    edi,0
  jge    @next1
  mov    edi,0
 @next1:
- cmp    ecx,gr2D_SCR_sx
+ cmp    ecx,
  jl     @next2
- mov    ecx,gr2D_SCR_sx-1
+ mov    ecx,-1
 @next2:
  sub    ecx,edi
  inc    ecx                                                           //количество пикселей в строке
@@ -454,6 +397,42 @@ void gr2D_setimage0(
 	item_img_t * image
 	)
 {
+	GLfloat scalex = VIDEO_MODE_W/320.0f;
+	GLfloat scaley = VIDEO_MODE_H/200.0f;
+	/*
+		glRotatef(xrf, 1.0f, 0.0f, 0.0f);	// Вращение куба по X, Y, Z
+		glRotatef(yrf, 0.0f, 1.0f, 0.0f);	// Вращение куба по X, Y, Z
+		glRotatef(zrf, 0.0f, 0.0f, 1.0f);	// Вращение куба по X, Y, Z
+	 */
+	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glLoadIdentity();
+	glTranslatef(out_x*scalex, out_y*scaley, 0.0f);
+	glBegin(GL_QUADS);		// Рисуем куб
+
+	glColor3f(1.0f, 1.0f, 1.0f);		// Красная сторона (Передняя)
+	GLfloat sx = image->IMG->sx*scalex;
+	GLfloat sy = image->IMG->sy*scaley;
+
+	GLfloat texture_sx = image->sx;
+	GLfloat texture_sy = image->sy;
+
+	GLfloat texture_map_sx = image->IMG->sx/texture_sx;
+	GLfloat texture_map_sy = image->IMG->sy/texture_sy;
+
+	glTexCoord2f(texture_map_sx, texture_map_sy); glVertex2f( sx  , sy  ); // Верхний правый угол квадрата
+	glTexCoord2f(texture_map_sx, 0.0f          ); glVertex2f( sx  , 0.0f); // Нижний правый
+	glTexCoord2f(0.0f          , 0.0f          ); glVertex2f( 0.0f, 0.0f); // Нижний левый
+	glTexCoord2f(0.0f          , texture_map_sy); glVertex2f( 0.0f, sy  ); // Верхний левый
+
+	/*
+	glTexCoord2f(1.0f, 1.0f); glVertex2f( sx  , sy  ); // Верхний правый угол квадрата
+	glTexCoord2f(1.0f, 0.0f); glVertex2f( sx  , 0.0f); // Нижний правый
+	glTexCoord2f(0.0f, 0.0f); glVertex2f( 0.0f, 0.0f); // Нижний левый
+	glTexCoord2f(0.0f, 1.0f); glVertex2f( 0.0f, sy  ); // Верхний левый
+*/
+	glEnd();	// Закончили квадраты
+
+
 /*var
 
 a:array[0..0]of byte absolute bytemap;

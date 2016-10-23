@@ -4,18 +4,19 @@
  * by Master San
  */
 
-#include <defs.h>
+#include <video.h>
 #include <game.h>
 #include <weap.h>
 #include <img.h>
 #include <map.h>
-#include <plr.h>
 #include <_gr2D.h>
 #include <x10_time.h>
 
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <player.h>
+#include <types.h>
 
 //оружия
 weapon_info_t wtable[3];
@@ -136,8 +137,8 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 				mdlbox,
 				mdlbox
 		);
-		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
-		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;
+		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = VIDEO_MODE_W-1;
+		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = VIDEO_MODE_H-1;
 	};
 };
 /*
@@ -319,8 +320,8 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 				mdlbox,
 				mdlbox
 		);
-		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
-		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;
+		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = VIDEO_MODE_W-1;
+		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = VIDEO_MODE_H-1;
 	}
 }
 /*

@@ -8,9 +8,9 @@
 #ifndef SRC_GAME_H_
 #define SRC_GAME_H_
 
-#include <defs.h>
-#include <plr.h>
 #include <map.h>
+#include <player.h>
+#include <types.h>
 
 #define GAME_LOGO \
 		"          _____    ______              __     ______ \n"\
@@ -115,7 +115,6 @@ typedef struct
 	//список записей
 	gamesave_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
-	int menu;
 } game_t;
 
 
