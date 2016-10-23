@@ -5,18 +5,17 @@
  */
 
 
-#include <defs.h>
 #include <game.h>
+#include <actions.h>
 #include <menu.h>
 #include <map.h>
 #include <weap.h>
-#include <plr.h>
+#include <img.h>
+#include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
-#include <x10_str.h>
 #include <x10_time.h>
 #include <x10_kbrd.h>
-#include <x10_str.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,7 +26,9 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
+#include <player.h>
 #include <stdarg.h>
+#include <types.h>
 
 #define CHECK(x, y) do{ if( x!= y) return false; }while(0)
 
@@ -103,16 +104,15 @@ void pics_load()
 	}
 };
 
+static void game_draw();
+
 void game_init()
 {
 	game.P0         = NULL;
 	game.P1         = NULL;
 	game.msg        = NULL;
 	game.created    = false;
-	game.allowpress = true;
-	game.quit       = false;
 	game.ingame     = false;
-	game.menu       = c_m_main;
 
 	randomize();
 	printf("%s\n", c_strTITLE);
@@ -120,59 +120,16 @@ void game_init()
 	printf(GAME_LOGO);
 	map_init();
 	map_load_list();
+
+	printf("ENTERING GRAPHIC...\n");
+	if(video_init())
+		game_halt("Video init failed");
+
+	if(game_pal_get())
+		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
 	printf("Images loading...\n");
 	pics_load();
-	//чтение конфига
-	printf("Config init...\n");
-	if(game_cfg_load())
-	{
-		game_halt("config read error.");
-	}
-	printf("OK\n");
-	//инициализация оружий
-	printf("Weapons init...\n");
-	strcpy(wtable[0].name, "Pulki");                                     //название оружия
-	wtable[0].damage     = 15;                                          //повреждение
-	wtable[0].selfdamage = 7;//0;                                       //повреждение
-	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
-	wtable[0].radius     = 7;                                           //радиус действия
-	wtable[0].range      = -1;                                          //дальность
-	wtable[0].bullspeed  = 750;                                         //скорость пули
-	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
-	strcpy(wtable[1].name, "Rocket");                                    //название оружия
-	wtable[1].damage     = 100;                                         //повреждение
-	wtable[1].selfdamage = 50;                                          //повреждение
-	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[1].radius     = 11;                                          //радиус действия
-	wtable[1].range      = -1;                                          //дальность
-	wtable[1].bullspeed  = 800;                                         //скорость пули
-	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
-	strcpy(wtable[2].name, "Mine");                                      //название оружия
-	wtable[2].damage     = 200;                                         //повреждение
-	wtable[2].selfdamage = 100;                                         //повреждение
-	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[2].radius     = 11;                                          //радиус действия
-	wtable[2].range      = 100;                                         //дальность
-	wtable[2].bullspeed  = -800;                                        //скорость пули
-	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
-	//инициализация графики
-	printf("ENTERING GRAPHIC...\n");
-	gr2D_init320X200X8();
-	if(game_pal_get())
-	{
-		gr2D_close();
-		game_halt("Error load palette %s.", FILENAME_PALETTE);
-		return;
-	};
-	gr2D_setRGBpal(&gr2D.PAL);
-	gr2D.color.current = 0;
-	//очищаем буфер
-	gr2D_BUFcurrentfill();
-	gr2D.color.transparent = 255;
 	game.m_i_logo     = IMG_connect("M_LOGO"     );
 	game.m_i_conback  = IMG_connect("M_CONBACK"  );
 	game.m_i_interlv  = IMG_connect("M_I_INTERLV");
@@ -204,10 +161,44 @@ void game_init()
 	game.i_health     = IMG_connect("I_HEALTH"   );
 	game.i_armor      = IMG_connect("I_ARMOR"    );
 	game.i_star       = IMG_connect("I_STAR"     );
-	//опустошим буфер клавы
-	kbrd_readport();
-	kbrd.port = 0;
 
+	//чтение конфига
+	printf("Config init...\n");
+	if(game_cfg_load())
+	{
+		game_halt("config read error.");
+	}
+	action_init();
+
+	//инициализация оружий
+	printf("Weapons init...\n");
+	strcpy(wtable[0].name, "Pulki");                                     //название оружия
+	wtable[0].damage     = 15;                                          //повреждение
+	wtable[0].selfdamage = 7;//0;                                       //повреждение
+	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
+	wtable[0].radius     = 7;                                           //радиус действия
+	wtable[0].range      = -1;                                          //дальность
+	wtable[0].bullspeed  = 750;                                         //скорость пули
+	wtable[0].bullbox    = 2;                                           //bodybox
+	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
+	strcpy(wtable[1].name, "Rocket");                                    //название оружия
+	wtable[1].damage     = 100;                                         //повреждение
+	wtable[1].selfdamage = 50;                                          //повреждение
+	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
+	wtable[1].radius     = 11;                                          //радиус действия
+	wtable[1].range      = -1;                                          //дальность
+	wtable[1].bullspeed  = 800;                                         //скорость пули
+	wtable[1].bullbox    = 8;                                           //bodybox
+	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
+	strcpy(wtable[2].name, "Mine");                                      //название оружия
+	wtable[2].damage     = 200;                                         //повреждение
+	wtable[2].selfdamage = 100;                                         //повреждение
+	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
+	wtable[2].radius     = 11;                                          //радиус действия
+	wtable[2].range      = 100;                                         //дальность
+	wtable[2].bullspeed  = -800;                                        //скорость пули
+	wtable[2].bullbox    = 8;                                           //bodybox
+	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
 }
 
 /*
@@ -215,7 +206,7 @@ void game_init()
  */
 void game_done()
 {
-	gr2D_close();
+	video_done();
 	//прекратим игру
 	game_abort();
 	//очистим список карт
@@ -229,98 +220,68 @@ void game_done()
  */
 void game_main()
 {
-	int ret;
-
-	while(!game.quit)
+	bool quit = false;
+	menu_selector_t imenu = MENU_MAIN;
+	imenu = MENU_MAIN;
+	menu_selector_t imenu_process = imenu;
+	while(!quit)
 	{
-		switch(game.menu)
+
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
 		{
-		case c_m_main      : game.menu = menu_main();break;
-		case c_m_game      : game.menu = menu_game();break;
-		case c_m_game_new1P:
-			if(game.created) game.menu = c_m_main;
-			else
+			//printf("event.type = %d\n", event.type);
+			if(game.ingame)
 			{
-				game.gamemap = mapList;
-				ret = map_load(game.gamemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = 0;
-					ret = game_create();
-					menu_prelv();
-				};
+
 			}
-			break;
-		case c_m_game_new2P:
-			if(game.created) game.menu = c_m_main;
 			else
+				menu_send_event(&event);
+			switch(event.type)
 			{
-				game.gamemap = mapList;
-				ret = map_load(game.gamemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_2PLAYERS;
-					ret = game_create();
-					menu_prelv();
-				}
+			case SDL_QUIT:quit = true;break;
 			}
-			break;
-		case c_m_game_load : game.menu = menu_load();break;
-		case c_m_case      : game.menu = menu_case();break;
-		case c_m_case_case : game.menu = menu_case();break;
-		case c_m_case_newP1:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				ret = map_load(game.casemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_CASE;
-					ret = game_create();
-				}
-			}
-			break;
-		case c_m_case_newP2:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				ret = map_load(game.casemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_2PLAYERS | c_g_f_CASE;
-					ret = game_create();
-				};
-			};
-			break;
-		case c_m_options   : game.menu = menu_options();break;
-		case c_m_about     : game.menu = menu_about();break;
-		case c_m_abort     :
-			game_abort();
-			game.menu = c_m_main;
-			game.allowpress = false;
-			break;
-		case c_m_quit: game.quit = true;break;
+			// handle your event here
 		}
-		if(ret != 0)
+		if(quit)break;
+		video_screen_draw_begin();
+
+		if(!game.ingame)
 		{
-			game.menu = c_m_main;
-			game_abort();
-			ret = 0;
-			game.allowpress = true;
+			imenu_process = imenu;
+			imenu = menu_handle(imenu_process);
+			switch(imenu_process)
+			{
+			case MENU_QUIT: quit = true;break;
+			default: break;
+			}
+			if(quit)break;
 		}
 		else
 		{
-			if(game.created && game.ingame)
-			{
+			/*
+			if(game.created)
 				game_time_reset();
-				game_mainproc();                                                     //главная процедура игры
-			};
-		};
-		gr2D_BUFcurrent2screen();
+			int ret = game_mainproc();
+			if(ret >= 0) imenu = ret;
+			*/
+		}
+
+
+
+		if(!game.ingame)
+		{
+			menu_draw(imenu_process);
+		}
+		else
+		{
+			game_draw();
+		}
+
+
+
+		video_screen_draw_end();
+
 	};
 }
 
@@ -328,106 +289,108 @@ void game_main()
 /*
  * главная процедура игры
  */
-void game_mainproc()
+int game_mainproc()
 {
-	player_t *player;
-	int count;
-	int x,y;
+	players_control();
+	bull_control();
+	explode_control();
 
-	while(game.ingame)
+	if(
+			game._win_ &&                                           //победа
+			(game.P0->charact.health > 0) &&                        //оба игрока должны быть живы
+			(!game.P1 || (game.P1 && game.P1->charact.health > 0))  //
+	)
 	{
-		player = playerList;
-		while(player)
+		if(game.flags & c_g_f_CASE)
 		{
-			if(player->charact.status==c_p_BOSS || player->charact.status==c_p_ENEMY)
-			{
-				ctrl_enemy(player);
-			}
-			else {
-				if(player->charact.status==c_p_P1)
-				{
-					if(player->bull) { game.P1cam.orig.x = player->bull->orig.x;game.P1cam.orig.y = player->bull->orig.y;}
-					else             { game.P1cam.orig.x = player->move.orig.x ;game.P1cam.orig.y = player->move.orig.y ;};
-					ctrl_human(1,player);
-					player_draw_status(&game.P1cam, game.P1);
-				}
-				else
-				{
-					bull_control();
-					if(player->bull) { game.P0cam.orig.x = player->bull->orig.x;game.P0cam.orig.y = player->bull->orig.y;}
-					else             { game.P0cam.orig.x = player->move.orig.x ;game.P0cam.orig.y = player->move.orig.y ;};
-					player_checkcode();
-					ctrl_human(0,player);
-					explode_control();
-					player_draw_status(&game.P0cam,game.P0);
-					if(game.msg)
-					{
-						count = 0;
-						gr2D.color.current = 1;
-						while(count<64 && game.msg[count])
-						{
-							x = ((count << 3)% 128)+96;
-							y = ((count >> 4)<< 3)+84;
-							gr2Don_setchar(x,y,game.msg[count]);
-							count++;
-						};
-						game.msg = NULL;
-					};
-					gr2D_BUFcurrent2screen();
-					gr2D.color.current = 0;
-					gr2D_BUFcurrentfill();
-					map_draw(&game.P0cam);                                            //рисуем карту игрока0
-					if(game.P1) map_draw(&game.P1cam);                       //рисуем карту игрока1
-				}
-			}
-			player_draw(&game.P0cam, player, true);
-			if(game.P1) player_draw(&game.P1cam,player,false);
-			player_control(player);
-			player = player->next;
+			//игра по уровням
+			game_nextmap();
+			return MENU_INTERLEVEL;
 		}
-		if(kbrd.port)
+		else
 		{
-			switch(kbrd.port)
-			{
-			case KP0_ESCAPE_1:
-				if(game.allowpress)
-				{
-					game.ingame     = false;
-					game.menu       = c_m_main;
-					game.allowpress = false;
-				};
-				break;
-			case KP0_ESCAPE_0: game.allowpress = true;break;
-			}
-		}
-		if(
-				(game._win_) &&                                                 //победа
-				(game.P0->charact.health>0) &&                                     //оба игрока должны быть живы
-				((!game.P1) || ((game.P1) && (game.P1->charact.health>0)))  //
-		)
-		{
-			if(game.flags & c_g_f_CASE) game_nextmap();                 //игра по уровням
-			else
-			{                                                         //игра по выбору
-				menu_interlevel();
-				game_abort();
-			}
+			//игра по выбору
+			game_abort();
+			return MENU_INTERLEVEL;
 		}
 	}
+	return MENU_MAIN;
 }
 
-/********процедура перехода на следующую карту********/
+void game_draw()
+{
+
+	map_draw(&game.P0cam);
+	if(game.P1) map_draw(&game.P1cam);
+
+
+	if(game.P0->bull)
+	{
+		game.P0cam.orig.x = game.P0->bull->orig.x;
+		game.P0cam.orig.y = game.P0->bull->orig.y;
+	}
+	else
+	{
+		game.P0cam.orig.x = game.P0->move.orig.x;
+		game.P0cam.orig.y = game.P0->move.orig.y;
+	}
+	player_draw_status(&game.P0cam, game.P0);
+	if(game.P1)
+	{
+		if(game.P1->bull)
+		{
+			game.P1cam.orig.x = game.P1->bull->orig.x;
+			game.P1cam.orig.y = game.P1->bull->orig.y;
+		}
+		else
+		{
+			game.P1cam.orig.x = game.P1->move.orig.x;
+			game.P1cam.orig.y = game.P1->move.orig.y;
+		}
+		player_draw_status(&game.P1cam, game.P1);
+	}
+
+
+	player_t * player = playerList;
+	while(player)
+	{
+		player_draw(&game.P0cam, player, true);
+		if(game.P1) player_draw(&game.P1cam, player, false);
+		player = player->next;
+	}
+
+	if(game.msg)
+	{
+		int count = 0;
+		gr2D.color.current = 1;
+		while(count<64 && game.msg[count])
+		{
+			int x = ((count * 8 ) % 128)+96;
+			int y = ((count / 16) * 8  )+84;
+			gr2Don_setchar(x, y, game.msg[count]);
+			count++;
+		};
+		game.msg = NULL;
+	};
+
+}
+
+/*
+ * процедура перехода на следующую карту
+ */
 void game_nextmap()
 {
 	int ret;
-	player_disconnect_monsters();                                          //дисконнект всех монстров
+	//дисконнект всех монстров
+	player_disconnect_monsters();
 	explode_removeall();
 	bull_removeall();
-	map_close();                                   //закроем карту
+	//закроем карту
+	map_clear();
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
-	menu_interlevel();
+	//menu_interlevel();
 	game.P0->charact.spawned = false;
 	if(game.P1) game.P1->charact.spawned = false;
 	if(game.gamemap->next)
@@ -437,16 +400,15 @@ void game_nextmap()
 		if(ret != 0) {
 			game_msg_error(ret);
 			game_abort();
-			game.menu = c_m_main;
-			game.allowpress = false;
+			//game.menu = c_m_main;
 		}
 		else
 		{
 			ret = game_create();
 			if(!ret)
 			{
-				game.menu = menu_save();       //сохраним игру в начале уровня
-				menu_prelv();
+				//game.menu = menu_save();       //сохраним игру в начале уровня
+				//menu_prelevel();
 				game_time_reset();
 			}
 		}
@@ -455,8 +417,7 @@ void game_nextmap()
 	{
 		game.gamemap = mapList;
 		player_disconnect_all();                //дисконнект всех монстров
-		game.menu = c_m_main;
-		game.allowpress = false;
+		//game.menu = c_m_main;
 	}
 }
 
@@ -568,34 +529,16 @@ int game_cfg_load()
 	}
 	return ret ? -1 : 0;
 }
-/********чтение файла палитры********/
-//game_PAL_get=0 -успешно
-//game_PAL_get=1 -файл не найден
-//game_PAL_get=2 -ошибка чтения файла
+
+/*
+ * чтение файла палитры
+ * @return = 0 -успешно
+ * @return = 1 -файл не найден
+ * @return = 2 -ошибка чтения файла
+ */
 int game_pal_get()
 {
-	int ret = 0;
-	int fd;
-	fd = open(BASEDIR FILENAME_PALETTE, O_RDONLY);
-	if(fd < 0)
-	{
-		ret = 1;
-		goto end;
-	}
-	if(read(fd, gr2D.PAL, 768) != 768)
-	{
-		ret = 2;
-		goto end;
-	}
-	end:
-	switch(ret)
-	{
-		case 0:
-		case 2:
-			close(fd);
-		case 1:;
-	}
-	return ret ? -1 : 0;
+	return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
 /********переустановка времени у всех объектов на карте********/
 void game_time_reset()
@@ -687,7 +630,7 @@ static bool game_record_save_player(int fd, player_t * player)
 	{
 	case c_p_P0:
 	case c_p_P1:
-        CHECK(write(fd, c_MAP_s_player, 13), 13);
+		write(fd, map_class_names[MAP_SPAWN_PLAYER], sizeof(map_class_names[MAP_SPAWN_PLAYER]));
 		break;
 	default:
 		return false;
@@ -708,12 +651,8 @@ static bool game_record_save_player(int fd, player_t * player)
  */
 static bool game_record_load_player(int fd, player_t * player)
 {
-	char class_string[33];
-	map_file_class_get(fd, class_string);
-	if(strcmp(class_string,c_MAP_s_player) != 0)
-	{
-		return false;
-	}
+	mobj_type_t mobj_type = map_file_class_get(fd);
+	if(mobj_type != MAP_SPAWN_PLAYER) return false;
     CHECK(read(fd, &player->charact.scores    , 4), 4);
     CHECK(read(fd, &player->charact.status    , 1), 1);
     CHECK(read(fd, &player->charact.health    , 2), 2);
@@ -754,7 +693,7 @@ bool game_record_save(gamesave_t * rec)
 		strlen(rec->_file)+
 		strlen(c_SAVext)+
 		1
-		);
+	);
 	strcpy(path, BASEDIR);
 	strcat(path, SAVESDIR);
 	strcat(path, rec->_file);
@@ -773,7 +712,7 @@ bool game_record_save(gamesave_t * rec)
 	//флаги настройки игры
     CHECK(write(fd, &rec->flags, 1),  1);
 	//сохраним 0-го игрока
-    CHECK(game_record_save_player(fd, game.P0), sizeof(game.P0));
+	game_record_save_player(fd, game.P0);
 	//сохраним 1-го игрока
 	if(game.P1) game_record_save_player(fd, game.P1);
 	close(fd);
@@ -805,7 +744,7 @@ int game_record_load(gamesave_t * rec)
 		}
 	};
 	//закроем отктытую карту
-	map_close();
+	map_clear();
 	//прочитаем карту
 	ret = map_load(rec->Hmap);
 	if(ret != 0) return 3;
@@ -850,6 +789,8 @@ int game_record_load(gamesave_t * rec)
 int game_create()
 {
 	int ret;
+
+	int pixels = (VIDEO_MODE_H*8)/200;
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
@@ -857,8 +798,8 @@ int game_create()
 		game.P0cam.orig.y = 0;
 		game.P0cam.x      = 0;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = 320;
-		game.P0cam.sy     = 184;
+		game.P0cam.sx     = VIDEO_MODE_W;
+		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;//184
 		ret = player_connect(c_p_P0);
 		if(ret)return ret;
 	}
@@ -866,16 +807,16 @@ int game_create()
 	{
 		game.P0cam.orig.x = 0;
 		game.P0cam.orig.y = 0;
-		game.P0cam.x      = 160+1;
+		game.P0cam.x      = VIDEO_MODE_W/2+1;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = 160-1;
-		game.P0cam.sy     = 184;
+		game.P0cam.sx     = VIDEO_MODE_W/2-1;
+		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;
 		game.P1cam.orig.x = 0;
 		game.P1cam.orig.y = 0;
 		game.P1cam.x      = 0;
 		game.P1cam.y      = 0;
-		game.P1cam.sx     = 160-1;
-		game.P1cam.sy     = 184;
+		game.P1cam.sx     = VIDEO_MODE_W-1;
+		game.P1cam.sy     = VIDEO_MODE_H - pixels*2;
 		ret = player_connect(c_p_P0);
 		if(ret)return ret;
 		ret = player_connect(c_p_P1);
@@ -884,8 +825,7 @@ int game_create()
 	//спавним всех игроков и монстров
 	player_spawn_all();
 	game.created    = true;
-	game.ingame     = true;
-	game.allowpress = true;
+	game.ingame     = false;
 	return 0;
 }
 /*
@@ -899,12 +839,10 @@ void game_abort()
 	explode_removeall();
 	bull_removeall();
 	//закроем карту
-	map_close();
+	map_clear();
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
-	game.menu       = c_m_main;
-	game.allowpress = false;
 }
 
 /*
@@ -933,36 +871,21 @@ void game_msg_error(int error)
 
 	while(!quit)
 	{
-		gr2D.color.current = 0;
-		gr2D_BUFcurrentfill();
 		gr2D.color.current = 26; gr2D_rectangle_f(x,y,sx,sy);
 		gr2D.color.current = 30; gr2D_line_h(x     ,x+sx-1,y     );          //верхний борт
 		gr2D.color.current = 22; gr2D_line_h(x     ,x+sx-1,y+sy-1);          //нижний  борт
 		gr2D.color.current = 29; gr2D_line_v(x     ,y     ,y+sy-1);          //левый   борт
 		gr2D.color.current = 23; gr2D_line_v(x+sx-1,y     ,y+sy-1);          //правый  борт
-		gr2D.color.current =  4; gr2Don_settextZ(x+(sx / 2)-6*8,y+2,"ERROR: ");
+		gr2D.color.current =  4; gr2Don_settext(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
 		gr2D.color.current = 15;
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
 		if(e > ERR_MAX) e = ERR_MAX;
 
-		gr2Don_settextZ(x+2, y+16, errList[e]);
+		gr2Don_settext(x+2, y+16, orient_horiz, errList[e]);
 
-		kbrd_readport();
-		if(kbrd.port != 0)
-		{
-			if(game.allowpress && kbrd.port <= 127 )
-			{
-				do
-				{
-					kbrd_readport();
-				} while(kbrd.port != KP0_ENTER_1);
-				quit = true;
-			};
-			if( !game.allowpress && 127 < kbrd.port ) game.allowpress = true;
-		}
-	gr2D_BUFcurrent2screen();
+		do{ } while(true);
 	}
 }
 
@@ -995,5 +918,10 @@ void game_halt(const char *error, ...)
 		fprintf(stdout, "%s\n", errmsg);
 	}
 	exit(1);
+}
+
+void game_console_send(const char *error, ...)
+{
+
 }
 

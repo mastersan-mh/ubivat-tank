@@ -8,7 +8,6 @@
 #ifndef SRC_X10_KBRD_H_
 #define SRC_X10_KBRD_H_
 
-
 #define KP0_ESCAPE_1        (1)
 #define KP0_ESCAPE_0        (1+128)
 #define KP0_1_1             (2)
@@ -213,23 +212,5 @@
 #define KP0_WINSTART_RIGHT_0 (92+128)
 #define KP0_WINMENU_1       (93)
 #define KP0_WINMENU_0       (93+128)
-
-
-
-typedef struct
-{
-	int port;
-	int lokey;
-	int hikey;
-	int keys;
- } T_kbrd;
-
-extern T_kbrd kbrd;
-
-void kbrd_readport();
-void kbrd_readport_no_free();
-int  kbrd_char(int lang, int reg, int key);
-int keypressed();
-int readkey();
 
 #endif /* SRC_X10_KBRD_H_ */

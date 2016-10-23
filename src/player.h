@@ -5,12 +5,12 @@
  *      Author: mastersan
  */
 
-#ifndef SRC_PLR_H_
-#define SRC_PLR_H_
+#ifndef SRC_PLAYER_H_
+#define SRC_PLAYER_H_
 
-#include <defs.h>
 #include <weap.h>
 #include <map.h>
+#include <types.h>
 
 typedef struct
 {
@@ -92,16 +92,25 @@ typedef struct player_s
 
 extern player_t * playerList;
 
+void player_moveUp_ON();
+void player_moveUp_OFF();
+void player_moveDown_ON();
+void player_moveDown_OFF();
+void player_moveLeft_ON();
+void player_moveLeft_OFF();
+void player_moveRight_ON();
+void player_moveRight_OFF();
+
+
 void player_checkcode();
 void player_item_get(player_t * player);
 void player_obj_check(player_t * player);
 void player_draw(camera_t * cam, player_t * player, bool play);
-void player_control(player_t * player);
 player_t * player_find(int status);
 int  player_connect(int status);
 void player_disconnect_monsters();
 void player_disconnect_all();
-void player_spawn(player_t * player, TDATAspawn * DATA);
+void player_spawn(player_t * player, spawn_t * spawn);
 int player_spawn_player(player_t * player);
 int player_spawn_enemy();
 void player_spawn_all();
@@ -112,5 +121,7 @@ void player_draw_status(camera_t * cam, player_t * player);
 
 void player_getdamage(player_t * player, explode_t * explode, bool self, float radius);
 
+void players_control();
 
-#endif /* SRC_PLR_H_ */
+
+#endif /* SRC_PLAYER_H_ */

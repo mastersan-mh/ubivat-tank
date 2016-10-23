@@ -1,80 +1,9 @@
 
 #include <_gr2D.h>
+#include <video.h>
 
 Tgr2D gr2D;
 
-/********************************************************************/
-
-
-/********инициализация графического режима 320X200X8********/
-//gr2D_init320X200X8=0 успешно
-//gr2D_init320X200X8=1 графика уже инициализирована
-//gr2D_init320X200X8=2 ошибка выделения памяти
-int gr2D_init320X200X8()
-{
-/*
- if(gr2D.BUFdefault != NULL) { gr2D_init320X200X8 = 1;exit;}
- getmem(gr2D.BUFdefault,gr2D_SCR_sx*gr2D_SCR_sy);
- if(gr2D.BUFdefault=NULL) { gr2D_init320X200X8 = 2;exit;}
- gr2D.BUFcurrent = NULL;
- gr2D.WIN.x0 = 0;gr2D.WIN.x1 = gr2D_SCR_sx-1;
- gr2D.WIN.y0 = 0;gr2D.WIN.y1 = gr2D_SCR_sy-1;
- gr2D.BUFcurrent        = gr2D.BUFdefault;
- gr2D.color.current     = 0;
- gr2D.color.transparent = -1;
- asm
-  mov    eax,13h
-  int    10h
-  }
-*/
-	return 0;
-}
-/********инициализация текстового режима 80X25X8********/
-/********закрытие режима 320X200X8********/
-//gr2D_close=0 успешно
-//gr2D_close=1 графика не была инициализирована
-int gr2D_close()
-{
-/*
- if(gr2D.BUFdefault=NULL) { gr2D_close = 1;exit;}
- if(gr2D.BUFcurrent=gr2D.BUFdefault) gr2D.BUFcurrent = NULL;
- freemem(gr2D.BUFdefault,gr2D_SCR_sx*gr2D_SCR_sy);
- gr2D.BUFdefault = NULL;
- asm
-  mov    eax,3h
-  int    10h
-  }
-*/
-	return 0;
-}
-/********заполнение gr2D.BUFcurrent цветом gr2D.color.current********/
-void gr2D_BUFcurrentfill()
-{
-/*
- asm
- mov    bl,gr2D.color.current
- mov    bh,bl
- mov    eax,ebx
- shl    eax,16
- mov    ax,bx                                                         //теперь в EAX цвет заполнения
- mov    ecx,3E80h   //16000                                           //установим счетчик кол-ва байт
- mov    edi,gr2D.BUFcurrent
- cld
- rep    stosd       //es:[edi],eax селектор es в таблице дескриптора указывает на физическое начало памяти
-*/
-}
-/********отображение буфера на этран********/
-void gr2D_BUFcurrent2screen()
-{
-/*
- asm
- mov    edi,0A0000h
- mov    esi,gr2D.BUFcurrent
- mov    ecx,3E80h                                                     //установим счетчик кол-ва байт
- cld
- rep    movsd
-*/
-}
 /********отрисовка пиксела в буфер без учета окна********/
 void gr2D_setpixel(int x, int y)
 {
@@ -85,7 +14,7 @@ asm
  cmp    ax,gr2D.color.transparent
  je     @quit                                                         //если цвет прозрачный
  mov    edi,[x]
- cmp    edi,gr2D_SCR_sx
+ cmp    edi,
  jae    @quit
  mov    eax,[y]
  cmp    eax,gr2D_SCR_sy
@@ -98,129 +27,6 @@ asm
  mov    al,gr2D.color.current
  mov    byte ptr [edi],al
 @quit:
-*/
-}
-/********отрисовка пиксела в буфер с учетом окна********/
-void gr2D_WINsetpixel(int x, int y)
-{
-/*
- asm
- xor    eax,eax
- mov    al,gr2D.color.current
- cmp    ax,gr2D.color.transparent
- je     @quit                                                         //если цвет прозрачный
- mov    edi,[x]
- cmp    edi,gr2D.WIN.x0
- jl     @quit
- cmp    edi,gr2D.WIN.x1
- jg     @quit
- mov    eax,[y]
- cmp    eax,gr2D.WIN.y0
- jl     @quit
- cmp    eax,gr2D.WIN.y1
- jg     @quit
- shl    eax,6       //y=y*64
- add    edi,eax     //x=x+y
- shl    eax,2       //y=y*4
- add    edi,eax     //edi=x+y                                         //edi=y*320+x
- add    edi,gr2D.BUFcurrent
- mov    al,gr2D.color.current
- mov    byte ptr [edi],al
-@quit:
-*/
-}
-/********получение пиксела без учета окна********/
-//gr2D_getpixel=0 ошибки нет
-//gr2D_getpixel=1 вышли за границы буфера
-char gr2D_getpixel(int x, int y)
-{
-/*
-asm
- mov    ebx,1                                                         //считаем что ошибка есть
- xor    eax,eax
- mov    edi,[x]
- cmp    edi,gr2D_SCR_sx
- jae    @quit
- mov    eax,[y]
- cmp    eax,gr2D_SCR_sy
- jae    @quit
- shl    eax,6
- add    edi,eax
- shl    eax,2
- add    edi,eax                                                       //edi=y*320+x
- add    edi,gr2D.BUFcurrent
- mov    al,byte ptr [edi]
- mov    gr2D.color.current,al
- xor    ebx,ebx                                                       //ошибки нет
-@quit:
- mov    eax,ebx                                                       //вернем код ошибки
-*/
-	return 0;
-}
-
-//====================================================================
-//====================================================================
-//====================================================================
-//====================================================================
-
-
-/********установка цвета в палитре********/
-void gr2D_setRGBcolor(char color, char r, char g, char b)
-{
-/*
-asm
- cli                                                                  //запретить прерывания
- mov    al,[color]
- mov    edx,03C8h                                                     //записать индекс порта цвета в DX
- out    dx,al
- inc    edx
- mov    al,r
- out    dx,al
- mov    al,g
- out    dx,al
- mov    al,b
- out    dx,al
- sti                                                                  //разрешить прерывания
-*/
-}
-/********получение составляющих цвета из палитры********/
-void gr2D_getRGBcolor(char color, char * r, char * g, char * b)
-{
-/*
-asm
- cli                                                                  //запретить прерывания
- mov    edx,03C7h                                                     //записать индекс порта цвета в DX
- mov    al,[color]
- out    dx,al
- inc    edx
- inc    edx
- mov    edi,[R]
- in     al,dx
- mov    [edi],al
- mov    edi,[G]
- in     al,dx
- mov    [edi],al
- mov    edi,[B]
- in     al,dx
- mov    [edi],al
- sti                                                                  //разрешить прерывания
-*/
-}
-
-/********установка палитры********/
-void gr2D_setRGBpal (T2Dpal * p)
-{
-/*	var c:byte;
- for c = 0 to 255 do gr2D_setRGBcolor(c,p[c].r,p[c].g,p[c].b);
-*/
-}
-/********получение палитры********/
-void gr2D_getRGBpal (T2Dpal * p)
-{
-/*
-	var c:byte;
-
- for c = 0 to 255 do gr2D_getRGBcolor(c,p[c].r,p[c].g,p[c].b);
 */
 }
 
@@ -293,15 +99,15 @@ void gr2D_line_h (int x0, int x1, int y)
 @next0:                                                               //edi=[x0] ecx=[x1]
  cmp    ecx,0                                                         //x1<0 => выход
  jl     @quit
- cmp    edi,gr2D_SCR_sx                                               //gr3D_SCR_sy<x0 => выход
+ cmp    edi,                                               //gr3D_SCR_sy<x0 => выход
  jg     @quit
  cmp    edi,0
  jge    @next1
  mov    edi,0
 @next1:
- cmp    ecx,gr2D_SCR_sx
+ cmp    ecx,
  jl     @next2
- mov    ecx,gr2D_SCR_sx-1
+ mov    ecx,-1
 @next2:
  sub    ecx,edi
  inc    ecx                                                           //количество пикселей в строке
@@ -383,13 +189,6 @@ var count:longint;
  for count = 0 to sx do gr2D_line_v(x0+count,y0,y0+sy);
 */
 }
-/********рисование незаполненного треугольника********/
-void gr2D_triangle_e (int x0, int y0, int x1, int y1, int x2, int y2)
-{
-	gr2D_line(x0,y0,x1,y1);
-	gr2D_line(x1,y1,x2,y2);
-	gr2D_line(x2,y2,x0,y0);
-}
 
 /********вывод цветной линии с цветами определенными в bytemap********/
 void gr2D_setline(int x, int y, int length, char * bytemap)
@@ -452,19 +251,30 @@ void gr2D_setimage0(
 	int out_x,
 	int out_y,
 	item_img_t * image
-	)
+)
 {
-/*var
+	GLfloat scalex = VIDEO_MODE_W / 320.0f;
+	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-a:array[0..0]of byte absolute bytemap;
-c,y:dword;
+	GLfloat mdl_sx = image->IMG->sx * scalex;
+	GLfloat mdl_sy = image->IMG->sy * scaley;
 
- c = 0;
- for y = 0 to full_sy-1 do {
-  gr2D_setline(out_x,out_y+y,full_sx,a[c]);
-  c = c+full_sx;
-  }
-*/
+	GLfloat texture_sx = image->sx;
+	GLfloat texture_sy = image->sy;
+
+	GLfloat texture_x1 = image->IMG->sx/texture_sx;
+	GLfloat texture_y1 = image->IMG->sy/texture_sy;
+
+	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glLoadIdentity();
+	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glBegin(GL_QUADS);		// Рисуем куб
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
+	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
+	glEnd();	// Закончили квадраты
 }
 
 
@@ -476,21 +286,43 @@ void gr2D_setimage1(
 	item_img_t * image,
 	int get_x,
 	int get_y,
-	int sx,
-	int sy
+	int get_sx,
+	int get_sy
 	)
 {
-/*
+	GLfloat scalex = VIDEO_MODE_W / 320.0f;
+	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-var
-y:longint;
-img:array[0..0]of byte absolute bytemap;
-c:dword;
- {
- c = get_x+get_y*full_sx;
- for y = 0 to sy-1 do {
-  gr2D_setline(out_x,out_y+y,sx,img[c]);
-  c = c+full_sx;
-  }
+	GLfloat mdl_sx = get_sx * scalex;
+	GLfloat mdl_sy = get_sy * scaley;
+/*
+	GLfloat mdl_sx = image->IMG->sx * scalex;
+	GLfloat mdl_sy = image->IMG->sy * scaley;
 */
+	GLfloat texture_sx = image->sx;
+	GLfloat texture_sy = image->sy;
+
+
+
+	GLfloat texture_x0 = get_x/texture_sx;
+	GLfloat texture_y0 = get_y/texture_sy;
+	GLfloat texture_x1 = texture_x0+(get_sx/texture_sx);
+	GLfloat texture_y1 = texture_y0+(get_sy/texture_sy);
+/*
+	GLfloat texture_x1 = image->IMG->sx/texture_sx;
+	GLfloat texture_y1 = image->IMG->sy/texture_sy;
+*/
+
+	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glLoadIdentity();
+	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glBegin(GL_QUADS);		// Рисуем куб
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, texture_y0); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
+	glTexCoord2f(texture_x0, texture_y0); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(texture_x0, texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
+
+	glEnd();	// Закончили квадраты
 }

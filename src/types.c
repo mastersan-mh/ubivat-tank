@@ -1,8 +1,8 @@
-#include <defs.h>
 
-#include <stdlib.h>
+#include <types.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 char *c_strTITLE = "Ubivat Tank v0.47b SecretCode Edition";
 char *c_strCORP ="Mad House Software (C)2004\n";
@@ -54,17 +54,12 @@ float sqrf(float v)
 
 void randomize()
 {
-		srandom(1024);
+	srandom(1024);
 }
 
 int xrand(int hi)
 {
 	return random() % hi;
-}
-
-int eof(int fd)
-{
-	return 1;
 }
 
 struct errno_ent_t
@@ -107,4 +102,20 @@ struct errno_ent_t
 	{EDOM    , "EDOM"},	/* Math argument out of domain of func */
 	{ERANGE  , "ERANGE"},	/* Math result not representable */
 };
+
+
+
+/*
+ * добавление символа в конец строки
+ */
+char * str_addch(char * s0, char ch)
+{
+	int count = 0;
+	while(s0[count]) count++;
+	s0[count] = ch;
+	count++;
+	s0[count] = 0;
+	return s0;
+}
+
 

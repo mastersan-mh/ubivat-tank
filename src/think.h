@@ -5,10 +5,10 @@
  *      Author: mastersan
  */
 
-#ifndef SRC_CTRL_H_
-#define SRC_CTRL_H_
+#ifndef SRC_THINK_H_
+#define SRC_THINK_H_
 
-#include <defs.h>
+#include <types.h>
 //искуственный интеллект
 typedef struct
 {
@@ -24,8 +24,8 @@ typedef struct
 	long count;
 }TAIbrain;
 
-void ctrl_human(int Pnum, struct player_s * player);
-void ctrl_enemy(struct player_s * player);
+void think_human(int Pnum, struct player_s * player);
+void think_enemy(struct player_s * player);
 
 void ctrl_AI_init       (TAIbrain * brain);
 void ctrl_AI_done       (TAIbrain * brain);
@@ -34,4 +34,4 @@ void ctrl_AI_attack     (struct player_s * player, struct player_s * target);
 void ctrl_AI_findenemy  (struct player_s * player, struct player_s * target);
 
 
-#endif /* SRC_CTRL_H_ */
+#endif /* SRC_THINK_H_ */

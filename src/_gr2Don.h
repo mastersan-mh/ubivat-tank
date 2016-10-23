@@ -8,12 +8,20 @@
 #ifndef SRC__GR2DON_H_
 #define SRC__GR2DON_H_
 
-//массив со шрифтом
-void gr2Don_circle_e(int x0, int y0, int r);
-void gr2Don_setchar(int px, int py, char ch);
-void gr2Don_settext(int px, int py, char orientation, char * s);
-void gr2Don_settextZ(int x, int y, char *s);
+enum text_orient_e
+{
+	orient_horiz,
+	orient_vert
+};
 
-//gr2Don :Tgr2Don;
+void gr2Don_setchar(int px, int py, char ch);
+
+void gr2Don_settext(
+	int px,
+	int py,
+	enum text_orient_e orientation,
+	const char * format,
+	...
+	);
 
 #endif /* SRC__GR2DON_H_ */
