@@ -439,14 +439,12 @@ int map_load(const char * mapname)
 	map_close();
 	strcpy(map._file, mapname);
 	path = Z_malloc(
-			strlen(BASEDIR)+
-			strlen(MAPSDIR)+
+			strlen(BASEDIR MAPSDIR)+
 			strlen(map._file)+
 			strlen(c_MAPext)+
 			1
 	);
-	strcpy(path, BASEDIR);
-	strcat(path, MAPSDIR);
+	strcpy(path, BASEDIR MAPSDIR);
 	strcat(path, map._file);
 	strcat(path, c_MAPext);
 	fd = open(path, O_RDONLY);
@@ -468,13 +466,7 @@ int map_load(const char * mapname)
 			{
 				if(map_try_load_obj(fd,class_string) == false)
 				{
-						gr2D.color.current = 15;
-						gr2Don_settextZ(0,0,"ER: ");
-						gr2Don_settextZ(32,0,class_string);
-						gr2D_BUFcurrent2screen();
-						getchar();
-						gr2D.color.current = 0;
-						gr2D_BUFcurrentfill();
+					game_console_send("map load error: no class %s", class_string);
 				}
 			}
 		}
@@ -496,7 +488,6 @@ void map_close()
 	map_spawn_removeall();
 	map_item_removeall();
 	map_obj_removeall();
-	game._win_ = false;
 }
 /*
  * рисование объектов на карте
@@ -510,8 +501,12 @@ void map_draw(camera_t * cam)
 	int y0,y1;
 	char map_block;
 
-	gr2D.WIN.x0 = cam->x;gr2D.WIN.x1 = cam->x+cam->sx-1;
-	gr2D.WIN.y0 = cam->y;gr2D.WIN.y1 = cam->y+cam->sy-1;
+	video_viewport_set(
+		cam->x,
+		cam->x+cam->sx-1,
+		cam->y,
+		cam->y+cam->sy-1
+	);
 	item = map.HEADitem;
 	while(item)
 	{
@@ -593,10 +588,12 @@ void map_draw(camera_t * cam)
 						};
 		};
 	};
-	gr2D.WIN.x0 = 0;
-	gr2D.WIN.x1 = VIDEO_MODE_W-1;
-	gr2D.WIN.y0 = 0;
-	gr2D.WIN.y1 = VIDEO_MODE_H-1;
+	video_viewport_set(
+		0.0f,
+		VIDEO_MODE_W-1,
+		0.0f,
+		VIDEO_MODE_H-1
+	);
 };
 /*
  * добавление карты в список
@@ -619,7 +616,7 @@ void map_list_add(const char *map, const char * name)
 		mapEnt->prev = p;
 		p->next = mapEnt;
 	}
-	game.casemap = mapList;
+	game.custommap = mapList;
 	game.gamemap = mapList;
 }
 /*
@@ -628,7 +625,7 @@ void map_list_add(const char *map, const char * name)
 void map_list_removeall()
 {
 	maplist_t * mapEnt;
-	game.casemap = NULL;
+	game.custommap = NULL;
 	game.gamemap = NULL;
 	while(mapList)
 	{

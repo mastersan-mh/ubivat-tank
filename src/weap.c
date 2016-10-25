@@ -126,8 +126,12 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 			(cam->orig.y-cam->sy/2<=bull->orig.y+(mdlbox >> 1)) && (bull->orig.y-(mdlbox >> 1)<=cam->orig.y+cam->sy/2)
 	)
 	{
-		gr2D.WIN.x0 = cam->x;gr2D.WIN.x1 = cam->x+cam->sx-1;
-		gr2D.WIN.y0 = cam->y;gr2D.WIN.y1 = cam->y+cam->sy-1;
+		video_viewport_set(
+		cam->x,
+		cam->x+cam->sx-1,
+		cam->y,
+		cam->y+cam->sy-1
+		);
 		gr2D_setimage1(
 				roundf(cam->x+bull->orig.x-(cam->orig.x-cam->sx/2))-(mdlbox >> 1),
 				roundf(cam->y-bull->orig.y+(cam->orig.y+cam->sy/2))-(mdlbox >> 1),
@@ -137,8 +141,12 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 				mdlbox,
 				mdlbox
 		);
-		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = VIDEO_MODE_W-1;
-		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = VIDEO_MODE_H-1;
+		video_viewport_set(
+			0.0f,
+			VIDEO_MODE_W-1,
+			0.0f,
+			VIDEO_MODE_H-1
+		);
 	};
 };
 /*
@@ -309,19 +317,27 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 			(explode->orig.y-(mdlbox >> 1)<=cam->orig.y+cam->sy/2)
 			)
 	{
-		gr2D.WIN.x0 = cam->x;gr2D.WIN.x1 = cam->x+cam->sx-1;
-		gr2D.WIN.y0 = cam->y;gr2D.WIN.y1 = cam->y+cam->sy-1;
-		gr2D_setimage1(
-				roundf(cam->x+explode->orig.x-(cam->orig.x-cam->sx/2))-(mdlbox >> 1),
-				roundf(cam->y-explode->orig.y+(cam->orig.y+cam->sy/2))-(mdlbox >> 1),
-				explode->image,
-				0,
-				mdlbox*trunc(explode->frame),
-				mdlbox,
-				mdlbox
+		video_viewport_set(
+			cam->x,
+			cam->x+cam->sx-1,
+			cam->y,
+			cam->y+cam->sy-1
 		);
-		gr2D.WIN.x0 = 0;gr2D.WIN.x1 = VIDEO_MODE_W-1;
-		gr2D.WIN.y0 = 0;gr2D.WIN.y1 = VIDEO_MODE_H-1;
+		gr2D_setimage1(
+			roundf(cam->x + explode->orig.x - (cam->orig.x - cam->sx / 2)) - (mdlbox / 2),
+			roundf(cam->y - explode->orig.y + (cam->orig.y + cam->sy / 2)) - (mdlbox / 2),
+			explode->image,
+			0,
+			mdlbox * trunc(explode->frame),
+			mdlbox,
+			mdlbox
+		);
+		video_viewport_set(
+			0.0f,
+			VIDEO_MODE_W-1,
+			0.0f,
+			VIDEO_MODE_H-1
+		);
 	}
 }
 /*
@@ -360,7 +376,8 @@ void explode_control()
 					if(
 							(0<=trunc((explode->orig.x+x)/8)) && (trunc((explode->orig.x+x)/8)<=c_MAP_sx) &&
 							(0<=trunc((explode->orig.y+y)/8)) && (trunc((explode->orig.y+y)/8)<=c_MAP_sy)
-					){
+					)
+					{
 						wall = map.map[(int)trunc((explode->orig.y+y)/8)][(int)trunc((explode->orig.x+x)/8)];
 						if(wall & c_m_f_clip)
 						{                   //присутствует зажим
@@ -400,13 +417,8 @@ void explode_control()
 					if(
 							(explode->player == player) ||
 							(
-									(
-											(explode->player==game.P0) || (explode->player==game.P1)
-									)&&
-									(
-											(player == game.P0)||
-											(player == game.P1)
-									)
+									((explode->player==game.P0) || (explode->player==game.P1))&&
+									((player == game.P0)||(player == game.P1))
 							)
 					)
 						self = true;          //взрывом задели себя или товарища по команде(не для монстров)
@@ -419,7 +431,9 @@ void explode_control()
 		if(c_explode_Famnt-1<explode->frame) explode->frame = c_explode_Famnt-1;
 		explode_draw(&game.P0cam, explode, true);                                  //рисуем взрыв
 		if(game.P1 != NULL) explode_draw(&game.P1cam, explode, false);             //рисуем взрыв
-		if(explode->frame>c_explode_Famnt-1) explode_remove(&explode);
-		else                                 explode = explode->next;
+		if(explode->frame > c_explode_Famnt - 1)
+			explode_remove(&explode);
+		else
+			explode = explode->next;
 	};
 };

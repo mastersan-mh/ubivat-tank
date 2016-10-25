@@ -50,6 +50,8 @@ extern int BII_errno;
 
 char * IMG_errorGet();
 
+int img_palette_read(const char * filename);
+
 item_img_t * IMG_find(const char * name);
 int IMG_add(const char * path, const char * IMGname);
 void IMG_removeall();

@@ -135,53 +135,6 @@ const char fonttable[256][8] = {
 };
 
 /*
- * рисование окружности с центром в x0,y0 и радиуса r
- */
-void gr2Don_circle_e(int x0, int y0, int r)
-{
-	float x,y;
-	float alpha;
-	int n,i;
-
-	switch(r)
-	{
-	case 0: gr2D_setpixel(x0,y0);break;
-	case 1: gr2D_setpixel(x0,y0-r);gr2D_setpixel(x0-r,y0);gr2D_setpixel(x0+r,y0);gr2D_setpixel(x0,y0+r);break;
-	default:
-		gr2D_setpixel(x0,y0-r);gr2D_setpixel(x0-r,y0);gr2D_setpixel(x0+r,y0);gr2D_setpixel(x0,y0+r);
-		alpha = 0;
-
-		//n = ((r-59) / 59)+1;
-		if(r<(59*11)) n = 11;
-		if(r<(59*10)) n = 10;
-		if(r<(59*9 )) n = 9;
-		if(r<(59*8 )) n = 8;
-		if(r<(59*7 )) n = 7;
-		if(r<(59*6 )) n = 6;
-		if(r<(59*5 )) n = 5;
-		if(r<(59*4 )) n = 4;
-		if(r<(59*3 )) n = 3;
-		if(r<(59*2 )) n = 2;
-		if(r<(59*1 )) n = 1;
-
-		for(i = 0; i<=45*n; i++)
-		{
-			alpha = alpha+gr2D_PI/180/n;
-			x = cosf(alpha) * r;
-			y = sqrt(r * r - x * x);
-			gr2D_setpixel(x0+round(x),y0+round(y));
-			gr2D_setpixel(x0+round(x),y0-round(y));
-			gr2D_setpixel(x0-round(x),y0+round(y));
-			gr2D_setpixel(x0-round(x),y0-round(y));
-			gr2D_setpixel(x0+round(y),y0+round(x));
-			gr2D_setpixel(x0+round(y),y0-round(x));
-			gr2D_setpixel(x0-round(y),y0+round(x));
-			gr2D_setpixel(x0-round(y),y0-round(x));
-		}
-		break;
-	}
-}
-/*
  * рисование указанного символа
  */
 void gr2Don_setchar(int px, int py, char ch)
@@ -220,44 +173,11 @@ t_byte:byte;
 /*
  * вывод текста на экран
  */
-void gr2Don_settext(int px, int py, char orientation, char * s)
+void gr2Don_settext(int px, int py, enum text_orient_e orientation, char * s)
 {
 /*
 	c:byte;
 	if(orientation=0) for c = 1 to byte(s[0]) do gr2Don_setchar(px+(c-1)*8,py        ,s[c])
 	else              for c = 1 to byte(s[0]) do gr2Don_setchar(px        ,py+(c-1)*8,s[c]);
-*/
-}
-/*
- * вывод текста в формате ASCIIZ на экран
- */
-void gr2Don_settextZ(int x, int y, char *s )
-{
-/*
- while(s^ != #00)do {
-  gr2Don_setchar(x,y,s^);
-  s = s+1;
-  x+ = 8;
-  }
-}
-
-{
-assembler;
- asm
- mov    ecx,$FFFF
- mov    eax,x
- mov    ebx,y
-@gr2Don_settextZ_again:
- mov    dl,s
- cmp    dl,0
- je     @gr2D_settextZ_quit
- push   eax
- push   ebx
- push   edx
- call   gr2D_setchar
- add    eax,8
- loop   @gr2D_settextZ_again
-@gr2Don_settextZ_quit:
- }
 */
 }

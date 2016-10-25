@@ -72,13 +72,8 @@ typedef struct
 	//игрок победил
 	bool _win_;
 
-	bool quit;
-
-	//разрешение нажатия клавиш на клавиатуре
-	bool allowpress;
-
 	maplist_t * gamemap;
-	maplist_t * casemap;
+	maplist_t * custommap;
 
 	item_img_t * i_health;
 	item_img_t * i_armor;
@@ -124,7 +119,7 @@ void game_init();
 void game_done();
 void game_main();
 
-void game_mainproc();
+int game_mainproc();
 
 void game_nextmap();
 
@@ -144,5 +139,6 @@ void game_message_send(const char * mess);
 
 void game_halt(const char *error, ...)
 	__attribute__ ((noreturn));
+void game_console_send(const char *error, ...);
 
 #endif /* SRC_GAME_H_ */

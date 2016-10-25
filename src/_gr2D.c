@@ -4,37 +4,6 @@
 
 Tgr2D gr2D;
 
-/********************************************************************/
-
-
-/********заполнение gr2D.BUFcurrent цветом gr2D.color.current********/
-void gr2D_BUFcurrentfill()
-{
-/*
- asm
- mov    bl,gr2D.color.current
- mov    bh,bl
- mov    eax,ebx
- shl    eax,16
- mov    ax,bx                                                         //теперь в EAX цвет заполнения
- mov    ecx,3E80h   //16000                                           //установим счетчик кол-ва байт
- mov    edi,gr2D.BUFcurrent
- cld
- rep    stosd       //es:[edi],eax селектор es в таблице дескриптора указывает на физическое начало памяти
-*/
-}
-/********отображение буфера на этран********/
-void gr2D_BUFcurrent2screen()
-{
-/*
- asm
- mov    edi,0A0000h
- mov    esi,gr2D.BUFcurrent
- mov    ecx,3E80h                                                     //установим счетчик кол-ва байт
- cld
- rep    movsd
-*/
-}
 /********отрисовка пиксела в буфер без учета окна********/
 void gr2D_setpixel(int x, int y)
 {
@@ -58,112 +27,6 @@ asm
  mov    al,gr2D.color.current
  mov    byte ptr [edi],al
 @quit:
-*/
-}
-/********отрисовка пиксела в буфер с учетом окна********/
-void gr2D_WINsetpixel(int x, int y)
-{
-/*
- asm
- xor    eax,eax
- mov    al,gr2D.color.current
- cmp    ax,gr2D.color.transparent
- je     @quit                                                         //если цвет прозрачный
- mov    edi,[x]
- cmp    edi,gr2D.WIN.x0
- jl     @quit
- cmp    edi,gr2D.WIN.x1
- jg     @quit
- mov    eax,[y]
- cmp    eax,gr2D.WIN.y0
- jl     @quit
- cmp    eax,gr2D.WIN.y1
- jg     @quit
- shl    eax,6       //y=y*64
- add    edi,eax     //x=x+y
- shl    eax,2       //y=y*4
- add    edi,eax     //edi=x+y                                         //edi=y*320+x
- add    edi,gr2D.BUFcurrent
- mov    al,gr2D.color.current
- mov    byte ptr [edi],al
-@quit:
-*/
-}
-/********получение пиксела без учета окна********/
-//gr2D_getpixel=0 ошибки нет
-//gr2D_getpixel=1 вышли за границы буфера
-char gr2D_getpixel(int x, int y)
-{
-/*
-asm
- mov    ebx,1                                                         //считаем что ошибка есть
- xor    eax,eax
- mov    edi,[x]
- cmp    edi,
- jae    @quit
- mov    eax,[y]
- cmp    eax,gr2D_SCR_sy
- jae    @quit
- shl    eax,6
- add    edi,eax
- shl    eax,2
- add    edi,eax                                                       //edi=y*320+x
- add    edi,gr2D.BUFcurrent
- mov    al,byte ptr [edi]
- mov    gr2D.color.current,al
- xor    ebx,ebx                                                       //ошибки нет
-@quit:
- mov    eax,ebx                                                       //вернем код ошибки
-*/
-	return 0;
-}
-
-//====================================================================
-//====================================================================
-//====================================================================
-//====================================================================
-
-
-/********установка цвета в палитре********/
-void gr2D_setRGBcolor(char color, char r, char g, char b)
-{
-/*
-asm
- cli                                                                  //запретить прерывания
- mov    al,[color]
- mov    edx,03C8h                                                     //записать индекс порта цвета в DX
- out    dx,al
- inc    edx
- mov    al,r
- out    dx,al
- mov    al,g
- out    dx,al
- mov    al,b
- out    dx,al
- sti                                                                  //разрешить прерывания
-*/
-}
-/********получение составляющих цвета из палитры********/
-void gr2D_getRGBcolor(char color, char * r, char * g, char * b)
-{
-/*
-asm
- cli                                                                  //запретить прерывания
- mov    edx,03C7h                                                     //записать индекс порта цвета в DX
- mov    al,[color]
- out    dx,al
- inc    edx
- inc    edx
- mov    edi,[R]
- in     al,dx
- mov    [edi],al
- mov    edi,[G]
- in     al,dx
- mov    [edi],al
- mov    edi,[B]
- in     al,dx
- mov    [edi],al
- sti                                                                  //разрешить прерывания
 */
 }
 
@@ -325,13 +188,6 @@ var count:longint;
  sy = sy-1;
  for count = 0 to sx do gr2D_line_v(x0+count,y0,y0+sy);
 */
-}
-/********рисование незаполненного треугольника********/
-void gr2D_triangle_e (int x0, int y0, int x1, int y1, int x2, int y2)
-{
-	gr2D_line(x0,y0,x1,y1);
-	gr2D_line(x1,y1,x2,y2);
-	gr2D_line(x2,y2,x0,y0);
 }
 
 /********вывод цветной линии с цветами определенными в bytemap********/

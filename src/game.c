@@ -10,6 +10,7 @@
 #include <menu.h>
 #include <map.h>
 #include <weap.h>
+#include <img.h>
 #include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
@@ -110,8 +111,6 @@ void game_init()
 	game.P1         = NULL;
 	game.msg        = NULL;
 	game.created    = false;
-	game.allowpress = true;
-	game.quit       = false;
 	game.ingame     = false;
 
 	randomize();
@@ -124,8 +123,6 @@ void game_init()
 	printf("ENTERING GRAPHIC...\n");
 	if(video_init())
 		game_halt("Video init failed");
-	video_transparent_set(255);
-
 
 	if(game_pal_get())
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
@@ -201,13 +198,6 @@ void game_init()
 	wtable[2].bullspeed  = -800;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
 	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
-	//инициализация графики
-
-
-	gr2D.color.current = 0;
-	//очищаем буфер
-	gr2D_BUFcurrentfill();
-
 }
 
 /*
@@ -224,21 +214,28 @@ void game_done()
 	IMG_removeall();
 };
 
+
 /*
  *
  */
 void game_main()
 {
 	bool quit = false;
-	menu_selector_t menu = c_m_main;
-	int menu_cur = 0;
+	menu_selector_t imenu = MENU_MAIN;
+	imenu = MENU_MAIN;
 	while(!quit)
 	{
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
-			printf("event.type = %d\n", event.type);
+			//printf("event.type = %d\n", event.type);
+			if(game.ingame)
+			{
+
+			}
+			else
+				menu_send_event(&event);
 			switch(event.type)
 			{
 			case SDL_QUIT:quit = true;break;
@@ -248,108 +245,27 @@ void game_main()
 		if(quit)break;
 		video_scree_draw_begin();
 
+		imenu = menu_handle(imenu);
 
-		switch(menu)
+		switch(imenu)
 		{
-		case c_m_main : menu_main_draw(&menu_cur);break;
-		default: ;
+		case MENU_QUIT: quit = true;break;
+		default: break;
 		}
+		if(quit)break;
 
-		//video_draw();
 
+		if(game.created && game.ingame)
+			game_time_reset();
+
+		int ret = game_mainproc();
+		if(ret >= 0)
+			imenu = ret;
+
+		menu_draw(imenu);
 
 		video_scree_draw_end();
 
-/*
-		switch(game.menu)
-		{
-		case c_m_main      : game.menu = menu_main();break;
-		case c_m_game      : game.menu = menu_game();break;
-		case c_m_game_new1P:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				game.gamemap = mapList;
-				ret = map_load(game.gamemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = 0;
-					ret = game_create();
-					menu_prelv();
-				};
-			}
-			break;
-		case c_m_game_new2P:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				game.gamemap = mapList;
-				ret = map_load(game.gamemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_2PLAYERS;
-					ret = game_create();
-					menu_prelv();
-				}
-			}
-			break;
-		case c_m_game_load : game.menu = menu_load();break;
-		case c_m_case      : game.menu = menu_case();break;
-		case c_m_case_case : game.menu = menu_case();break;
-		case c_m_case_newP1:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				ret = map_load(game.casemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_CASE;
-					ret = game_create();
-				}
-			}
-			break;
-		case c_m_case_newP2:
-			if(game.created) game.menu = c_m_main;
-			else
-			{
-				ret = map_load(game.casemap->map);
-				if(ret) game_msg_error(ret);
-				else
-				{
-					game.flags = c_g_f_2PLAYERS | c_g_f_CASE;
-					ret = game_create();
-				};
-			};
-			break;
-		case c_m_options   : game.menu = menu_options();break;
-		case c_m_about     : game.menu = menu_about();break;
-		case c_m_abort     :
-			game_abort();
-			game.menu = c_m_main;
-			game.allowpress = false;
-			break;
-		case c_m_quit: game.quit = true;break;
-		}
-		if(ret != 0)
-		{
-			game.menu = c_m_main;
-			game_abort();
-			ret = 0;
-			game.allowpress = true;
-		}
-		else
-		{
-			if(game.created && game.ingame)
-			{
-				game_time_reset();
-				game_mainproc();                                                     //главная процедура игры
-			};
-		};
-		gr2D_BUFcurrent2screen();
-		*/
 	};
 }
 
@@ -357,106 +273,112 @@ void game_main()
 /*
  * главная процедура игры
  */
-void game_mainproc()
+int game_mainproc()
 {
 	player_t *player;
 	int count;
 	int x,y;
 
-	while(game.ingame)
+	if(!game.ingame) return -1;
+	bool allowpress = false;
+	player = playerList;
+	while(player)
 	{
-		player = playerList;
-		while(player)
+		if(player->charact.status==c_p_BOSS || player->charact.status==c_p_ENEMY)
 		{
-			if(player->charact.status==c_p_BOSS || player->charact.status==c_p_ENEMY)
-			{
-				ctrl_enemy(player);
-			}
-			else {
-				if(player->charact.status==c_p_P1)
-				{
-					if(player->bull) { game.P1cam.orig.x = player->bull->orig.x;game.P1cam.orig.y = player->bull->orig.y;}
-					else             { game.P1cam.orig.x = player->move.orig.x ;game.P1cam.orig.y = player->move.orig.y ;};
-					ctrl_human(1,player);
-					player_draw_status(&game.P1cam, game.P1);
-				}
-				else
-				{
-					bull_control();
-					if(player->bull) { game.P0cam.orig.x = player->bull->orig.x;game.P0cam.orig.y = player->bull->orig.y;}
-					else             { game.P0cam.orig.x = player->move.orig.x ;game.P0cam.orig.y = player->move.orig.y ;};
-					player_checkcode();
-					ctrl_human(0,player);
-					explode_control();
-					player_draw_status(&game.P0cam,game.P0);
-					if(game.msg)
-					{
-						count = 0;
-						gr2D.color.current = 1;
-						while(count<64 && game.msg[count])
-						{
-							x = ((count << 3)% 128)+96;
-							y = ((count >> 4)<< 3)+84;
-							gr2Don_setchar(x,y,game.msg[count]);
-							count++;
-						};
-						game.msg = NULL;
-					};
-					gr2D_BUFcurrent2screen();
-					gr2D.color.current = 0;
-					gr2D_BUFcurrentfill();
-					map_draw(&game.P0cam);                                            //рисуем карту игрока0
-					if(game.P1) map_draw(&game.P1cam);                       //рисуем карту игрока1
-				}
-			}
-			player_draw(&game.P0cam, player, true);
-			if(game.P1) player_draw(&game.P1cam,player,false);
-			player_control(player);
-			player = player->next;
+			ctrl_enemy(player);
 		}
-		if(kbrd.port)
+		else
 		{
-			switch(kbrd.port)
+			if(player->charact.status==c_p_P1)
 			{
-			case KP0_ESCAPE_1:
-				if(game.allowpress)
-				{
-					game.ingame     = false;
-					//game.menu       = c_m_main;
-					game.allowpress = false;
-				};
-				break;
-			case KP0_ESCAPE_0: game.allowpress = true;break;
+				if(player->bull) { game.P1cam.orig.x = player->bull->orig.x;game.P1cam.orig.y = player->bull->orig.y;}
+				else             { game.P1cam.orig.x = player->move.orig.x ;game.P1cam.orig.y = player->move.orig.y ;};
+				ctrl_human(1,player);
+				player_draw_status(&game.P1cam, game.P1);
 			}
-		}
-		if(
-				(game._win_) &&                                                 //победа
-				(game.P0->charact.health>0) &&                                     //оба игрока должны быть живы
-				((!game.P1) || ((game.P1) && (game.P1->charact.health>0)))  //
-		)
-		{
-			if(game.flags & c_g_f_CASE) game_nextmap();                 //игра по уровням
 			else
-			{                                                         //игра по выбору
-				menu_interlevel();
-				game_abort();
+			{
+				bull_control();
+				if(player->bull) { game.P0cam.orig.x = player->bull->orig.x;game.P0cam.orig.y = player->bull->orig.y;}
+				else             { game.P0cam.orig.x = player->move.orig.x ;game.P0cam.orig.y = player->move.orig.y ;};
+				player_checkcode();
+				ctrl_human(0,player);
+				explode_control();
+				player_draw_status(&game.P0cam,game.P0);
+				if(game.msg)
+				{
+					count = 0;
+					gr2D.color.current = 1;
+					while(count<64 && game.msg[count])
+					{
+						x = ((count << 3)% 128)+96;
+						y = ((count >> 4)<< 3)+84;
+						gr2Don_setchar(x,y,game.msg[count]);
+						count++;
+					};
+					game.msg = NULL;
+				};
+				map_draw(&game.P0cam);                                            //рисуем карту игрока0
+				if(game.P1) map_draw(&game.P1cam);                       //рисуем карту игрока1
 			}
+		}
+		player_draw(&game.P0cam, player, true);
+		if(game.P1) player_draw(&game.P1cam,player,false);
+		player_control(player);
+		player = player->next;
+	}
+	if(kbrd.port)
+	{
+		switch(kbrd.port)
+		{
+		case KP0_ESCAPE_1:
+			if(allowpress)
+			{
+				game.ingame     = false;
+				//game.menu       = c_m_main;
+				allowpress = false;
+			};
+			break;
+		case KP0_ESCAPE_0: allowpress = true;break;
 		}
 	}
+	if(
+			(game._win_) &&                                                 //победа
+			(game.P0->charact.health>0) &&                                     //оба игрока должны быть живы
+			((!game.P1) || ((game.P1) && (game.P1->charact.health>0)))  //
+	)
+	{
+		if(game.flags & c_g_f_CASE)
+		{
+			game_nextmap();                 //игра по уровням
+			return MENU_INTERLEVEL;
+		}
+		else
+		{                                                         //игра по выбору
+			game_abort();
+			return MENU_INTERLEVEL;
+		}
+	}
+	return -1;
 }
 
-/********процедура перехода на следующую карту********/
+/*
+ * процедура перехода на следующую карту
+ */
 void game_nextmap()
 {
 	int ret;
-	player_disconnect_monsters();                                          //дисконнект всех монстров
+	//дисконнект всех монстров
+	player_disconnect_monsters();
 	explode_removeall();
 	bull_removeall();
-	map_close();                                   //закроем карту
+	//закроем карту
+	map_close();
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
-	menu_interlevel();
+	//menu_interlevel();
 	game.P0->charact.spawned = false;
 	if(game.P1) game.P1->charact.spawned = false;
 	if(game.gamemap->next)
@@ -467,7 +389,6 @@ void game_nextmap()
 			game_msg_error(ret);
 			game_abort();
 			//game.menu = c_m_main;
-			game.allowpress = false;
 		}
 		else
 		{
@@ -475,7 +396,7 @@ void game_nextmap()
 			if(!ret)
 			{
 				//game.menu = menu_save();       //сохраним игру в начале уровня
-				menu_prelv();
+				//menu_prelevel();
 				game_time_reset();
 			}
 		}
@@ -485,7 +406,6 @@ void game_nextmap()
 		game.gamemap = mapList;
 		player_disconnect_all();                //дисконнект всех монстров
 		//game.menu = c_m_main;
-		game.allowpress = false;
 	}
 }
 
@@ -593,34 +513,16 @@ int game_cfg_load()
 	}
 	return ret ? -1 : 0;
 }
-/********чтение файла палитры********/
-//game_PAL_get=0 -успешно
-//game_PAL_get=1 -файл не найден
-//game_PAL_get=2 -ошибка чтения файла
+
+/*
+ * чтение файла палитры
+ * @return = 0 -успешно
+ * @return = 1 -файл не найден
+ * @return = 2 -ошибка чтения файла
+ */
 int game_pal_get()
 {
-	int ret = 0;
-	int fd;
-	fd = open(BASEDIR FILENAME_PALETTE, O_RDONLY);
-	if(fd < 0)
-	{
-		ret = 1;
-		goto end;
-	}
-	if(read(fd, gr2D.PAL, 768) != 768)
-	{
-		ret = 2;
-		goto end;
-	}
-	end:
-	switch(ret)
-	{
-		case 0:
-		case 2:
-			close(fd);
-		case 1:;
-	}
-	return ret ? -1 : 0;
+	return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
 /********переустановка времени у всех объектов на карте********/
 void game_time_reset()
@@ -779,7 +681,7 @@ bool game_record_save(gamesave_t * rec)
 		strlen(rec->_file)+
 		strlen(c_SAVext)+
 		1
-		);
+	);
 	strcpy(path, BASEDIR);
 	strcat(path, SAVESDIR);
 	strcat(path, rec->_file);
@@ -906,7 +808,6 @@ int game_create()
 	player_spawn_all();
 	game.created    = true;
 	game.ingame     = true;
-	game.allowpress = true;
 	return 0;
 }
 /*
@@ -924,8 +825,6 @@ void game_abort()
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
-	//game.menu       = c_m_main;
-	game.allowpress = false;
 }
 
 /*
@@ -954,26 +853,24 @@ void game_msg_error(int error)
 
 	while(!quit)
 	{
-		gr2D.color.current = 0;
-		gr2D_BUFcurrentfill();
 		gr2D.color.current = 26; gr2D_rectangle_f(x,y,sx,sy);
 		gr2D.color.current = 30; gr2D_line_h(x     ,x+sx-1,y     );          //верхний борт
 		gr2D.color.current = 22; gr2D_line_h(x     ,x+sx-1,y+sy-1);          //нижний  борт
 		gr2D.color.current = 29; gr2D_line_v(x     ,y     ,y+sy-1);          //левый   борт
 		gr2D.color.current = 23; gr2D_line_v(x+sx-1,y     ,y+sy-1);          //правый  борт
-		gr2D.color.current =  4; gr2Don_settextZ(x+(sx / 2)-6*8,y+2,"ERROR: ");
+		gr2D.color.current =  4; gr2Don_settext(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
 		gr2D.color.current = 15;
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
 		if(e > ERR_MAX) e = ERR_MAX;
 
-		gr2Don_settextZ(x+2, y+16, errList[e]);
+		gr2Don_settext(x+2, y+16, orient_horiz, errList[e]);
 
 		kbrd_readport();
 		if(kbrd.port != 0)
 		{
-			if(game.allowpress && kbrd.port <= 127 )
+			if(kbrd.port <= 127 )
 			{
 				do
 				{
@@ -981,9 +878,7 @@ void game_msg_error(int error)
 				} while(kbrd.port != KP0_ENTER_1);
 				quit = true;
 			};
-			if( !game.allowpress && 127 < kbrd.port ) game.allowpress = true;
 		}
-	gr2D_BUFcurrent2screen();
 	}
 }
 
@@ -1016,5 +911,10 @@ void game_halt(const char *error, ...)
 		fprintf(stdout, "%s\n", errmsg);
 	}
 	exit(1);
+}
+
+void game_console_send(const char *error, ...)
+{
+
 }
 

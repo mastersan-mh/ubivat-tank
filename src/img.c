@@ -17,10 +17,45 @@
 #include <string.h>
 #include <stdint.h>
 
-item_img_t * images = NULL;
+typedef struct
+{
+	char R,G,B;
+} T2DRGBcolor;
+
+typedef T2DRGBcolor T2Dpal[256];
 
 int BII_errno;
 
+item_img_t * images = NULL;
+//палитра
+static T2Dpal _palette;
+#define TRANSPARENT_COLOR_INDEX (255)
+
+int img_palette_read(const char * filename)
+{
+#define RETURN(x) \
+		do{ \
+			ret = (x); \
+			goto end; \
+		}while(0);
+
+	int ret = 0;
+	int fd;
+	fd = open(filename, O_RDONLY);
+	if(fd < 0)
+		RETURN(1);
+	if(read(fd, _palette, 768) != 768)
+		RETURN(2);
+	end:
+	switch(ret)
+	{
+		case 0:
+		case 2:
+			close(fd);
+		case 1:;
+	}
+	return ret ? -1 : 0;
+}
 
 static char *BII_err_list[] =
 {
@@ -204,6 +239,7 @@ int IMG_add(const char * path, const char * IMGname)
 	int i = 0;
 	int iindex = 0;
 #define COLOR_COMPONENT_AMOUNT 4
+#define OPAQUE 0
 	p->data = Z_malloc(size*COLOR_COMPONENT_AMOUNT);
 	uint8_t intencity = 4;
 	for(y = 0; y < IMG->sy; y++)
@@ -211,13 +247,10 @@ int IMG_add(const char * path, const char * IMGname)
 		for(x = 0;x < IMG->sx;x++)
 		{
 			int pindex = buf[i++];
-			p->data[iindex++] = gr2D.PAL[pindex].R*intencity;
-			p->data[iindex++] = gr2D.PAL[pindex].G*intencity;
-			p->data[iindex++] = gr2D.PAL[pindex].B*intencity;
-
-			//p->data[iindex++] = (pindex == 255) ? 0 : 255;
-			//p->data[iindex++] = (pindex == 255) ? 255 : 0;
-			p->data[iindex++] = (pindex == 255) ? 255 : 0;
+			p->data[iindex++] = _palette[pindex].R * intencity;
+			p->data[iindex++] = _palette[pindex].G * intencity;
+			p->data[iindex++] = _palette[pindex].B * intencity;
+			p->data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : OPAQUE;
 		}
 		iindex += (p->sx - IMG->sx)*COLOR_COMPONENT_AMOUNT;
 	}
