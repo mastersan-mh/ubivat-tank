@@ -15,6 +15,13 @@ enum text_orient_e
 };
 
 void gr2Don_setchar(int px, int py, char ch);
-void gr2Don_settext(int px, int py, enum text_orient_e orientation, char * s);
+
+void gr2Don_settext(
+	int px,
+	int py,
+	enum text_orient_e orientation,
+	const char * format,
+	...
+	);
 
 #endif /* SRC__GR2DON_H_ */

@@ -16,9 +16,18 @@
 /*
  * управление игроком
  */
-void ctrl_human(int Pnum, player_t * player)
+void think_human(int Pnum, player_t * player)
 {
-	kbrd_readport_no_free();
+	/*
+
+	switch(kbrd.port)
+	{
+	case KP0_ESCAPE_1:
+		game.ingame = false;
+		break;
+	}
+	player_checkcode();
+
 	//клав. буфер пуст
 	if(kbrd.port == 0)return;
 
@@ -86,12 +95,13 @@ void ctrl_human(int Pnum, player_t * player)
 		player->w.attack = 3;
 		break;
 	}
+	*/
 };
 
 /*
  * управление вражеским игроком
  */
-void ctrl_enemy(struct player_s * player)
+void think_enemy(struct player_s * player)
 {
 	if(0<player->charact.health)
 	{

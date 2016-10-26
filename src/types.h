@@ -4,13 +4,14 @@
  * by Master San
  */
 
-#ifndef SRC_DEFS_H_
-#define SRC_DEFS_H_
+#ifndef SRC_TYPES_H_
+#define SRC_TYPES_H_
 
-#define DEBUG
+#define _DEBUG
 
 #define MAX_MESSAGE_SIZE 2048
 
+#define ATTR_PACKED __attribute__ ((packed))
 
 #include <errno.h>
 #include <stdio.h>
@@ -28,6 +29,8 @@ typedef enum {
 }bool;
 #endif
 
+typedef void (*actionf_t)();
+
 #define FILENAME_CONFIG "config.cfg"
 #define FILENAME_MAPSLIST "maps.lst"
 #define FILENAME_PALETTE "palette.pal"
@@ -41,40 +44,10 @@ typedef enum {
 //разрешенные для ввода символы
 #define chars_allowed "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-//меню
-#define c_m_main        0x00
-#define c_m_game        0x10
-#define c_m_game_new1P  0x11
-#define c_m_game_new2P  0x12
-#define c_m_game_load   0x13
-#define c_m_game_save   0x14
-#define c_m_case        0x20
-#define c_m_case_case   0x21
-#define c_m_case_newP1  0x22
-#define c_m_case_newP2  0x23
-#define c_m_options     0x30
-#define c_m_about       0x40
-#define c_m_abort       0x50
-#define c_m_quit        0x60
 // карта
 #define c_MAPext        ".mut"
 // Map Ubivat Tank
 #define c_MAPheader     "MUT"
-
-// размер карты OX
-#define c_MAP_sx 66
-// размер карты OY
-#define c_MAP_sy 50
-#define c_MAP_s_player   "SPAWN.PLAYER"
-#define c_MAP_s_enemy    "SPAWN.ENEMY"
-#define c_MAP_s_boss     "SPAWN.BOSS"
-#define c_MAP_i_health   "ITEM.HEALTH"
-#define c_MAP_i_armor    "ITEM.ARMOR"
-#define c_MAP_i_star     "ITEM.STAR"
-#define c_MAP_i_rocket   "ITEM.ROCKET"
-#define c_MAP_i_mine     "ITEM.MINE"
-#define c_MAP_o_exit     "OBJ.EXIT"
-#define c_MAP_o_mess     "OBJ.MESS"
 
 //броня0
 #define c_m_w_w0        0x01
@@ -92,18 +65,8 @@ typedef enum {
 //игра по выбору
 #define c_g_f_CASE      0x02
 //флаги спавнпоинта
-//SINGLE/COOP спавн
-#define c_s_PLAYER      1
-//ENEMY       спавн
-#define c_s_ENEMY       2
-//BOSS        спавн
-#define c_s_BOSS        3
-//ID предметов
-#define c_i_health      0
-#define c_i_armor       1
-#define c_i_star        2
-#define c_i_rocket      3
-#define c_i_mine        4
+
+
 //предметы
 //размер предмета
 #define c_i_MDL_box     16
@@ -114,10 +77,6 @@ typedef enum {
 #define c_o_MDL_box     16
 //позиция изображения
 #define c_o_MDL_pos     (-8)
-//конец уровня
-#define c_o_exit        0
-//мессагер
-#define c_o_mess        1
 //оружия
 //оружие бесконечно
 #define c_WEAP_indefinit 0
@@ -174,7 +133,7 @@ typedef enum {
 #define c_BOT_dist      (c_p_MDL_box*3)
 
 //директория файлов игры
-#ifdef DEBUG
+#ifdef _DEBUG
 #define BASEDIR         "base/"
 #else
 #define BASEDIR         "base/"
@@ -222,7 +181,7 @@ typedef struct
 	float x,y;
 }pos_t;
 
-#include <ctrl.h>
+#include <think.h>
 
 
 //камера
@@ -240,8 +199,9 @@ typedef struct
 
 
 
-
-/********************************************************************/
+extern char *c_strTITLE;
+extern char *c_strCORP;
+extern char *c_about[];
 
 
 bool checkchar(char chr);
@@ -251,11 +211,7 @@ float sqrf(float v);
 void randomize();
 int xrand(int hi);
 
-int eof(int fd);
+char * str_addch(char * s0, char ch);
 
-
-extern char *c_strTITLE;
-extern char *c_strCORP;
-extern char *c_about[];
-#endif /* SRC_DEFS_H_ */
+#endif /* SRC_TYPES_H_ */
 

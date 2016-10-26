@@ -5,26 +5,58 @@
  * by Master San
  */
 
-#include <defs.h>
+#include <video.h>
 #include <img.h>
 #include <map.h>
 #include <weap.h>
-#include <plr.h>
 #include <game.h>
-#include <ctrl.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
+#include <player.h>
 #include <x10_time.h>
 #include <x10_str.h>
 #include <x10_kbrd.h>
 
 #include <string.h>
+#include <think.h>
+#include <types.h>
 
 player_t * playerList = NULL;
 
-static char codebuf[17];
-static int codecount = 0;
-static long codetimer = 0;
+
+void player_moveUp_ON()
+{
+}
+
+void player_moveUp_OFF()
+{
+}
+
+void player_moveDown_ON()
+{
+}
+
+void player_moveDown_OFF()
+{
+}
+
+void player_moveLeft_ON()
+{
+}
+
+void player_moveLeft_OFF()
+{
+}
+
+void player_moveRight_ON()
+{
+}
+
+void player_moveRight_OFF()
+{
+}
+
+
 
 int player_spawn_player(player_t * player);
 
@@ -33,6 +65,12 @@ int player_spawn_player(player_t * player);
 //////////////////////////////////////////////////////////////////////
 void player_checkcode()
 {
+	/*
+
+	static char codebuf[17];
+	static int codecount = 0;
+	static long codetimer = 0;
+
 	bool allow;
 	char key;
 
@@ -124,6 +162,7 @@ void player_checkcode()
 			}
 		}
 	}
+	*/
 }
 /*
  * подбирание предметов игроком
@@ -137,48 +176,49 @@ void player_item_get(player_t * player)
 			((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
 	)
 	{// не монстр(монстрюки оружие не подбирают)
-		item = map.HEADitem;
+		item = map.items;
 		while(item)
 		{
-			if(item->present)
-			{                                    //если предмет есть
+			if(item->exist)
+			{
+				//если предмет есть
 				if(
-						(item->data.orig.x-c_i_MDL_box/2< player->move.orig.x+c_p_MDL_box/2)&&
-						(player->move.orig.x-c_p_MDL_box/2<=item->data.orig.x+c_i_MDL_box/2)&&
-						(item->data.orig.y-c_i_MDL_box/2<=player->move.orig.y+c_p_MDL_box/2)&&
-						(player->move.orig.y-c_p_MDL_box/2< item->data.orig.y+c_i_MDL_box/2)
+						(item->orig.x-c_i_MDL_box/2< player->move.orig.x+c_p_MDL_box/2)&&
+						(player->move.orig.x-c_p_MDL_box/2<=item->orig.x+c_i_MDL_box/2)&&
+						(item->orig.y-c_i_MDL_box/2<=player->move.orig.y+c_p_MDL_box/2)&&
+						(player->move.orig.y-c_p_MDL_box/2< item->orig.y+c_i_MDL_box/2)
 				)
 				{
-					switch(item->data.class)
+					switch(item->class)
 					{
-					case c_i_health:
-						if((player->charact.health<player->charact.healthmax)||(item->data.amount<0))
+					case MAP_ITEM_HEALTH:
+						if((player->charact.health<player->charact.healthmax)||(item->amount<0))
 						{
-							item->present = false;
-							if(player->charact.healthmax < player->charact.health + item->data.amount)
+							item->exist = false;
+							if(player->charact.healthmax < player->charact.health + item->amount)
 								player->charact.health = player->charact.healthmax;
 							else
-								player->charact.health += item->data.amount;
+								player->charact.health += item->amount;
 						};
 						break;
-					case c_i_armor:
-						if((player->charact.armor<player->charact.armormax)||(item->data.amount<0)) {
-							item->present = false;
-							if(player->charact.armormax<player->charact.armor+item->data.amount)
+					case MAP_ITEM_ARMOR:
+						if((player->charact.armor<player->charact.armormax)||(item->amount<0)) {
+							item->exist = false;
+							if(player->charact.armormax<player->charact.armor+item->amount)
 								player->charact.armor = player->charact.armormax;
 							else
-								player->charact.armor+= item->data.amount;
+								player->charact.armor+= item->amount;
 							if(player->charact.armor<0) player->charact.armor = 0;
 						};
 						break;
-					case c_i_star  :
-						if((player->charact.scores<c_score_max)||(item->data.amount<0))
+					case MAP_ITEM_STAR  :
+						if((player->charact.scores<c_score_max)||(item->amount<0))
 						{
-							item->present = false;
-							if(c_score_max<player->charact.scores+item->data.amount)
+							item->exist = false;
+							if(c_score_max<player->charact.scores+item->amount)
 								player->charact.scores = c_score_max;
 							else
-								player->charact.scores+= item->data.amount;
+								player->charact.scores+= item->amount;
 							if(player->charact.scores<0) player->charact.scores = 0;
 						};
 						player_class_init(player);
@@ -188,28 +228,29 @@ void player_item_get(player_t * player)
 							if(player->charact.armor <player->charact.armormax ) player->charact.armor  = player->charact.armormax ;
 						};
 						break;
-					case c_i_rocket:
-						if((player->w.ammo[1] != c_p_WEAP_notused)&&((player->w.ammo[1]<wtable[1].ammo)||(item->data.amount<0)))
+					case MAP_ITEM_ROCKET:
+						if((player->w.ammo[1] != c_p_WEAP_notused)&&((player->w.ammo[1]<wtable[1].ammo)||(item->amount<0)))
 						{
-							item->present = false;
-							if(wtable[1].ammo<player->w.ammo[1]+item->data.amount)
+							item->exist = false;
+							if(wtable[1].ammo<player->w.ammo[1]+item->amount)
 								player->w.ammo[1] = wtable[1].ammo;
 							else
-								player->w.ammo[1]+= item->data.amount;
+								player->w.ammo[1]+= item->amount;
 							if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
 						};
 						break;
-					case c_i_mine  :
-						if((player->w.ammo[2] != c_p_WEAP_notused)&&((player->w.ammo[2]<wtable[2].ammo)||(item->data.amount<0)))
+					case MAP_ITEM_MINE  :
+						if((player->w.ammo[2] != c_p_WEAP_notused)&&((player->w.ammo[2]<wtable[2].ammo)||(item->amount<0)))
 						{
-							item->present = false;
-							if(wtable[2].ammo<player->w.ammo[2]+item->data.amount)
+							item->exist = false;
+							if(wtable[2].ammo<player->w.ammo[2]+item->amount)
 								player->w.ammo[2] = wtable[2].ammo;
 							else
-								player->w.ammo[2]+= item->data.amount;
+								player->w.ammo[2]+= item->amount;
 							if(player->w.ammo[2]<0) player->w.ammo[2] = 0;
 						};
 						break;
+					default: ;
 					}
 				}
 			}
@@ -226,23 +267,24 @@ void player_obj_check(player_t * player)
 	obj_t * obj;
 	if((player->charact.status=c_p_P0)||(player->charact.status=c_p_P1))
 	{
-		obj = map.HEADobj;
+		obj = map.objs;
 		while(obj)
 		{
 			if(
-					(obj->data.orig.x-c_o_MDL_box/2 <= player->move.orig.x + c_p_MDL_box / 2)&&
-					(player->move.orig.x-c_p_MDL_box/2 <= obj->data.orig.x + c_o_MDL_box / 2)&&
-					(obj->data.orig.y-c_o_MDL_box/2 <= player->move.orig.y + c_p_MDL_box / 2)&&
-					(player->move.orig.y-c_p_MDL_box/2 <= obj->data.orig.y + c_o_MDL_box / 2)
+					(obj->orig.x-c_o_MDL_box/2 <= player->move.orig.x + c_p_MDL_box / 2)&&
+					(player->move.orig.x-c_p_MDL_box/2 <= obj->orig.x + c_o_MDL_box / 2)&&
+					(obj->orig.y-c_o_MDL_box/2 <= player->move.orig.y + c_p_MDL_box / 2)&&
+					(player->move.orig.y-c_p_MDL_box/2 <= obj->orig.y + c_o_MDL_box / 2)
 			)
 			{
-				switch (obj->data.class)
+				switch (obj->class)
 				{
-				case c_o_exit: game._win_ = true;break;
-				case c_o_mess: break;
+				case MAP_OBJ_EXIT: game._win_ = true;break;
+				case MAP_OBJ_MESS: break;
+				default: ;
 				}
 				//отправим сообщение игроку
-				game_message_send(obj->data.message);
+				game_message_send(obj->message);
 			};
 		obj = obj->next;
 		};
@@ -267,8 +309,12 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 				(cam->orig.y-cam->sy/2<=player->move.orig.y+(c_p_MDL_box/2))&&(player->move.orig.y-(c_p_MDL_box/2)<=cam->orig.y+cam->sy/2)
 		)
 		{
-			gr2D.WIN.x0 = cam->x;gr2D.WIN.x1 = cam->x+cam->sx-1;
-			gr2D.WIN.y0 = cam->y;gr2D.WIN.y1 = cam->y+cam->sy-1;
+			video_viewport_set(
+				cam->x,
+				cam->x+cam->sx-1,
+				cam->y,
+				cam->y+cam->sy-1
+			);
 			gr2D_setimage1(
 					round(cam->x+player->move.orig.x-(cam->orig.x-cam->sx/2))+c_p_MDL_pos,
 					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
@@ -283,10 +329,12 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
 					player->Iflag
 			);//флаг
-			gr2D.WIN.x0 = 0;
-			gr2D.WIN.x1 = gr2D_SCR_sx-1;
-			gr2D.WIN.y0 = 0;
-			gr2D.WIN.y1 = gr2D_SCR_sy-1;
+			video_viewport_set(
+				0.0f,
+				VIDEO_MODE_W-1,
+				0.0f,
+				VIDEO_MODE_H-1
+			);
 		};
 	};
 };
@@ -340,7 +388,7 @@ static void player_move(player_t * player, int dir, long * speed)
 /*
  * управление игроком
  */
-void player_control(player_t * player)
+static void player_handle(player_t * player)
 {
 	pos_t Sorig;
 	float L,R,U,D;
@@ -375,7 +423,8 @@ void player_control(player_t * player)
 		if(player->charact.status == c_p_BOSS) game._win_ = true;
 	}
 	else
-	{                                                           //если игрок жив
+	{
+		//игрок жив
 		if(player->bull)
 		{
 			player->bull->dir = player->move.dir;
@@ -501,40 +550,46 @@ int player_connect(int status)
 {
 	player_t * player = NULL;
 	int error = 0;
-	bool flag;
+	bool match;
 	int id = 0;
-	if(
-			(status != c_p_ENEMY)&&(status != c_p_BOSS)
-	) player = player_find(status);
-	if(player) error = 2;                                           //ирок P0/P1 присоединен
-	else
-	{                                                           //ирок P0/P1 не присоединен
-		if(playerList)
-		{                                  //список игроков создан
-			error = 1;
-			flag  = false;
-			while((id<c_p_Pmax)&&(error=1))
-			{                             //пытаемся соединить игрока с сервером,
-				player = playerList;                                            // пока не исчерпан лимит на кол-во игроков
-				while((!flag)&&(player))
-				{                             //ищем, чтобы небыло совпадения идентификаторов
-					if(player->charact.id==id) flag = true;                            //совпадение есть
-					else player = player->next;                                           //совпадения нет, проверим следующий эл-т
-				};
-				if(!flag) error = 0;                                         //все номера свободны, коннект удался
-				else {
-					flag = false;
-					id = id+1;
-				}
+	if(status != c_p_ENEMY && status != c_p_BOSS) player = player_find(status);
+	//ирок P0/P1 присоединен
+	if(player) return 2;
+
+	//ирок P0/P1 не присоединен
+	if(playerList)
+	{
+		//список игроков создан
+		error = 1;
+		match = false;
+		//пытаемся соединить игрока с сервером,
+		while( id < c_p_Pmax && error == 1)
+		{
+			// пока не исчерпан лимит на кол-во игроков
+			player = playerList;
+			//ищем, чтобы небыло совпадения идентификаторов
+			while( !match && player )
+			{
+				if(player->charact.id == id) match = true;
+				else player = player->next;
+			};
+			if(!match) error = 0;                                         //все номера свободны, коннект удался
+			else
+			{
+				match = false;
+				id = id+1;
 			}
 		}
 	}
+
+	//нет ошибок, инициализируем игрока
 	if(!error)
-	{                                                //нет ошибок, инициализируем игрока
-		player = Z_malloc(sizeof(*player));                       //создаем игрока
-		player->next      = playerList;              //включим игрока в
-		playerList = player           ;             // общий список
-		player->charact.scores = 0;
+	{
+		//создаем игрока
+		player = Z_malloc(sizeof(*player));
+		player->next = playerList;
+		playerList = player;
+		player->charact.scores     = 0;
 		player->charact.id         = id;
 		player->charact.status     = status;
 		player->charact.health     = 0;
@@ -546,21 +601,27 @@ int player_connect(int status)
 		player->w.ammo[2] = 0;
 		ctrl_AI_init(&player->brain);
 	};
-	if((!error)||(error==2))
+	if( !error || error == 2 )
 	{
-		if(player->charact.status==c_p_BOSS) player->Iflag = IMG_connect("F_USA");//флаг
-		else
-			if(player->charact.status==c_p_ENEMY) player->Iflag = IMG_connect("F_WHITE");//флаг
-			else {
-				if(player->charact.status==c_p_P0) game.P0 = player;
-				if(player->charact.status==c_p_P1) game.P1 = player;
-				player->charact.frags = 0;
-				player->Iflag = IMG_connect("F_RUS");//флаг
-			};
-		player->charact.spawned   = false;
-	};
+		switch(player->charact.status)
+		{
+		case c_p_BOSS : player->Iflag = IMG_connect("F_USA");break;
+		case c_p_ENEMY: player->Iflag = IMG_connect("F_WHITE");break;
+		case c_p_P0   :
+			game.P0 = player;
+			player->charact.frags = 0;
+			player->Iflag = IMG_connect("F_RUS");
+			break;
+		case c_p_P1   :
+			game.P1 = player;
+			player->charact.frags = 0;
+			player->Iflag = IMG_connect("F_RUS");
+			break;
+		}
+		player->charact.spawned = false;
+	}
 	return error;
-};
+}
 /*
  * отключение игрока от игры
  *
@@ -630,11 +691,11 @@ void player_disconnect_all()
 /*
  * спавним игрока
  */
-void player_spawn(player_t * player, TDATAspawn * DATA)
+void player_spawn(player_t * player, spawn_t * spawn)
 {
-	if((-1<DATA->scores)&&(DATA->scores<=c_score_max)) player->charact.scores = DATA->scores;
+	if((-1<spawn->scores)&&(spawn->scores<=c_score_max)) player->charact.scores = spawn->scores;
 	player_class_init(player);
-	if((-1<DATA->health)&&(DATA->health<=player->charact.healthmax)) player->charact.health = DATA->health;
+	if((-1<spawn->health)&&(spawn->health<=player->charact.healthmax)) player->charact.health = spawn->health;
 	else
 	{
 		if(
@@ -652,12 +713,12 @@ void player_spawn(player_t * player, TDATAspawn * DATA)
 			}
 		};
 	};
-	if((-1<DATA->armor )&&(DATA->armor <=player->charact.armormax )) player->charact.armor = DATA->armor;
+	if((-1<spawn->armor )&&(spawn->armor <=player->charact.armormax )) player->charact.armor = spawn->armor;
 	else
 	{
 		if(
-				(player->charact.status=c_p_BOSS)||
-				(player->charact.status=c_p_ENEMY)
+				(player->charact.status == c_p_BOSS)||
+				(player->charact.status == c_p_ENEMY)
 		) player->charact.armor = player->charact.armormax;
 		else
 		{
@@ -696,18 +757,18 @@ int player_spawn_player(player_t * player)
 	else
 	{
 		spawn_amount = 0;
-		spawn = map.HEADspawn;
+		spawn = map.spawns;
 		while(spawn){ spawn = spawn->next;spawn_amount++;};     //считаем количество спавн-поинтов
 		do
 		{                                                              //ищем подходящий спавн поинт
-			spawn_number = trunc(xrand(spawn_amount));//=[0..spawn_amount-1]    //выбираем случайным образом
-			spawn = map.HEADspawn;
+			spawn_number = xrand(spawn_amount);//=[0..spawn_amount-1]    //выбираем случайным образом
+			spawn = map.spawns;
 			for(count = 0; count < spawn_number; count ++) spawn = spawn->next;
-			if(spawn->data.class==c_s_PLAYER) flag = true;                      //это PLAYER спавн
+			if(spawn->class == MAP_SPAWN_PLAYER) flag = true;                      //это PLAYER спавн
 		}while(!flag);
-		player->move.orig.x = spawn->data.orig.x;
-		player->move.orig.y = spawn->data.orig.y;
-		player_spawn(player, &spawn->data);
+		player->move.orig.x = spawn->orig.x;
+		player->move.orig.y = spawn->orig.y;
+		player_spawn(player, spawn);
 		return 0;
 	}
 }
@@ -721,27 +782,26 @@ int player_spawn_enemy()
 	spawn_t * spawn;
 	int error = 0;
 
-	spawn = map.HEADspawn;
+	spawn = map.spawns;
 	while(spawn && error != 1)
-	{                                //пока не привысили лимит на игроков
-		if(
-				(spawn->data.class==c_s_ENEMY)
-				||(spawn->data.class==c_s_BOSS )
-		)
-		{                            //это monster спавн
-			if(spawn->data.class==c_s_ENEMY) error = player_connect(c_p_ENEMY);
-			if(spawn->data.class==c_s_BOSS ) error = player_connect(c_p_BOSS );
+	{
+		//пока не привысили лимит на игроков
+		if( spawn->class == MAP_SPAWN_ENEMY || spawn->class == MAP_SPAWN_BOSS )
+		{
+			//это monster спавн
+			if(spawn->class == MAP_SPAWN_ENEMY) error = player_connect(c_p_ENEMY);
+			if(spawn->class == MAP_SPAWN_BOSS ) error = player_connect(c_p_BOSS );
 			if(error != 1)
 			{
-				playerList->move.orig.x = spawn->data.orig.x;
-				playerList->move.orig.y = spawn->data.orig.y;
-				player_spawn(playerList, &spawn->data);
-			};
-		};
+				playerList->move.orig.x = spawn->orig.x;
+				playerList->move.orig.y = spawn->orig.y;
+				player_spawn(playerList, spawn);
+			}
+		}
 		spawn = spawn->next;
-	};
+	}
 	return error;
-};
+}
 /*
  * спавним всех игроков и монстров
  */
@@ -758,6 +818,30 @@ void player_spawn_all()
 }
 
 
+void players_control()
+{
+	player_t * player = playerList;
+	while(player)
+	{
+		switch(player->charact.status)
+		{
+		case c_p_BOSS:
+		case c_p_ENEMY:
+			think_enemy(player);
+			break;
+		case c_p_P0:
+			think_human(0,player);
+			break;
+		case c_p_P1:
+			think_human(1,player);
+			break;
+		}
+		player_handle(player);
+		player = player->next;
+	}
+}
+
+
 
 /*
  * вывод информации об игроке
@@ -767,7 +851,7 @@ void player_draw_status(camera_t * cam, player_t *player)
 	char s[32];
 	gr2D.color.current = 1;
 	// gr2D_settext(cam->x,cam->y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
-	// gr2D_settext(cam->x,cam->y,0,'PING '+wordtostr(player->time.delta));
+	// gr2D_settext(cam->x,cam->y,0,"PING %d", player->time.delta);
 	gr2Don_settext(cam->x+32*2+16, cam->y+cam->sy+4, 0,inttostr(player->w.ammo[0], s));
 	if(player->w.ammo[1]>-1)
 		gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy+4,0,inttostr(player->w.ammo[1], s));

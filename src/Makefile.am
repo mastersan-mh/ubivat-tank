@@ -24,5 +24,4 @@ map.c \
 menu.c \
 player.c \
 weap.c \
-x10_str.c \
 x10_time.c

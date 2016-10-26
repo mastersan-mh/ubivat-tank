@@ -376,7 +376,7 @@ int menu_game_save(menu_key_t menukey, void * ctx)
 				}
 				else
 				{
-					if(ch<0x80 && l<=16) strZ_addch(game.saveslist[menu_cur].Hname,ch);
+					if(ch<0x80 && l<=16) str_addch(game.saveslist[menu_cur].Hname, ch);
 				}
 			}
 		}

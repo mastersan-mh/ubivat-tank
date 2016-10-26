@@ -12,9 +12,12 @@ typedef struct
 {
 	//часы
 	int h;
-	int m;                                                //минуты
-	int s;                                                //секунды
-	int hs;                                                //сотые_доли_секунды
+	//минуты
+	int m;
+	//секунды
+	int s;
+	//сотые_доли_секунды
+	int hs;
 } Tsystime;
 
 void time_Sget();
