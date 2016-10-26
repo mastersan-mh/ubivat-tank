@@ -105,6 +105,8 @@ void pics_load()
 	}
 };
 
+static void game_draw();
+
 void game_init()
 {
 	game.P0         = NULL;
@@ -223,6 +225,7 @@ void game_main()
 	bool quit = false;
 	menu_selector_t imenu = MENU_MAIN;
 	imenu = MENU_MAIN;
+	menu_selector_t imenu_process = imenu;
 	while(!quit)
 	{
 
@@ -243,28 +246,43 @@ void game_main()
 			// handle your event here
 		}
 		if(quit)break;
-		video_scree_draw_begin();
+		video_screen_draw_begin();
 
-		imenu = menu_handle(imenu);
-
-		switch(imenu)
+		if(!game.ingame)
 		{
-		case MENU_QUIT: quit = true;break;
-		default: break;
+			imenu_process = imenu;
+			imenu = menu_handle(imenu_process);
+			switch(imenu_process)
+			{
+			case MENU_QUIT: quit = true;break;
+			default: break;
+			}
+			if(quit)break;
 		}
-		if(quit)break;
+		else
+		{
+			/*
+			if(game.created)
+				game_time_reset();
+			int ret = game_mainproc();
+			if(ret >= 0) imenu = ret;
+			*/
+		}
 
 
-		if(game.created && game.ingame)
-			game_time_reset();
 
-		int ret = game_mainproc();
-		if(ret >= 0)
-			imenu = ret;
+		if(!game.ingame)
+		{
+			menu_draw(imenu_process);
+		}
+		else
+		{
+			game_draw();
+		}
 
-		menu_draw(imenu);
 
-		video_scree_draw_end();
+
+		video_screen_draw_end();
 
 	};
 }
@@ -275,92 +293,88 @@ void game_main()
  */
 int game_mainproc()
 {
-	player_t *player;
-	int count;
-	int x,y;
+	players_control();
+	bull_control();
+	explode_control();
 
-	if(!game.ingame) return -1;
-	bool allowpress = false;
-	player = playerList;
-	while(player)
-	{
-		if(player->charact.status==c_p_BOSS || player->charact.status==c_p_ENEMY)
-		{
-			ctrl_enemy(player);
-		}
-		else
-		{
-			if(player->charact.status==c_p_P1)
-			{
-				if(player->bull) { game.P1cam.orig.x = player->bull->orig.x;game.P1cam.orig.y = player->bull->orig.y;}
-				else             { game.P1cam.orig.x = player->move.orig.x ;game.P1cam.orig.y = player->move.orig.y ;};
-				ctrl_human(1,player);
-				player_draw_status(&game.P1cam, game.P1);
-			}
-			else
-			{
-				bull_control();
-				if(player->bull) { game.P0cam.orig.x = player->bull->orig.x;game.P0cam.orig.y = player->bull->orig.y;}
-				else             { game.P0cam.orig.x = player->move.orig.x ;game.P0cam.orig.y = player->move.orig.y ;};
-				player_checkcode();
-				ctrl_human(0,player);
-				explode_control();
-				player_draw_status(&game.P0cam,game.P0);
-				if(game.msg)
-				{
-					count = 0;
-					gr2D.color.current = 1;
-					while(count<64 && game.msg[count])
-					{
-						x = ((count << 3)% 128)+96;
-						y = ((count >> 4)<< 3)+84;
-						gr2Don_setchar(x,y,game.msg[count]);
-						count++;
-					};
-					game.msg = NULL;
-				};
-				map_draw(&game.P0cam);                                            //рисуем карту игрока0
-				if(game.P1) map_draw(&game.P1cam);                       //рисуем карту игрока1
-			}
-		}
-		player_draw(&game.P0cam, player, true);
-		if(game.P1) player_draw(&game.P1cam,player,false);
-		player_control(player);
-		player = player->next;
-	}
-	if(kbrd.port)
-	{
-		switch(kbrd.port)
-		{
-		case KP0_ESCAPE_1:
-			if(allowpress)
-			{
-				game.ingame     = false;
-				//game.menu       = c_m_main;
-				allowpress = false;
-			};
-			break;
-		case KP0_ESCAPE_0: allowpress = true;break;
-		}
-	}
 	if(
-			(game._win_) &&                                                 //победа
-			(game.P0->charact.health>0) &&                                     //оба игрока должны быть живы
-			((!game.P1) || ((game.P1) && (game.P1->charact.health>0)))  //
+			game._win_ &&                                           //победа
+			(game.P0->charact.health > 0) &&                        //оба игрока должны быть живы
+			(!game.P1 || (game.P1 && game.P1->charact.health > 0))  //
 	)
 	{
 		if(game.flags & c_g_f_CASE)
 		{
-			game_nextmap();                 //игра по уровням
+			//игра по уровням
+			game_nextmap();
 			return MENU_INTERLEVEL;
 		}
 		else
-		{                                                         //игра по выбору
+		{
+			//игра по выбору
 			game_abort();
 			return MENU_INTERLEVEL;
 		}
 	}
-	return -1;
+	return MENU_MAIN;
+}
+
+void game_draw()
+{
+
+	map_draw(&game.P0cam);
+	if(game.P1) map_draw(&game.P1cam);
+
+
+	if(game.P0->bull)
+	{
+		game.P0cam.orig.x = game.P0->bull->orig.x;
+		game.P0cam.orig.y = game.P0->bull->orig.y;
+	}
+	else
+	{
+		game.P0cam.orig.x = game.P0->move.orig.x;
+		game.P0cam.orig.y = game.P0->move.orig.y;
+	}
+	player_draw_status(&game.P0cam, game.P0);
+	if(game.P1)
+	{
+		if(game.P1->bull)
+		{
+			game.P1cam.orig.x = game.P1->bull->orig.x;
+			game.P1cam.orig.y = game.P1->bull->orig.y;
+		}
+		else
+		{
+			game.P1cam.orig.x = game.P1->move.orig.x;
+			game.P1cam.orig.y = game.P1->move.orig.y;
+		}
+		player_draw_status(&game.P1cam, game.P1);
+	}
+
+
+	player_t * player = playerList;
+	while(player)
+	{
+		player_draw(&game.P0cam, player, true);
+		if(game.P1) player_draw(&game.P1cam, player, false);
+		player = player->next;
+	}
+
+	if(game.msg)
+	{
+		int count = 0;
+		gr2D.color.current = 1;
+		while(count<64 && game.msg[count])
+		{
+			int x = ((count * 8 ) % 128)+96;
+			int y = ((count / 16) * 8  )+84;
+			gr2Don_setchar(x, y, game.msg[count]);
+			count++;
+		};
+		game.msg = NULL;
+	};
+
 }
 
 /*
@@ -374,7 +388,7 @@ void game_nextmap()
 	explode_removeall();
 	bull_removeall();
 	//закроем карту
-	map_close();
+	map_clear();
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
@@ -614,7 +628,7 @@ static bool game_record_save_player(int fd, player_t * player)
 	{
 	case c_p_P0:
 	case c_p_P1:
-		write(fd, c_MAP_s_player, 13);
+		write(fd, map_class_names[MAP_SPAWN_PLAYER], sizeof(map_class_names[MAP_SPAWN_PLAYER]));
 		break;
 	default:
 		return false;
@@ -635,12 +649,8 @@ static bool game_record_save_player(int fd, player_t * player)
  */
 static bool game_record_load_player(int fd, player_t * player)
 {
-	char class_string[33];
-	map_file_class_get(fd, class_string);
-	if(strcmp(class_string,c_MAP_s_player) != 0)
-	{
-		return false;
-	}
+	mobj_type_t mobj_type = map_file_class_get(fd);
+	if(mobj_type != MAP_SPAWN_PLAYER) return false;
 	read(fd, &player->charact.scores    , 4);
 	read(fd, &player->charact.status    , 1);
 	read(fd, &player->charact.health    , 2);
@@ -728,7 +738,7 @@ int game_record_load(gamesave_t * rec)
 		}
 	};
 	//закроем отктытую карту
-	map_close();
+	map_clear();
 	//прочитаем карту
 	ret = map_load(rec->Hmap);
 	if(ret != 0) return 3;
@@ -773,6 +783,8 @@ int game_record_load(gamesave_t * rec)
 int game_create()
 {
 	int ret;
+
+	int pixels = (VIDEO_MODE_H*8)/200;
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
@@ -780,8 +792,8 @@ int game_create()
 		game.P0cam.orig.y = 0;
 		game.P0cam.x      = 0;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = 320;
-		game.P0cam.sy     = 184;
+		game.P0cam.sx     = VIDEO_MODE_W;
+		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;//184
 		ret = player_connect(c_p_P0);
 		if(ret)return ret;
 	}
@@ -789,16 +801,16 @@ int game_create()
 	{
 		game.P0cam.orig.x = 0;
 		game.P0cam.orig.y = 0;
-		game.P0cam.x      = 160+1;
+		game.P0cam.x      = VIDEO_MODE_W/2+1;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = 160-1;
-		game.P0cam.sy     = 184;
+		game.P0cam.sx     = VIDEO_MODE_W/2-1;
+		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;
 		game.P1cam.orig.x = 0;
 		game.P1cam.orig.y = 0;
 		game.P1cam.x      = 0;
 		game.P1cam.y      = 0;
-		game.P1cam.sx     = 160-1;
-		game.P1cam.sy     = 184;
+		game.P1cam.sx     = VIDEO_MODE_W-1;
+		game.P1cam.sy     = VIDEO_MODE_H - pixels*2;
 		ret = player_connect(c_p_P0);
 		if(ret)return ret;
 		ret = player_connect(c_p_P1);
@@ -807,7 +819,7 @@ int game_create()
 	//спавним всех игроков и монстров
 	player_spawn_all();
 	game.created    = true;
-	game.ingame     = true;
+	game.ingame     = false;
 	return 0;
 }
 /*
@@ -821,7 +833,7 @@ void game_abort()
 	explode_removeall();
 	bull_removeall();
 	//закроем карту
-	map_close();
+	map_clear();
 	game.created    = false;
 	game.ingame     = false;
 	game._win_      = false;
@@ -867,18 +879,7 @@ void game_msg_error(int error)
 
 		gr2Don_settext(x+2, y+16, orient_horiz, errList[e]);
 
-		kbrd_readport();
-		if(kbrd.port != 0)
-		{
-			if(kbrd.port <= 127 )
-			{
-				do
-				{
-					kbrd_readport();
-				} while(kbrd.port != KP0_ENTER_1);
-				quit = true;
-			};
-		}
+		do{ } while(true);
 	}
 }
 

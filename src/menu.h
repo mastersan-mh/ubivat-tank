@@ -113,7 +113,8 @@ typedef enum
 	LEFT,
 	RIGHT,
 	ENTER,
-	LEAVE
+	LEAVE,
+	SPACE
 } menu_key_t;
 
 /*
@@ -126,8 +127,9 @@ typedef enum
 	case RIGHT  :
 	case ENTER  :
 	case LEAVE  :
+	case SPACE  :
 	}
- */
+*/
 
 typedef struct
 {

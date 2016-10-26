@@ -113,6 +113,7 @@ menu_key_t menu_key_get(int maxmenu)
 	case SDL_SCANCODE_DOWN    : return DOWN;
 	case SDL_SCANCODE_LEFT    : return LEFT;
 	case SDL_SCANCODE_RIGHT   : return RIGHT;
+	case SDL_SCANCODE_SPACE   : return SPACE;
 	default: break;
 	}
 	return NOTHING;
@@ -173,6 +174,7 @@ int menu_main(menu_key_t menukey, void * ctx)
 			return -1;
 		}
 		break;
+	case SPACE: break;
 	}
 	return MENU_MAIN;
 }
@@ -210,6 +212,7 @@ int menu_game(menu_key_t menukey, void * ctx)
 	case RIGHT  : break;
 	case ENTER  : return menus[__ctx->menu];
 	case LEAVE  : return MENU_MAIN;
+	case SPACE: break;
 	}
 	return MENU_GAME;
 }
@@ -223,7 +226,7 @@ int menu_game_new1P(menu_key_t menukey, void * ctx)
 	ret = map_load(game.gamemap->map);
 	if(ret)
 	{
-		game_msg_error(ret);
+		game_msg_error(map_error_get());
 		return MENU_ABORT;
 	}
 	game.flags = 0;
@@ -305,6 +308,7 @@ int menu_game_load(menu_key_t menukey, void * ctx)
 		}
 		return MENU_MAIN;
 	case LEAVE  : return MENU_GAME;
+	case SPACE: break;
 	}
 	return MENU_GAME_LOAD;
 }
@@ -358,15 +362,13 @@ int menu_game_save(menu_key_t menukey, void * ctx)
 		game_record_getsaves();
 	if(f_input)
 	{
-		kbrd.port = 0;
-		kbrd_readport();
-		if(kbrd.port>=0x80) ;
+		if(menukey>=0x80) ;
 		else
 		{
-			if( kbrd.port==KP0_ENTER_1 || kbrd.port == KP0_ESCAPE_1) ;
+			if( menukey==KP0_ENTER_1 || menukey == KP0_ESCAPE_1) ;
 			else
 			{
-				ch = (char)kbrd_char(0, 0, kbrd.port);
+				ch = (char) menukey;
 				l = strlen(game.saveslist[menu_cur].Hname);
 				if(ch == 0xEE)
 				{
@@ -397,7 +399,7 @@ int menu_game_save(menu_key_t menukey, void * ctx)
 				tmprec = game.saveslist[menu_cur];
 				game.saveslist[menu_cur].flags = game.flags;
 				if(game.saveslist[menu_cur].Hname[0]== 0xFF) game.saveslist[menu_cur].Hname[0] = 0x00;
-				do{ kbrd_readport();}while(!( (kbrd.port==KP0_ENTER_0) ));
+				do{ }while(!( (menukey==KP0_ENTER_0) ));
 				f_input = true;
 			};
 		};
@@ -465,6 +467,7 @@ int menu_custom(menu_key_t menukey, void * ctx)
 		break;
 	case ENTER  : return menus[__ctx->menu];
 	case LEAVE  : return MENU_MAIN;
+	case SPACE: break;
 	}
 
 	return MENU_CUSTOM;
@@ -552,20 +555,20 @@ int menu_options(menu_key_t menukey, void * ctx)
 	if(wait_a_key)
 	{
 		//"забивание" клавиш
-		do{ kbrd_readport();}while(!( (kbrd.port != KP0_ENTER_0) ));
+		do{ }while(!( (menukey != KP0_ENTER_0) ));
 		if(cur_pl==0)
 		{
 			//настройка игрока 0
-			game.controlP0[__ctx->menu * 2 + 0] = kbrd.port;
-			do{ kbrd_readport();}while(!( (kbrd.port != game.controlP0[__ctx->menu*2+0])));
-			game.controlP0[__ctx->menu * 2 + 1] = kbrd.port;
+			game.controlP0[__ctx->menu * 2 + 0] = menukey;
+			do{ }while(!( (menukey != game.controlP0[__ctx->menu*2+0])));
+			game.controlP0[__ctx->menu * 2 + 1] = menukey;
 		}
 		else
 		{
 			//настройка игрока 1
-			game.controlP1[__ctx->menu * 2 + 0] = kbrd.port;
-			do{ kbrd_readport();}while(!( (kbrd.port != game.controlP1[__ctx->menu*2+0]) ));
-			game.controlP1[__ctx->menu * 2 + 1] = kbrd.port;
+			game.controlP1[__ctx->menu * 2 + 0] = menukey;
+			do{ }while(!( (menukey != game.controlP1[__ctx->menu*2+0]) ));
+			game.controlP1[__ctx->menu * 2 + 1] = menukey;
 		};
 		wait_a_key = false;
 	};
@@ -626,20 +629,29 @@ static void menu_prelevel_draw(const void * ctx)
 	gr2Don_settext(160-16*4, 8*7 , orient_horiz, map.name);
 	gr2Don_settext(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
 	gr2Don_settext(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
-}
-int menu_prelevel(menu_key_t menukey, void * ctx)
-{
-	int i;
-
-	i = 0;
+	int i = 0;
 	while(map.brief[i])
 	{
 		gr2Don_setchar(160 - 16 * 4 + ((i % 16) * 8), 8 * 12 + ((i / 16) * 10), map.brief[i]);
 		i++;
 	};
-	if(menukey == LEAVE) return MENU_MAIN;
-	kbrd_readport();
-	if(kbrd.port==KP0_SPACE_1) return MENU_MAIN;
+}
+int menu_prelevel(menu_key_t menukey, void * ctx)
+{
+	//menu_prelevel_context_t * __ctx = ctx;
+	switch(menukey)
+	{
+	case NOTHING: break;
+	case UP     : break;
+	case DOWN   : break;
+	case LEFT   : break;
+	case RIGHT  : break;
+	case ENTER  : break;
+	case LEAVE  : return MENU_MAIN;
+	case SPACE  :
+		game.ingame = true;
+		return MENU_MAIN;
+	}
 	return MENU_PRELEVEL;
 };
 /*
@@ -688,9 +700,17 @@ static void menu_interlevel_draw(const void * ctx)
 
 int menu_interlevel(menu_key_t menukey, void * ctx)
 {
-	if(menukey == LEAVE) return MENU_MAIN;
-	kbrd_readport();
-	if(kbrd.port == KP0_SPACE_1) return MENU_MAIN;
+	switch(menukey)
+	{
+	case NOTHING: break;
+	case UP     : break;
+	case DOWN   : break;
+	case LEFT   : break;
+	case RIGHT  : break;
+	case ENTER  : return MENU_MAIN;
+	case LEAVE  : return MENU_MAIN;
+	case SPACE  : return MENU_MAIN;
+	}
 	return MENU_INTERLEVEL;
 }
 

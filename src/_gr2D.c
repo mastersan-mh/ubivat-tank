@@ -251,55 +251,30 @@ void gr2D_setimage0(
 	int out_x,
 	int out_y,
 	item_img_t * image
-	)
+)
 {
-	GLfloat scalex = VIDEO_MODE_W/320.0f;
-	GLfloat scaley = VIDEO_MODE_H/200.0f;
-	/*
-		glRotatef(xrf, 1.0f, 0.0f, 0.0f);	// Вращение куба по X, Y, Z
-		glRotatef(yrf, 0.0f, 1.0f, 0.0f);	// Вращение куба по X, Y, Z
-		glRotatef(zrf, 0.0f, 0.0f, 1.0f);	// Вращение куба по X, Y, Z
-	 */
-	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
-	glLoadIdentity();
-	glTranslatef(out_x*scalex, out_y*scaley, 0.0f);
-	glBegin(GL_QUADS);		// Рисуем куб
+	GLfloat scalex = VIDEO_MODE_W / 320.0f;
+	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-	glColor3f(1.0f, 1.0f, 1.0f);		// Красная сторона (Передняя)
-	GLfloat sx = image->IMG->sx*scalex;
-	GLfloat sy = image->IMG->sy*scaley;
+	GLfloat mdl_sx = image->IMG->sx * scalex;
+	GLfloat mdl_sy = image->IMG->sy * scaley;
 
 	GLfloat texture_sx = image->sx;
 	GLfloat texture_sy = image->sy;
 
-	GLfloat texture_map_sx = image->IMG->sx/texture_sx;
-	GLfloat texture_map_sy = image->IMG->sy/texture_sy;
+	GLfloat texture_x1 = image->IMG->sx/texture_sx;
+	GLfloat texture_y1 = image->IMG->sy/texture_sy;
 
-	glTexCoord2f(texture_map_sx, texture_map_sy); glVertex2f( sx  , sy  ); // Верхний правый угол квадрата
-	glTexCoord2f(texture_map_sx, 0.0f          ); glVertex2f( sx  , 0.0f); // Нижний правый
-	glTexCoord2f(0.0f          , 0.0f          ); glVertex2f( 0.0f, 0.0f); // Нижний левый
-	glTexCoord2f(0.0f          , texture_map_sy); glVertex2f( 0.0f, sy  ); // Верхний левый
-
-	/*
-	glTexCoord2f(1.0f, 1.0f); glVertex2f( sx  , sy  ); // Верхний правый угол квадрата
-	glTexCoord2f(1.0f, 0.0f); glVertex2f( sx  , 0.0f); // Нижний правый
-	glTexCoord2f(0.0f, 0.0f); glVertex2f( 0.0f, 0.0f); // Нижний левый
-	glTexCoord2f(0.0f, 1.0f); glVertex2f( 0.0f, sy  ); // Верхний левый
-*/
+	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glLoadIdentity();
+	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glBegin(GL_QUADS);		// Рисуем куб
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
+	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
 	glEnd();	// Закончили квадраты
-
-
-/*var
-
-a:array[0..0]of byte absolute bytemap;
-c,y:dword;
-
- c = 0;
- for y = 0 to full_sy-1 do {
-  gr2D_setline(out_x,out_y+y,full_sx,a[c]);
-  c = c+full_sx;
-  }
-*/
 }
 
 
@@ -311,21 +286,43 @@ void gr2D_setimage1(
 	item_img_t * image,
 	int get_x,
 	int get_y,
-	int sx,
-	int sy
+	int get_sx,
+	int get_sy
 	)
 {
-/*
+	GLfloat scalex = VIDEO_MODE_W / 320.0f;
+	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-var
-y:longint;
-img:array[0..0]of byte absolute bytemap;
-c:dword;
- {
- c = get_x+get_y*full_sx;
- for y = 0 to sy-1 do {
-  gr2D_setline(out_x,out_y+y,sx,img[c]);
-  c = c+full_sx;
-  }
+	GLfloat mdl_sx = get_sx * scalex;
+	GLfloat mdl_sy = get_sy * scaley;
+/*
+	GLfloat mdl_sx = image->IMG->sx * scalex;
+	GLfloat mdl_sy = image->IMG->sy * scaley;
 */
+	GLfloat texture_sx = image->sx;
+	GLfloat texture_sy = image->sy;
+
+
+
+	GLfloat texture_x0 = get_x/texture_sx;
+	GLfloat texture_y0 = get_y/texture_sy;
+	GLfloat texture_x1 = texture_x0+(get_sx/texture_sx);
+	GLfloat texture_y1 = texture_y0+(get_sy/texture_sy);
+/*
+	GLfloat texture_x1 = image->IMG->sx/texture_sx;
+	GLfloat texture_y1 = image->IMG->sy/texture_sy;
+*/
+
+	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glLoadIdentity();
+	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glBegin(GL_QUADS);		// Рисуем куб
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, texture_y0); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
+	glTexCoord2f(texture_x0, texture_y0); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(texture_x0, texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
+
+	glEnd();	// Закончили квадраты
 }

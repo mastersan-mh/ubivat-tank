@@ -11,8 +11,6 @@
 #include <map.h>
 #include <weap.h>
 #include <menu.h>
-#include <ctrl.h>
-
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <player.h>
@@ -22,6 +20,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <think.h>
 
 int main()
 {
