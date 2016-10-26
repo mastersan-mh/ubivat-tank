@@ -10,7 +10,6 @@
 #include <_gr2Don.h>
 #include <types.h>
 #include <x10_time.h>
-#include <x10_str.h>
 #include <x10_kbrd.h>
 
 /* MENU_MAIN */
@@ -514,7 +513,6 @@ static void menu_options_draw(const void * ctx)
 	int cur_pl      = __ctx->cur_pl;
 	bool wait_a_key = __ctx->wait_a_key;
 
-	char s[32];
 	menu_draw_conback();
 	gr2D_setimage0(120,30+23*(-1)     ,game.m_i_options);
 	if(!wait_a_key)
@@ -529,20 +527,20 @@ static void menu_options_draw(const void * ctx)
 	gr2Don_settext( 9,32+12*5, 0, "Пульки");
 	gr2Don_settext( 9,32+12*6, 0, "Ракета");
 	gr2Don_settext( 9,32+12*7, 0, "Мина");
-	gr2Don_settext(82+131*0,32+12*1,0,bytetostr(game.controlP0[ 0], s));
-	gr2Don_settext(82+131*0,32+12*2,0,bytetostr(game.controlP0[ 2], s));
-	gr2Don_settext(82+131*0,32+12*3,0,bytetostr(game.controlP0[ 4], s));
-	gr2Don_settext(82+131*0,32+12*4,0,bytetostr(game.controlP0[ 6], s));
-	gr2Don_settext(82+131*0,32+12*5,0,bytetostr(game.controlP0[ 8], s));
-	gr2Don_settext(82+131*0,32+12*6,0,bytetostr(game.controlP0[10], s));
-	gr2Don_settext(82+131*0,32+12*7,0,bytetostr(game.controlP0[12], s));
-	gr2Don_settext(82+131*1,32+12*1,0,bytetostr(game.controlP1[ 0], s));
-	gr2Don_settext(82+131*1,32+12*2,0,bytetostr(game.controlP1[ 2], s));
-	gr2Don_settext(82+131*1,32+12*3,0,bytetostr(game.controlP1[ 4], s));
-	gr2Don_settext(82+131*1,32+12*4,0,bytetostr(game.controlP1[ 6], s));
-	gr2Don_settext(82+131*1,32+12*5,0,bytetostr(game.controlP1[ 8], s));
-	gr2Don_settext(82+131*1,32+12*6,0,bytetostr(game.controlP1[10], s));
-	gr2Don_settext(82+131*1,32+12*7,0,bytetostr(game.controlP1[12], s));
+	gr2Don_settext(82+131*0,32+12*1, orient_horiz, "%d", game.controlP0[ 0]);
+	gr2Don_settext(82+131*0,32+12*2, orient_horiz, "%d", game.controlP0[ 2]);
+	gr2Don_settext(82+131*0,32+12*3, orient_horiz, "%d", game.controlP0[ 4]);
+	gr2Don_settext(82+131*0,32+12*4, orient_horiz, "%d", game.controlP0[ 6]);
+	gr2Don_settext(82+131*0,32+12*5, orient_horiz, "%d", game.controlP0[ 7]);
+	gr2Don_settext(82+131*0,32+12*6, orient_horiz, "%d", game.controlP0[10]);
+	gr2Don_settext(82+131*0,32+12*7, orient_horiz, "%d", game.controlP0[12]);
+	gr2Don_settext(82+131*1,32+12*1, orient_horiz, "%d", game.controlP1[ 0]);
+	gr2Don_settext(82+131*1,32+12*2, orient_horiz, "%d", game.controlP1[ 2]);
+	gr2Don_settext(82+131*1,32+12*3, orient_horiz, "%d", game.controlP1[ 4]);
+	gr2Don_settext(82+131*1,32+12*4, orient_horiz, "%d", game.controlP1[ 6]);
+	gr2Don_settext(82+131*1,32+12*5, orient_horiz, "%d", game.controlP1[ 8]);
+	gr2Don_settext(82+131*1,32+12*6, orient_horiz, "%d", game.controlP1[10]);
+	gr2Don_settext(82+131*1,32+12*7, orient_horiz, "%d", game.controlP1[12]);
 }
 
 int menu_options(menu_key_t menukey, void * ctx)
@@ -659,7 +657,6 @@ int menu_prelevel(menu_key_t menukey, void * ctx)
  */
 static void menu_interlevel_draw(const void * ctx)
 {
-	char s[32];
 	gr2D_setimage0(0, 0, game.m_i_interlv);
 	gr2D.color.current = 15;
 	gr2Don_settext(108,191,0,"НАЖМИ ПРОБЕЛ");
@@ -671,10 +668,10 @@ static void menu_interlevel_draw(const void * ctx)
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		gr2D.color.current = 15;
-		gr2Don_settext(48+8*00,84      ,0,"ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		gr2Don_settext(48+8*00,84+4+8*1,0,longinttostr(game.P0->charact.scores, s));
-		gr2Don_settext(48+8*10,84+4+8*1,0,longinttostr(game.P0->charact.frags , s));
-		gr2Don_settext(48+8*21,84+4+8*1,0,longinttostr(game.P0->charact.fragstotal, s));
+		gr2Don_settext(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+		gr2Don_settext(48+8*00,84+4+8*1, orient_horiz, "%ld", game.P0->charact.scores);
+		gr2Don_settext(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->charact.frags );
+		gr2Don_settext(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->charact.fragstotal);
 	}
 	else
 	{
@@ -688,13 +685,13 @@ static void menu_interlevel_draw(const void * ctx)
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		gr2D.color.current = 15;
-		gr2Don_settext(48+8*00,76      -1,0,"ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		gr2Don_settext(48+8*00,76+4+8*1-1,0,longinttostr(game.P0->charact.scores, s));
-		gr2Don_settext(48+8*10,76+4+8*1-1,0,longinttostr(game.P0->charact.frags, s));
-		gr2Don_settext(48+8*21,76+4+8*1-1,0,longinttostr(game.P0->charact.fragstotal, s));
-		gr2Don_settext(48+8*00,76+4+8*3+1,0,longinttostr(game.P1->charact.scores, s));
-		gr2Don_settext(48+8*10,76+4+8*3+1,0,longinttostr(game.P1->charact.frags, s));
-		gr2Don_settext(48+8*21,76+4+8*3+1,0,longinttostr(game.P1->charact.fragstotal, s));
+		gr2Don_settext(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+		gr2Don_settext(48+8*00,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.scores     );
+		gr2Don_settext(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.frags      );
+		gr2Don_settext(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.fragstotal );
+		gr2Don_settext(48+8*00,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.scores     );
+		gr2Don_settext(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.frags      );
+		gr2Don_settext(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.fragstotal );
 	}
 }
 

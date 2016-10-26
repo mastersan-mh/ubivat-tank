@@ -14,10 +14,8 @@
 #include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
-#include <x10_str.h>
 #include <x10_time.h>
 #include <x10_kbrd.h>
-#include <x10_str.h>
 
 #include <stdlib.h>
 #include <stdio.h>

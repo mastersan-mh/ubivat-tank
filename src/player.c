@@ -14,7 +14,6 @@
 #include <_gr2Don.h>
 #include <player.h>
 #include <x10_time.h>
-#include <x10_str.h>
 #include <x10_kbrd.h>
 
 #include <string.h>
@@ -848,20 +847,19 @@ void players_control()
  */
 void player_draw_status(camera_t * cam, player_t *player)
 {
-	char s[32];
 	gr2D.color.current = 1;
 	// gr2D_settext(cam->x,cam->y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
 	// gr2D_settext(cam->x,cam->y,0,"PING %d", player->time.delta);
-	gr2Don_settext(cam->x+32*2+16, cam->y+cam->sy+4, 0,inttostr(player->w.ammo[0], s));
+	gr2Don_settext(cam->x+32*2+16, cam->y+cam->sy+4, orient_horiz, "%d", player->w.ammo[0]);
 	if(player->w.ammo[1]>-1)
-		gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy+4,0,inttostr(player->w.ammo[1], s));
+		gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy+4, orient_horiz, "%d", player->w.ammo[1]);
 	if(player->w.ammo[2]>-1)
-		gr2Don_settext(cam->x+32*4+16,cam->y+cam->sy+4,0,inttostr(player->w.ammo[2], s));
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-16,0,inttostr(player->charact.health, s));
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-8,0,inttostr(player->charact.healthmax, s));
-	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-16,0,inttostr(player->charact.armor, s));
-	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-8,0,inttostr(player->charact.armormax, s));
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy+4,0,inttostr(player->charact.scores, s));
+		gr2Don_settext(cam->x+32*4+16,cam->y+cam->sy+4,0, "%d", player->w.ammo[2]);
+	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-16, orient_horiz, "%d", player->charact.health);
+	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-8 , orient_horiz, "%d", player->charact.healthmax);
+	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-16, orient_horiz, "%d", player->charact.armor);
+	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-8 , orient_horiz, "%d", player->charact.armormax);
+	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy+4 , orient_horiz, "%d", player->charact.scores);
 	gr2D_setimage0(
 		cam->x + 32 * 0,
 		cam->y + cam->sy - 16,
