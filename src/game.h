@@ -114,6 +114,10 @@ typedef struct
 
 
 extern game_t game;
+extern long dtime;
+extern double ddtime10;
+
+void game_action_enter_mainmenu();
 
 void game_init();
 void game_done();
@@ -127,7 +131,6 @@ int game_cfg_save();
 int game_cfg_new();
 int game_cfg_load();
 int game_pal_get();
-void game_time_reset();
 void game_record_getsaves();
 bool game_record_save(gamesave_t * rec);
 int game_record_load(gamesave_t * rec);

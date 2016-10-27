@@ -118,15 +118,6 @@ typedef void (*actionf_t)();
 #define c_p_WEAP_notused (-1)
 //время на перезарядку(мсек)
 #define c_p_WEAP_reloadtime (100)
-//направлениия
-//0 - вверх
-#define c_DIR_up        0
-//1 - вниз
-#define c_DIR_dn        1
-//2 - влево
-#define c_DIR_lf        2
-//3 - вправо
-#define c_DIR_rt        3
 //время "думания" бота
 #define c_BOT_time      150
 //расстояние с которого бот будет стремиться вести атаку
@@ -156,24 +147,6 @@ typedef char TstrZ128[129];
 //идентификатор изображения
 #define TBIIid TstrZ11
 #define Tstringclass TstrZ16
-
-/*
- * время
- */
-typedef struct time_s
-{
-	//начальное время
-	int t0;
-	//конечное время
-	int t1;
-	//изменение времени
-	int delta;
-	//последнее изменение времени
-	int last_delta;
-} Ttime;
-
-
-
 
 //координаты
 typedef struct

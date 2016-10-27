@@ -12,12 +12,20 @@
 #include <map.h>
 #include <types.h>
 
+typedef enum
+{
+	DIR_UP,
+	DIR_DOWN,
+	DIR_LEFT,
+	DIR_RIGHT
+} direction_t;
+
 typedef struct
 {
 	//кол-во боеприпасов(-1 - не используется)
 	long ammo[3];
 	//атака
-	char attack;
+	weapon_t attack;
 	//время на перезарядку
 	long reloadtime_d;
 } TINVweap;
@@ -35,7 +43,7 @@ typedef struct
 	bool go;
 	//направление движения
 	//0 - вверх;1 - вниз;2 - влево;3 - вправо
-	int dir;
+	direction_t dir;
 } Tmove;
 
 /*
@@ -86,8 +94,6 @@ typedef struct player_s
 	float Fbase;
 	// мозг
 	TAIbrain brain;
-	//время
-	struct time_s time;
 } player_t;
 
 extern player_t * playerList;
@@ -100,7 +106,12 @@ void player_moveLeft_ON();
 void player_moveLeft_OFF();
 void player_moveRight_ON();
 void player_moveRight_OFF();
-
+void player_attack_weapon1_ON();
+void player_attack_weapon1_OFF();
+void player_attack_weapon2_ON();
+void player_attack_weapon2_OFF();
+void player_attack_weapon3_ON();
+void player_attack_weapon3_OFF();
 
 void player_checkcode();
 void player_item_get(player_t * player);

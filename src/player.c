@@ -13,7 +13,6 @@
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <player.h>
-#include <x10_time.h>
 #include <x10_kbrd.h>
 
 #include <string.h>
@@ -22,46 +21,90 @@
 
 player_t * playerList = NULL;
 
+int player_spawn_player(player_t * player);
 
 void player_moveUp_ON()
 {
+	if(!game.P0)return;
+	game.P0->move.dir = DIR_UP;
+	game.P0->move.go = true;
 }
 
 void player_moveUp_OFF()
 {
+	if(!game.P0)return;
+	game.P0->move.go = false;
 }
 
 void player_moveDown_ON()
 {
+	if(!game.P0)return;
+	game.P0->move.dir = DIR_DOWN;
+	game.P0->move.go = true;
 }
 
 void player_moveDown_OFF()
 {
+	if(!game.P0)return;
+	game.P0->move.go = false;
 }
 
 void player_moveLeft_ON()
 {
+	if(!game.P0)return;
+	game.P0->move.dir = DIR_LEFT;
+	game.P0->move.go = true;
 }
 
 void player_moveLeft_OFF()
 {
+	if(!game.P0)return;
+	game.P0->move.go = false;
 }
 
 void player_moveRight_ON()
 {
+	if(!game.P0)return;
+	game.P0->move.dir = DIR_RIGHT;
+	game.P0->move.go = true;
 }
 
 void player_moveRight_OFF()
 {
+	if(!game.P0)return;
+	game.P0->move.go = false;
 }
 
+void player_attack_weapon1_ON()
+{
+	game.P0->w.attack = WEAP_BULL;
+}
+void player_attack_weapon1_OFF()
+{
+	game.P0->w.attack = WEAP_NONE;
+}
 
+void player_attack_weapon2_ON()
+{
+	game.P0->w.attack = WEAP_ROCKET;
+}
+void player_attack_weapon2_OFF()
+{
+	game.P0->w.attack = WEAP_NONE;
+}
 
-int player_spawn_player(player_t * player);
+void player_attack_weapon3_ON()
+{
+	game.P0->w.attack = WEAP_MINE;
+}
+void player_attack_weapon3_OFF()
+{
+	game.P0->w.attack = WEAP_NONE;
+}
 
-//////////////////////////////////////////////////////////////////////
-//набор и проверка кодов (добавление 10.05.2006)
-//////////////////////////////////////////////////////////////////////
+/*
+ * набор и проверка кодов (добавление 10.05.2006)
+ */
 void player_checkcode()
 {
 	/*
@@ -299,7 +342,7 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 		if(player->move.go)
 		{
 			if(play) {
-				player->Fbase = player->Fbase+c_p_fpsRUN*player->time.delta/100;
+				player->Fbase = player->Fbase+c_p_fpsRUN * ddtime10/100.0f;
 				if((player->Fbase<0)||(player->Fbase>3)) player->Fbase = 0;
 			};
 		};
@@ -349,34 +392,34 @@ static void player_move(player_t * player, int dir, long * speed)
 	orig = player->move.orig;
 	switch(dir)
 	{
-	case c_DIR_up:
+	case DIR_UP:
 		do{
-			orig.y = player->move.orig.y+(*speed)*player->time.delta/1000;
-			map_clip_find_near(&orig,c_p_MDL_box,c_DIR_up,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
+			orig.y = player->move.orig.y+(*speed) * ddtime10 / 1000.0f;
+			map_clip_find_near(&orig,c_p_MDL_box,DIR_UP,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
 			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
 			c+= 1;
 		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
 		break;
-	case c_DIR_dn:
+	case DIR_DOWN:
 		do{
-			orig.y = player->move.orig.y-(*speed)*player->time.delta/1000;
-			map_clip_find_near(&orig,c_p_MDL_box,c_DIR_dn,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
+			orig.y = player->move.orig.y-(*speed) * ddtime10 / 1000.0f;
+			map_clip_find_near(&orig,c_p_MDL_box,DIR_DOWN,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
 			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
 			c+= 1;
 		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
 		break;
-	case c_DIR_lf:
+	case DIR_LEFT:
 		do{
-			orig.x = player->move.orig.x-(*speed)*player->time.delta/1000;
-			map_clip_find_near(&orig,c_p_MDL_box,c_DIR_lf,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
+			orig.x = player->move.orig.x-(*speed) * ddtime10 / 1000.0f;
+			map_clip_find_near(&orig,c_p_MDL_box,DIR_LEFT,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
 			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
 			c+= 1;
 		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
 		break;
-	case c_DIR_rt:
+	case DIR_RIGHT:
 		do{
-			orig.x = player->move.orig.x+(*speed)*player->time.delta/1000;
-			map_clip_find_near(&orig,c_p_MDL_box,c_DIR_rt,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
+			orig.x = player->move.orig.x+(*speed) * ddtime10 / 1000.0f;
+			map_clip_find_near(&orig,c_p_MDL_box,DIR_RIGHT,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
 			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
 			c+= 1;
 		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
@@ -393,19 +436,6 @@ static void player_handle(player_t * player)
 	float L,R,U,D;
 	long speed_s;
 
-	time_Sget();
-	player->time.t1 = time.s*100+time.hs;              //системное время в сотых долях секунд
-	if(player->time.t0>player->time.t1)
-	{
-		player->time.delta = player->time.last_delta;       //t0 должно быть меньше t1
-	}
-	else
-	{
-		player->time.delta = player->time.t1-player->time.t0;
-	};
-	player->time.last_delta = player->time.delta;
-	time_Sget();
-	player->time.t0 = time.s*100+time.hs;               //системное время в сотых долях секунд
 	if(player->charact.health<=0) {                     //если игрок мертв
 		if(player->charact.spawned)
 		{
@@ -431,11 +461,11 @@ static void player_handle(player_t * player)
 		};
 		if(!player->move.go)
 		{                                     //игрок останавливается
-			player->move.speed = player->move.speed-c_p_accel*player->time.delta;
+			player->move.speed = player->move.speed-c_p_accel * ddtime10;
 			if(player->move.speed<0) player->move.speed = 0;
 		}
 		else {                                                          //игрок идет
-			player->move.speed = player->move.speed+c_p_accel*player->time.delta;
+			player->move.speed = player->move.speed + ddtime10;
 			if(player->charact.speed<player->move.speed) player->move.speed = player->charact.speed;
 			if(player->move.speed<0) player->move.speed = 0;
 		};
@@ -443,34 +473,34 @@ static void player_handle(player_t * player)
 		speed_s = player->charact.speed >> 2;
 		//стрейф
 		switch(player->move.dir){
-		case c_DIR_up:
-		case c_DIR_dn:
+		case DIR_UP:
+		case DIR_DOWN:
 			Sorig = player->move.orig;
 			Sorig.x = Sorig.x-c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &L);
 			Sorig = player->move.orig;
 			Sorig.x = Sorig.x+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &R);
-			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) player_move(player,c_DIR_lf, &speed_s);//strafe left
-			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) player_move(player,c_DIR_rt, &speed_s);//strafe right
+			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) player_move(player,DIR_LEFT, &speed_s);//strafe left
+			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) player_move(player,DIR_RIGHT, &speed_s);//strafe right
 			break;
-		case c_DIR_lf:
-		case c_DIR_rt:
+		case DIR_LEFT:
+		case DIR_RIGHT:
 			Sorig = player->move.orig;
 			Sorig.y = Sorig.y-c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &D);
 			Sorig = player->move.orig;
 			Sorig.y = Sorig.y+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &U);
-			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) player_move(player,c_DIR_up, &speed_s);//strafe up
-			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) player_move(player,c_DIR_dn, &speed_s);//strafe down
+			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) player_move(player,DIR_UP, &speed_s);//strafe up
+			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) player_move(player,DIR_DOWN, &speed_s);//strafe down
 			break;
 		}
 	}
 //стрельба
 	if(player->w.attack == 0)
 	{                                       //игрок не атакует
-		if(player->w.reloadtime_d>0) player->w.reloadtime_d -= player->time.delta;//учитываем время на перезарядку
+		if(player->w.reloadtime_d>0) player->w.reloadtime_d -= ddtime10;//учитываем время на перезарядку
 	}
 	else {                                                           //игрок атакует
 		if(player->charact.health<=0)
@@ -486,7 +516,7 @@ static void player_handle(player_t * player)
 		}
 		else
 		{
-			if(player->w.reloadtime_d>0) player->w.reloadtime_d-= player->time.delta;//учитываем время на перезарядку
+			if(player->w.reloadtime_d>0) player->w.reloadtime_d -= ddtime10;//учитываем время на перезарядку
 			else
 			{
 				if(!player->bull)
@@ -505,13 +535,14 @@ static void player_handle(player_t * player)
 						if(bullList->_weap_==1) player->bull = bullList;
 						bullList->dir    = player->move.dir;                          //направление движения
 						bullList->delta_s  = 0;                                     //изменение расстояния
-						bullList->time.t0  = time.s*100+time.hs;                    //системное время в сотых долях секунд
 						bullList->frame    = 0;
+						//присоединяем изображение пули
 						switch(player->w.attack)
-						{                                          //присоединяем изображение пули
+						{
 						case 1:bullList->image = IMG_connect("B_BULL"  );break;
 						case 2:bullList->image = IMG_connect("B_ROCKET");break;
 						case 3:bullList->image = IMG_connect("B_MINE"  );break;
+						default: bullList->image = NULL;
 						};
 						if(
 								(wtable[player->w.attack-1].ammo>0) && //если пули у оружия не бесконечны и
@@ -731,11 +762,6 @@ void player_spawn(player_t * player, spawn_t * spawn)
 	player->move.dir          = 0;
 	player->w.attack          = false;
 	player->w.reloadtime_d    = 0;
-	player->time.delta      = 0;
-	player->time.last_delta = 0;
-	time_Sget();
-	player->time.t0         = time.s*100+time.hs;
-	player->time.t1         = player->time.t0;
 };
 /*
  * появление/восстановление игрока на карте
@@ -829,10 +855,10 @@ void players_control()
 			think_enemy(player);
 			break;
 		case c_p_P0:
-			think_human(0,player);
+			think_human(0, player);
 			break;
 		case c_p_P1:
-			think_human(1,player);
+			think_human(1, player);
 			break;
 		}
 		player_handle(player);

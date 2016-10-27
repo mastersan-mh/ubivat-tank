@@ -10,7 +10,6 @@
 #include <img.h>
 #include <map.h>
 #include <_gr2D.h>
-#include <x10_time.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -84,8 +83,10 @@ void bull_remove(bull_t ** bull)
 
 				if((*bull)->player->bull == *bull) (*bull)->player->bull = NULL;
 
-				Z_free(*bull);                                                    //удаляем его
-				*bull = p;                                                          //bull указ. на пред. эл-т
+				//удаляем его
+				Z_free(*bull);
+				//bull указ. на пред. эл-т
+				*bull = p;
 			}
 		}
 	}
@@ -110,14 +111,13 @@ void bull_removeall()
  */
 void bull_draw(camera_t * cam, bull_t * bull, bool play)
 {
-	int mdlbox;                                                          //размер кадра X,Y
-	int Fmax;
-
-	mdlbox = bull->image->IMG->sx;
-	Fmax   = ((bull->image->IMG->sy)/ mdlbox)>> 2;                      //количество кадров
+	//размер кадра X,Y
+	int mdlbox = bull->image->IMG->sx;
+	//количество кадров
+	int Fmax = bull->image->IMG->sy / (mdlbox * 4);
 	if(play)
 	{
-		bull->frame = bull->frame+c_bull_FPS*bull->time.delta/100;
+		bull->frame = bull->frame + c_bull_FPS * ddtime10/100;
 		if((bull->frame<0)||(Fmax<=bull->frame)) bull->frame = 0;
 	};
 	if
@@ -163,18 +163,7 @@ void bull_control()
 	bull = bullList;
 	while(bull)
 	{
-		time_Sget();
-		bull->time.t1 = time.s*100+time.hs;                        //системное время в сотых долях секунд
-		if(bull->time.t0>bull->time.t1) {
-			bull->time.delta = bull->time.last_delta;                           //t0 должно быть меньше t1
-		}
-		else {
-			bull->time.delta = bull->time.t1-bull->time.t0;
-		};
-		bull->time.last_delta = bull->time.delta;
-		time_Sget();
-		bull->time.t0 = time.s*100+time.hs;                                  //системное время в сотых долях секунд
-		s = wtable[bull->_weap_].bullspeed*bull->time.delta/1000;
+		s = wtable[bull->_weap_].bullspeed * ddtime10 / 1000;
 		switch(bull->dir)
 		{
 		case 0: bull->orig.y = bull->orig.y+s;break; //c_p_DIR_up
@@ -253,10 +242,6 @@ void explode_add(bull_t * bull, float Xexpl, float Yexpl)
 	};
 	p->next       = explList;
 	explList = p;
-	explList->time.delta      = 0;
-	explList->time.last_delta = 0;
-	time_Sget();
-	explList->time.t0         = time.s*100+time.hs;
 }
 /*
  * удаление взрыва из списка, после удаления
@@ -309,7 +294,7 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 	int mdlbox;
 
 	mdlbox = explode->image->IMG->sx;
-	if(play) explode->frame = explode->frame+c_explode_FPS*explode->time.delta/100;
+	if(play) explode->frame = explode->frame + c_explode_FPS * ddtime10 / 100.0f;
 	if(
 			(cam->orig.x-cam->sx/2<=explode->orig.x+(mdlbox >> 1)) &&
 			(explode->orig.x-(mdlbox >> 1)<=cam->orig.x+cam->sx/2) &&
@@ -356,15 +341,6 @@ void explode_control()
 	explode = explList;
 	while(explode)
 	{
-		time_Sget();
-		explode->time.t1 = time.s*100+time.hs;
-		if(explode->time.t0>explode->time.t1)
-			explode->time.delta = explode->time.last_delta;
-		else
-			explode->time.delta = explode->time.t1-explode->time.t0;
-		explode->time.last_delta = explode->time.delta;
-		time_Sget();
-		explode->time.t0 = time.s*100+time.hs;
 		if(explode->frame == -1)
 		{
 			explode->frame = 0;

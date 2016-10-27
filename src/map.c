@@ -9,7 +9,6 @@
 #include <img.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
-#include <x10_time.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -252,7 +251,7 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 	*dist = box/2;
 	switch(dir)
 	{
-	case c_DIR_up:
+	case DIR_UP:
 		if(c_MAP_sy*8<DISTmax) DISTmax = c_MAP_sy * 8;
 		do
 		{
@@ -265,7 +264,7 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 			}while (!((+box<=c)||((wall & mask) != 0)));
 		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
-	case c_DIR_dn:
+	case DIR_DOWN:
 		if(c_MAP_sy*8<DISTmax) DISTmax = c_MAP_sy*8;
 		do
 		{
@@ -278,7 +277,7 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 			}while(!((+box<=c)||((wall & mask) != 0)));
 		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
-	case c_DIR_lf:
+	case DIR_LEFT:
 		if(c_MAP_sx*8<DISTmax) DISTmax = c_MAP_sx*8;
 		do
 		{
@@ -291,7 +290,7 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 			}while(!( (+box<=c)||((wall && mask) != 0)));
 		}while(!( (DISTmax<=(*dist))||((wall && mask) != 0)));
 		break;
-	case c_DIR_rt:
+	case DIR_RIGHT:
 		if(c_MAP_sx*8<DISTmax) DISTmax = c_MAP_sx*8;
 		do
 		{

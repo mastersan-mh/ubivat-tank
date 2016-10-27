@@ -9,19 +9,19 @@ ubivat_tank_CFLAGS = -std=c11 -Wall -D_GNU_SOURCE
 ubivat_tank_LDFLAGS =
 
 ubivat_tank_SOURCES = \
-types.c \
 Z_mem.c \
+system.c \
+types.c \
 video.c \
+_gr2D.c \
+_gr2Don.c \
 actions.c \
 input.c \
 think.c \
 game.c \
-_gr2D.c \
-_gr2Don.c \
 img.c \
 main.c \
 map.c \
 menu.c \
 player.c \
-weap.c \
-x10_time.c
+weap.c

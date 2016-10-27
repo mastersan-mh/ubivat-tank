@@ -11,21 +11,17 @@
 #include <player.h>
 
 
-action_t action[ACTION_NUM] = {
+action_t actions[__ACTION_NUM] = {
+		{ NULL               , game_action_enter_mainmenu}, /* 	ACTION_ENTER_MAINMENU */
+		{ player_moveUp_ON   , player_moveUp_OFF    }, /* ACTION_PLAYER_MOVEL */
+		{ player_moveDown_ON , player_moveDown_OFF  }, /* ACTION_PLAYER_MOVER */
+		{ player_moveLeft_ON , player_moveLeft_OFF  }, /* ACTION_PLAYER_MOVE_LEFT */
+		{ player_moveRight_ON, player_moveRight_OFF }, /* ACTION_PLAYER_MOVE_RIGHT */
+		{ player_attack_weapon1_ON, player_attack_weapon1_OFF },
+		{ player_attack_weapon2_ON, player_attack_weapon2_OFF },
+		{ player_attack_weapon3_ON, player_attack_weapon3_OFF }
 
-		{player_moveUp_ON   , player_moveUp_OFF }, /* ACTION_PLAYER_MOVEL */
-		{player_moveDown_ON , player_moveDown_OFF}, /* ACTION_PLAYER_MOVER */
-		{player_moveLeft_ON , player_moveLeft_OFF }, /* ACTION_PLAYER_MOVE_LEFT */
-		{player_moveRight_ON, player_moveRight_OFF}, /* ACTION_PLAYER_MOVE_RIGHT */
 };
-
-void action_init()
-{
-	input_key_bindAction(SDLK_UP   , action[ACTION_PLAYER_MOVE_UP]);
-	input_key_bindAction(SDLK_DOWN , action[ACTION_PLAYER_MOVE_DOWN]);
-	input_key_bindAction(SDLK_LEFT , action[ACTION_PLAYER_MOVE_LEFT]);
-	input_key_bindAction(SDLK_RIGHT, action[ACTION_PLAYER_MOVE_RIGHT]);
-}
 
 typedef struct
 {

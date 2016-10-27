@@ -5,11 +5,15 @@
 
 typedef enum
 {
+	ACTION_ENTER_MAINMENU,
 	ACTION_PLAYER_MOVE_UP,
 	ACTION_PLAYER_MOVE_DOWN,
 	ACTION_PLAYER_MOVE_LEFT,
 	ACTION_PLAYER_MOVE_RIGHT,
-	ACTION_NUM
+	ACTION_PLAYER_ATTACK_WEAPON1,
+	ACTION_PLAYER_ATTACK_WEAPON2,
+	ACTION_PLAYER_ATTACK_WEAPON3,
+	__ACTION_NUM
 }actions_t;
 
 typedef struct
@@ -18,10 +22,10 @@ typedef struct
 	actionf_t release;
 }action_t;
 
+extern action_t actions[__ACTION_NUM];
+
 void kp_0();
 void kp_B();
-
-void action_init();
 
 void action_zoom_in();
 void action_zoom_out();

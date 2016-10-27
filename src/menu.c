@@ -9,7 +9,6 @@
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <types.h>
-#include <x10_time.h>
 #include <x10_kbrd.h>
 
 /* MENU_MAIN */
@@ -84,7 +83,7 @@ void menu_send_event(SDL_Event * event)
 			printf("buffer is full!\n");
 		else
 		{
-			buffer[buffer_end] = event->key.keysym.scancode;
+			buffer[buffer_end] = event->key.keysym.scancode;// use .sym istead
 			buffer_end++;
 			if(buffer_end >= KEYBUFFER_SIZE) buffer_end = 0;
 		}
@@ -371,7 +370,7 @@ int menu_game_save(menu_key_t menukey, void * ctx)
 				l = strlen(game.saveslist[menu_cur].Hname);
 				if(ch == 0xEE)
 				{
-					if(0<l) game.saveslist[menu_cur].Hname[l-1] = 0;
+					if(0 < l) game.saveslist[menu_cur].Hname[l-1] = 0;
 				}
 				else
 				{
@@ -414,7 +413,6 @@ int menu_game_save(menu_key_t menukey, void * ctx)
 				if(game.created)
 				{
 					game.ingame = false;
-					game_time_reset();
 				}
 			}
 		}
