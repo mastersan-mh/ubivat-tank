@@ -84,10 +84,7 @@ void input_init()
  */
 void input_done()
 {
-	for(int i=0; i < KEYS_HASH_NUM; i++)
-	{
-		free(game_input.key[i].collision);
-	}
+	input_key_unbind_all();
 }
 
 /*
@@ -161,4 +158,17 @@ void input_key_unbind(int __key)
 		__keyHash->collision[collisionIndex].release = NULL;
 	}
 
+}
+
+/*
+ * отвязать функцию от клавиши
+ */
+void input_key_unbind_all()
+{
+	for(int i=0; i < KEYS_HASH_NUM; i++)
+	{
+		game_input.key[i].amount = 0;
+		free(game_input.key[i].collision);
+		game_input.key[i].collision = NULL;
+	}
 }

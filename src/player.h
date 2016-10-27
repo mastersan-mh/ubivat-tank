@@ -93,7 +93,7 @@ typedef struct player_s
 	//№ кадра(база)
 	float Fbase;
 	// мозг
-	TAIbrain brain;
+	think_t brain;
 } player_t;
 
 extern player_t * playerList;

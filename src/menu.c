@@ -4,44 +4,42 @@
  * by Master San
  */
 #include <menu.h>
-#include <game.h>
 #include <img.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <types.h>
-#include <x10_kbrd.h>
 
 /* MENU_MAIN */
-menu_main_context_t menu_main_context = {};
+menu_main_ctx_t menu_main_ctx = {};
 
 /* MENU_GAME */
-menu_game_context_t menu_game_context = {};
+menu_game_ctx_t menu_game_ctx = {};
 
 /* MENU_GAME_NEW1P */
 
 /* MENU_GAME_NEW2P */
 
 /* MENU_GAME_LOAD */
-menu_game_load_context_t menu_load_context = {};
+menu_game_load_ctx_t menu_load_ctx = {};
 
 /* MENU_GAME_SAVE */
-menu_game_save_context_t menu_save_context = {};
+menu_game_save_ctx_t menu_save_ctx = {};
 
 /* MENU_CUSTOM */
-menu_custom_context_t menu_custom_context = {};
+menu_custom_ctx_t menu_custom_ctx = {};
 
 /* MENU_CUSTOM_NEWP1 */
 
 /* MENU_CUSTOM_NEWP2 */
 
 /* MENU_OPTIONS */
-menu_options_context_t menu_options_context = {};
+menu_options_ctx_t menu_options_ctx = {};
 /* MENU_ABOUT */
-menu_about_context_t menu_about_context = {};
+menu_about_ctx_t menu_about_ctx = {};
 /* MENU_INTERLEVEL */
-menu_interlevel_context_t menu_interlevel_context = {};
+menu_interlevel_ctx_t menu_interlevel_ctx = {};
 /* MENU_PRELEVEL */
-menu_prelevel_context_t menu_prelevel_context = {};
+menu_prelevel_ctx_t menu_prelevel_ctx = {};
 
 /* MENU_ABORT */
 
@@ -127,7 +125,7 @@ void menu_draw_conback()
  */
 static void menu_main_draw(const void * ctx)
 {
-	const menu_main_context_t *__ctx = ctx;
+	const menu_main_ctx_t *__ctx = ctx;
 	int menu = __ctx->menu;
 	menu_draw_conback();
 	gr2D_setimage0(277  ,159    ,game.m_i_logo);
@@ -154,7 +152,7 @@ int menu_main(menu_key_t menukey, void * ctx)
 			MENU_ABORT,
 			MENU_QUIT
 	};
-	menu_main_context_t * __ctx  = ctx;
+	menu_main_ctx_t * __ctx  = ctx;
 	switch(menukey)
 	{
 	case NOTHING: break;
@@ -182,7 +180,7 @@ int menu_main(menu_key_t menukey, void * ctx)
  */
 static void menu_game_draw(const void * ctx)
 {
-	const menu_game_context_t * __ctx = ctx;
+	const menu_game_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
 	gr2D_setimage0(120,30-23*1       ,game.m_i_game    );
@@ -200,7 +198,7 @@ int menu_game(menu_key_t menukey, void * ctx)
 			MENU_GAME_LOAD,
 			MENU_GAME_SAVE
 	};
-	menu_game_context_t * __ctx = ctx;
+	menu_game_ctx_t * __ctx = ctx;
 	switch(menukey)
 	{
 	case NOTHING: break;
@@ -254,7 +252,7 @@ int menu_game_new2P(menu_key_t menukey, void * ctx)
  */
 static void menu_game_load_draw(const void * ctx)
 {
-	const menu_game_load_context_t * __ctx = ctx;
+	const menu_game_load_ctx_t * __ctx = ctx;
 	int iline;
 	int ic;
 	menu_draw_conback();
@@ -283,7 +281,7 @@ static void menu_game_load_draw(const void * ctx)
 }
 int menu_game_load(menu_key_t menukey, void * ctx)
 {
-	menu_game_load_context_t * __ctx = ctx;
+	menu_game_load_ctx_t * __ctx = ctx;
 	int ret;
 	int menu_cur = 0;
 	game_record_getsaves();
@@ -315,107 +313,98 @@ int menu_game_load(menu_key_t menukey, void * ctx)
  */
 static void menu_game_save_draw(const void * ctx)
 {
-	const menu_game_save_context_t * __ctx = (menu_game_save_context_t *) ctx;
+	const menu_game_save_ctx_t * __ctx = ctx;
 
+	int menu = __ctx->menu;
 
-	int menu_cur = __ctx->menu_cur;
-	bool f_input = __ctx->f_input;
-
-	int ic;
-	int iline;
+	int irow;
+	int icol;
 
 	menu_draw_conback();
 	gr2D_setimage0(120, 30+23*(-1), game.m_i_g_save );
-	if(!f_input)
-		gr2D_setimage0(97, 30+15*menu_cur+2, game.m_i_cur_1);
-	for(iline = 0; iline < 8; iline++)
+	if(__ctx->state != MENU_GAME_SAVE_SELECT)
+		gr2D_setimage0(97, 30+15*menu+2, game.m_i_cur_1);
+	for(irow = 0; irow < 8; irow++)
 	{
-		gr2D_setimage0(97+23          ,30+iline*15,game.m_i_lineL);
-		for(ic = 0; ic<=16; ic++)
-			gr2D_setimage0(97+23+4+8*ic    ,30+iline*15,game.m_i_lineM);
-		gr2D_setimage0(97+23+4+8*(ic+1),30+iline*15,game.m_i_lineR);
+		gr2D_setimage0(97+23, 30+irow*15, game.m_i_lineL);
+		for(icol = 0; icol <= 16; icol++)
+			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineM);
+		gr2D_setimage0(97+23+4+8*(icol+1), 30+irow*15, game.m_i_lineR);
 		gr2D.color.current = 7;
-		if(game.saveslist[iline].Hname[0]==0xFF)
-			gr2Don_settext(97+23+4,33+iline*15, orient_horiz, "---===EMPTY===---");
+		if(game.saveslist[irow].Hname[0] == 0xFF)
+			gr2Don_settext(97+23+4,33+irow*15, orient_horiz, "---===EMPTY===---");
 		else
 		{
-			gr2Don_settext(97+23+4,33+iline*15, orient_horiz, game.saveslist[iline].Hname);
+			gr2Don_settext(97+23+4,33+irow*15, orient_horiz, game.saveslist[irow].Hname);
 			//отображение статуса сохраненной игры
-			gr2D_setimage0( 98+23+4+8*(ic+1),29+iline*15,game.m_i_flagRUS);
-			if(game.saveslist[iline].flags & c_g_f_2PLAYERS)
-				gr2D_setimage0(110+23+4+8*(ic+1),29+iline*15,game.m_i_flagRUS);
+			gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
+			if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
+				gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		}
 	}
 }
 
 int menu_game_save(menu_key_t menukey, void * ctx)
 {
-	int menu_cur = 0;
-	gamesave_t tmprec;
-	bool f_input = false;
+	menu_game_save_ctx_t * __ctx = ctx;
+
 	char ch;
 	long l;
-	bool onInit = false;
-	if(onInit)
-		game_record_getsaves();
-	if(f_input)
-	{
-		if(menukey>=0x80) ;
-		else
-		{
-			if( menukey==KP0_ENTER_1 || menukey == KP0_ESCAPE_1) ;
-			else
-			{
-				ch = (char) menukey;
-				l = strlen(game.saveslist[menu_cur].Hname);
-				if(ch == 0xEE)
-				{
-					if(0 < l) game.saveslist[menu_cur].Hname[l-1] = 0;
-				}
-				else
-				{
-					if(ch<0x80 && l<=16) str_addch(game.saveslist[menu_cur].Hname, ch);
-				}
-			}
-		}
-	}
-	if(!f_input)
-	{
 
-	}
-	else
+	switch(__ctx->state)
 	{
-		if(menukey == ENTER)
+	case MENU_GAME_SAVE_INIT:
+		game_record_getsaves();
+		break;
+	case MENU_GAME_SAVE_SELECT:
+		switch(menukey)
 		{
-			if(f_input)
+		case NOTHING: break;
+		case UP     : if(__ctx->menu > 0  ) __ctx->menu--;break;
+		case DOWN   : if(__ctx->menu < 8-1) __ctx->menu++;break;
+		case LEFT   :
+		case RIGHT  :
+		case ENTER  :
+			__ctx->rec = game.saveslist[__ctx->menu];
+			__ctx->rec.flags = game.flags;
+			if(__ctx->rec.Hname[0]== 0xFF) __ctx->rec.Hname[0] = 0x00;
+			break;
+		case LEAVE  :
+			if(game.created)
 			{
-				game_record_save(&game.saveslist[menu_cur]);
-				f_input = false;
+				game.ingame = false;
 			}
-			else
-			{
-				tmprec = game.saveslist[menu_cur];
-				game.saveslist[menu_cur].flags = game.flags;
-				if(game.saveslist[menu_cur].Hname[0]== 0xFF) game.saveslist[menu_cur].Hname[0] = 0x00;
-				do{ }while(!( (menukey==KP0_ENTER_0) ));
-				f_input = true;
-			};
-		};
-		if(menukey == LEAVE)
-		{
-			if(f_input)
-			{
-				game.saveslist[menu_cur] = tmprec;
-				f_input = false;
-			}
-			else
-			{
-				if(game.created)
-				{
-					game.ingame = false;
-				}
-			}
+			break;
+		case SPACE  :break;
 		}
+		break;
+	case MENU_GAME_SAVE_INPUT:
+		switch(menukey)
+		{
+		case NOTHING:
+			ch = (char) menukey;
+			l = strlen(__ctx->rec.Hname);
+			if(ch == 0xEE)//backspace
+			{
+				if(0 < l) __ctx->rec.Hname[l-1] = 0;
+			}
+			else
+				if(ch < 0x80 && l <= 16) str_addch(__ctx->rec.Hname, ch);
+			break;
+		case UP     : if(__ctx->menu > 0  ) __ctx->menu--;break;
+		case DOWN   : if(__ctx->menu < 8-1) __ctx->menu++;break;
+		case LEFT   :
+		case RIGHT  :
+		case ENTER  :
+			game.saveslist[__ctx->menu] = __ctx->rec;
+			break;
+		case LEAVE  : break;
+		case SPACE  : break;
+		}
+		break;
+	case MENU_GAME_SAVE_SAVE:
+		game_record_save(&game.saveslist[__ctx->menu]);
+		break;
 	}
 	return MENU_GAME_SAVE;
 }
@@ -424,7 +413,7 @@ int menu_game_save(menu_key_t menukey, void * ctx)
  */
 static void menu_custom_draw(const void * ctx)
 {
-	const menu_custom_context_t * __ctx = ctx;
+	const menu_custom_ctx_t * __ctx = ctx;
 	menu_draw_conback();
 	gr2D_setimage0(120,30-23*1       , game.m_i_case    );
 	gr2D_setimage0(120,30+23*0       , game.m_i_arrowL  );
@@ -446,7 +435,7 @@ int menu_custom(menu_key_t menukey, void * ctx)
 			MENU_CUSTOM_NEWP2,
 	};
 
-	menu_custom_context_t * __ctx = ctx;
+	menu_custom_ctx_t * __ctx = ctx;
 	switch(menukey)
 	{
 	case NOTHING: break;
@@ -506,15 +495,12 @@ int menu_custom_new2P(menu_key_t menukey, void * ctx)
  */
 static void menu_options_draw(const void * ctx)
 {
-	const menu_options_context_t * __ctx = ctx;
-
-	int cur_pl      = __ctx->cur_pl;
-	bool wait_a_key = __ctx->wait_a_key;
+	const menu_options_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
 	gr2D_setimage0(120,30+23*(-1)     ,game.m_i_options);
-	if(!wait_a_key)
-		gr2D_setimage0(58+cur_pl*131,30+12+12*__ctx->menu+1,game.m_i_cur_1);
+	if(__ctx->state == MENU_OPTIONS_SELECT)
+		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, game.m_i_cur_1);
 	gr2D.color.current = 25;
 	gr2Don_settext( 58+131*0, 30+9*0, 0, "ИГРОК1");
 	gr2Don_settext( 58+131*1, 30+9*0, 0, "ИГРОК2");
@@ -525,61 +511,71 @@ static void menu_options_draw(const void * ctx)
 	gr2Don_settext( 9,32+12*5, 0, "Пульки");
 	gr2Don_settext( 9,32+12*6, 0, "Ракета");
 	gr2Don_settext( 9,32+12*7, 0, "Мина");
-	gr2Don_settext(82+131*0,32+12*1, orient_horiz, "%d", game.controlP0[ 0]);
-	gr2Don_settext(82+131*0,32+12*2, orient_horiz, "%d", game.controlP0[ 2]);
-	gr2Don_settext(82+131*0,32+12*3, orient_horiz, "%d", game.controlP0[ 4]);
-	gr2Don_settext(82+131*0,32+12*4, orient_horiz, "%d", game.controlP0[ 6]);
-	gr2Don_settext(82+131*0,32+12*5, orient_horiz, "%d", game.controlP0[ 7]);
-	gr2Don_settext(82+131*0,32+12*6, orient_horiz, "%d", game.controlP0[10]);
-	gr2Don_settext(82+131*0,32+12*7, orient_horiz, "%d", game.controlP0[12]);
-	gr2Don_settext(82+131*1,32+12*1, orient_horiz, "%d", game.controlP1[ 0]);
-	gr2Don_settext(82+131*1,32+12*2, orient_horiz, "%d", game.controlP1[ 2]);
-	gr2Don_settext(82+131*1,32+12*3, orient_horiz, "%d", game.controlP1[ 4]);
-	gr2Don_settext(82+131*1,32+12*4, orient_horiz, "%d", game.controlP1[ 6]);
-	gr2Don_settext(82+131*1,32+12*5, orient_horiz, "%d", game.controlP1[ 8]);
-	gr2Don_settext(82+131*1,32+12*6, orient_horiz, "%d", game.controlP1[10]);
-	gr2Don_settext(82+131*1,32+12*7, orient_horiz, "%d", game.controlP1[12]);
+	gr2Don_settext(82+131*0,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_UP]);
+	gr2Don_settext(82+131*0,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_DOWN]);
+	gr2Don_settext(82+131*0,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_LEFT]);
+	gr2Don_settext(82+131*0,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_RIGHT]);
+	gr2Don_settext(82+131*0,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON1]);
+	gr2Don_settext(82+131*0,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON2]);
+	gr2Don_settext(82+131*0,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON3]);
+	gr2Don_settext(82+131*1,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_UP]);
+	gr2Don_settext(82+131*1,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_DOWN]);
+	gr2Don_settext(82+131*1,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_LEFT]);
+	gr2Don_settext(82+131*1,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_RIGHT]);
+	gr2Don_settext(82+131*1,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON1]);
+	gr2Don_settext(82+131*1,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON2]);
+	gr2Don_settext(82+131*1,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON3]);
 }
 
 int menu_options(menu_key_t menukey, void * ctx)
 {
-	menu_options_context_t * __ctx = ctx;
-	int cur_pl = 0;
-	bool wait_a_key = false;
-	bool onDone = false;
+	menu_options_ctx_t * __ctx = ctx;
+	int scancode = 0;
 
-	if(wait_a_key)
+	static actions_t menuactions[] =
 	{
-		//"забивание" клавиш
-		do{ }while(!( (menukey != KP0_ENTER_0) ));
-		if(cur_pl==0)
+			ACTION_PLAYER_MOVE_UP,
+			ACTION_PLAYER_MOVE_DOWN,
+			ACTION_PLAYER_MOVE_LEFT,
+			ACTION_PLAYER_MOVE_RIGHT,
+			ACTION_PLAYER_ATTACK_WEAPON1,
+			ACTION_PLAYER_ATTACK_WEAPON2,
+			ACTION_PLAYER_ATTACK_WEAPON3,
+			ACTION_PLAYER2_MOVE_UP,
+			ACTION_PLAYER2_MOVE_DOWN,
+			ACTION_PLAYER2_MOVE_LEFT,
+			ACTION_PLAYER2_MOVE_RIGHT,
+			ACTION_PLAYER2_ATTACK_WEAPON1,
+			ACTION_PLAYER2_ATTACK_WEAPON2,
+			ACTION_PLAYER2_ATTACK_WEAPON3
+	};
+#define MENU_ROWS 8
+	switch(__ctx->state)
+	{
+	case MENU_OPTIONS_SELECT:
+		switch(menukey)
 		{
-			//настройка игрока 0
-			game.controlP0[__ctx->menu * 2 + 0] = menukey;
-			do{ }while(!( (menukey != game.controlP0[__ctx->menu*2+0])));
-			game.controlP0[__ctx->menu * 2 + 1] = menukey;
+		case NOTHING: break;
+		case UP     : if(__ctx->menu > 0  ) __ctx->menu--;break;
+		case DOWN   : if(__ctx->menu < MENU_ROWS - 1) __ctx->menu++;break;
+		case LEFT   : if(__ctx->column > 0  ) __ctx->column--;break;
+		case RIGHT  : if(__ctx->column < 1  ) __ctx->column++;break;
+		case ENTER  : __ctx->state = MENU_OPTIONS_WAIT_KEY;break;
+		case LEAVE  :
+			game_cfg_save();
+			game_rebind_keys_all();
+			__ctx->state = MENU_OPTIONS_SELECT;
+			return MENU_MAIN;
+		case SPACE  : break;
 		}
-		else
-		{
-			//настройка игрока 1
-			game.controlP1[__ctx->menu * 2 + 0] = menukey;
-			do{ }while(!( (menukey != game.controlP1[__ctx->menu*2+0]) ));
-			game.controlP1[__ctx->menu * 2 + 1] = menukey;
-		};
-		wait_a_key = false;
-	};
-	menukey = -1000;
-	if(menukey == ENTER) wait_a_key = true;       //нажали ENTER
-	if(!wait_a_key)
-	{
-		if(menukey == LEAVE) return MENU_MAIN;
-		if(menukey == LEFT) cur_pl = 0;
-		if(menukey == RIGHT) cur_pl = 1;
-	};
-	if(onDone)
-		game_cfg_save();
+		break;
+	case MENU_OPTIONS_WAIT_KEY:
+		game.controls[menuactions[__ctx->menu + __ctx->column * MENU_ROWS ]] = scancode;
+		break;
+	}
 	return MENU_OPTIONS;
 };
+
 /*
  * меню "О ИГРЕ"
  */
@@ -721,21 +717,21 @@ int menu_abort(menu_key_t menukey, void * ctx)
 
 menu_t menus[MENU_NUM] =
 {
-		{ 6, &menu_main_context    , menu_main        , menu_main_draw }, /* MENU_MAIN */
-		{ 3, &menu_game_context    , menu_game        , menu_game_draw }, /* MENU_GAME */
-		{ 0, NULL                  , menu_game_new1P  , NULL }, /* MENU_GAME_NEW1P */
-		{ 0, NULL                  , menu_game_new2P  , NULL }, /* MENU_GAME_NEW2P */
-		{ 8, &menu_load_context    , menu_game_load   , menu_game_load_draw   }, /* MENU_GAME_LOAD */
-		{ 8, &menu_save_context    , menu_game_save   , menu_game_save_draw   }, /* MENU_GAME_SAVE */
-		{ 3, &menu_custom_context  , menu_custom      , menu_custom_draw }, /* MENU_CUSTOM */
-		{ 0, NULL                  , menu_custom_new1P, NULL }, /* MENU_CUSTOM_NEWP1 */
-		{ 0, NULL                  , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
-		{ 7, &menu_options_context , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
-		{ 0, &menu_about_context   , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
-		{ 0, &menu_interlevel_context, menu_interlevel, menu_interlevel_draw }, /* MENU_INTERLEVEL */
-		{ 0, &menu_prelevel_context, menu_prelevel    , menu_prelevel_draw }, /* MENU_PRELEVEL */
-		{ 0, NULL                  , menu_abort       , NULL }, /* MENU_ABORT */
-		{ 0, NULL                  , NULL             , NULL }  /* MENU_QUIT */
+		{ 6, &menu_main_ctx      , menu_main        , menu_main_draw }, /* MENU_MAIN */
+		{ 3, &menu_game_ctx      , menu_game        , menu_game_draw }, /* MENU_GAME */
+		{ 0, NULL                , menu_game_new1P  , NULL }, /* MENU_GAME_NEW1P */
+		{ 0, NULL                , menu_game_new2P  , NULL }, /* MENU_GAME_NEW2P */
+		{ 8, &menu_load_ctx      , menu_game_load   , menu_game_load_draw   }, /* MENU_GAME_LOAD */
+		{ 8, &menu_save_ctx      , menu_game_save   , menu_game_save_draw   }, /* MENU_GAME_SAVE */
+		{ 3, &menu_custom_ctx    , menu_custom      , menu_custom_draw }, /* MENU_CUSTOM */
+		{ 0, NULL                , menu_custom_new1P, NULL }, /* MENU_CUSTOM_NEWP1 */
+		{ 0, NULL                , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
+		{ 7, &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
+		{ 0, &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
+		{ 0, &menu_interlevel_ctx, menu_interlevel  , menu_interlevel_draw }, /* MENU_INTERLEVEL */
+		{ 0, &menu_prelevel_ctx  , menu_prelevel    , menu_prelevel_draw }, /* MENU_PRELEVEL */
+		{ 0, NULL                , menu_abort       , NULL }, /* MENU_ABORT */
+		{ 0, NULL                , NULL             , NULL }  /* MENU_QUIT */
 };
 
 

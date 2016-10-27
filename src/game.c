@@ -16,7 +16,6 @@
 #include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
-#include <x10_kbrd.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -89,6 +88,8 @@ struct image_table_ent_s images_info[] = {
 	{NULL, NULL}
 };
 
+static void game_draw();
+
 
 void game_action_enter_mainmenu()
 {
@@ -113,7 +114,18 @@ static void pics_load()
 	}
 };
 
-static void game_draw();
+
+
+void game_rebind_keys_all()
+{
+	input_key_unbind_all();
+	int i;
+	for(i = ACTION_ENTER_MAINMENU; i < __ACTION_NUM; i++)
+	{
+
+		input_key_bindAction(game.controls[i], actions[i]);
+	}
+}
 
 void game_init()
 {
@@ -209,16 +221,7 @@ void game_init()
 	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
 	input_init();
 
-	input_key_bindAction(SDL_SCANCODE_ESCAPE, actions[ACTION_ENTER_MAINMENU]);
-	input_key_bindAction(SDL_SCANCODE_UP    , actions[ACTION_PLAYER_MOVE_UP]);
-	input_key_bindAction(SDL_SCANCODE_DOWN  , actions[ACTION_PLAYER_MOVE_DOWN]);
-	input_key_bindAction(SDL_SCANCODE_LEFT  , actions[ACTION_PLAYER_MOVE_LEFT]);
-	input_key_bindAction(SDL_SCANCODE_RIGHT , actions[ACTION_PLAYER_MOVE_RIGHT]);
-
-	input_key_bindAction(SDL_SCANCODE_SLASH , actions[ACTION_PLAYER_ATTACK_WEAPON1]);
-	input_key_bindAction(SDL_SCANCODE_PERIOD, actions[ACTION_PLAYER_ATTACK_WEAPON2]);
-	input_key_bindAction(SDL_SCANCODE_COMMA , actions[ACTION_PLAYER_ATTACK_WEAPON3]);
-
+	game_rebind_keys_all();
 }
 
 /*
@@ -469,7 +472,7 @@ void game_nextmap()
 int game_cfg_save()
 {
 	int ret = 0;
-	ssize_t c;
+	ssize_t count;
 	int fd;
     fd = open(
             BASEDIR FILENAME_CONFIG,
@@ -481,14 +484,8 @@ int game_cfg_save()
 		ret = 1;
 		goto __end;
 	}
-	c = write(fd, game.controlP0, sizeof(game.controlP0));
-	if(c != sizeof(game.controlP0))
-	{
-		ret = 2;
-		goto __end;
-	}
-	c = write(fd, game.controlP1, sizeof(game.controlP1));
-	if(c != sizeof(game.controlP0))
+	count = write(fd, game.controls, sizeof(game.controls));
+	if(count != sizeof(game.controls))
 	{
 		ret = 2;
 		goto __end;
@@ -508,36 +505,20 @@ int game_cfg_save()
  */
 int game_cfg_new()
 {
-	//игрок 0
-	game.controlP0[0]  = KP0_UPARROW_1   ;//вперед
-	game.controlP0[1]  = KP0_UPARROW_0   ;//
-	game.controlP0[2]  = KP0_DOWNARROW_1 ;//назад
-	game.controlP0[3]  = KP0_DOWNARROW_0 ;//
-	game.controlP0[4]  = KP0_LEFTARROW_1 ;//влево
-	game.controlP0[5]  = KP0_LEFTARROW_0 ;//
-	game.controlP0[6]  = KP0_RIGHTARROW_1;//вправо
-	game.controlP0[7]  = KP0_RIGHTARROW_0;//
-	game.controlP0[8]  = KP0_SLASH1_1    ;//пульки
-	game.controlP0[9]  = KP0_SLASH1_0    ;//
-	game.controlP0[10] = KP0_POINT_1     ;//ракета
-	game.controlP0[11] = KP0_POINT_0     ;//
-	game.controlP0[12] = KP0_SEMIPOINT_1 ;//мина
-	game.controlP0[13] = KP0_SEMIPOINT_0 ;//
-	//игрок 1
-	game.controlP1[0]  = KP0_R_1         ;
-	game.controlP1[1]  = KP0_R_0         ;
-	game.controlP1[2]  = KP0_F_1         ;
-	game.controlP1[3]  = KP0_F_0         ;
-	game.controlP1[4]  = KP0_D_1         ;
-	game.controlP1[5]  = KP0_D_0         ;
-	game.controlP1[6]  = KP0_G_1         ;
-	game.controlP1[7]  = KP0_G_0         ;
-	game.controlP1[8]  = KP0_W_1         ;
-	game.controlP1[9]  = KP0_W_0         ;
-	game.controlP1[10] = KP0_Q_1         ;
-	game.controlP1[11] = KP0_Q_0         ;
-	game.controlP1[12] = KP0_TAB_1       ;
-	game.controlP1[13] = KP0_TAB_0       ;
+	game.controls[ACTION_PLAYER_MOVE_UP   ]     = SDL_SCANCODE_UP;
+	game.controls[ACTION_PLAYER_MOVE_DOWN ]     = SDL_SCANCODE_DOWN ;
+	game.controls[ACTION_PLAYER_MOVE_LEFT ]     = SDL_SCANCODE_LEFT ;
+	game.controls[ACTION_PLAYER_MOVE_RIGHT]     = SDL_SCANCODE_RIGHT;
+	game.controls[ACTION_PLAYER_ATTACK_WEAPON1] = SDL_SCANCODE_SLASH;
+	game.controls[ACTION_PLAYER_ATTACK_WEAPON2] = SDL_SCANCODE_PERIOD;
+	game.controls[ACTION_PLAYER_ATTACK_WEAPON3] = SDL_SCANCODE_COMMA ;
+	game.controls[ACTION_PLAYER2_MOVE_UP   ]     = SDL_SCANCODE_R;
+	game.controls[ACTION_PLAYER2_MOVE_DOWN ]     = SDL_SCANCODE_F;
+	game.controls[ACTION_PLAYER2_MOVE_LEFT ]     = SDL_SCANCODE_D;
+	game.controls[ACTION_PLAYER2_MOVE_RIGHT]     = SDL_SCANCODE_G;
+	game.controls[ACTION_PLAYER2_ATTACK_WEAPON1] = SDL_SCANCODE_W;
+	game.controls[ACTION_PLAYER2_ATTACK_WEAPON2] = SDL_SCANCODE_Q;
+	game.controls[ACTION_PLAYER2_ATTACK_WEAPON3] = SDL_SCANCODE_TAB;
 	return game_cfg_save();
 }
 /********чтение конфига********/
@@ -545,17 +526,11 @@ int game_cfg_load()
 {
 	int ret = 0;
 	int fd;
-	ssize_t c;
+	ssize_t count;
 	fd = open(BASEDIR FILENAME_CONFIG, O_RDONLY);
 	if(fd < 0) return game_cfg_new();
-	c = read(fd, game.controlP0, sizeof(game.controlP0));
-	if(c != sizeof(game.controlP0))
-	{
-		ret = 2;
-		goto end;
-	}
-	c = read(fd, game.controlP1, sizeof(game.controlP1));
-	if(c != sizeof(game.controlP1))
+	count = read(fd, game.controls, sizeof(game.controls));
+	if(count != sizeof(game.controls))
 	{
 		ret = 2;
 		goto end;

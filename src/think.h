@@ -22,16 +22,14 @@ typedef struct
 	struct player_s * target;
 	//счетчик
 	long count;
-}TAIbrain;
+}think_t;
+
+void ctrl_AI_init       (think_t * brain);
+void ctrl_AI_done       (think_t * brain);
 
 void think_human(int Pnum, struct player_s * player);
 void think_enemy(struct player_s * player);
 
-void ctrl_AI_init       (TAIbrain * brain);
-void ctrl_AI_done       (TAIbrain * brain);
-void ctrl_AI_checkdanger(struct player_s * player);
-void ctrl_AI_attack     (struct player_s * player, struct player_s * target);
-void ctrl_AI_findenemy  (struct player_s * player, struct player_s * target);
 
 
 #endif /* SRC_THINK_H_ */

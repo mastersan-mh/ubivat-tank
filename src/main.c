@@ -16,7 +16,6 @@
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <player.h>
-#include <x10_kbrd.h>
 
 #include <stdio.h>
 #include <string.h>

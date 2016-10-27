@@ -18,6 +18,10 @@
 #include <string.h>
 #include <types.h>
 
+// карта
+#define MAP_FILE_EXT    ".mut"
+// Map Ubivat Tank
+#define MAP_DATA_HEADER "MUT"
 
 char * map_class_names[__MAP_NUM] =
 {
@@ -58,9 +62,9 @@ void map_clear();
 
 void map_init()
 {
-	map.spawns   = NULL;
-	map.items    = NULL;
-	map.objs     = NULL;
+	map.spawns = NULL;
+	map.items  = NULL;
+	map.objs   = NULL;
 }
 
 
@@ -440,12 +444,12 @@ int map_load(const char * mapname)
 	path = Z_malloc(
 			strlen(BASEDIR MAPSDIR)+
 			strlen(map._file)+
-			strlen(c_MAPext)+
+			strlen(MAP_FILE_EXT)+
 			1
 	);
 	strcpy(path, BASEDIR MAPSDIR);
 	strcat(path, map._file);
-	strcat(path, c_MAPext);
+	strcat(path, MAP_FILE_EXT);
 	fd = open(path, O_RDONLY);
 	Z_free(path);
 	if(fd < 0) RETURN_ERR(MAP_ERR_NOFILE);
@@ -455,7 +459,7 @@ int map_load(const char * mapname)
 	count = read(fd, MAPheader, 3);
 	if(count != 3) RETURN_ERR(MAP_ERR_READ);
 
-	ret = memcmp(MAPheader, c_MAPheader, 3);
+	ret = memcmp(MAPheader, MAP_DATA_HEADER, 3);
 	if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
 	//название карты

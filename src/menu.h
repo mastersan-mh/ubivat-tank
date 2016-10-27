@@ -9,6 +9,7 @@
 #define SRC_MENU_H_
 
 #include <types.h>
+#include <game.h>
 
 #include <SDL2/SDL.h>
 
@@ -38,14 +39,14 @@ typedef enum
 typedef struct
 {
 	int menu;
-} menu_main_context_t;
+} menu_main_ctx_t;
 
 
 /* MENU_GAME */
 typedef struct
 {
 	int menu;
-} menu_game_context_t;
+} menu_game_ctx_t;
 
 /* MENU_GAME_NEW1P */
 
@@ -55,20 +56,29 @@ typedef struct
 typedef struct
 {
 	int menu;
-} menu_game_load_context_t;
+} menu_game_load_ctx_t;
 
 /* MENU_GAME_SAVE */
 typedef struct
 {
-	int menu_cur;
-	bool f_input;
-} menu_game_save_context_t;
+	int menu;
+	enum
+	{
+		MENU_GAME_SAVE_INIT,
+		MENU_GAME_SAVE_SELECT,
+		MENU_GAME_SAVE_INPUT,
+		MENU_GAME_SAVE_SAVE,
+	}state;
+	// редактируемая запись
+	gamesave_t rec;
+
+} menu_game_save_ctx_t;
 
 /* MENU_CUSTOM */
 typedef struct
 {
 	int menu;
-} menu_custom_context_t;
+} menu_custom_ctx_t;
 
 /* MENU_CUSTOM_NEWP1 */
 
@@ -78,24 +88,27 @@ typedef struct
 typedef struct
 {
 	int menu;
-	int cur_pl;
-	bool wait_a_key;
-} menu_options_context_t;
+	int column;
+	enum{
+		MENU_OPTIONS_SELECT,
+		MENU_OPTIONS_WAIT_KEY
+	} state;
+} menu_options_ctx_t;
 /* MENU_ABOUT */
 typedef struct
 {
 	int menu;
-} menu_about_context_t;
+} menu_about_ctx_t;
 /* MENU_INTERLEVEL */
 typedef struct
 {
 	int menu;
-} menu_interlevel_context_t;
+} menu_interlevel_ctx_t;
 /* MENU_PRELEVEL */
 typedef struct
 {
 	int menu;
-} menu_prelevel_context_t;
+} menu_prelevel_ctx_t;
 
 /* MENU_ABORT */
 
