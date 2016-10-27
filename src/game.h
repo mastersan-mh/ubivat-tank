@@ -8,9 +8,10 @@
 #ifndef SRC_GAME_H_
 #define SRC_GAME_H_
 
+#include <types.h>
 #include <map.h>
 #include <player.h>
-#include <types.h>
+#include <actions.h>
 
 #define GAME_LOGO \
 		"          _____    ______              __     ______ \n"\
@@ -33,7 +34,7 @@ struct image_table_ent_s
 	char * id;
 };
 
-typedef int control_t[14];
+typedef uint32_t control_t[__ACTION_NUM];
 
 //запись иры
 typedef struct
@@ -105,8 +106,7 @@ typedef struct
 	item_img_t * m_i_lineR;
 	item_img_t * m_i_flagRUS;
 	item_img_t * m_i_flagUSA;
-	control_t controlP0;
-	control_t controlP1;
+	control_t controls;
 	//список записей
 	gamesave_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
@@ -127,9 +127,13 @@ int game_mainproc();
 
 void game_nextmap();
 
+
 int game_cfg_save();
 int game_cfg_new();
 int game_cfg_load();
+
+void game_rebind_keys_all();
+
 int game_pal_get();
 void game_record_getsaves();
 bool game_record_save(gamesave_t * rec);

@@ -13,7 +13,6 @@
 #include <_gr2D.h>
 #include <_gr2Don.h>
 #include <player.h>
-#include <x10_kbrd.h>
 
 #include <string.h>
 #include <think.h>
@@ -532,7 +531,7 @@ static void player_handle(player_t * player)
 						bullList->orig.y   = player->move.orig.y;                     //координаты
 						bullList->player   = player;                                  //игрок, выпустивший пулю
 						bullList->_weap_   = player->w.attack-1;                      //тип пули(оружие, из которого выпущена пуля)
-						if(bullList->_weap_==1) player->bull = bullList;
+						if(bullList->_weap_ == 1) player->bull = bullList;
 						bullList->dir    = player->move.dir;                          //направление движения
 						bullList->delta_s  = 0;                                     //изменение расстояния
 						bullList->frame    = 0;

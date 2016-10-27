@@ -44,21 +44,7 @@ typedef void (*actionf_t)();
 //разрешенные для ввода символы
 #define chars_allowed "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-// карта
-#define c_MAPext        ".mut"
-// Map Ubivat Tank
-#define c_MAPheader     "MUT"
 
-//броня0
-#define c_m_w_w0        0x01
-//броня1
-#define c_m_w_w1        0x02
-//кирпич
-#define c_m_w_brick     0x04
-//вода
-#define c_m_water       0x08
-//флаг присутствия стены
-#define c_m_f_clip      0x10
 //флаги состояния игры:
 //2 игрока
 #define c_g_f_2PLAYERS  0x01

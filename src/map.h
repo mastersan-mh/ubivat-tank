@@ -11,6 +11,17 @@
 #include <types.h>
 #include <img.h>
 
+//броня0
+#define c_m_w_w0        0x01
+//броня1
+#define c_m_w_w1        0x02
+//кирпич
+#define c_m_w_brick     0x04
+//вода
+#define c_m_water       0x08
+//флаг присутствия стены
+#define c_m_f_clip      0x10
+
 #define MAP_NAME_SIZE (17)
 #define MAP_BRIEF_SIZE (129)
 

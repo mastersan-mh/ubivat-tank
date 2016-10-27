@@ -7,64 +7,14 @@
 #include <weap.h>
 #include <map.h>
 #include <player.h>
-#include <x10_kbrd.h>
 
 #include <stdlib.h>
 #include <types.h>
 
 /*
- * управление игроком
- */
-void think_human(int Pnum, player_t * player)
-{
-
-};
-
-/*
- * управление вражеским игроком
- */
-void think_enemy(struct player_s * player)
-{
-	if(0<player->charact.health)
-	{
-		ctrl_AI_checkdanger(player);
-		if(!player->brain.danger)
-		{
-			if(!game.P1)
-			{
-				if(game.P0->charact.health <= 0) player->w.attack = 0;
-				else {
-					if(!player->bull &&  !player->w.attack) ctrl_AI_findenemy(player, game.P0);
-					ctrl_AI_attack(player,game.P0);
-				};
-			}
-			else
-			{
-				if(xrand(2)==0)
-				{
-					if(0<game.P0->charact.health)
-					{
-						if( !player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P0);
-						ctrl_AI_attack(player,game.P0);
-					}
-				}
-				else
-				{
-					if(0 < game.P1->charact.health)
-					{
-						if(!player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P1);
-						ctrl_AI_attack(player,game.P1);
-					}
-				}
-			}
-		}
-	}
-}
-
-/*
  * инициализация AI
  */
-void ctrl_AI_init(TAIbrain * brain)
+void ctrl_AI_init(think_t * brain)
 {
 	brain->danger  = 0;
 	brain->Fdanger = 0;
@@ -75,14 +25,14 @@ void ctrl_AI_init(TAIbrain * brain)
 /*
  * удаление AI
  */
-void ctrl_AI_done(TAIbrain * brain)
+void ctrl_AI_done(think_t * brain)
 {
 	brain->target = NULL;
 };
 /*
  * уворачивание от снарядов
  */
-void ctrl_AI_checkdanger(player_t * player)
+static void ctrl_AI_checkdanger(player_t * player)
 {
 	bull_t * bull;
 	float Udist;
@@ -216,8 +166,10 @@ void ctrl_AI_checkdanger(player_t * player)
 		//player->move.go = $00;
 	}
 }
-/********атака********/
-void ctrl_AI_attack(player_t * player, player_t * target)
+/*
+ * атака
+ */
+static void ctrl_AI_attack(player_t * player, player_t * target)
 {
 	float dist;
 	char wall;
@@ -408,7 +360,7 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 /*
  * поиск врага
  */
-void ctrl_AI_findenemy(player_t * player, player_t * target)
+static void ctrl_AI_findenemy(player_t * player, player_t * target)
 {
 	if(
 			(160<abs(player->move.orig.x-target->move.orig.x))||
@@ -452,3 +404,52 @@ void ctrl_AI_findenemy(player_t * player, player_t * target)
 	player->brain.count += ddtime10;
 	if(c_BOT_time*2<player->brain.count) player->brain.count = 0;
 }
+
+/*
+ * управление вражеским игроком
+ */
+void think_enemy(struct player_s * player)
+{
+	if(0<player->charact.health)
+	{
+		ctrl_AI_checkdanger(player);
+		if(!player->brain.danger)
+		{
+			if(!game.P1)
+			{
+				if(game.P0->charact.health <= 0) player->w.attack = 0;
+				else {
+					if(!player->bull &&  !player->w.attack) ctrl_AI_findenemy(player, game.P0);
+					ctrl_AI_attack(player, game.P0);
+				};
+			}
+			else
+			{
+				if(xrand(2) == 0)
+				{
+					if(0 < game.P0->charact.health)
+					{
+						if( !player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P0);
+						ctrl_AI_attack(player, game.P0);
+					}
+				}
+				else
+				{
+					if(0 < game.P1->charact.health)
+					{
+						if(!player->bull && !player->w.attack) ctrl_AI_findenemy(player,game.P1);
+						ctrl_AI_attack(player,game.P1);
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+ * управление игроком
+ */
+void think_human(int Pnum, player_t * player)
+{
+
+};
