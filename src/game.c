@@ -5,7 +5,9 @@
  */
 
 
+#include <system.h>
 #include <game.h>
+#include <input.h>
 #include <actions.h>
 #include <menu.h>
 #include <map.h>
@@ -14,7 +16,6 @@
 #include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
-#include <x10_time.h>
 #include <x10_kbrd.h>
 
 #include <stdlib.h>
@@ -33,6 +34,8 @@
 //состояние игры
 game_t game;
 
+long dtime;
+double ddtime10;
 
 struct image_table_ent_s images_info[] = {
 	{BASEDIR"menu/mhlogo.bii" ,"M_LOGO"     },
@@ -85,10 +88,15 @@ struct image_table_ent_s images_info[] = {
 };
 
 
+void game_action_enter_mainmenu()
+{
+	game.ingame = false;
+}
+
 /*
  * открытие файлов с рисунками меню
  */
-void pics_load()
+static void pics_load()
 {
 	int i;
 	struct image_table_ent_s * info;
@@ -167,7 +175,6 @@ void game_init()
 	{
 		game_halt("config read error.");
 	}
-	action_init();
 
 	//инициализация оружий
 	printf("Weapons init...\n");
@@ -198,6 +205,18 @@ void game_init()
 	wtable[2].bullspeed  = -800;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
 	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
+	input_init();
+
+	input_key_bindAction(SDL_SCANCODE_ESCAPE, actions[ACTION_ENTER_MAINMENU]);
+	input_key_bindAction(SDL_SCANCODE_UP    , actions[ACTION_PLAYER_MOVE_UP]);
+	input_key_bindAction(SDL_SCANCODE_DOWN  , actions[ACTION_PLAYER_MOVE_DOWN]);
+	input_key_bindAction(SDL_SCANCODE_LEFT  , actions[ACTION_PLAYER_MOVE_LEFT]);
+	input_key_bindAction(SDL_SCANCODE_RIGHT , actions[ACTION_PLAYER_MOVE_RIGHT]);
+
+	input_key_bindAction(SDL_SCANCODE_SLASH , actions[ACTION_PLAYER_ATTACK_WEAPON1]);
+	input_key_bindAction(SDL_SCANCODE_PERIOD, actions[ACTION_PLAYER_ATTACK_WEAPON2]);
+	input_key_bindAction(SDL_SCANCODE_COMMA , actions[ACTION_PLAYER_ATTACK_WEAPON3]);
+
 }
 
 /*
@@ -205,6 +224,7 @@ void game_init()
  */
 void game_done()
 {
+	input_done();
 	video_done();
 	//прекратим игру
 	game_abort();
@@ -224,8 +244,18 @@ void game_main()
 	menu_selector_t imenu = MENU_MAIN;
 	imenu = MENU_MAIN;
 	menu_selector_t imenu_process = imenu;
+
+	unsigned long time_prev;
+	unsigned long time_current = system_getTime_realTime_ms();
 	while(!quit)
 	{
+		time_prev = time_current;
+		time_current = system_getTime_realTime_ms();
+		dtime = time_current - time_prev;
+		ddtime10 = (double)dtime/10.0f;
+
+		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
+
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
@@ -234,13 +264,27 @@ void game_main()
 			if(game.ingame)
 			{
 
+				switch(event.type)
+				{
+				case SDL_KEYDOWN:
+					input_key_setState(event.key.keysym.scancode, true);
+					break;
+				case SDL_KEYUP:
+					input_key_setState(event.key.keysym.scancode, false);
+					break;
+				}
+
+				//player_checkcode();
+
 			}
 			else
 				menu_send_event(&event);
+
 			switch(event.type)
 			{
 			case SDL_QUIT:quit = true;break;
 			}
+
 			// handle your event here
 		}
 		if(quit)break;
@@ -259,12 +303,9 @@ void game_main()
 		}
 		else
 		{
-			/*
-			if(game.created)
-				game_time_reset();
 			int ret = game_mainproc();
 			if(ret >= 0) imenu = ret;
-			*/
+
 		}
 
 
@@ -409,7 +450,6 @@ void game_nextmap()
 			{
 				//game.menu = menu_save();       //сохраним игру в начале уровня
 				//menu_prelevel();
-				game_time_reset();
 			}
 		}
 	}
@@ -535,41 +575,6 @@ int game_cfg_load()
 int game_pal_get()
 {
 	return img_palette_read(BASEDIR FILENAME_PALETTE);
-}
-/********переустановка времени у всех объектов на карте********/
-void game_time_reset()
-{
-	player_t * player = playerList;
-	while(player)
-	{
-		player->time.delta      = 0;
-		player->time.last_delta = 0;
-		time_Sget();
-		player->time.t0         = time.s*100+time.hs;
-		player->time.t1         = player->time.t0;
-		player = player->next;
-	}
-	bull_t * bull = bullList;
-	while(bull)
-	{
-		bull->delta_s = 0;                                                   //изменение расстояния
-		bull->time.delta      = 0;
-		bull->time.last_delta = 0;
-		time_Sget();
-		bull->time.t0  = time.s*100+time.hs;                                 //системное время в сотых долях секунд
-		bull->time.t1         = bull->time.t0;
-		bull = bull->next;
-	}
-	explode_t * explode = explList;
-	while(explode)
-	{
-		explode->time.delta      = 0;
-		explode->time.last_delta = 0;
-		time_Sget();
-		explode->time.t0         = time.s*100+time.hs;
-		explode->time.t1         = explode->time.t0;
-		explode = explode->next;
-	}
 }
 /**
  * @description чтение заголовка записи

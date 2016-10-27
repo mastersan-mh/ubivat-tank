@@ -11,6 +11,15 @@
 #include <img.h>
 #include <types.h>
 
+typedef enum
+{
+	WEAP_NONE,
+	WEAP_BULL,
+	WEAP_ROCKET,
+	WEAP_MINE,
+} weapon_t;
+
+
 /*
  * оружие
  */
@@ -54,7 +63,6 @@ typedef struct bull_s
 	//изменение расстояния
 	float delta_s;
 	//время
-	Ttime time;
 	float frame;
 	//изображение пули
 	item_img_t * image;
@@ -71,8 +79,6 @@ typedef struct Texplode
 	//игрок, выпустивший пулю
 	struct player_s * player;
 	int _weap_;
-	//время
-	Ttime time;
 	//№ кадра
 	float frame;
 	//изображение взрыва

@@ -7,7 +7,6 @@
 #include <weap.h>
 #include <map.h>
 #include <player.h>
-#include <x10_time.h>
 #include <x10_kbrd.h>
 
 #include <stdlib.h>
@@ -18,84 +17,7 @@
  */
 void think_human(int Pnum, player_t * player)
 {
-	/*
 
-	switch(kbrd.port)
-	{
-	case KP0_ESCAPE_1:
-		game.ingame = false;
-		break;
-	}
-	player_checkcode();
-
-	//клав. буфер пуст
-	if(kbrd.port == 0)return;
-
-	control_t * control;
-
-	if(Pnum == 0)
-		control = &(game.controlP0);
-	else
-		control = &(game.controlP1);
-	int i;
-	for(i = 0; i < 14; i++)
-	{
-		if((*control)[i] == kbrd.port)break;
-	}
-#define control_forward      0
-#define control_forward_stop 1
-#define control_backward     2
-#define control_backward_stop 3
-#define control_left         4
-#define control_left_stop    5
-#define control_right        6
-#define control_right_stop   7
-#define control_attack1      8
-#define control_attack1stop  9
-#define control_attack2      10
-#define control_attack2stop  11
-#define control_attack3      12
-#define control_attack3stop  13
-	switch(i)
-	{
-	case control_forward_stop:
-	case control_backward_stop:
-	case control_left_stop:
-	case control_right_stop:
-		player->move.go = false;
-		break;
-	case control_forward:
-		player->move.go = true;
-		player->move.dir = c_DIR_up;
-		break;
-	case control_backward:
-		player->move.go = true;
-		player->move.dir = c_DIR_dn;
-		break;
-	case control_left:
-		player->move.go = true;
-		player->move.dir = c_DIR_lf;
-		break;
-	case control_right:
-		player->move.go = true;
-		player->move.dir = c_DIR_rt;
-		break;
-	case control_attack1stop:
-	case control_attack2stop:
-	case control_attack3stop:
-		player->w.attack = 0;
-		break;
-	case control_attack1:
-		player->w.attack = 1;
-		break;
-	case control_attack2:
-		player->w.attack = 2;
-		break;
-	case control_attack3:
-		player->w.attack = 3;
-		break;
-	}
-	*/
 };
 
 /*
@@ -110,7 +32,7 @@ void think_enemy(struct player_s * player)
 		{
 			if(!game.P1)
 			{
-				if(game.P0->charact.health<=0) player->w.attack = 0;
+				if(game.P0->charact.health <= 0) player->w.attack = 0;
 				else {
 					if(!player->bull &&  !player->w.attack) ctrl_AI_findenemy(player, game.P0);
 					ctrl_AI_attack(player,game.P0);
@@ -179,13 +101,13 @@ void ctrl_AI_checkdanger(player_t * player)
 		if(bull->player != player)
 		{
 			//верхняя ближайшая стена
-			map_clip_find_near(&player->move.orig, 0, c_DIR_up, 0xF0, 100, &Udist);
+			map_clip_find_near(&player->move.orig, 0, DIR_UP, 0xF0, 100, &Udist);
 			//нижняя ближайшая стена
-			map_clip_find_near(&player->move.orig, 0, c_DIR_dn, 0xF0, 100, &Ddist);
-			//правая ближайшая стена
-			map_clip_find_near(&player->move.orig, 0, c_DIR_rt, 0xF0, 160, &Rdist);
+			map_clip_find_near(&player->move.orig, 0, DIR_DOWN, 0xF0, 100, &Ddist);
 			//левая ближайшая стена
-			map_clip_find_near(&player->move.orig, 0, c_DIR_lf, 0xF0, 160, &Ldist);
+			map_clip_find_near(&player->move.orig, 0, DIR_LEFT, 0xF0, 160, &Ldist);
+			//правая ближайшая стена
+			map_clip_find_near(&player->move.orig, 0, DIR_RIGHT, 0xF0, 160, &Rdist);
 			Ud = (player->move.orig.y+Udist-c_p_MDL_box/2)-(bull->orig.y+wtable[bull->_weap_].radius);
 			Dd = (bull->orig.y-wtable[bull->_weap_].radius)-(player->move.orig.y-Ddist+c_p_MDL_box/2);
 			Rd = (player->move.orig.x+Rdist-c_p_MDL_box/2)-(bull->orig.x+wtable[bull->_weap_].radius);
@@ -197,7 +119,7 @@ void ctrl_AI_checkdanger(player_t * player)
 			)
 			{
 				if(
-						((bull->dir=c_DIR_up) || (wtable[bull->_weap_].bullspeed<0)) &&
+						((bull->dir == DIR_UP) || (wtable[bull->_weap_].bullspeed<0)) &&
 						(abs(player->move.orig.y-bull->orig.y)<Ddist) &&
 						(bull->orig.y+wtable[bull->_weap_].radius<player->move.orig.y-c_p_MDL_box/2)
 				)
@@ -209,15 +131,15 @@ void ctrl_AI_checkdanger(player_t * player)
 						player->brain.Fdanger = true;
 						if(0 <= Ld && 0 <= Rd) player->move.dir = xrand(2) + 2;
 						else
-							if(0 < Ld) player->move.dir = c_DIR_lf;
+							if(0 < Ld) player->move.dir = DIR_LEFT;
 							else
-								if(0<Rd) player->move.dir = c_DIR_rt;
+								if(0<Rd) player->move.dir = DIR_RIGHT;
 					}
 			}
 				else
 				{
 					if(
-							(bull->dir=c_DIR_dn || wtable[bull->_weap_].bullspeed<0) &&
+							(bull->dir == DIR_DOWN || wtable[bull->_weap_].bullspeed<0) &&
 							(abs(player->move.orig.y-bull->orig.y)<Udist) &&
 							(player->move.orig.y+c_p_MDL_box/2<bull->orig.y-wtable[bull->_weap_].radius)
 					)
@@ -228,22 +150,22 @@ void ctrl_AI_checkdanger(player_t * player)
 							player->brain.Fdanger = true;
 							if( 0 <= Ld && 0 <= Rd) player->move.dir = xrand(2)+2;
 							else
-								if(0 < Ld) player->move.dir = c_DIR_lf;
+								if(0 < Ld) player->move.dir = DIR_LEFT;
 								else
-									if(0<Rd) player->move.dir = c_DIR_rt;
+									if(0<Rd) player->move.dir = DIR_RIGHT;
 						}
 					}
 				}
 			}
 			else {
 				if(
-						(player->move.orig.y-c_p_MDL_box/2<=bull->orig.y+wtable[bull->_weap_].radius) &&
-						(bull->orig.y-wtable[bull->_weap_].radius<=player->move.orig.y+c_p_MDL_box/2) &&
-						(abs(player->move.orig.x-bull->orig.x)<128)
+						(player->move.orig.y - c_p_MDL_box/2 <= bull->orig.y + wtable[bull->_weap_].radius) &&
+						(bull->orig.y - wtable[bull->_weap_].radius <= player->move.orig.y + c_p_MDL_box/2) &&
+						(abs(player->move.orig.x - bull->orig.x) < 128)
 				)
 				{
 					if (
-							((bull->dir=c_DIR_lf) || (wtable[bull->_weap_].bullspeed<0))&&
+							(bull->dir == DIR_LEFT || (wtable[bull->_weap_].bullspeed<0))&&
 							(abs(player->move.orig.x-bull->orig.x)<Rdist)&&
 							(player->move.orig.x+c_p_MDL_box/2<bull->orig.x-wtable[bull->_weap_].radius)
 					)
@@ -255,17 +177,18 @@ void ctrl_AI_checkdanger(player_t * player)
 							player->brain.Fdanger = true;
 							if(0 <= Ud && 0 <= Dd) player->move.dir = xrand(2);
 							else
-								if(0<Ud) player->move.dir = c_DIR_up;
+								if(0 < Ud) player->move.dir = DIR_UP;
 								else
-									if(0<Dd) player->move.dir = c_DIR_dn;
+									if(0 < Dd) player->move.dir = DIR_DOWN;
 						}
 					}
 					else
 					{
 						if(
-								((bull->dir=c_DIR_rt) || (wtable[bull->_weap_].bullspeed<0)) &&
+								((bull->dir == DIR_RIGHT) || (wtable[bull->_weap_].bullspeed<0)) &&
 								(abs(player->move.orig.x-bull->orig.x)<Ldist) &&
-								(bull->orig.x+wtable[bull->_weap_].radius<player->move.orig.x-c_p_MDL_box/2)
+								(bull->orig.x +
+										wtable[bull->_weap_].radius<player->move.orig.x-c_p_MDL_box/2)
 						)
 						{
 							flag = true;
@@ -275,9 +198,9 @@ void ctrl_AI_checkdanger(player_t * player)
 								player->brain.Fdanger = true;
 								if(0 <= Ud && 0 <= Dd) player->move.dir = xrand(2);
 								else
-									if(0<Ud) player->move.dir = c_DIR_up;
+									if(0 < Ud) player->move.dir = DIR_UP;
 									else
-										if(0<Dd) player->move.dir = c_DIR_dn;
+										if(0 < Dd) player->move.dir = DIR_DOWN;
 							}
 						}
 					}
@@ -306,23 +229,23 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 		)
 		{
 			if(player->bull->orig.x < player->brain.target->move.orig.x)
-				player->move.dir = c_DIR_rt;
+				player->move.dir = DIR_RIGHT;
 			else
-				player->move.dir = c_DIR_lf;
+				player->move.dir = DIR_LEFT;
 		}
 		else
 		{
 			if(player->bull->orig.y < player->brain.target->move.orig.y)
-				player->move.dir = c_DIR_up;
+				player->move.dir = DIR_UP;
 			else
-				player->move.dir = c_DIR_dn;
+				player->move.dir = DIR_DOWN;
 		}
 		return;
 	}
 	if
 	(
-			(abs(player->move.orig.x-target->move.orig.x)>160) ||
-			(abs(player->move.orig.y-target->move.orig.y)>100)
+			abs(player->move.orig.x - target->move.orig.x) > 160 ||
+			abs(player->move.orig.y - target->move.orig.y) > 100
 	)
 	{
 		player->w.attack = 0;
@@ -336,16 +259,18 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 			(target->move.orig.x<player->move.orig.x+c_p_MDL_box/2)
 	)
 	{
-		if(target->move.orig.y<player->move.orig.y)
-			player->move.dir = c_DIR_dn;
+		if(target->move.orig.y < player->move.orig.y)
+			player->move.dir = DIR_DOWN;
 		else
-			player->move.dir = c_DIR_up;
+			player->move.dir = DIR_UP;
 		map_clip_find_near_wall(&player->move.orig, player->move.dir, &dist, &wall);
 		if(
 				//противник в прямой видимости
-				(abs(player->move.orig.y-target->move.orig.y)<dist-c_p_MDL_box/2) ||
-				((wall       ) == c_m_w_w0  ) || ((wall)==c_m_w_w1  ) ||
-				((wall & 0x0F) == c_m_water ) || ((wall)==c_m_f_clip)
+				(abs(player->move.orig.y - target->move.orig.y) < dist - c_p_MDL_box/2) ||
+				(wall       ) == c_m_w_w0   ||
+				(wall       ) == c_m_w_w1   ||
+				(wall & 0x0F) == c_m_water  ||
+				(wall       ) == c_m_f_clip
 		){
 			if(player->w.ammo[2]>0)
 			{
@@ -354,10 +279,10 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 				if(player->brain.weapon == 1+2)
 				{
 					//мина
-					if(player->move.dir == c_DIR_dn)
-						player->move.dir = c_DIR_up;
+					if(player->move.dir == DIR_DOWN)
+						player->move.dir = DIR_UP;
 					else
-						player->move.dir = c_DIR_dn;
+						player->move.dir = DIR_DOWN;
 				}
 			}
 			else {
@@ -376,11 +301,11 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 					if((wall & 0x0F)==c_m_w_w1) {                            //слабая броня
 						if(player->w.ammo[2]>0) {
 							player->brain.weapon = 1+1+xrand(2);                             //выбираем наугад ракету или мину
-							if(player->brain.weapon==1+2) {                           //мина
-								if(player->move.dir==c_DIR_dn)
-									player->move.dir = c_DIR_up;
+							if(player->brain.weapon == 1+2) {                           //мина
+								if(player->move.dir == DIR_DOWN)
+									player->move.dir = DIR_UP;
 								else
-									player->move.dir = c_DIR_dn;
+									player->move.dir = DIR_DOWN;
 							}
 						}
 						else
@@ -406,22 +331,24 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 				(target->move.orig.y<player->move.orig.y+c_p_MDL_box/2)
 		)
 		{
-			if(target->move.orig.x<player->move.orig.x) player->move.dir = c_DIR_lf;
-			else                                        player->move.dir = c_DIR_rt;
+			if(target->move.orig.x<player->move.orig.x) player->move.dir = DIR_LEFT;
+			else                                        player->move.dir = DIR_RIGHT;
 			map_clip_find_near_wall(&player->move.orig,player->move.dir,&dist,&wall);
 			if(
 					//противник в прямой видимости
 					(abs(player->move.orig.x-target->move.orig.x)<dist-c_p_MDL_box/2)||
-					((wall       ) == c_m_w_w0  ) || ((wall)==c_m_w_w1  )||
-					((wall & 0x0F) == c_m_water ) || ((wall)==c_m_f_clip)
+					(wall       ) == c_m_w_w0  ||
+					(wall       ) == c_m_w_w1  ||
+					(wall & 0x0F) == c_m_water ||
+					(wall       ) == c_m_f_clip
 			)
 			{
 				if(player->w.ammo[2]>0)
 				{
 					player->brain.weapon = 1+1+xrand(2);                               //выбираем наугад ракету или мину
-					if(player->brain.weapon==1+2) {                             //мина
-						if(player->move.dir==c_DIR_lf) player->move.dir = c_DIR_rt;
-						else                            player->move.dir = c_DIR_lf;
+					if(player->brain.weapon == 1+2) {                             //мина
+						if(player->move.dir == DIR_LEFT) player->move.dir = DIR_RIGHT;
+						else                             player->move.dir = DIR_LEFT;
 					};
 				}
 				else {
@@ -438,10 +365,10 @@ void ctrl_AI_attack(player_t * player, player_t * target)
 							if(player->w.ammo[2]>0) {
 								player->brain.weapon = 1+1+xrand(2);                            //выбираем наугад ракету или мину
 								if(player->brain.weapon==1+2) {                          //мина
-									if(player->move.dir==c_DIR_lf)
-										player->move.dir = c_DIR_rt;
+									if(player->move.dir==DIR_LEFT)
+										player->move.dir = DIR_RIGHT;
 									else
-										player->move.dir = c_DIR_lf;
+										player->move.dir = DIR_LEFT;
 								};
 							}
 							else {
@@ -502,16 +429,16 @@ void ctrl_AI_findenemy(player_t * player, player_t * target)
 			if(abs(player->move.orig.x-target->move.orig.x)>abs(player->move.orig.y-target->move.orig.y))
 			{
 				if(player->move.orig.x<target->move.orig.x)
-					player->move.dir = c_DIR_rt;
+					player->move.dir = DIR_RIGHT;
 				else
-					player->move.dir = c_DIR_lf;
+					player->move.dir = DIR_LEFT;
 			}
 			else
 			{
 				if(player->move.orig.y < target->move.orig.y)
-					player->move.dir = c_DIR_up;
+					player->move.dir = DIR_UP;
 				else
-					player->move.dir = c_DIR_dn;
+					player->move.dir = DIR_DOWN;
 			}
 			if(
 					(abs(player->move.orig.x-target->move.orig.x)<c_BOT_dist)&&
@@ -522,6 +449,6 @@ void ctrl_AI_findenemy(player_t * player, player_t * target)
 				player->move.go = true;
 		}
 	}
-	player->brain.count += player->time.delta;
+	player->brain.count += ddtime10;
 	if(c_BOT_time*2<player->brain.count) player->brain.count = 0;
 }

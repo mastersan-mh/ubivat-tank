@@ -7,7 +7,7 @@ typedef struct
 	game_keyHash_t key[KEYS_HASH_NUM];
 
 }game_input_t;
-game_input_t game_input;
+static game_input_t game_input;
 
 static void * __xrealloc(void * __ptrmem, size_t __newsize, size_t __oldsize)
 {
@@ -76,7 +76,7 @@ static int __findHashCollision(game_keyHash_t *__keyHash, int __key)
  */
 void input_init()
 {
-	memset(&game_input,0,sizeof(game_input));
+	memset(&game_input, 0, sizeof(game_input));
 }
 
 /*
@@ -84,7 +84,7 @@ void input_init()
  */
 void input_done()
 {
-	for(int i=0;i<KEYS_HASH_NUM;i++)
+	for(int i=0; i < KEYS_HASH_NUM; i++)
 	{
 		free(game_input.key[i].collision);
 	}
