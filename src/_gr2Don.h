@@ -14,7 +14,11 @@ enum text_orient_e
 	orient_vert
 };
 
-void gr2Don_setchar(int px, int py, char ch);
+void fonts_init();
+void fonts_done();
+
+
+int gr2Don_setchar(int out_x, int out_y, char ch);
 
 void gr2Don_settext(
 	int px,

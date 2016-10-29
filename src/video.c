@@ -5,6 +5,7 @@
 #include <types.h>
 #include <video.h>
 
+#include <video.h>
 
 #include <inttypes.h>
 
@@ -40,21 +41,17 @@ void checkOpenGLError(const char* stmt, const char* fname, int line)
 		for(i = 0; i< sizeof(errs)/sizeof(*errs); i++)
 		{
 			struct errs_s * err = &errs[i];
-			if(err->value == error) error_str = err->name;
+			if(err->value == error)
+			{
+				error_str = err->name;
+				break;
+			}
 		}
 		printf("OpenGL error %08x, %s, at %s:%i - for %s\n", error, error_str, fname, line, stmt);
 		abort();
 	}
 }
 
-#ifdef _DEBUG
-#define GL_CHECK(stmt) do { \
-		stmt; \
-		checkOpenGLError(#stmt, __FILE__, __LINE__); \
-} while (0)
-#else
-#define GL_CHECK(stmt) stmt
-#endif
 
 
 #define VIDEO_USE_OPENGL
@@ -375,12 +372,13 @@ int video_init()
 	}
 #endif
 	scene_init();
-
+	fonts_init();
 	return 0;
 }
 
 void video_done()
 {
+	fonts_done();
 #if defined(VIDEO_USE_OPENGL)
 	SDL_GL_DeleteContext(glcontext);
 #elif defined(VIDEO_USE_SDL2)

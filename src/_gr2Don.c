@@ -1,7 +1,19 @@
+#include <video.h>
 #include <_gr2D.h>
 #include <_gr2Don.h>
 
+#include <game.h>
+
 #include <math.h>
+
+#include <ftimage.h>
+#include <ft2build.h>
+#include <freetype.h>
+//#define FT_FREETYPE_H
+/*
+#include <freetype2/freetype.h>
+#include <fontconfig/fcfreetype.h>
+*/
 
 const char fonttable[256][8] = {
 {  0,  0,  0,  0,  0,  0,  0,  0},{126,129,165,129,189,153,129,126},
@@ -134,56 +146,215 @@ const char fonttable[256][8] = {
 {  0,  0, 60, 60, 60, 60,  0,  0},{  0,  0,  0,  0,  0,  0,  0,  0}
 };
 
+FT_Library ft;
+FT_Face face;
+
+
+typedef struct {
+	// ID handle of the glyph texture
+	GLuint textureId;
+	// Size of glyph
+	int size_x;
+	int size_y;
+	// Offset from baseline to left/top of glyph
+	int bearing_x;
+	int bearing_y;
+	// Offset to advance to next glyph
+	GLuint advance;
+}character_t;
+
+character_t characters[128];
+
+void fonts_init()
+{
+
+	if(FT_Init_FreeType(&ft))
+		game_halt("Could not init freetype library");
+
+
+#define FONTPATH "/usr/share/fonts/gnu-free/"
+
+	//if(FT_New_Face(ft, FONTPATH"FreeSerif.ttf", 0, &face)) {
+	if(FT_New_Face(ft, FONTPATH"FreeSansBold.ttf", 0, &face)) {
+		game_halt("Could not open font");
+	}
+
+	FT_Set_Pixel_Sizes(face, 0, 48);
+
+#define CHAR_AMOUNT (128)
+	GLuint textures[CHAR_AMOUNT];
+	glGenTextures(CHAR_AMOUNT, textures);
+
+
+	for (GLubyte c = 0; c < CHAR_AMOUNT; c++)
+	{
+
+		// Load character glyph
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+		{
+			game_halt("ERROR::FREETYTPE: Failed to load Glyph");
+			continue;
+		}
+
+		int sx = face->glyph->bitmap.width;
+		int sy = face->glyph->bitmap.rows;
+		int size = sx * sy;
+#define PLANES (4)
+		uint8_t * buf = malloc(size * PLANES);
+
+#define TRANSPARENT_COLOR_INDEX (0)
+
+		int i = 0;
+		int iindex = 0;
+		float intencity = 1;
+		for(i = 0; i < size; i++)
+		{
+			int pindex = face->glyph->bitmap.buffer[i];
+			int color = pindex * intencity;
+			buf[iindex++] = color;
+			buf[iindex++] = color;
+			buf[iindex++] = color;
+			buf[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : OPAQUE;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, textures[c]);
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			sx,
+			sy,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			buf
+		);
+
+		free(buf);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		character_t character = {
+				.textureId = textures[c],
+				.size_x    = sx,
+				.size_y    = sy,
+				.bearing_x = face->glyph->bitmap_left,
+				.bearing_y = face->glyph->bitmap_top,
+				.advance = face->glyph->advance.x >> 6
+		};
+		characters[c] = character;
+
+	}
+
+
+}
+
+void fonts_done()
+{
+FT_Done_Face(face);
+FT_Done_FreeType(ft);
+}
 /*
  * рисование указанного символа
  */
-void gr2Don_setchar(int px, int py, char ch)
+int gr2Don_setchar(
+	int x,
+	int y,
+	char ch
+)
 {
-/*
-x,y:longint;
-t_byte:byte;
 
- asm
-  lea ebx,dword ptr[fonttable]
+	int www = characters['A'].size_x;
+	int hhh = characters['A'].size_y;
 
-  mov cl,7
-  sub cl,x
-  mov dl,byte ptr[ebx]
-  shl dl,cl
-  cmp dl,0
-  jne @next
-  push px+x
-  push py+y
-  call gr2D_setpixel
-
-  @next:
-
-  }}
+	GLfloat scalex = VIDEO_MODE_W / 320.0f;
+	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
 
- for y = 0 to 7 do
-  for x = 0 to 7 do {
-
-   if((fonttable[byte(ch),y]and(1 shl(7-x))) != 0) gr2D_setpixel(px+x,py+y);
+	float cscalex = (8.0f / www) * scalex;
+	float cscaley = (8.0f / hhh) * scaley;
 
 
-   }
-*/
+	character_t * character = &characters[ch%128];
+
+	// Size of glyph
+	//GLfloat mdl_sx = character->size_width;
+	//GLfloat mdl_sy = character->size_rows;
+	// Offset from baseline to left/top of glyph
+	//GLint texture_x1 = character->bearing_bitmap_left;
+	//GLint texture_y1 = character->bearing_bitmap_top;
+
+	GLint texture_x1 = 1.0f;
+	GLint texture_y1 = 1.0f;
+
+	// Offset to advance to next glyph
+
+	GLfloat xpos = x + character->bearing_x * cscalex;
+
+	//GLfloat ypos = y - (character->size_y - character->bearing_y) * scale;
+
+	//GLfloat ypos = y - character->bearing_y * scale; // GOOD!!!
+
+	//GLfloat ypos = y - character->bearing_y * scale + hhh * scale;
+
+	GLfloat ypos = y - ( character->bearing_y - hhh) * cscalex;
+
+	//GLfloat ypos = y - character->bearing_y * scale;
+
+	//GLfloat ypos = y - 16 - (character->size_y) * scale;
+
+	GLfloat w = character->size_x * cscalex;
+	GLfloat h = character->size_y * cscaley;
+
+
+	glBindTexture(GL_TEXTURE_2D, character->textureId);
+	glLoadIdentity();
+	glTranslatef(xpos, ypos, 0.0f);
+	glBegin(GL_QUADS);
+	float grayColor = 0.35f;
+	glColor3f(grayColor, grayColor, grayColor);
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(w, h); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(w, 0.0f  ); // Нижний правый
+	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , h); // Верхний левый
+	glEnd();	// Закончили квадраты
+	//return character->advance;
+	return (int) ( (float) character->advance * cscalex);
 }
+
+
 /*
  * вывод текста на экран
  */
 void gr2Don_settext(
-	int px,
-	int py,
+	int x,
+	int y,
 	enum text_orient_e orientation,
 	const char * format,
 	...
 	)
 {
-/*
-	c:byte;
-	if(orientation=0) for c = 1 to byte(s[0]) do gr2Don_setchar(px+(c-1)*8,py        ,s[c])
-	else              for c = 1 to byte(s[0]) do gr2Don_setchar(px        ,py+(c-1)*8,s[c]);
-*/
+
+	static char string[MAX_MESSAGE_SIZE];
+	va_list argptr;
+	va_start(argptr, format);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(string, MAX_MESSAGE_SIZE, format, argptr);
+#else
+	vsprintf(string, format, argptr);
+#endif
+	va_end(argptr);
+
+	int i = 0;
+	int adv;
+
+	while(string[i])
+	{
+		adv = gr2Don_setchar(x, y, string[i]);
+		x += adv;
+		i++;
+	}
 }

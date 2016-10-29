@@ -7,6 +7,7 @@
 #include <img.h>
 #include <_gr2D.h>
 #include <Z_mem.h>
+#include <video.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -188,6 +189,8 @@ item_img_t * IMG_find(const char * name)
 
 GLsizei make_gl_size(int size)
 {
+	return size;
+/*
 	GLsizei size2;
 	if(size <= 64)return 64;
 	//if(size <= 128)return 128;
@@ -200,6 +203,7 @@ GLsizei make_gl_size(int size)
 		size2 <<=1;
 	}while(size2 < size);
 	return size2;
+	*/
 }
 /**
  * загрузка изображений
@@ -239,7 +243,6 @@ int IMG_add(const char * path, const char * IMGname)
 	int i = 0;
 	int iindex = 0;
 #define COLOR_COMPONENT_AMOUNT 4
-#define OPAQUE 0
 	p->data = Z_malloc(size*COLOR_COMPONENT_AMOUNT);
 	uint8_t intencity = 4;
 	for(y = 0; y < IMG->sy; y++)
@@ -257,13 +260,13 @@ int IMG_add(const char * path, const char * IMGname)
 
 	// Загрузка картинки
 	// Создание текстуры
-	glGenTextures(1, &p->textures[0]);
+	GL_CHECK(glGenTextures(1, &p->textures));
 	GLenum error = glGetError();
-	if(error != GL_NO_ERROR || p->textures[0] == 0)
+	if(error != GL_NO_ERROR || p->textures == 0)
 	{
 		abort();
 	}
-	glBindTexture(GL_TEXTURE_2D, p->textures[0]);
+	glBindTexture(GL_TEXTURE_2D, p->textures);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(
@@ -297,7 +300,7 @@ void IMG_removeall()
 	{
 		img = images;
 
-		glDeleteTextures(1, img->textures);
+		glDeleteTextures(1, &img->textures);
 
 		BII_free(img->IMG);
 		images = images->next;

@@ -40,13 +40,15 @@ typedef struct image_s
 	char * name;
 	//изображение
 	BIIpic_t * IMG;
-	GLuint textures[1];
+	GLuint textures;
 	GLsizei sx;// размер, кратный 2 не менее 64
 	GLsizei sy;
 	uint8_t * data;
 } item_img_t;
 
 extern int BII_errno;
+
+GLsizei make_gl_size(int size);
 
 char * IMG_errorGet();
 

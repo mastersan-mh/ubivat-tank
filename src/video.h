@@ -8,6 +8,8 @@
 #ifndef SRC_VIDEO_H_
 #define SRC_VIDEO_H_
 
+#include <types.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_pixels.h>
@@ -21,6 +23,8 @@
 
 #define VIDEO_MODE_W 320
 #define VIDEO_MODE_H 200
+
+#define OPAQUE 0
 
 /*
 #define VIDEO_MODE_W 640
@@ -41,5 +45,16 @@ void video_viewport_set(
 );
 
 void video_draw();
+
+void checkOpenGLError(const char* stmt, const char* fname, int line);
+
+#ifdef _DEBUG
+#define GL_CHECK(stmt) do { \
+		stmt; \
+		checkOpenGLError(#stmt, __FILE__, __LINE__); \
+} while (0)
+#else
+#define GL_CHECK(stmt) stmt
+#endif
 
 #endif /* SRC_VIDEO_H_ */
