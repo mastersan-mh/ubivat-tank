@@ -18,5 +18,6 @@ AC_CHECK_LIB([m], [cosf], [], [ AC_MSG_ERROR([Unable to find 'm']) ] )
 AC_CHECK_LIB([GL], [glBegin], [], [ AC_MSG_ERROR([Unable to find 'GL']) ] )
 AC_CHECK_LIB([GLU], [gluOrtho2D], [], [ AC_MSG_ERROR([Unable to find 'GLU']) ] )
 AC_CHECK_LIB([SDL2], [SDL_GetVersion], [], [ AC_MSG_ERROR([Unable to find 'SDL2']) ] )
+AC_CHECK_LIB([freetype], [FT_Init_FreeType], [], [ AC_MSG_ERROR([Unable to find 'freetype']) ] )
 
 AC_OUTPUT

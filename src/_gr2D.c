@@ -265,10 +265,10 @@ void gr2D_setimage0(
 	GLfloat texture_x1 = image->IMG->sx/texture_sx;
 	GLfloat texture_y1 = image->IMG->sy/texture_sy;
 
-	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glBindTexture(GL_TEXTURE_2D, image->textures);
 	glLoadIdentity();
 	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
-	glBegin(GL_QUADS);		// Рисуем куб
+	glBegin(GL_QUADS);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
 	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
@@ -313,7 +313,7 @@ void gr2D_setimage1(
 	GLfloat texture_y1 = image->IMG->sy/texture_sy;
 */
 
-	glBindTexture(GL_TEXTURE_2D, image->textures[0]);
+	glBindTexture(GL_TEXTURE_2D, image->textures);
 	glLoadIdentity();
 	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
 	glBegin(GL_QUADS);		// Рисуем куб

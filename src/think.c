@@ -43,9 +43,9 @@ static void ctrl_AI_checkdanger(player_t * player)
 	float Dd;
 	float Ld;
 	float Rd;
-	bool flag = false;
+	bool danger = false;
 	bull = bullList;
-	while(bull && !flag)
+	while(bull && !danger)
 	{
 		//не своя пуля
 		if(bull->player != player)
@@ -69,12 +69,12 @@ static void ctrl_AI_checkdanger(player_t * player)
 			)
 			{
 				if(
-						((bull->dir == DIR_UP) || (wtable[bull->_weap_].bullspeed<0)) &&
+						(bull->dir == DIR_UP || wtable[bull->_weap_].bullspeed < 0) &&
 						(abs(player->move.orig.y-bull->orig.y)<Ddist) &&
 						(bull->orig.y+wtable[bull->_weap_].radius<player->move.orig.y-c_p_MDL_box/2)
 				)
 			{
-					flag = true;
+					danger = true;
 					if(!player->brain.Fdanger)
 					{
 						player->move.go = true;
@@ -94,7 +94,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 							(player->move.orig.y+c_p_MDL_box/2<bull->orig.y-wtable[bull->_weap_].radius)
 					)
 					{
-						flag = true;
+						danger = true;
 						if(!player->brain.Fdanger) {
 							player->move.go = true;
 							player->brain.Fdanger = true;
@@ -115,12 +115,12 @@ static void ctrl_AI_checkdanger(player_t * player)
 				)
 				{
 					if (
-							(bull->dir == DIR_LEFT || (wtable[bull->_weap_].bullspeed<0))&&
+							(bull->dir == DIR_LEFT || wtable[bull->_weap_].bullspeed < 0)&&
 							(abs(player->move.orig.x-bull->orig.x)<Rdist)&&
 							(player->move.orig.x+c_p_MDL_box/2<bull->orig.x-wtable[bull->_weap_].radius)
 					)
 					{
-						flag = 1;
+						danger = true;
 						if(!player->brain.Fdanger)
 						{
 							player->move.go = true;
@@ -135,13 +135,12 @@ static void ctrl_AI_checkdanger(player_t * player)
 					else
 					{
 						if(
-								((bull->dir == DIR_RIGHT) || (wtable[bull->_weap_].bullspeed<0)) &&
+								(bull->dir == DIR_RIGHT || wtable[bull->_weap_].bullspeed < 0) &&
 								(abs(player->move.orig.x-bull->orig.x)<Ldist) &&
-								(bull->orig.x +
-										wtable[bull->_weap_].radius<player->move.orig.x-c_p_MDL_box/2)
+								(bull->orig.x + wtable[bull->_weap_].radius < player->move.orig.x - c_p_MDL_box / 2)
 						)
 						{
-							flag = true;
+							danger = true;
 							if(!player->brain.Fdanger)
 							{
 								player->move.go = true;
@@ -159,7 +158,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 		}
 		bull = bull->next;
 	}
-	player->brain.danger = flag;
+	player->brain.danger = danger;
 	if(!player->brain.danger)
 	{
 		player->brain.Fdanger = false;
@@ -176,8 +175,8 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 	if( player->bull && player->brain.target )
 	{
 		if(
-				abs(player->bull->orig.y-player->brain.target->move.orig.y)<
-				abs(player->bull->orig.x-player->brain.target->move.orig.x)
+				abs(player->bull->orig.y - player->brain.target->move.orig.y) <
+				abs(player->bull->orig.x - player->brain.target->move.orig.x)
 		)
 		{
 			if(player->bull->orig.x < player->brain.target->move.orig.x)

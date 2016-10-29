@@ -882,7 +882,7 @@ void game_message_send(const char * mess)
 
 
 
-void game_halt(const char *error, ...)
+void game_halt(const char * error, ...)
 {
 	int __errno_ = errno;
 	static char errmsg[MAX_MESSAGE_SIZE];
