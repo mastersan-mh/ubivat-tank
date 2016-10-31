@@ -11,7 +11,7 @@
 #include <weap.h>
 #include <game.h>
 #include <_gr2D.h>
-#include <_gr2Don.h>
+#include <fonts.h>
 #include <player.h>
 
 #include <string.h>
@@ -99,6 +99,85 @@ void player_attack_weapon3_ON()
 void player_attack_weapon3_OFF()
 {
 	game.P0->w.attack = WEAP_NONE;
+}
+
+void player2_moveUp_ON()
+{
+	if(!game.P1)return;
+	game.P1->move.dir = DIR_UP;
+	game.P1->move.go = true;
+}
+
+void player2_moveUp_OFF()
+{
+	if(!game.P1)return;
+	game.P1->move.go = false;
+}
+
+void player2_moveDown_ON()
+{
+	if(!game.P1)return;
+	game.P1->move.dir = DIR_DOWN;
+	game.P1->move.go = true;
+}
+
+void player2_moveDown_OFF()
+{
+	if(!game.P1)return;
+	game.P1->move.go = false;
+}
+
+void player2_moveLeft_ON()
+{
+	if(!game.P1)return;
+	game.P1->move.dir = DIR_LEFT;
+	game.P1->move.go = true;
+}
+
+void player2_moveLeft_OFF()
+{
+	if(!game.P1)return;
+	game.P1->move.go = false;
+}
+
+void player2_moveRight_ON()
+{
+	if(!game.P1)return;
+	game.P1->move.dir = DIR_RIGHT;
+	game.P1->move.go = true;
+}
+
+void player2_moveRight_OFF()
+{
+	if(!game.P1)return;
+	game.P1->move.go = false;
+}
+
+void player2_attack_weapon1_ON()
+{
+	game.P1->w.attack = WEAP_BULL;
+}
+void player2_attack_weapon1_OFF()
+{
+	game.P1->w.attack = WEAP_NONE;
+}
+
+void player2_attack_weapon2_ON()
+{
+	game.P1->w.attack = WEAP_ROCKET;
+}
+void player2_attack_weapon2_OFF()
+{
+	game.P1->w.attack = WEAP_NONE;
+}
+
+void player2_attack_weapon3_ON()
+{
+	game.P1->w.attack = WEAP_MINE;
+}
+void player2_attack_weapon3_OFF()
+{
+	game.P1->w.attack = WEAP_NONE;
 }
 
 /*
@@ -306,7 +385,7 @@ void player_item_get(player_t * player)
 void player_obj_check(player_t * player)
 {
 	obj_t * obj;
-	if((player->charact.status=c_p_P0)||(player->charact.status=c_p_P1))
+	if((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
 	{
 		obj = map.objs;
 		while(obj)
@@ -341,7 +420,7 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 		if(player->move.go)
 		{
 			if(play) {
-				player->Fbase = player->Fbase+c_p_fpsRUN * ddtime10/100.0f;
+				player->Fbase = player->Fbase+PLAYER_FPS_RUN * ddtime10/100.0f;
 				if((player->Fbase<0)||(player->Fbase>3)) player->Fbase = 0;
 			};
 		};
@@ -460,7 +539,7 @@ static void player_handle(player_t * player)
 		};
 		if(!player->move.go)
 		{                                     //игрок останавливается
-			player->move.speed = player->move.speed-c_p_accel * ddtime10;
+			player->move.speed = player->move.speed-PLAYER_ACCEL * ddtime10;
 			if(player->move.speed<0) player->move.speed = 0;
 		}
 		else {                                                          //игрок идет
@@ -544,10 +623,10 @@ static void player_handle(player_t * player)
 						default: bullList->image = NULL;
 						};
 						if(
-								(wtable[player->w.attack-1].ammo>0) && //если пули у оружия не бесконечны и
-								((player->charact.status=c_p_P0)||(player->charact.status=c_p_P1)) // игрок не монстр(у монстрюков пули не кончаются)
+								wtable[player->w.attack-1].ammo > 0 && //если пули у оружия не бесконечны и
+								(player->charact.status==c_p_P0 || player->charact.status == c_p_P1) // игрок не монстр(у монстрюков пули не кончаются)
 						)
-							player->w.ammo[player->w.attack-1]-= 1;
+							player->w.ammo[player->w.attack-1]--;
 					}
 				}
 			}
@@ -583,34 +662,35 @@ int player_connect(int status)
 	int id = 0;
 	if(status != c_p_ENEMY && status != c_p_BOSS) player = player_find(status);
 	//ирок P0/P1 присоединен
-	if(player) return 2;
-
-	//ирок P0/P1 не присоединен
-	if(playerList)
+	if(player) error = 2;
+	else
 	{
-		//список игроков создан
-		error = 1;
-		match = false;
-		//пытаемся соединить игрока с сервером,
-		while( id < c_p_Pmax && error == 1)
+		//ирок P0/P1 не присоединен
+		if(playerList)
 		{
-			// пока не исчерпан лимит на кол-во игроков
-			player = playerList;
-			//ищем, чтобы небыло совпадения идентификаторов
-			while( !match && player )
+			//список игроков создан
+			error = 1;
+			match = false;
+			//пытаемся соединить игрока с сервером,
+			while( id < c_p_Pmax && error == 1)
 			{
-				if(player->charact.id == id) match = true;
-				else player = player->next;
-			};
-			if(!match) error = 0;                                         //все номера свободны, коннект удался
-			else
-			{
-				match = false;
-				id = id+1;
+				// пока не исчерпан лимит на кол-во игроков
+				player = playerList;
+				//ищем, чтобы небыло совпадения идентификаторов
+				while( !match && player )
+				{
+					if(player->charact.id == id) match = true;
+					else player = player->next;
+				};
+				if(!match) error = 0;                                         //все номера свободны, коннект удался
+				else
+				{
+					match = false;
+					id = id+1;
+				}
 			}
 		}
 	}
-
 	//нет ошибок, инициализируем игрока
 	if(!error)
 	{

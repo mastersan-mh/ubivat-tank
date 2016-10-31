@@ -12,7 +12,7 @@
 
 
 action_t actions[__ACTION_NUM] = {
-		{ NULL               , game_action_enter_mainmenu}, /* 	ACTION_ENTER_MAINMENU */
+		{ game_action_enter_mainmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
 		{ player_moveUp_ON   , player_moveUp_OFF    },      /* ACTION_PLAYER_MOVEL */
 		{ player_moveDown_ON , player_moveDown_OFF  },      /* ACTION_PLAYER_MOVER */
 		{ player_moveLeft_ON , player_moveLeft_OFF  },      /* ACTION_PLAYER_MOVE_LEFT */
@@ -20,13 +20,14 @@ action_t actions[__ACTION_NUM] = {
 		{ player_attack_weapon1_ON, player_attack_weapon1_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON1 */
 		{ player_attack_weapon2_ON, player_attack_weapon2_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON2 */
 		{ player_attack_weapon3_ON, player_attack_weapon3_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON3 */
-		{ NULL, NULL }, /* ACTION_PLAYER2_MOVE_UP */
-		{ NULL, NULL }, /* ACTION_PLAYER2_MOVE_DOWN */
-		{ NULL, NULL }, /* ACTION_PLAYER2_MOVE_LEFT */
-		{ NULL, NULL }, /* ACTION_PLAYER2_MOVE_RIGHT */
-		{ NULL, NULL }, /* ACTION_PLAYER2_ATTACK_WEAPON1 */
-		{ NULL, NULL }, /* ACTION_PLAYER2_ATTACK_WEAPON2 */
-		{ NULL, NULL }  /* ACTION_PLAYER2_ATTACK_WEAPON3 */
+		{ player2_moveUp_ON   , player2_moveUp_OFF }, /* ACTION_PLAYER2_MOVE_UP */
+		{ player2_moveDown_ON , player2_moveDown_OFF }, /* ACTION_PLAYER2_MOVE_DOWN */
+		{ player2_moveLeft_ON , player2_moveLeft_OFF }, /* ACTION_PLAYER2_MOVE_LEFT */
+		{ player2_moveRight_ON, player2_moveRight_OFF }, /* ACTION_PLAYER2_MOVE_RIGHT */
+		{ player2_attack_weapon1_ON, player2_attack_weapon1_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON1 */
+		{ player2_attack_weapon2_ON, player2_attack_weapon2_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON2 */
+		{ player2_attack_weapon3_ON, player2_attack_weapon3_OFF },  /* ACTION_PLAYER2_ATTACK_WEAPON3 */
+		{ game_action_win, NULL } /* ACTION_CHEAT_WIN */
 };
 
 typedef struct

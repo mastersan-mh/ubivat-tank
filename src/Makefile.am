@@ -16,8 +16,8 @@ Z_mem.c \
 system.c \
 types.c \
 video.c \
+fonts.c \
 _gr2D.c \
-_gr2Don.c \
 actions.c \
 input.c \
 think.c \

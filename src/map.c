@@ -8,7 +8,7 @@
 #include <game.h>
 #include <img.h>
 #include <_gr2D.h>
-#include <_gr2Don.h>
+#include <fonts.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -291,8 +291,8 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 			{
 				wall = map.map[(int)trunc((orig->y+c   )/8)][(int)trunc((orig->x-(*dist))/8)];
 				c++;
-			}while(!( (+box<=c)||((wall && mask) != 0)));
-		}while(!( (DISTmax<=(*dist))||((wall && mask) != 0)));
+			}while(!( (+box<=c)||((wall & mask) != 0)));
+		}while(!( (DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
 	case DIR_RIGHT:
 		if(c_MAP_sx*8<DISTmax) DISTmax = c_MAP_sx*8;

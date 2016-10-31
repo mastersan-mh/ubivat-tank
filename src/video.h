@@ -20,16 +20,22 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 
-
+/*
 #define VIDEO_MODE_W 320
 #define VIDEO_MODE_H 200
+*/
+
+#define VIDEO_MODE_W 640
+#define VIDEO_MODE_H 480
+
+
+
+#define VIDEO_SCALEX ((float)VIDEO_MODE_W / 320.0f)
+#define VIDEO_SCALEY ((float)VIDEO_MODE_H / 200.0f)
+
 
 #define OPAQUE 0
 
-/*
-#define VIDEO_MODE_W 640
-#define VIDEO_MODE_H 480
-*/
 int video_init();
 void video_done();
 

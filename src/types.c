@@ -5,27 +5,28 @@
 #include <stdlib.h>
 
 char *c_strTITLE = "Ubivat Tank v0.47b SecretCode Edition";
-char *c_strCORP ="Mad House Software (C)2004\n";
+char *c_strCORP ="Mad House Software (C)2004";
 
 char *c_about[] = {
 	"Ubivat Tank v0.47b SecretCode Edition",
-	"Mad House Software (C)2004\n",
-	"Programming:\n",
-	" Remnyov Alexander aka Master San[MH]\n",
-	"Artists:\n",
-	" Remnyov Alexander,\n",
-	" Vasilyev Artyom aka Timon\n",
-	"Designers:\n",
-	" Remnyov Alexander, Vasilyev Artyom\n",
-	"Levels designers:\n",
-	" Remnyov Alexander, Vasilyev Artyom\n",
-	"Special thanks:\n",
-	" Vasilyev Artyom\n",
-	" Данная редакция, в отличии от\n",
-	" коды, добавленые по многочисленным\n",
+	"Mad House Software (C)2004",
+	"Programming:",
+	" Remnyov Alexander aka Master San[MH]",
+	"Artists:",
+	" Remnyov Alexander,",
+	" Vasilyev Artyom aka Timon",
+	"Designers:",
+	" Remnyov Alexander, Vasilyev Artyom",
+	"Levels designers:",
+	" Remnyov Alexander, Vasilyev Artyom",
+	"Special thanks:",
+	" Vasilyev Artyom",
+	" Данная редакция, в отличии от",
+	" коды, добавленые по многочисленным",
 	" просьбам."
 };
 
+bool debug_noAI = false;
 
 
 /**

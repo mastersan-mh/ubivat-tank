@@ -5,8 +5,7 @@
 #include <types.h>
 #include <video.h>
 
-#include <video.h>
-#include "_gr2Don.h"
+#include "fonts.h"
 
 #include <inttypes.h>
 #include <stdlib.h>
