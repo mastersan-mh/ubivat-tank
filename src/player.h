@@ -113,6 +113,22 @@ void player_attack_weapon2_OFF();
 void player_attack_weapon3_ON();
 void player_attack_weapon3_OFF();
 
+void player2_moveUp_ON();
+void player2_moveUp_OFF();
+void player2_moveDown_ON();
+void player2_moveDown_OFF();
+void player2_moveLeft_ON();
+void player2_moveLeft_OFF();
+void player2_moveRight_ON();
+void player2_moveRight_OFF();
+void player2_attack_weapon1_ON();
+void player2_attack_weapon1_OFF();
+void player2_attack_weapon2_ON();
+void player2_attack_weapon2_OFF();
+void player2_attack_weapon3_ON();
+void player2_attack_weapon3_OFF();
+
+
 void player_checkcode();
 void player_item_get(player_t * player);
 void player_obj_check(player_t * player);

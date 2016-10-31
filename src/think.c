@@ -409,6 +409,7 @@ static void ctrl_AI_findenemy(player_t * player, player_t * target)
  */
 void think_enemy(struct player_s * player)
 {
+	if(debug_noAI)return;
 	if(0<player->charact.health)
 	{
 		ctrl_AI_checkdanger(player);

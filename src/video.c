@@ -5,7 +5,7 @@
 #include <types.h>
 #include <video.h>
 
-#include <video.h>
+#include <fonts.h>
 
 #include <inttypes.h>
 

@@ -15,7 +15,7 @@
 #include <img.h>
 #include <video.h>
 #include <_gr2D.h>
-#include <_gr2Don.h>
+#include <fonts.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -94,6 +94,11 @@ void game_action_enter_mainmenu()
 	game.ingame = false;
 }
 
+void game_action_win()
+{
+	game._win_ = true;
+}
+
 /*
  * открытие файлов с рисунками меню
  */
@@ -118,7 +123,7 @@ void game_rebind_keys_all()
 {
 	input_key_unbind_all();
 	int i;
-	for(i = ACTION_ENTER_MAINMENU; i < __ACTION_NUM; i++)
+	for(i = 0; i < __ACTION_NUM; i++)
 	{
 
 		input_key_bindAction(game.controls[i], actions[i]);
@@ -183,10 +188,7 @@ void game_init()
 
 	//чтение конфига
 	printf("Config init...\n");
-	if(game_cfg_load())
-	{
-		game_halt("config read error.");
-	}
+	game_cfg_load();
 
 	//инициализация оружий
 	printf("Weapons init...\n");
@@ -347,14 +349,14 @@ int game_mainproc()
 	{
 		if(game.flags & c_g_f_CASE)
 		{
-			//игра по уровням
-			game_nextmap();
-			return MENU_INTERLEVEL;
+			//игра по выбору
+			game_abort();
+			return MENU_MAIN;
 		}
 		else
 		{
-			//игра по выбору
-			game_abort();
+			//игра по уровням
+			game_nextmap();
 			return MENU_INTERLEVEL;
 		}
 	}
@@ -426,9 +428,9 @@ void game_nextmap()
 {
 	int ret;
 	//дисконнект всех монстров
-	player_disconnect_monsters();
 	explode_removeall();
 	bull_removeall();
+	player_disconnect_monsters();
 	//закроем карту
 	map_clear();
 	game.created    = false;
@@ -441,7 +443,8 @@ void game_nextmap()
 	{
 		game.gamemap = game.gamemap->next;
 		ret = map_load(game.gamemap->map);
-		if(ret != 0) {
+		if(ret)
+		{
 			game_msg_error(ret);
 			game_abort();
 			//game.menu = c_m_main;
@@ -500,6 +503,7 @@ int game_cfg_save()
  */
 int game_cfg_new()
 {
+	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
 	game.controls[ACTION_PLAYER_MOVE_UP   ]     = SDL_SCANCODE_UP;
 	game.controls[ACTION_PLAYER_MOVE_DOWN ]     = SDL_SCANCODE_DOWN ;
 	game.controls[ACTION_PLAYER_MOVE_LEFT ]     = SDL_SCANCODE_LEFT ;
@@ -514,6 +518,7 @@ int game_cfg_new()
 	game.controls[ACTION_PLAYER2_ATTACK_WEAPON1] = SDL_SCANCODE_W;
 	game.controls[ACTION_PLAYER2_ATTACK_WEAPON2] = SDL_SCANCODE_Q;
 	game.controls[ACTION_PLAYER2_ATTACK_WEAPON3] = SDL_SCANCODE_TAB;
+	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
 	return game_cfg_save();
 }
 /********чтение конфига********/
@@ -538,6 +543,8 @@ int game_cfg_load()
 		close(fd);
 	case 1:;
 	}
+	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
+	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
 	return ret ? -1 : 0;
 }
 
@@ -555,44 +562,50 @@ int game_pal_get()
  * @description чтение заголовка записи
  * @return true | false
  */
-static bool game_record_load_info(const char * savename, gamesave_t * rec)
+static bool game_record_load_info(const char * savename, gamesave_descr_t * rec)
 {
 	int fd;
-	char * path = Z_malloc(strlen(BASEDIR)+strlen(FILENAME_CONFIG) + 1);
-	strcpy(rec->_file, savename);
-	strcpy(path, BASEDIR);
-	strcat(path, SAVESDIR);
+	char * path = Z_malloc(strlen(BASEDIR SAVESDIR)+strlen(savename) + 1);
+	strcpy(path, BASEDIR SAVESDIR);
 	strcat(path, savename);
-	strcat(path, c_SAVext);
 	fd = open(path, O_RDONLY);
-	if(fd < 0)
+	Z_free(path);
+	if(fd < 0) return false;
+	memset(rec, 0, sizeof(*rec));
+	game_savedata_header_t header;
+	ssize_t count = read(fd, &header, sizeof(header));
+	if(count != sizeof(header))
 	{
+		close(fd);
 		return false;
 	}
-	memset(rec, 0, sizeof(*rec));
-	//имя файла карты
-	read(fd, rec->Hmap , 9 );rec->Hmap [8]  = 0;
-	//внутреннее имя записи
-	read(fd, rec->Hname, 17);rec->Hname[16] = 0;
-	//флаги состояния игры
-	read(fd, &rec->flags, 1 );
+	strncpy(rec->name, header.name, 16);
+	strncpy(rec->mapfilename, header.mapfilename, 16);
+	rec->flags = header.flags;
 	close(fd);
+	rec->exist = true;
+	Z_free(path);
 	return true;
 };
+
+static char * _make_gamesave_filename(char * filename, int i)
+{
+	sprintf(filename, "ut_s%02d." FILENAME_GAMESAVE_EXT, i);
+	return filename;
+}
+
 /*
  * формируем листинг записей
  */
 void game_record_getsaves()
 {
 	int i;
-	char _file[9];
+	char filename[16];
 
 	memset(game.saveslist, 0, sizeof(game.saveslist[0])*GAME_SAVESNUM);
 	for(i = 0; i < GAME_SAVESNUM; i++)
 	{
-		game.saveslist[i].Hname[0] = 0xFF;
-		sprintf(_file, "UT_S%02x", i);
-		game_record_load_info(_file, &(game.saveslist[i]));
+		game_record_load_info(_make_gamesave_filename(filename, i), &(game.saveslist[i]));
 	};
 };
 
@@ -611,13 +624,19 @@ static bool game_record_save_player(int fd, player_t * player)
 	default:
 		return false;
 	};
-	write(fd, &player->charact.scores    , 4);
-	write(fd, &player->charact.status    , 1);
-	write(fd, &player->charact.health    , 2);
-	write(fd, &player->charact.armor     , 2);
-	write(fd, &player->charact.fragstotal, 4);
-	write(fd, &player->charact.frags     , 4);
-	write(fd, &player->w.ammo            , 6);
+	game_savedata_player_t savedata =
+	{
+		.scores     = player->charact.scores,
+		.fragstotal = player->charact.fragstotal,
+		.frags      = player->charact.frags,
+		.health     = player->charact.health,
+		.armor      = player->charact.armor,
+		.ammo1      = player->w.ammo[0],
+		.ammo2      = player->w.ammo[1],
+		.ammo3      = player->w.ammo[2],
+		.status     = player->charact.status
+	};
+	write(fd, &savedata, sizeof(savedata));
 	return true;
 };
 
@@ -629,13 +648,18 @@ static bool game_record_load_player(int fd, player_t * player)
 {
 	mobj_type_t mobj_type = map_file_class_get(fd);
 	if(mobj_type != MAP_SPAWN_PLAYER) return false;
-	read(fd, &player->charact.scores    , 4);
-	read(fd, &player->charact.status    , 1);
-	read(fd, &player->charact.health    , 2);
-	read(fd, &player->charact.armor     , 2);
-	read(fd, &player->charact.fragstotal, 4);
-	read(fd, &player->charact.frags     , 4);
-	read(fd, &player->w.ammo            , 6);
+	game_savedata_player_t savedata;
+	ssize_t c = read(fd, &savedata, sizeof(savedata));
+	if(c != sizeof(savedata))return false;
+	player->charact.scores     = savedata.scores;
+	player->charact.fragstotal = savedata.fragstotal;
+	player->charact.frags      = savedata.frags;
+	player->charact.health     = savedata.health;
+	player->charact.armor      = savedata.armor;
+	player->w.ammo[0]          = savedata.ammo1;
+	player->w.ammo[1]          = savedata.ammo2;
+	player->w.ammo[2]          = savedata.ammo3;
+	player->charact.status     = savedata.status;
 	player_class_init(player);
 	return true;
 };
@@ -643,52 +667,48 @@ static bool game_record_load_player(int fd, player_t * player)
  * сохраниние записи
  * @return true| false
  */
-bool game_record_save(gamesave_t * rec)
+bool game_record_save(int isave)
 {
+	gamesave_descr_t * rec = &game.saveslist[isave];
 	int fd;
+	char filename[16];
+	_make_gamesave_filename(filename, isave);
 	char * path;
 
 	//если папка "SAVES" отсутствует, тогда создадим ее
-	path = Z_malloc(
-		strlen(BASEDIR)+
-		strlen(SAVESDIR)+
-		1
-		);
+	path = Z_malloc(strlen(BASEDIR SAVESDIR)+1);
 
-	strcpy(path, BASEDIR);
-	strcat(path, SAVESDIR);
+	strcpy(path, BASEDIR SAVESDIR);
 	DIR * dir = opendir(path);
 	if(!dir) mkdir(path, 0755);
 	else closedir(dir);
 
 	Z_free(path);
 
-	path = Z_malloc(
-		strlen(BASEDIR)+
-		strlen(SAVESDIR)+
-		strlen(rec->_file)+
-		strlen(c_SAVext)+
-		1
-	);
-	strcpy(path, BASEDIR);
-	strcat(path, SAVESDIR);
-	strcat(path, rec->_file);
-	strcat(path, c_SAVext);
-	strcpy(rec->Hmap, map._file);
+	path = Z_malloc(strlen(BASEDIR SAVESDIR) + strlen(filename) + 1);
+	strcpy(path, BASEDIR SAVESDIR);
+	strcat(path, filename);
+	strcpy(rec->mapfilename, map._file);
+	ssize_t count;
+	//int ret = unlink(path);
+	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	Z_free(path);
+	if(fd <= 0)return false;
 
-	fd = open(path, O_CREAT | O_WRONLY);
-	//имя файла карты
-	write(fd, rec->Hmap , 9);
-	//внутреннее имя записи
-	write(fd, rec->Hname,17);
-	//флаги настройки игры
-	write(fd, &rec->flags, 1);
-	//сохраним 0-го игрока
+	game_savedata_header_t header;
+	strncpy(header.name, rec->name, 16);
+	strncpy(header.mapfilename, rec->mapfilename, 16);
+	header.flags = rec->flags;
+	count = write(fd, &header, sizeof(header));
+	if(count != sizeof(header))
+	{
+		close(fd);
+		return false;
+	}
+
 	game_record_save_player(fd, game.P0);
-	//сохраним 1-го игрока
 	if(game.P1) game_record_save_player(fd, game.P1);
 	close(fd);
-	Z_free(path);
 	return true;
 };
 /*
@@ -698,56 +718,62 @@ bool game_record_save(gamesave_t * rec)
  * @return = 2 - карта отсутствует в списке карт
  * @return = 3 - ошибка чтения карты
  */
-int game_record_load(gamesave_t * rec)
+int game_record_load(int isave)
 {
+	gamesave_descr_t * rec = &game.saveslist[isave];
+	char filename[16];
+	_make_gamesave_filename(filename, isave);
 	int ret;
-	int fd_rec;
+	int fd;
 
-	if(rec->Hname[0] == 0xFF)
-		return 1;
+	if(!rec->exist) return 1;
 	if(!(rec->flags & c_g_f_CASE))
 	{
 		game.gamemap = mapList;
 		while(game.gamemap)
 		{
-			if(strcmp(rec->Hmap, game.gamemap->map)==0)
-				return 2;
+			if(!strcmp(rec->mapfilename, game.gamemap->map))break;
 			game.gamemap = game.gamemap->next;
 		}
+		if(!game.gamemap) return 2;
 	};
-	//закроем отктытую карту
+	//закроем открытую карту
 	map_clear();
-	//прочитаем карту
-	ret = map_load(rec->Hmap);
-	if(ret != 0) return 3;
-	char * path = Z_malloc(
-		sizeof(BASEDIR)+
-		sizeof(SAVESDIR)+
-		sizeof(rec->_file)+
-		sizeof(c_SAVext)+
-		1
-	);
 
-	strcpy(path, BASEDIR);
-	strcat(path, SAVESDIR);
-	strcat(path, rec->_file);
-	strcat(path, c_SAVext);
-	fd_rec = open(path, O_RDONLY);
-	//имя файла карты
-	read(fd_rec, rec->Hmap , 9);rec->Hmap [ 8] = 0;
-	//внутреннее имя записи
-	read(fd_rec, rec->Hname,17);rec->Hname[16] = 0;
-	//флаги настройки игры
-	read(fd_rec, &rec->flags, 1);game.flags = rec->flags;
+	char * path = Z_malloc(sizeof(BASEDIR SAVESDIR) + sizeof(filename) + 1);
+
+	strcpy(path, BASEDIR SAVESDIR);
+	strcat(path, filename);
+	fd = open(path, O_RDONLY);
+	Z_free(path);
+	if(fd <= 0)
+	{
+		game_halt("gamesave load error");
+		return -1;
+	}
+	game_savedata_header_t header;
+	ssize_t count = read(fd, &header, sizeof(header));
+	if(count != sizeof(header))
+	{
+		close(fd);
+		return false;
+	}
+	strncpy(rec->name, header.name, 16);
+	strncpy(rec->mapfilename, header.mapfilename, 16);
+	rec->flags = header.flags;
+
+	//прочитаем карту
+	ret = map_load(rec->mapfilename);
+	if(ret) return 3;
+
 	//создаем игру и спавним всех игроков
 	ret = game_create();
 	//читаем первого игрока
-	game_record_load_player(fd_rec, game.P0);
+	game_record_load_player(fd, game.P0);
 	//читаем второго игрока
 	if(rec->flags & c_g_f_2PLAYERS)
-		game_record_load_player(fd_rec, game.P1);
-	close(fd_rec);
-	Z_free(path);
+		game_record_load_player(fd, game.P1);
+	close(fd);
 	return 0;
 }
 /*
@@ -762,7 +788,10 @@ int game_create()
 {
 	int ret;
 
-	int pixels = (VIDEO_MODE_H*8)/200;
+	int cam_sx = 320;
+	int cam_sy = 200;
+
+	int pixels = (cam_sy*8)/200;
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
@@ -770,29 +799,26 @@ int game_create()
 		game.P0cam.orig.y = 0;
 		game.P0cam.x      = 0;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = VIDEO_MODE_W;
-		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;//184
+		game.P0cam.sx     = cam_sx;
+		game.P0cam.sy     = cam_sy - pixels*2;//184
 		ret = player_connect(c_p_P0);
-		if(ret)return ret;
 	}
 	else
 	{
 		game.P0cam.orig.x = 0;
 		game.P0cam.orig.y = 0;
-		game.P0cam.x      = VIDEO_MODE_W/2+1;
+		game.P0cam.x      = cam_sx/2+1;
 		game.P0cam.y      = 0;
-		game.P0cam.sx     = VIDEO_MODE_W/2-1;
-		game.P0cam.sy     = VIDEO_MODE_H - pixels*2;
+		game.P0cam.sx     = cam_sx/2-1;
+		game.P0cam.sy     = cam_sy - pixels*2;
 		game.P1cam.orig.x = 0;
 		game.P1cam.orig.y = 0;
 		game.P1cam.x      = 0;
 		game.P1cam.y      = 0;
-		game.P1cam.sx     = VIDEO_MODE_W-1;
-		game.P1cam.sy     = VIDEO_MODE_H - pixels*2;
+		game.P1cam.sx     = cam_sx-1;
+		game.P1cam.sy     = cam_sy - pixels*2;
 		ret = player_connect(c_p_P0);
-		if(ret)return ret;
 		ret = player_connect(c_p_P1);
-		if(ret)return ret;
 	};
 	//спавним всех игроков и монстров
 	player_spawn_all();
@@ -803,7 +829,7 @@ int game_create()
 /*
  * прерывание игры
  */
-void game_abort()
+void game_abort(void)
 {
 	game.gamemap = mapList;
 	//дисконнект всех игроков

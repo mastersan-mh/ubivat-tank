@@ -12,7 +12,7 @@
 #include <weap.h>
 #include <menu.h>
 #include <_gr2D.h>
-#include <_gr2Don.h>
+#include <fonts.h>
 #include <player.h>
 
 #include <stdio.h>

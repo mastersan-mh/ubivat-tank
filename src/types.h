@@ -34,7 +34,7 @@ typedef void (*actionf_t)();
 #define FILENAME_CONFIG "config.cfg"
 #define FILENAME_MAPSLIST "maps.lst"
 #define FILENAME_PALETTE "palette.pal"
-#define c_SAVext  ".sav"
+#define FILENAME_GAMESAVE_EXT "sav"
 //коды
 #define code_levelup "IAMSUPERTANK"
 #define code_health  "GIVEHEALTH"
@@ -91,9 +91,10 @@ typedef void (*actionf_t)();
 //босс
 #define c_p_BOSS        3
 //ускорение игрока
-#define c_p_accel       12
-//скорость проигрывания кадров:бег
-#define c_p_fpsRUN      20
+//#define PLAYER_ACCEL       12
+#define PLAYER_ACCEL       64
+//скорость проигрывания кадров: бег
+#define PLAYER_FPS_RUN      20
 //макс. кол-во игроков
 #define c_p_Pmax        128
 //body box
@@ -162,6 +163,7 @@ extern char *c_strTITLE;
 extern char *c_strCORP;
 extern char *c_about[];
 
+extern bool debug_noAI;
 
 bool checkchar(char chr);
 

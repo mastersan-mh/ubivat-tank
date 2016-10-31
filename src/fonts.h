@@ -1,12 +1,12 @@
 /*
- * _gr2Don.h
+ * fonts.h
  *
  * Created on: 11 окт. 2016 г.
  * Author: mastersan
  */
 
-#ifndef SRC__GR2DON_H_
-#define SRC__GR2DON_H_
+#ifndef SRC__FONTS_H_
+#define SRC__FONTS_H_
 
 enum text_orient_e
 {
@@ -28,4 +28,4 @@ void gr2Don_settext(
 	...
 	);
 
-#endif /* SRC__GR2DON_H_ */
+#endif /* SRC__FONTS_H_ */

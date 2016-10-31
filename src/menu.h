@@ -56,6 +56,12 @@ typedef struct
 typedef struct
 {
 	int menu;
+	enum
+	{
+		MENU_GAME_LOAD_INIT,
+		MENU_GAME_LOAD_SELECT,
+		MENU_GAME_LOAD_LOAD,
+	} state;
 } menu_game_load_ctx_t;
 
 /* MENU_GAME_SAVE */
@@ -70,7 +76,7 @@ typedef struct
 		MENU_GAME_SAVE_SAVE,
 	}state;
 	// редактируемая запись
-	gamesave_t rec;
+	gamesave_descr_t rec;
 
 } menu_game_save_ctx_t;
 
@@ -146,9 +152,8 @@ typedef enum
 
 typedef struct
 {
-	int maxmenu;
 	void * context;
-	int  (* handle) (menu_key_t status, void * context);
+	int  (* handle) (void * context);
 	void (* draw) (const void * context);
 } menu_t;
 

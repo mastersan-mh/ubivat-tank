@@ -253,11 +253,9 @@ void gr2D_setimage0(
 	item_img_t * image
 )
 {
-	GLfloat scalex = VIDEO_MODE_W / 320.0f;
-	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-	GLfloat mdl_sx = image->IMG->sx * scalex;
-	GLfloat mdl_sy = image->IMG->sy * scaley;
+	GLfloat mdl_sx = image->IMG->sx * VIDEO_SCALEX;
+	GLfloat mdl_sy = image->IMG->sy * VIDEO_SCALEY;
 
 	GLfloat texture_sx = image->sx;
 	GLfloat texture_sy = image->sy;
@@ -267,14 +265,14 @@ void gr2D_setimage0(
 
 	glBindTexture(GL_TEXTURE_2D, image->textures);
 	glLoadIdentity();
-	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
 	glBegin(GL_QUADS);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
 	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
 	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
 	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
-	glEnd();	// Закончили квадраты
+	glEnd();
 }
 
 
@@ -290,11 +288,9 @@ void gr2D_setimage1(
 	int get_sy
 	)
 {
-	GLfloat scalex = VIDEO_MODE_W / 320.0f;
-	GLfloat scaley = VIDEO_MODE_H / 200.0f;
 
-	GLfloat mdl_sx = get_sx * scalex;
-	GLfloat mdl_sy = get_sy * scaley;
+	GLfloat mdl_sx = get_sx * VIDEO_SCALEX;
+	GLfloat mdl_sy = get_sy * VIDEO_SCALEY;
 /*
 	GLfloat mdl_sx = image->IMG->sx * scalex;
 	GLfloat mdl_sy = image->IMG->sy * scaley;
@@ -315,7 +311,7 @@ void gr2D_setimage1(
 
 	glBindTexture(GL_TEXTURE_2D, image->textures);
 	glLoadIdentity();
-	glTranslatef(out_x * scalex, out_y * scaley, 0.0f);
+	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
 	glBegin(GL_QUADS);		// Рисуем куб
 	glColor3f(1.0f, 1.0f, 1.0f);
 
