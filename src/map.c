@@ -247,16 +247,18 @@ void map_clip_find(
 /*
  * вычисление расстояния до ближайшей стены
  */
-void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTmax, float * dist)
+void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist)
 {
 	char wall;
 	float c;
 	box = box/2;
 	*dist = box/2;
+	int mapx;
+	int mapy;
 	switch(dir)
 	{
 	case DIR_UP:
-		if(c_MAP_sy*8<DISTmax) DISTmax = c_MAP_sy * 8;
+		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * 8;
 		do
 		{
 			(*dist)++;
@@ -269,20 +271,22 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
 	case DIR_DOWN:
-		if(c_MAP_sy*8<DISTmax) DISTmax = c_MAP_sy*8;
+		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY*8;
 		do
 		{
 			(*dist)++;
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)trunc((orig->y-(*dist))/8)][(int)trunc((orig->x+c   )/8)];
+				mapy = trunc((orig->y-(*dist))/8);
+				mapx = trunc((orig->x+c   )/8);
+				wall = map.map[mapy][mapx];
 				c++;
 			}while(!((+box<=c)||((wall & mask) != 0)));
 		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
 	case DIR_LEFT:
-		if(c_MAP_sx*8<DISTmax) DISTmax = c_MAP_sx*8;
+		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
 		do
 		{
 			(*dist)++;
@@ -295,7 +299,7 @@ void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTm
 		}while(!( (DISTmax<=(*dist))||((wall & mask) != 0)));
 		break;
 	case DIR_RIGHT:
-		if(c_MAP_sx*8<DISTmax) DISTmax = c_MAP_sx*8;
+		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
 		do
 		{
 			(*dist)++;
@@ -322,28 +326,28 @@ void map_clip_find_near_wall(pos_t * orig, int dir, float * dist, char * wall)
 		{
 			*wall = map.map[(int)trunc((orig->y+(*dist))/8)][(int)trunc((orig->x     )/8)];
 			(*dist)++;
-		}while(!( (c_MAP_sy*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 1:
 		do
 		{
 			*wall = map.map[(int)trunc((orig->y-(*dist))/8)][(int)trunc((orig->x     )/8)];
 			(*dist)++;
-		}while(!( (c_MAP_sy*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 2:
 		do
 		{
 			*wall = map.map[(int)trunc((orig->y     )/8)][(int)trunc((orig->x-(*dist))/8)];
 			(*dist)++;
-		}while(!( (c_MAP_sx*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 3:
 		do
 		{
 			*wall = map.map[(int)trunc((orig->y     )/8)][(int)trunc((orig->x+(*dist))/8)];
 			(*dist)++;
-		}while(!( (c_MAP_sx*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	}
 }
@@ -473,8 +477,8 @@ int map_load(const char * mapname)
 	if(count != MAP_BRIEF_SIZE) RETURN_ERR(MAP_ERR_READ);
 
 	//чтение карты
-	count = read(fd, map.map, c_MAP_sx*c_MAP_sy);
-	if(count != c_MAP_sx*c_MAP_sy) RETURN_ERR(MAP_ERR_READ);
+	count = read(fd, map.map, MAP_SX * MAP_SY);
+	if(count != MAP_SX * MAP_SY) RETURN_ERR(MAP_ERR_READ);
 
 	_eof = false;
 	bool player_spawn_exist = false;
@@ -546,13 +550,13 @@ void map_draw(camera_t * cam)
 	{
 		if(
 				(item->exist) &&
-				(cam->orig.x-cam->sx/2 <= item->orig.x+(c_i_MDL_box/2))&&(item->orig.x - (c_i_MDL_box/2)<=cam->orig.x+cam->sx/2) &&
-				(cam->orig.y-cam->sy/2 <= item->orig.y+(c_i_MDL_box/2))&&(item->orig.y - (c_i_MDL_box/2)<=cam->orig.y+cam->sy/2)
+				(cam->pos.x-cam->sx/2 <= item->orig.x+(c_i_MDL_box/2))&&(item->orig.x - (c_i_MDL_box/2)<=cam->pos.x+cam->sx/2) &&
+				(cam->pos.y-cam->sy/2 <= item->orig.y+(c_i_MDL_box/2))&&(item->orig.y - (c_i_MDL_box/2)<=cam->pos.y+cam->sy/2)
 			)
 		{
 			gr2D_setimage0(
-					round(cam->x+item->orig.x-(cam->orig.x-cam->sx/2))+c_i_MDL_pos,
-					round(cam->y-item->orig.y+(cam->orig.y+cam->sy/2))+c_i_MDL_pos,
+					round(cam->x+item->orig.x-(cam->pos.x-cam->sx/2))+c_i_MDL_pos,
+					round(cam->y-item->orig.y+(cam->pos.y+cam->sy/2))+c_i_MDL_pos,
 					item->img
 			);
 		}
@@ -563,27 +567,27 @@ void map_draw(camera_t * cam)
 	while(obj){
 		if(
 				(obj->img) &&
-				(cam->orig.x-cam->sx/2<=obj->orig.x+(c_o_MDL_box/2))&&(obj->orig.x-(c_o_MDL_box/2)<=cam->orig.x+cam->sx/2) &&
-				(cam->orig.y-cam->sy/2<=obj->orig.y+(c_o_MDL_box/2))&&(obj->orig.y-(c_o_MDL_box/2)<=cam->orig.y+cam->sy/2)
+				(cam->pos.x-cam->sx/2<=obj->orig.x+(c_o_MDL_box/2))&&(obj->orig.x-(c_o_MDL_box/2)<=cam->pos.x+cam->sx/2) &&
+				(cam->pos.y-cam->sy/2<=obj->orig.y+(c_o_MDL_box/2))&&(obj->orig.y-(c_o_MDL_box/2)<=cam->pos.y+cam->sy/2)
 		)
 		{
 			gr2D_setimage0(
-					round(cam->x+obj->orig.x-(cam->orig.x-cam->sx/2))+c_o_MDL_pos,
-					round(cam->y-obj->orig.y+(cam->orig.y+cam->sy/2))+c_o_MDL_pos,
+					round(cam->x+obj->orig.x-(cam->pos.x-cam->sx/2))+c_o_MDL_pos,
+					round(cam->y-obj->orig.y+(cam->pos.y+cam->sy/2))+c_o_MDL_pos,
 					obj->img
 			);
 		};
 		obj = obj->next;
 	};
 
-	x0 = trunc((cam->orig.x-(cam->sx / 2))/8);
+	x0 = trunc((cam->pos.x-(cam->sx / 2))/8);
 	if(x0 < 0) x0 = 0;
-	y0 = trunc((cam->orig.y-(cam->sy / 2))/8);
+	y0 = trunc((cam->pos.y-(cam->sy / 2))/8);
 	if(y0 < 0) y0 = 0;
 	x1 = x0+(cam->sx / 8)+1;
-	if(c_MAP_sx<=x1) x1 = c_MAP_sx-1;
+	if(MAP_SX<=x1) x1 = MAP_SX-1;
 	y1 = y0+(cam->sy / 8)+1;
-	if(c_MAP_sy<=y1) y1 = c_MAP_sy-1;
+	if(MAP_SY<=y1) y1 = MAP_SY-1;
 
 	for(y = y0; y <= y1; y++)
 	{
@@ -600,8 +604,8 @@ void map_draw(camera_t * cam)
 			}
 			if(img)
 			{
-				int pos_x = round(cam->x + (x  ) * 8 - (cam->orig.x - cam->sx / 2));
-				int pos_y = round(cam->y - (y+1) * 8 + (cam->orig.y + cam->sy / 2));
+				int pos_x = round(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
+				int pos_y = round(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
 				gr2D_setimage0(pos_x, pos_y, img);
 			}
 		}

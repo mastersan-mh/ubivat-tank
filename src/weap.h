@@ -34,13 +34,13 @@ typedef struct
 	//макс кол-во боеприпасов(0 - бесконечно)
 	int ammo;
 	//радиус действия
-	int radius;
+	coord_t radius;
 	//дальность
-	int range;
+	coord_t range;
 	//начальная скорость пули
-	int bullspeed;
+	coord_t bullspeed;
 	//bodybox
-	int bullbox;
+	coord_t bullbox;
 	//изображение оружия
 	item_img_t * icon;
 } weapon_info_t;
@@ -61,7 +61,7 @@ typedef struct bull_s
 	//0 - вверх;1 - вниз;2 - влево;3 - вправо
 	int dir;
 	//изменение расстояния
-	float delta_s;
+	coord_t delta_s;
 	//время
 	float frame;
 	//изображение пули
@@ -75,7 +75,7 @@ typedef struct Texplode
 {
 	struct Texplode * next;
 	//координаты
-	pos_t orig;
+	pos_t pos;
 	//игрок, выпустивший пулю
 	struct player_s * player;
 	int _weap_;
@@ -94,7 +94,7 @@ void bull_remove(bull_t ** bull);
 void bull_removeall();
 void bull_draw(camera_t * cam, bull_t * bull, bool play);
 void bull_control();
-void explode_add(bull_t * bull, float Xexpl, float Yexpl);
+void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl);
 void explode_remove(explode_t ** explode);
 void explode_removeall();
 void explode_draw(camera_t * cam, explode_t * explode, bool play);
