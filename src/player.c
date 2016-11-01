@@ -546,10 +546,6 @@ static void player_handle(player_t * player)
 		else
 		{
 			//игрок останавливается
-			long d1 = dtimed1000;
-			long d2 = PLAYER_DECEL;
-			double d2d = PLAYER_DECEL;
-			long d = PLAYER_DECEL * dtime;
 			player->move.speed -= PLAYER_DECEL * dtime;
 		};
 		if(player->move.speed < 0) player->move.speed = 0;

@@ -14,7 +14,7 @@ system.c \
 types.c \
 video.c \
 _gr2D.c \
-_gr2Don.c \
+fonts.c \
 actions.c \
 input.c \
 think.c \
