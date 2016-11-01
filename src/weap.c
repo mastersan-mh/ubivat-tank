@@ -117,8 +117,8 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 	int Fmax = bull->image->IMG->sy / (mdlbox * 4);
 	if(play)
 	{
-		bull->frame = bull->frame + c_bull_FPS * ddtime10/100;
-		if((bull->frame<0)||(Fmax<=bull->frame)) bull->frame = 0;
+		bull->frame = bull->frame + c_bull_FPS * dtimed1000;
+		if(bull->frame < 0 || Fmax<=bull->frame) bull->frame = 0;
 	};
 	if
 	(
@@ -163,7 +163,7 @@ void bull_control()
 	bull = bullList;
 	while(bull)
 	{
-		s = wtable[bull->_weap_].bullspeed * ddtime10 / 1000;
+		s = wtable[bull->_weap_].bullspeed * dtimed1000;
 		switch(bull->dir)
 		{
 		case 0: bull->orig.y = bull->orig.y+s;break; //c_p_DIR_up
@@ -294,7 +294,7 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 	int mdlbox;
 
 	mdlbox = explode->image->IMG->sx;
-	if(play) explode->frame = explode->frame + c_explode_FPS * ddtime10 / 100.0f;
+	if(play) explode->frame = explode->frame + c_explode_FPS * dtimed1000;
 	if(
 			(cam->orig.x-cam->sx/2<=explode->orig.x+(mdlbox >> 1)) &&
 			(explode->orig.x-(mdlbox >> 1)<=cam->orig.x+cam->sx/2) &&

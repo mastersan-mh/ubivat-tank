@@ -523,6 +523,64 @@ int menu_custom_new2P(void * ctx)
 	return MENU_GAME;
 }
 
+int menu_options(void * ctx)
+{
+	menu_options_ctx_t * __ctx = ctx;
+	static actions_t menuactions[] =
+	{
+			ACTION_PLAYER_MOVE_UP,
+			ACTION_PLAYER_MOVE_DOWN,
+			ACTION_PLAYER_MOVE_LEFT,
+			ACTION_PLAYER_MOVE_RIGHT,
+			ACTION_PLAYER_ATTACK_WEAPON1,
+			ACTION_PLAYER_ATTACK_WEAPON2,
+			ACTION_PLAYER_ATTACK_WEAPON3,
+			ACTION_PLAYER2_MOVE_UP,
+			ACTION_PLAYER2_MOVE_DOWN,
+			ACTION_PLAYER2_MOVE_LEFT,
+			ACTION_PLAYER2_MOVE_RIGHT,
+			ACTION_PLAYER2_ATTACK_WEAPON1,
+			ACTION_PLAYER2_ATTACK_WEAPON2,
+			ACTION_PLAYER2_ATTACK_WEAPON3
+	};
+#define MENU_ROWS 7
+	switch(__ctx->state)
+	{
+	case MENU_OPTIONS_SELECT:
+		switch(menu_key_get())
+		{
+		case NOTHING: break;
+		case UP     : _menu_dec(MENU_ROWS, &__ctx->menu);break;
+		case DOWN   : _menu_inc(MENU_ROWS, &__ctx->menu);break;
+		case LEFT   : _menu_dec(1, &__ctx->column);break;
+		case RIGHT  : _menu_inc(1, &__ctx->column);break;
+		case ENTER  : __ctx->state = MENU_OPTIONS_WAIT_KEY;break;
+		case LEAVE  :
+			game_cfg_save();
+			game_rebind_keys_all();
+			__ctx->state = MENU_OPTIONS_SELECT;
+			return MENU_MAIN;
+		case SPACE  : break;
+		}
+		break;
+	case MENU_OPTIONS_WAIT_KEY:
+
+
+		if(buffer_isEmpty())break;
+		buffer_key_t scancode = buffer_dequeue_nowait();
+		switch(scancode)
+		{
+		case SDL_SCANCODE_UNKNOWN: break;
+		case SDL_SCANCODE_ESCAPE:
+			__ctx->state = MENU_OPTIONS_SELECT;
+			break;
+		default:
+			game.controls[menuactions[__ctx->menu + __ctx->column * MENU_ROWS ]] = scancode;
+			__ctx->state = MENU_OPTIONS_SELECT;
+		}
+	}
+	return MENU_OPTIONS;
+};
 
 /*
  * меню "НАСТРОЙКИ"
@@ -562,56 +620,6 @@ static void menu_options_draw(const void * ctx)
 }
 
 
-int menu_options(void * ctx)
-{
-	menu_options_ctx_t * __ctx = ctx;
-	int scancode = 0;
-
-	static actions_t menuactions[] =
-	{
-			ACTION_PLAYER_MOVE_UP,
-			ACTION_PLAYER_MOVE_DOWN,
-			ACTION_PLAYER_MOVE_LEFT,
-			ACTION_PLAYER_MOVE_RIGHT,
-			ACTION_PLAYER_ATTACK_WEAPON1,
-			ACTION_PLAYER_ATTACK_WEAPON2,
-			ACTION_PLAYER_ATTACK_WEAPON3,
-			ACTION_PLAYER2_MOVE_UP,
-			ACTION_PLAYER2_MOVE_DOWN,
-			ACTION_PLAYER2_MOVE_LEFT,
-			ACTION_PLAYER2_MOVE_RIGHT,
-			ACTION_PLAYER2_ATTACK_WEAPON1,
-			ACTION_PLAYER2_ATTACK_WEAPON2,
-			ACTION_PLAYER2_ATTACK_WEAPON3
-	};
-
-
-#define MENU_ROWS 7
-	switch(__ctx->state)
-	{
-	case MENU_OPTIONS_SELECT:
-		switch(menu_key_get())
-		{
-		case NOTHING: break;
-		case UP     : _menu_dec(MENU_ROWS, &__ctx->menu);break;
-		case DOWN   : _menu_inc(MENU_ROWS, &__ctx->menu);break;
-		case LEFT   : _menu_dec(1, &__ctx->column);break;
-		case RIGHT  : _menu_inc(1, &__ctx->column);break;
-		case ENTER  : __ctx->state = MENU_OPTIONS_WAIT_KEY;break;
-		case LEAVE  :
-			game_cfg_save();
-			game_rebind_keys_all();
-			__ctx->state = MENU_OPTIONS_SELECT;
-			return MENU_MAIN;
-		case SPACE  : break;
-		}
-		break;
-	case MENU_OPTIONS_WAIT_KEY:
-		game.controls[menuactions[__ctx->menu + __ctx->column * MENU_ROWS ]] = scancode;
-		break;
-	}
-	return MENU_OPTIONS;
-};
 
 /*
  * меню "О ИГРЕ"

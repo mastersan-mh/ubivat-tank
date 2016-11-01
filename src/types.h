@@ -90,23 +90,16 @@ typedef void (*actionf_t)();
 #define c_p_ENEMY       2
 //босс
 #define c_p_BOSS        3
-//ускорение игрока
-//#define PLAYER_ACCEL       12
-#define PLAYER_ACCEL       64
-//скорость проигрывания кадров: бег
-#define PLAYER_FPS_RUN      20
 //макс. кол-во игроков
 #define c_p_Pmax        128
 //body box
 #define c_p_MDL_box     16
 //позиция изображения
 #define c_p_MDL_pos     (-8)
-//оружие не используется
-#define c_p_WEAP_notused (-1)
-//время на перезарядку(мсек)
-#define c_p_WEAP_reloadtime (100)
-//время "думания" бота
-#define c_BOT_time      150
+//время на перезарядку, мс
+#define c_p_WEAP_reloadtime 1000
+//время "думания" бота, мс
+#define c_BOT_time      1500
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 
@@ -121,19 +114,6 @@ typedef void (*actionf_t)();
 #define SAVESDIR       "saves/"
 //директория карт
 #define MAPSDIR        "maps/"
-
-typedef char Tstring11[11];
-typedef char Tstring16[16];
-
-typedef char TstrZ8[9];
-typedef char TstrZ11[12];
-typedef char TstrZ16[17];
-typedef char TstrZ64[65];
-typedef char TstrZ128[129];
-
-//идентификатор изображения
-#define TBIIid TstrZ11
-#define Tstringclass TstrZ16
 
 //координаты
 typedef struct
