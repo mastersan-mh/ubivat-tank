@@ -26,9 +26,6 @@ explode_t * explList = NULL;
 
 extern player_t * playerList;
 
-
-void explode_add(bull_t * bull, float Xexpl, float Yexpl);
-
 /*
  * проверка на попадание в игрока
  */
@@ -122,8 +119,8 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 	};
 	if
 	(
-			(cam->orig.x-cam->sx/2<=bull->orig.x+(mdlbox >> 1)) && (bull->orig.x-(mdlbox >> 1)<=cam->orig.x+cam->sx/2) &&
-			(cam->orig.y-cam->sy/2<=bull->orig.y+(mdlbox >> 1)) && (bull->orig.y-(mdlbox >> 1)<=cam->orig.y+cam->sy/2)
+			(cam->pos.x-cam->sx/2<=bull->orig.x+(mdlbox >> 1)) && (bull->orig.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
+			(cam->pos.y-cam->sy/2<=bull->orig.y+(mdlbox >> 1)) && (bull->orig.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
 	)
 	{
 		video_viewport_set(
@@ -133,8 +130,8 @@ void bull_draw(camera_t * cam, bull_t * bull, bool play)
 		cam->y+cam->sy-1
 		);
 		gr2D_setimage1(
-				roundf(cam->x+bull->orig.x-(cam->orig.x-cam->sx/2))-(mdlbox >> 1),
-				roundf(cam->y-bull->orig.y+(cam->orig.y+cam->sy/2))-(mdlbox >> 1),
+				roundf(cam->x+bull->orig.x-(cam->pos.x-cam->sx/2))-(mdlbox >> 1),
+				roundf(cam->y-bull->orig.y+(cam->pos.y+cam->sy/2))-(mdlbox >> 1),
 				bull->image,
 				0,
 				mdlbox*(bull->dir*Fmax+trunc(bull->frame)),
@@ -217,13 +214,13 @@ void bull_control()
 /*
  * добавление взрыва
  */
-void explode_add(bull_t * bull, float Xexpl, float Yexpl)
+void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl)
 {
 	explode_t * p;
 
 	p = Z_malloc(sizeof(*p));
-	p->orig.x = Xexpl;                                                    //координаты
-	p->orig.y = Yexpl;                                                    //координаты
+	p->pos.x = Xexpl;                                                    //координаты
+	p->pos.y = Yexpl;                                                    //координаты
 	if(!bull)
 	{
 		p->player = NULL;                                                     //игрок, выпустивший пулю
@@ -296,10 +293,10 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 	mdlbox = explode->image->IMG->sx;
 	if(play) explode->frame = explode->frame + c_explode_FPS * dtimed1000;
 	if(
-			(cam->orig.x-cam->sx/2<=explode->orig.x+(mdlbox >> 1)) &&
-			(explode->orig.x-(mdlbox >> 1)<=cam->orig.x+cam->sx/2) &&
-			(cam->orig.y-cam->sy/2<=explode->orig.y+(mdlbox >> 1)) &&
-			(explode->orig.y-(mdlbox >> 1)<=cam->orig.y+cam->sy/2)
+			(cam->pos.x-cam->sx/2<=explode->pos.x+(mdlbox >> 1)) &&
+			(explode->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
+			(cam->pos.y-cam->sy/2<=explode->pos.y+(mdlbox >> 1)) &&
+			(explode->pos.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
 			)
 	{
 		video_viewport_set(
@@ -309,8 +306,8 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 			cam->y+cam->sy-1
 		);
 		gr2D_setimage1(
-			roundf(cam->x + explode->orig.x - (cam->orig.x - cam->sx / 2)) - (mdlbox / 2),
-			roundf(cam->y - explode->orig.y + (cam->orig.y + cam->sy / 2)) - (mdlbox / 2),
+			roundf(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
+			roundf(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
 			explode->image,
 			0,
 			mdlbox * trunc(explode->frame),
@@ -350,11 +347,11 @@ void explode_control()
 				for(x = -wtable[explode->_weap_].radius; x<= wtable[explode->_weap_].radius; x++)
 				{
 					if(
-							(0<=trunc((explode->orig.x+x)/8)) && (trunc((explode->orig.x+x)/8)<=c_MAP_sx) &&
-							(0<=trunc((explode->orig.y+y)/8)) && (trunc((explode->orig.y+y)/8)<=c_MAP_sy)
+							(0<=trunc((explode->pos.x+x)/8)) && (trunc((explode->pos.x+x)/8)<=MAP_SX) &&
+							(0<=trunc((explode->pos.y+y)/8)) && (trunc((explode->pos.y+y)/8)<=MAP_SY)
 					)
 					{
-						wall = map.map[(int)trunc((explode->orig.y+y)/8)][(int)trunc((explode->orig.x+x)/8)];
+						wall = map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)];
 						if(wall & c_m_f_clip)
 						{                   //присутствует зажим
 							wall_type = wall & 0x0F;
@@ -367,7 +364,7 @@ void explode_control()
 												((explode->_weap_==1)||(explode->_weap_==2)))//если броня1
 								)
 								{
-									map.map[(int)trunc((explode->orig.y+y)/8)][(int)trunc((explode->orig.x+x)/8)] = 0;
+									map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)] = 0;
 								}
 							}
 						}
@@ -378,8 +375,8 @@ void explode_control()
 			player = playerList;
 			while(player)
 			{
-				sp_x = player->move.orig.x-explode->orig.x;
-				sp_y = player->move.orig.y-explode->orig.y;
+				sp_x = player->move.orig.x-explode->pos.x;
+				sp_y = player->move.orig.y-explode->pos.y;
 				if(
 						(abs(sp_x)<=c_p_MDL_box/2) &&
 						(abs(sp_y)<=c_p_MDL_box/2)) r = 0;

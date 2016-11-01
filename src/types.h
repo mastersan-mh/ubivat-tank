@@ -29,6 +29,9 @@ typedef enum {
 }bool;
 #endif
 
+typedef float coord_t;
+
+
 typedef void (*actionf_t)();
 
 #define FILENAME_CONFIG "config.cfg"
@@ -118,7 +121,8 @@ typedef void (*actionf_t)();
 //координаты
 typedef struct
 {
-	float x,y;
+	coord_t x;
+	coord_t y;
 }pos_t;
 
 #include <think.h>
@@ -128,7 +132,7 @@ typedef struct
 typedef struct
 {
 	//координаты
-	pos_t orig;
+	pos_t pos;
 	//позиция на экране
 	int x;
 	int y;

@@ -32,6 +32,7 @@ void player_moveUp_ON()
 void player_moveUp_OFF()
 {
 	if(!game.P0)return;
+	if(game.P0->move.dir != DIR_UP) return;
 	game.P0->move.go = false;
 }
 
@@ -45,6 +46,7 @@ void player_moveDown_ON()
 void player_moveDown_OFF()
 {
 	if(!game.P0)return;
+	if(game.P0->move.dir != DIR_DOWN) return;
 	game.P0->move.go = false;
 }
 
@@ -58,6 +60,7 @@ void player_moveLeft_ON()
 void player_moveLeft_OFF()
 {
 	if(!game.P0)return;
+	if(game.P0->move.dir != DIR_LEFT) return;
 	game.P0->move.go = false;
 }
 
@@ -71,6 +74,7 @@ void player_moveRight_ON()
 void player_moveRight_OFF()
 {
 	if(!game.P0)return;
+	if(game.P0->move.dir != DIR_RIGHT) return;
 	game.P0->move.go = false;
 }
 
@@ -111,6 +115,7 @@ void player2_moveUp_ON()
 void player2_moveUp_OFF()
 {
 	if(!game.P1)return;
+	if(game.P1->move.dir != DIR_UP) return;
 	game.P1->move.go = false;
 }
 
@@ -124,6 +129,7 @@ void player2_moveDown_ON()
 void player2_moveDown_OFF()
 {
 	if(!game.P1)return;
+	if(game.P1->move.dir != DIR_DOWN) return;
 	game.P1->move.go = false;
 }
 
@@ -137,6 +143,7 @@ void player2_moveLeft_ON()
 void player2_moveLeft_OFF()
 {
 	if(!game.P1)return;
+	if(game.P1->move.dir != DIR_LEFT) return;
 	game.P1->move.go = false;
 }
 
@@ -150,6 +157,7 @@ void player2_moveRight_ON()
 void player2_moveRight_OFF()
 {
 	if(!game.P1)return;
+	if(game.P1->move.dir != DIR_RIGHT) return;
 	game.P1->move.go = false;
 }
 
@@ -425,8 +433,8 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 			};
 		};
 		if(
-				(cam->orig.x-cam->sx/2<=player->move.orig.x+(c_p_MDL_box/2))&&(player->move.orig.x-(c_p_MDL_box/2)<=cam->orig.x+cam->sx/2)&&
-				(cam->orig.y-cam->sy/2<=player->move.orig.y+(c_p_MDL_box/2))&&(player->move.orig.y-(c_p_MDL_box/2)<=cam->orig.y+cam->sy/2)
+				(cam->pos.x-cam->sx/2<=player->move.orig.x+(c_p_MDL_box/2))&&(player->move.orig.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
+				(cam->pos.y-cam->sy/2<=player->move.orig.y+(c_p_MDL_box/2))&&(player->move.orig.y-(c_p_MDL_box/2)<=cam->pos.y+cam->sy/2)
 		)
 		{
 			video_viewport_set(
@@ -436,8 +444,8 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 				cam->y+cam->sy-1
 			);
 			gr2D_setimage1(
-					round(cam->x+player->move.orig.x-(cam->orig.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
+					round(cam->x+player->move.orig.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					round(cam->y-player->move.orig.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->Ibase,
 					0,
 					c_p_MDL_box*((player->move.dir * 4)+round(player->Fbase)),
@@ -445,8 +453,8 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 					c_p_MDL_box
 			);//база
 			gr2D_setimage0(
-					round(cam->x+player->move.orig.x-(cam->orig.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->move.orig.y+(cam->orig.y+cam->sy/2))+c_p_MDL_pos,
+					round(cam->x+player->move.orig.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					round(cam->y-player->move.orig.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->Iflag
 			);//флаг
 			video_viewport_set(
@@ -461,49 +469,23 @@ void player_draw(camera_t * cam, player_t * player, bool play)
 /*
  * передвижение игрока
  */
-static void player_move(player_t * player, int dir, long * speed)
+static void player_move(player_t * player, int dir, coord_t * speed)
 {
-	pos_t orig;
-	int c = 0;
-	float dist;
+	pos_t * orig = &player->move.orig;
+	coord_t dway = (*speed) * dtimed1000;
+	coord_t halfbox = c_p_MDL_box/2;
+	coord_t dist;
 
-	orig = player->move.orig;
+	map_clip_find_near(orig, c_p_MDL_box, dir, 0xF0, c_p_MDL_box, &dist);//найдем препятствия
+	if(dist < dway + halfbox) dway = dist - halfbox;
+
 	switch(dir)
 	{
-	case DIR_UP:
-		do{
-			orig.y = player->move.orig.y+(*speed) * dtimed1000;
-			map_clip_find_near(&orig,c_p_MDL_box,DIR_UP,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
-			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
-			c+= 1;
-		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
-		break;
-	case DIR_DOWN:
-		do{
-			orig.y = player->move.orig.y-(*speed) * dtimed1000;
-			map_clip_find_near(&orig,c_p_MDL_box,DIR_DOWN,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
-			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
-			c+= 1;
-		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
-		break;
-	case DIR_LEFT:
-		do{
-			orig.x = player->move.orig.x-(*speed) * dtimed1000;
-			map_clip_find_near(&orig,c_p_MDL_box,DIR_LEFT,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
-			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
-			c+= 1;
-		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
-		break;
-	case DIR_RIGHT:
-		do{
-			orig.x = player->move.orig.x+(*speed) * dtimed1000;
-			map_clip_find_near(&orig,c_p_MDL_box,DIR_RIGHT,0xF0,c_p_MDL_box/2+2, &dist);//найдем препятствия
-			if(dist<=c_p_MDL_box/2) (*speed) = (*speed) >> 2;
-			c+= 1;
-		}while(!( (c_p_MDL_box/2<dist)||(c=5) ));
-		break;
+	case DIR_UP   : orig->y += dway; break;
+	case DIR_DOWN : orig->y -= dway; break;
+	case DIR_LEFT : orig->x -= dway; break;
+	case DIR_RIGHT: orig->x += dway; break;
 	}
-	player->move.orig = orig;
 };
 /*
  * управление игроком
@@ -511,10 +493,12 @@ static void player_move(player_t * player, int dir, long * speed)
 static void player_handle(player_t * player)
 {
 	pos_t Sorig;
-	float L,R,U,D;
-	long speed_s;
+	coord_t L,R,U,D;
+	coord_t speed_s;
 
-	if(player->charact.health<=0) {                     //если игрок мертв
+	if(player->charact.health<=0)
+	{
+		//если игрок мертв
 		if(player->charact.spawned)
 		{
 			bull_add();
@@ -549,8 +533,10 @@ static void player_handle(player_t * player)
 			player->move.speed -= PLAYER_DECEL * dtime;
 		};
 		if(player->move.speed < 0) player->move.speed = 0;
-		player_move(player,player->move.dir, &player->move.speed);
+		player_move(player, player->move.dir, &player->move.speed);
+
 		speed_s = player->charact.speed / 4;
+
 		//стрейф
 		switch(player->move.dir){
 		case DIR_UP:

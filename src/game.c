@@ -377,26 +377,26 @@ void game_draw()
 
 	if(game.P0->bull)
 	{
-		game.P0cam.orig.x = game.P0->bull->orig.x;
-		game.P0cam.orig.y = game.P0->bull->orig.y;
+		game.P0cam.pos.x = game.P0->bull->orig.x;
+		game.P0cam.pos.y = game.P0->bull->orig.y;
 	}
 	else
 	{
-		game.P0cam.orig.x = game.P0->move.orig.x;
-		game.P0cam.orig.y = game.P0->move.orig.y;
+		game.P0cam.pos.x = game.P0->move.orig.x;
+		game.P0cam.pos.y = game.P0->move.orig.y;
 	}
 	player_draw_status(&game.P0cam, game.P0);
 	if(game.P1)
 	{
 		if(game.P1->bull)
 		{
-			game.P1cam.orig.x = game.P1->bull->orig.x;
-			game.P1cam.orig.y = game.P1->bull->orig.y;
+			game.P1cam.pos.x = game.P1->bull->orig.x;
+			game.P1cam.pos.y = game.P1->bull->orig.y;
 		}
 		else
 		{
-			game.P1cam.orig.x = game.P1->move.orig.x;
-			game.P1cam.orig.y = game.P1->move.orig.y;
+			game.P1cam.pos.x = game.P1->move.orig.x;
+			game.P1cam.pos.y = game.P1->move.orig.y;
 		}
 		player_draw_status(&game.P1cam, game.P1);
 	}
@@ -629,10 +629,8 @@ static bool game_record_save_player(int fd, player_t * player)
 	case c_p_P0:
 	case c_p_P1:
     {
-        CHECK(
-                write(fd, map_class_names[MAP_SPAWN_PLAYER], sizeof(map_class_names[MAP_SPAWN_PLAYER])),
-                sizeof(map_class_names[MAP_SPAWN_PLAYER])
-        );
+        size_t size = strlen(map_class_names[MAP_SPAWN_PLAYER]) + 1;
+        CHECK(write(fd, map_class_names[MAP_SPAWN_PLAYER], size), size);
         break;
     }
 	default:
@@ -824,25 +822,25 @@ int game_create()
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
-		game.P0cam.orig.x = 0;
-		game.P0cam.orig.y = 0;
-		game.P0cam.x      = 0;
-		game.P0cam.y      = 0;
-		game.P0cam.sx     = cam_sx;
-		game.P0cam.sy     = cam_sy - pixels*2;//184
+        game.P0cam.pos.x = 0;
+        game.P0cam.pos.y = 0;
+        game.P0cam.x     = 0;
+        game.P0cam.y     = 0;
+        game.P0cam.sx    = cam_sx;
+        game.P0cam.sy    = cam_sy - pixels*2;//184
         res = player_connect(c_p_P0);
         if(res) return res;
 	}
 	else
 	{
-		game.P0cam.orig.x = 0;
-		game.P0cam.orig.y = 0;
+		game.P0cam.pos.x = 0;
+		game.P0cam.pos.y = 0;
 		game.P0cam.x      = cam_sx/2+1;
 		game.P0cam.y      = 0;
 		game.P0cam.sx     = cam_sx/2-1;
 		game.P0cam.sy     = cam_sy - pixels*2;
-		game.P1cam.orig.x = 0;
-		game.P1cam.orig.y = 0;
+		game.P1cam.pos.x = 0;
+		game.P1cam.pos.y = 0;
 		game.P1cam.x      = 0;
 		game.P1cam.y      = 0;
 		game.P1cam.sx     = cam_sx-1;

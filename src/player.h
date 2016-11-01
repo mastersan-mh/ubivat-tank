@@ -73,7 +73,7 @@ typedef struct
 	//координаты
 	pos_t orig;
 	//скорость движения игрока
-	long speed;
+	coord_t speed;
 	//игрок движется
 	bool go;
 	//направление движения

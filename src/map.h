@@ -26,9 +26,9 @@
 #define MAP_BRIEF_SIZE (129)
 
 // размер карты OX
-#define c_MAP_sx 66
+#define MAP_SX 66
 // размер карты OY
-#define c_MAP_sy 50
+#define MAP_SY 50
 
 typedef enum
 {
@@ -92,8 +92,8 @@ typedef struct
 
 typedef struct
 {
-	int x;
-	int y;
+	coord_t x;
+	coord_t y;
 }map_position_t;
 
 typedef struct maplist_s
@@ -171,7 +171,7 @@ typedef struct
 	//обьекты
 	obj_t * objs;
 	//66 X 50 = 3300 матрица карты
-	char map[c_MAP_sy][c_MAP_sx];
+	char map[MAP_SY][MAP_SX];
 } map_t;
 
 extern map_t map;
@@ -196,8 +196,8 @@ void map_clip_find(
 		bool * Rd
 		);
 
-void map_clip_find_near(pos_t * orig, float box, int dir, char mask, float DISTmax, float * dist);
-void map_clip_find_near_wall(pos_t * orig, int dir, float * dist, char * wall);
+void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist);
+void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);
 
 extern mobj_type_t map_file_class_get(int fd);
 int map_load(const char *mapname);
