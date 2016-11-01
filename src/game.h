@@ -135,7 +135,8 @@ typedef struct
 
 extern game_t game;
 extern long dtime;
-extern double ddtime10;
+extern double dtimed;
+extern double dtimed1000;
 
 void game_action_enter_mainmenu();
 void game_action_win();

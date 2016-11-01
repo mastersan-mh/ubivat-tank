@@ -400,7 +400,7 @@ static void ctrl_AI_findenemy(player_t * player, player_t * target)
 				player->move.go = true;
 		}
 	}
-	player->brain.count += ddtime10;
+	player->brain.count += dtime;
 	if(c_BOT_time*2<player->brain.count) player->brain.count = 0;
 }
 

@@ -55,19 +55,17 @@ typedef struct
 /* MENU_GAME_LOAD */
 typedef struct
 {
-	int menu;
 	enum
 	{
 		MENU_GAME_LOAD_INIT,
-		MENU_GAME_LOAD_SELECT,
-		MENU_GAME_LOAD_LOAD,
+		MENU_GAME_LOAD_SELECT
 	} state;
+	int menu;
 } menu_game_load_ctx_t;
 
 /* MENU_GAME_SAVE */
 typedef struct
 {
-	int menu;
 	enum
 	{
 		MENU_GAME_SAVE_INIT,
@@ -75,9 +73,9 @@ typedef struct
 		MENU_GAME_SAVE_INPUT,
 		MENU_GAME_SAVE_SAVE,
 	}state;
-	// редактируемая запись
+	int menu;
+	// бэкап редактируемой записи
 	gamesave_descr_t rec;
-
 } menu_game_save_ctx_t;
 
 /* MENU_CUSTOM */
@@ -93,12 +91,12 @@ typedef struct
 /* MENU_OPTIONS */
 typedef struct
 {
-	int menu;
-	int column;
 	enum{
 		MENU_OPTIONS_SELECT,
 		MENU_OPTIONS_WAIT_KEY
 	} state;
+	int menu;
+	int column;
 } menu_options_ctx_t;
 /* MENU_ABOUT */
 typedef struct

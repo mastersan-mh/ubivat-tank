@@ -35,8 +35,12 @@
 //состояние игры
 game_t game;
 
+/* (ms) */
 long dtime;
-double ddtime10;
+/* (ms) */
+double dtimed;
+/*  (s) */
+double dtimed1000;
 
 struct image_table_ent_s images_info[] = {
 	{BASEDIR"menu/mhlogo.bii" ,"M_LOGO"     },
@@ -200,7 +204,7 @@ void game_init()
 	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
 	wtable[0].radius     = 7;                                           //радиус действия
 	wtable[0].range      = -1;                                          //дальность
-	wtable[0].bullspeed  = 750;                                         //скорость пули
+	wtable[0].bullspeed  = 75;                                         //скорость пули
 	wtable[0].bullbox    = 2;                                           //bodybox
 	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
 	strcpy(wtable[1].name, "Rocket");                                    //название оружия
@@ -209,7 +213,7 @@ void game_init()
 	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
 	wtable[1].radius     = 11;                                          //радиус действия
 	wtable[1].range      = -1;                                          //дальность
-	wtable[1].bullspeed  = 800;                                         //скорость пули
+	wtable[1].bullspeed  = 80;                                         //скорость пули
 	wtable[1].bullbox    = 8;                                           //bodybox
 	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
 	strcpy(wtable[2].name, "Mine");                                      //название оружия
@@ -218,7 +222,7 @@ void game_init()
 	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
 	wtable[2].radius     = 11;                                          //радиус действия
 	wtable[2].range      = 100;                                         //дальность
-	wtable[2].bullspeed  = -800;                                        //скорость пули
+	wtable[2].bullspeed  = -80;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
 	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
 	input_init();
@@ -258,10 +262,10 @@ void game_main()
 		time_prev = time_current;
 		time_current = system_getTime_realTime_ms();
 		dtime = time_current - time_prev;
-		ddtime10 = (double)dtime/10.0f;
+		dtimed = (double)dtime;
+		dtimed1000 = dtimed/1000.0f;
 
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
-
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event))

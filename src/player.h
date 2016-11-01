@@ -12,6 +12,41 @@
 #include <map.h>
 #include <types.h>
 
+/*
+	pix/s -> m/s -> km/h
+	16p = 6m
+	10 m/s = 10*8 p/s
+	90 km/h = 90 * 1000/3600 * 8 p/s
+
+	km/h * SPEEDSCALE = pix/s
+*/
+/* пикселов на метр */
+#define PIXPM (16.0f/6.0f)
+/* метров на пиксел */
+#define MPPIX (1.0f/PIXPM)
+
+#define SPEEDSCALE (( PIXPM * 1000.0f)/(3600.0f))
+/* множитель скорости: пикселов/с */
+#define SPEEDSCALE_PIXPS SPEEDSCALE
+/* множитель скорости: пикселов/мс */
+#define SPEEDSCALE_PIXPMS (PIXPM /(1000.f * 1000.f))
+
+#define MPS2_TO_KMPH2 ( (3600.0f * 3600.0f) / 1000.f)
+/* pix/(s^2) */
+#define MPS2_TO_PIXPS2 ( 1.0f / MPPIX)
+/* pix/(ms^2) */
+#define MPS2_TO_PIXPMS2 ( (0.001f * 0.001f) / MPPIX)
+
+//оружие не используется
+#define PLAYER_WEAP_NOTACCESSIBLE (-1)
+//ускорение игрока, м/с^2
+#define PLAYER_ACCEL       (0.05f * MPS2_TO_PIXPS2)
+//#define PLAYER_ACCEL       12
+/* торможение: м/с^2 */
+#define PLAYER_DECEL       (0.05f * MPS2_TO_PIXPS2)
+//скорость проигрывания кадров: бег
+#define PLAYER_FPS_RUN      20
+
 typedef enum
 {
 	DIR_UP,
