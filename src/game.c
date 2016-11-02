@@ -387,8 +387,8 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 	video_viewport_set(
 		cam->x,
 		cam->y,
-		cam->x + cam->sx-1,
-		cam->y + cam->sy-1
+		cam->sx,
+		cam->sy
 	);
 
 	map_draw(cam);
@@ -400,8 +400,8 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 	video_viewport_set(
 		0.0f,
 		0.0f,
-		VIDEO_MODE_W-1,
-		VIDEO_MODE_H-1
+		VIDEO_SCREEN_W,
+		VIDEO_SCREEN_H
 	);
 	player_draw_status(cam, player);
 }
@@ -419,8 +419,8 @@ void game_draw()
 	video_viewport_set(
 		0.0f,
 		0.0f,
-		VIDEO_MODE_W-1,
-		VIDEO_MODE_H-1
+		VIDEO_SCREEN_W,
+		VIDEO_SCREEN_H
 	);
 
 	if(game.msg)
@@ -431,7 +431,7 @@ void game_draw()
 		{
 			int x = ((i * 8 ) % 128)+96;
 			int y = ((i / 16) * 8  )+84;
-			gr2Don_setchar(x, y, game.msg[i]);
+			video_print_char(x, y, game.msg[i]);
 			i++;
 		};
 		game.msg = NULL;
@@ -806,10 +806,10 @@ int game_create()
 {
 	int ret;
 
-	int cam_sx = 320;
-	int cam_sy = 200;
+	int cam_sx = VIDEO_SCREEN_W;
+	int cam_sy = VIDEO_SCREEN_H;
 
-	int pixels = (cam_sy*8)/200;
+	int statusbar_h = 32;
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
@@ -818,7 +818,7 @@ int game_create()
 		game.P0cam.x     = 0;
 		game.P0cam.y     = 0;
 		game.P0cam.sx    = cam_sx;
-		game.P0cam.sy    = cam_sy - pixels*2;//184
+		game.P0cam.sy    = cam_sy - statusbar_h;//184
 		ret = player_connect(c_p_P0);
 	}
 	else
@@ -828,13 +828,13 @@ int game_create()
 		game.P0cam.x     = cam_sx/2 + 1;
 		game.P0cam.y     = 0;
 		game.P0cam.sx    = cam_sx/2 - 1;
-		game.P0cam.sy    = cam_sy - pixels*2;
+		game.P0cam.sy    = cam_sy - statusbar_h;
 		game.P1cam.pos.x = 0;
 		game.P1cam.pos.y = 0;
 		game.P1cam.x     = 0;
 		game.P1cam.y     = 0;
 		game.P1cam.sx    = cam_sx/2 - 1;
-		game.P1cam.sy    = cam_sy - pixels*2;
+		game.P1cam.sy    = cam_sy - statusbar_h;
 		ret = player_connect(c_p_P0);
 		ret = player_connect(c_p_P1);
 	};
@@ -892,14 +892,14 @@ void game_msg_error(int error)
 		gr2D.color.current = 22; gr2D_line_h(x     ,x+sx-1,y+sy-1);          //нижний  борт
 		gr2D.color.current = 29; gr2D_line_v(x     ,y     ,y+sy-1);          //левый   борт
 		gr2D.color.current = 23; gr2D_line_v(x+sx-1,y     ,y+sy-1);          //правый  борт
-		gr2D.color.current =  4; gr2Don_settext(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
+		gr2D.color.current =  4; video_printf(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
 		gr2D.color.current = 15;
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
 		if(e > ERR_MAX) e = ERR_MAX;
 
-		gr2Don_settext(x+2, y+16, orient_horiz, errList[e]);
+		video_printf(x+2, y+16, orient_horiz, errList[e]);
 
 		do{ } while(true);
 	}

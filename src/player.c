@@ -163,28 +163,34 @@ void player2_moveRight_OFF()
 
 void player2_attack_weapon1_ON()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_BULL;
 }
 void player2_attack_weapon1_OFF()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_NONE;
 }
 
 void player2_attack_weapon2_ON()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_ROCKET;
 }
 void player2_attack_weapon2_OFF()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_NONE;
 }
 
 void player2_attack_weapon3_ON()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_MINE;
 }
 void player2_attack_weapon3_OFF()
 {
+	if(!game.P1)return;
 	game.P1->w.attack = WEAP_NONE;
 }
 
@@ -838,33 +844,40 @@ void player_spawn(player_t * player, spawn_t * spawn)
  */
 int player_spawn_player(player_t * player)
 {
-	spawn_t * spawn;
-	int count;
-	int spawn_amount;
-	int spawn_number;
-	bool flag = false;
-
 	if(
-			(player->charact.status != c_p_P0)&&(player->charact.status != c_p_P1)
+			player->charact.status != c_p_P0 &&
+			player->charact.status != c_p_P1
 	) return 1;//игрок является монстром, ошибка спавнинга
-	else
+
+	spawn_t * spawn;
+	int count = 0;
+	spawn = map.spawns;
+	//считаем количество спавн-поинтов
+	while(spawn)
 	{
-		spawn_amount = 0;
-		spawn = map.spawns;
-		while(spawn){ spawn = spawn->next;spawn_amount++;};     //считаем количество спавн-поинтов
-		do
-		{                                                              //ищем подходящий спавн поинт
-			spawn_number = xrand(spawn_amount);//=[0..spawn_amount-1]    //выбираем случайным образом
-			spawn = map.spawns;
-			for(count = 0; count < spawn_number; count ++) spawn = spawn->next;
-			if(spawn->class == MAP_SPAWN_PLAYER) flag = true;                      //это PLAYER спавн
-		}while(!flag);
-		player->move.pos.x = spawn->orig.x;
-		player->move.pos.y = spawn->orig.y;
-		player_spawn(player, spawn);
-		return 0;
-	}
+		if(spawn->class == MAP_SPAWN_PLAYER) count++;
+		spawn = spawn->next;
+	};
+	//выбираем случайным образом
+	count = xrand(count);
+
+	spawn = map.spawns;
+	while(spawn)
+	{
+		if(spawn->class == MAP_SPAWN_PLAYER)
+		{
+			if(count == 0) break;
+			count--;
+		}
+		spawn = spawn->next;
+	};
+
+	player->move.pos.x = spawn->orig.x;
+	player->move.pos.y = spawn->orig.y;
+	player_spawn(player, spawn);
+	return 0;
 }
+
 /*
  * появление/восстановление игрока на карте
  * @return = 0 -спавнинг монстров прошел успешно
@@ -941,33 +954,35 @@ void players_control()
  */
 void player_draw_status(camera_t * cam, player_t * player)
 {
+	int ref_y = VIDEO_SCREEN_H - 16 * 2;
+
 	gr2D.color.current = 1;
-	// gr2D_settext(cam->x,cam->y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
-	// gr2D_settext(cam->x,cam->y,0,"PING %d", player->time.delta);
-	gr2Don_settext(cam->x+32*2+16, cam->y+cam->sy+4, orient_horiz, "%d", player->w.ammo[0]);
+	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
+	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
+
+	gr2D_setimage0(cam->x + 16 * 0     , ref_y, game.i_health);
+	gr2D_setimage0(cam->x + 16 * 6     , ref_y, game.i_armor);
+
+	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", player->charact.health);
+	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", player->charact.armor);
+	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, orient_horiz, "%d", player->charact.healthmax);
+	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, orient_horiz, "%d", player->charact.armormax);
+
+	/* вторая строка */
+	ref_y += 16;
+
+	gr2D_setimage1(cam->x + 16 * 0, ref_y, player->Ibase, 0, 0, c_p_MDL_box,c_p_MDL_box);
+	gr2D_setimage0(cam->x + 16 * 4, ref_y, wtable[0].icon);
+	gr2D_setimage0(cam->x + 16 * 6, ref_y, wtable[1].icon);
+	gr2D_setimage0(cam->x + 16 * 8, ref_y, wtable[2].icon);
+
+	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "%d", player->w.ammo[0]);
 	if(player->w.ammo[1]>-1)
-		gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy+4, orient_horiz, "%d", player->w.ammo[1]);
+		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", player->w.ammo[1]);
 	if(player->w.ammo[2]>-1)
-		gr2Don_settext(cam->x+32*4+16,cam->y+cam->sy+4,0, "%d", player->w.ammo[2]);
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-16, orient_horiz, "%d", player->charact.health);
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy-8 , orient_horiz, "%d", player->charact.healthmax);
-	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-16, orient_horiz, "%d", player->charact.armor);
-	gr2Don_settext(cam->x+32*3+16,cam->y+cam->sy-8 , orient_horiz, "%d", player->charact.armormax);
-	gr2Don_settext(cam->x+32*0+16,cam->y+cam->sy+4 , orient_horiz, "%d", player->charact.scores);
-	gr2D_setimage0(
-		cam->x + 32 * 0,
-		cam->y + cam->sy - 16,
-		game.i_health
-	);
-	gr2D_setimage0(cam->x+32*3,cam->y+cam->sy-16, game.i_armor);
-	gr2D_setimage1(
-		cam->x+32*0,cam->y+cam->sy,
-		player->Ibase,
-		0,0,c_p_MDL_box,c_p_MDL_box
-	);
-	gr2D_setimage0(cam->x+32*2, cam->y+cam->sy, wtable[0].icon);
-	gr2D_setimage0(cam->x+32*3, cam->y+cam->sy, wtable[1].icon);
-	gr2D_setimage0(cam->x+32*4, cam->y+cam->sy, wtable[2].icon);
+		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", player->w.ammo[2]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", player->charact.scores);
+
 }
 
 /*

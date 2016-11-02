@@ -286,7 +286,7 @@ FT_Done_FreeType(ft);
 /*
  * рисование указанного символа
  */
-int gr2Don_setchar(
+int video_print_char(
 	int x,
 	int y,
 	char ch
@@ -350,7 +350,7 @@ int gr2Don_setchar(
 	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(w, 0.0f  ); // Нижний правый
 	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
 	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , h); // Верхний левый
-	glEnd();	// Закончили квадраты
+	glEnd();
 	//return character->advance;
 	return (int) ( (float) character->advance * cscalex);
 }
@@ -359,7 +359,7 @@ int gr2Don_setchar(
 /*
  * вывод текста на экран
  */
-void gr2Don_settext(
+void video_printf(
 	int x,
 	int y,
 	enum text_orient_e orientation,
@@ -383,7 +383,7 @@ void gr2Don_settext(
 
 	while(string[i])
 	{
-		adv = gr2Don_setchar(x, y, string[i]);
+		adv = video_print_char(x, y, string[i]);
 		x += adv;
 		i++;
 	}

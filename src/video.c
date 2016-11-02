@@ -171,6 +171,13 @@ static void scene_init()
 	gluOrtho2D(0.0, Width, Height, 0.0);
 
 	glMatrixMode(GL_MODELVIEW); // переходим в трехмерный режим
+
+
+	GL_CHECK(glEnable(GL_SCISSOR_TEST));
+
+
+
+
 /*
 	// Инициализация OpenGL
 	glClearDepth(1.0);           // Установка буфера глубины
@@ -413,12 +420,33 @@ void video_delay()
 
 
 void video_viewport_set(
-	float x0,
-	float y0,
-	float x1,
-	float y1
+	int x,
+	int y,
+	int sx,
+	int sy
 )
 {
+
+	//GL_CHECK(glScissor(x * VIDEO_SCALEX, y * VIDEO_SCALEY, sx * VIDEO_SCALEX, sy * VIDEO_SCALEY));
+
+	int _y = y + (VIDEO_SCREEN_H - sy);
+	GL_CHECK(glScissor(x * VIDEO_SCALEX, _y * VIDEO_SCALEY, sx * VIDEO_SCALEX, sy * VIDEO_SCALEY));
+
+/*
+	void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
+	glEnable();
+	glDisable();
+	GL_SCISSOR_TEST
+
+	 glClipPlane
+	 (GLenum
+	 plane
+	,
+	const GLdouble
+	*
+	equation
+	)
+*/
 
 }
 
