@@ -154,8 +154,8 @@ static void menu_main_draw(const void * ctx)
 	menu_draw_conback();
 	gr2D_setimage0(277  ,159    ,game.m_i_logo);
 	gr2D.color.current = 1;
-	gr2Don_settext(1     ,183          , orient_horiz, c_strTITLE);
-	gr2Don_settext(1     ,191          , orient_horiz, c_strCORP);
+	video_printf(1     ,183          , orient_horiz, c_strTITLE);
+	video_printf(1     ,191          , orient_horiz, c_strCORP);
 	gr2D_setimage0(120, 30+23*0 ,game.m_i_game);
 	gr2D_setimage0(120, 30+23*1 ,game.m_i_case);
 	gr2D_setimage0(120, 30+23*2 ,game.m_i_options);
@@ -290,10 +290,10 @@ static void menu_game_load_draw(const void * ctx)
 		gr2D.color.current = 7;
 		if(!game.saveslist[irow].exist)
 		{
-			gr2Don_settext(97+23+4, 33+irow*15, orient_horiz, "---===EMPTY===---");
+			video_printf(97+23+4, 33+irow*15, orient_horiz, "---===EMPTY===---");
 			continue;
 		}
-		gr2Don_settext(97+23+4, 33+irow*15, orient_horiz, game.saveslist[irow].name);
+		video_printf(97+23+4, 33+irow*15, orient_horiz, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
@@ -368,10 +368,10 @@ static void menu_game_save_draw(const void * ctx)
 		gr2D.color.current = 7;
 		if(!game.saveslist[irow].exist)
 		{
-			gr2Don_settext(97+23+4,33+irow*15, orient_horiz, "---===EMPTY===---");
+			video_printf(97+23+4,33+irow*15, orient_horiz, "---===EMPTY===---");
 			continue;
 		}
-		gr2Don_settext(97+23+4,33+irow*15, orient_horiz, game.saveslist[irow].name);
+		video_printf(97+23+4,33+irow*15, orient_horiz, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
@@ -456,8 +456,8 @@ static void menu_custom_draw(const void * ctx)
 	gr2D_setimage0(120,30+23*2       , game.m_i_g_new_p2);
 	gr2D_setimage0( 97,30+23 * __ctx->menu, game.m_i_cur_0);
 	gr2D.color.current = 25;
-	gr2Don_settext(133, 33+23*0, orient_horiz, game.custommap->map);
-	gr2Don_settext(133, 41+23*0, orient_horiz, game.custommap->name);
+	video_printf(133, 33+23*0, orient_horiz, game.custommap->map);
+	video_printf(133, 41+23*0, orient_horiz, game.custommap->name);
 }
 
 int menu_custom(void * ctx)
@@ -595,29 +595,29 @@ static void menu_options_draw(const void * ctx)
 	if(__ctx->state == MENU_OPTIONS_SELECT)
 		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, game.m_i_cur_1);
 	gr2D.color.current = 25;
-	gr2Don_settext( 58+131*0, 30+9*0, 0, "ИГРОК1");
-	gr2Don_settext( 58+131*1, 30+9*0, 0, "ИГРОК2");
-	gr2Don_settext( 9,32+12*1, 0, "Вперед");
-	gr2Don_settext( 9,32+12*2, 0, "Назад");
-	gr2Don_settext( 9,32+12*3, 0, "Влево");
-	gr2Don_settext( 9,32+12*4, 0, "Вправо");
-	gr2Don_settext( 9,32+12*5, 0, "Пульки");
-	gr2Don_settext( 9,32+12*6, 0, "Ракета");
-	gr2Don_settext( 9,32+12*7, 0, "Мина");
-	gr2Don_settext(82+131*0,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_UP]);
-	gr2Don_settext(82+131*0,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_DOWN]);
-	gr2Don_settext(82+131*0,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_LEFT]);
-	gr2Don_settext(82+131*0,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_RIGHT]);
-	gr2Don_settext(82+131*0,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON1]);
-	gr2Don_settext(82+131*0,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON2]);
-	gr2Don_settext(82+131*0,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON3]);
-	gr2Don_settext(82+131*1,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_UP]);
-	gr2Don_settext(82+131*1,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_DOWN]);
-	gr2Don_settext(82+131*1,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_LEFT]);
-	gr2Don_settext(82+131*1,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_RIGHT]);
-	gr2Don_settext(82+131*1,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON1]);
-	gr2Don_settext(82+131*1,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON2]);
-	gr2Don_settext(82+131*1,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON3]);
+	video_printf( 58+131*0, 30+9*0, 0, "ИГРОК1");
+	video_printf( 58+131*1, 30+9*0, 0, "ИГРОК2");
+	video_printf( 9,32+12*1, 0, "Вперед");
+	video_printf( 9,32+12*2, 0, "Назад");
+	video_printf( 9,32+12*3, 0, "Влево");
+	video_printf( 9,32+12*4, 0, "Вправо");
+	video_printf( 9,32+12*5, 0, "Пульки");
+	video_printf( 9,32+12*6, 0, "Ракета");
+	video_printf( 9,32+12*7, 0, "Мина");
+	video_printf(82+131*0,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_UP]);
+	video_printf(82+131*0,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_DOWN]);
+	video_printf(82+131*0,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_LEFT]);
+	video_printf(82+131*0,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_RIGHT]);
+	video_printf(82+131*0,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON1]);
+	video_printf(82+131*0,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON2]);
+	video_printf(82+131*0,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON3]);
+	video_printf(82+131*1,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_UP]);
+	video_printf(82+131*1,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_DOWN]);
+	video_printf(82+131*1,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_LEFT]);
+	video_printf(82+131*1,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_RIGHT]);
+	video_printf(82+131*1,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON1]);
+	video_printf(82+131*1,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON2]);
+	video_printf(82+131*1,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON3]);
 }
 
 
@@ -629,26 +629,26 @@ static void menu_about_draw(const void * ctx)
 {
 	gr2D_setimage0( 0, 0, game.m_i_interlv);
 	gr2D.color.current = 13;
-	gr2Don_settext( 8,10* 1, orient_horiz, c_strTITLE);
-	gr2Don_settext(56,10* 2, orient_horiz, c_strCORP);
-	gr2Don_settext( 8,10*15, orient_horiz, c_about[12]);
-	gr2Don_settext( 8,10*16, orient_horiz, c_about[13]);
-	gr2Don_settext( 8,10*17, orient_horiz, c_about[14]);
-	gr2Don_settext( 8,10*18, orient_horiz, c_about[15]);
+	video_printf( 8,10* 1, orient_horiz, c_strTITLE);
+	video_printf(56,10* 2, orient_horiz, c_strCORP);
+	video_printf( 8,10*15, orient_horiz, c_about[12]);
+	video_printf( 8,10*16, orient_horiz, c_about[13]);
+	video_printf( 8,10*17, orient_horiz, c_about[14]);
+	video_printf( 8,10*18, orient_horiz, c_about[15]);
 
 	gr2D.color.current = 7;
-	gr2Don_settext( 8,10* 3, orient_horiz, c_about[0]);
-	gr2Don_settext( 8,10* 5, orient_horiz, c_about[2]);
-	gr2Don_settext( 8,10* 8, orient_horiz, c_about[5]);
-	gr2Don_settext( 8,10*10, orient_horiz, c_about[7]);
-	gr2Don_settext( 8,10*12, orient_horiz, c_about[9]);
+	video_printf( 8,10* 3, orient_horiz, c_about[0]);
+	video_printf( 8,10* 5, orient_horiz, c_about[2]);
+	video_printf( 8,10* 8, orient_horiz, c_about[5]);
+	video_printf( 8,10*10, orient_horiz, c_about[7]);
+	video_printf( 8,10*12, orient_horiz, c_about[9]);
 	gr2D.color.current = 15;
-	gr2Don_settext( 8,10* 4, orient_horiz, c_about[1]);
-	gr2Don_settext( 8,10* 6, orient_horiz, c_about[3]);
-	gr2Don_settext( 8,10* 7, orient_horiz, c_about[4]);
-	gr2Don_settext( 8,10* 9, orient_horiz, c_about[6]);
-	gr2Don_settext( 8,10*11, orient_horiz, c_about[8]);
-	gr2Don_settext( 8,10*13, orient_horiz, c_about[10]);
+	video_printf( 8,10* 4, orient_horiz, c_about[1]);
+	video_printf( 8,10* 6, orient_horiz, c_about[3]);
+	video_printf( 8,10* 7, orient_horiz, c_about[4]);
+	video_printf( 8,10* 9, orient_horiz, c_about[6]);
+	video_printf( 8,10*11, orient_horiz, c_about[8]);
+	video_printf( 8,10*13, orient_horiz, c_about[10]);
 }
 int menu_about(void * ctx)
 {
@@ -662,15 +662,15 @@ static void menu_prelevel_draw(const void * ctx)
 {
 	gr2D_setimage0(0,0,game.m_i_interlv);
 	gr2D.color.current = 15;
-	gr2Don_settext(160-06*4 ,8*5, orient_horiz, "КАРТА:");
+	video_printf(160-06*4 ,8*5, orient_horiz, "КАРТА:");
 	gr2D.color.current = 15;
-	gr2Don_settext(160-16*4, 8*7 , orient_horiz, map.name);
-	gr2Don_settext(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
-	gr2Don_settext(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
+	video_printf(160-16*4, 8*7 , orient_horiz, map.name);
+	video_printf(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
+	video_printf(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
 	int i = 0;
 	while(map.brief[i])
 	{
-		gr2Don_setchar(160 - 16 * 4 + ((i % 16) * 8), 8 * 12 + ((i / 16) * 10), map.brief[i]);
+		video_print_char(160 - 16 * 4 + ((i % 16) * 8), 8 * 12 + ((i / 16) * 10), map.brief[i]);
 		i++;
 	};
 }
@@ -703,7 +703,7 @@ static void menu_interlevel_draw(const void * ctx)
 {
 	gr2D_setimage0(0, 0, game.m_i_interlv);
 	gr2D.color.current = 15;
-	gr2Don_settext(108,191,0,"НАЖМИ ПРОБЕЛ");
+	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
 	if(!game.P1)
 	{
 		//один игрок
@@ -712,10 +712,10 @@ static void menu_interlevel_draw(const void * ctx)
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		gr2D.color.current = 15;
-		gr2Don_settext(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		gr2Don_settext(48+8*00,84+4+8*1, orient_horiz, "%ld", game.P0->charact.scores);
-		gr2Don_settext(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->charact.frags );
-		gr2Don_settext(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->charact.fragstotal);
+		video_printf(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+		video_printf(48+8*00,84+4+8*1, orient_horiz, "%ld", game.P0->charact.scores);
+		video_printf(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->charact.frags );
+		video_printf(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->charact.fragstotal);
 	}
 	else
 	{
@@ -729,13 +729,13 @@ static void menu_interlevel_draw(const void * ctx)
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		gr2D.color.current = 15;
-		gr2Don_settext(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		gr2Don_settext(48+8*00,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.scores     );
-		gr2Don_settext(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.frags      );
-		gr2Don_settext(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.fragstotal );
-		gr2Don_settext(48+8*00,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.scores     );
-		gr2Don_settext(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.frags      );
-		gr2Don_settext(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.fragstotal );
+		video_printf(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.scores     );
+		video_printf(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.frags      );
+		video_printf(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.fragstotal );
+		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.scores     );
+		video_printf(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.frags      );
+		video_printf(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.fragstotal );
 	}
 }
 
@@ -800,8 +800,8 @@ void menu_draw(int imenu)
 	video_viewport_set(
 		0.0f,
 		0.0f,
-		VIDEO_MODE_W - 1,
-		VIDEO_MODE_H - 1
+		VIDEO_SCREEN_W,
+		VIDEO_SCREEN_H
 	);
 	if(0 <= imenu && imenu < MENU_NUM)
 	{

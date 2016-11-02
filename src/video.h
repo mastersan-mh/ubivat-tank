@@ -25,13 +25,16 @@
 #define VIDEO_MODE_H 200
 */
 
+#define VIDEO_SCREEN_W 320
+#define VIDEO_SCREEN_H 200
+
 #define VIDEO_MODE_W 640
 #define VIDEO_MODE_H 480
 
 
 
-#define VIDEO_SCALEX ((float)VIDEO_MODE_W / 320.0f)
-#define VIDEO_SCALEY ((float)VIDEO_MODE_H / 200.0f)
+#define VIDEO_SCALEX ((float) ((float)VIDEO_MODE_W / (float)VIDEO_SCREEN_W))
+#define VIDEO_SCALEY ((float) ((float)VIDEO_MODE_H / (float)VIDEO_SCREEN_H))
 
 
 #define OPAQUE 0
@@ -44,10 +47,10 @@ void video_screen_draw_end();
 void video_delay();
 
 void video_viewport_set(
-	float x0,
-	float y0,
-	float x1,
-	float y1
+	int x,
+	int y,
+	int sx,
+	int sy
 );
 
 void video_draw();
