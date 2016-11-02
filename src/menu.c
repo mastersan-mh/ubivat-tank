@@ -8,6 +8,7 @@
 #include <_gr2D.h>
 #include <fonts.h>
 #include <types.h>
+#include <video.h>
 
 /* MENU_MAIN */
 menu_main_ctx_t menu_main_ctx = {};
@@ -796,6 +797,12 @@ int menu_handle(int imenu)
 
 void menu_draw(int imenu)
 {
+	video_viewport_set(
+		0.0f,
+		0.0f,
+		VIDEO_MODE_W - 1,
+		VIDEO_MODE_H - 1
+	);
 	if(0 <= imenu && imenu < MENU_NUM)
 	{
 		menu_t * menu = &menus[imenu];
