@@ -426,7 +426,7 @@ void game_draw()
 	if(game.msg)
 	{
 		int i = 0;
-		gr2D.color.current = 1;
+		font_color_set(COLOR_1);
 		while(i < 64 && game.msg[i])
 		{
 			int x = ((i * 8 ) % 128)+96;
@@ -887,13 +887,9 @@ void game_msg_error(int error)
 
 	while(!quit)
 	{
-		gr2D.color.current = 26; gr2D_rectangle_f(x,y,sx,sy);
-		gr2D.color.current = 30; gr2D_line_h(x     ,x+sx-1,y     );          //верхний борт
-		gr2D.color.current = 22; gr2D_line_h(x     ,x+sx-1,y+sy-1);          //нижний  борт
-		gr2D.color.current = 29; gr2D_line_v(x     ,y     ,y+sy-1);          //левый   борт
-		gr2D.color.current = 23; gr2D_line_v(x+sx-1,y     ,y+sy-1);          //правый  борт
-		gr2D.color.current =  4; video_printf(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
-		gr2D.color.current = 15;
+		font_color_set(COLOR_4);
+		video_printf(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
+		font_color_set(COLOR_15);
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
