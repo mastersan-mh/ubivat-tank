@@ -539,12 +539,6 @@ void map_draw(camera_t * cam)
 	int x0,x1;
 	int y0,y1;
 
-	video_viewport_set(
-		cam->x,
-		cam->x+cam->sx-1,
-		cam->y,
-		cam->y+cam->sy-1
-	);
 	item = map.items;
 	while(item)
 	{
@@ -610,12 +604,6 @@ void map_draw(camera_t * cam)
 			}
 		}
 	}
-	video_viewport_set(
-		0.0f,
-		VIDEO_MODE_W-1,
-		0.0f,
-		VIDEO_MODE_H-1
-	);
 };
 /*
  * добавление карты в список

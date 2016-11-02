@@ -145,8 +145,6 @@ void game_init();
 void game_done();
 void game_main();
 
-int game_mainproc();
-
 void game_nextmap();
 
 

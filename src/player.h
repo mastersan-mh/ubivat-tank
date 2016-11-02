@@ -71,7 +71,7 @@ typedef struct
 typedef struct
 {
 	//координаты
-	pos_t orig;
+	pos_t pos;
 	//скорость движения игрока
 	coord_t speed;
 	//игрок движется
@@ -167,7 +167,8 @@ void player2_attack_weapon3_OFF();
 void player_checkcode();
 void player_item_get(player_t * player);
 void player_obj_check(player_t * player);
-void player_draw(camera_t * cam, player_t * player, bool play);
+void player_draw_all(camera_t * cam);
+
 player_t * player_find(int status);
 int  player_connect(int status);
 void player_disconnect_monsters();

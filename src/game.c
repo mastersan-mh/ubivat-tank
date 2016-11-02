@@ -90,6 +90,8 @@ struct image_table_ent_s images_info[] = {
 	{NULL, NULL}
 };
 
+static int game_gameTick();
+
 static void game_draw();
 
 
@@ -312,7 +314,7 @@ void game_main()
 		}
 		else
 		{
-			int ret = game_mainproc();
+			int ret = game_gameTick();
 			if(ret >= 0) imenu = ret;
 
 		}
@@ -339,7 +341,7 @@ void game_main()
 /*
  * главная процедура игры
  */
-int game_mainproc()
+int game_gameTick()
 {
 	players_control();
 	bull_control();
@@ -367,58 +369,70 @@ int game_mainproc()
 	return MENU_MAIN;
 }
 
-void game_draw()
+
+static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 {
 
-	map_draw(&game.P0cam);
-	if(game.P1) map_draw(&game.P1cam);
-
-
-	if(game.P0->bull)
+	if(player->bull)
 	{
-		game.P0cam.pos.x = game.P0->bull->orig.x;
-		game.P0cam.pos.y = game.P0->bull->orig.y;
+		cam->pos.x = player->bull->pos.x;
+		cam->pos.y = player->bull->pos.y;
 	}
 	else
 	{
-		game.P0cam.pos.x = game.P0->move.orig.x;
-		game.P0cam.pos.y = game.P0->move.orig.y;
+		cam->pos.x = player->move.pos.x;
+		cam->pos.y = player->move.pos.y;
 	}
-	player_draw_status(&game.P0cam, game.P0);
+
+	video_viewport_set(
+		cam->x,
+		cam->y,
+		cam->x + cam->sx-1,
+		cam->y + cam->sy-1
+	);
+
+	map_draw(cam);
+
+	player_draw_all(cam);
+	explode_draw_all(cam);
+	bull_draw_all(cam);
+
+	video_viewport_set(
+		0.0f,
+		0.0f,
+		VIDEO_MODE_W-1,
+		VIDEO_MODE_H-1
+	);
+	player_draw_status(cam, player);
+}
+
+void game_draw()
+{
+
+	game_draw_cam(game.P0, &game.P0cam, true);
+
 	if(game.P1)
 	{
-		if(game.P1->bull)
-		{
-			game.P1cam.pos.x = game.P1->bull->orig.x;
-			game.P1cam.pos.y = game.P1->bull->orig.y;
-		}
-		else
-		{
-			game.P1cam.pos.x = game.P1->move.orig.x;
-			game.P1cam.pos.y = game.P1->move.orig.y;
-		}
-		player_draw_status(&game.P1cam, game.P1);
+		game_draw_cam(game.P1, &game.P1cam, false);
 	}
 
-
-	player_t * player = playerList;
-	while(player)
-	{
-		player_draw(&game.P0cam, player, true);
-		if(game.P1) player_draw(&game.P1cam, player, false);
-		player = player->next;
-	}
+	video_viewport_set(
+		0.0f,
+		0.0f,
+		VIDEO_MODE_W-1,
+		VIDEO_MODE_H-1
+	);
 
 	if(game.msg)
 	{
-		int count = 0;
+		int i = 0;
 		gr2D.color.current = 1;
-		while(count<64 && game.msg[count])
+		while(i < 64 && game.msg[i])
 		{
-			int x = ((count * 8 ) % 128)+96;
-			int y = ((count / 16) * 8  )+84;
-			gr2Don_setchar(x, y, game.msg[count]);
-			count++;
+			int x = ((i * 8 ) % 128)+96;
+			int y = ((i / 16) * 8  )+84;
+			gr2Don_setchar(x, y, game.msg[i]);
+			i++;
 		};
 		game.msg = NULL;
 	};
@@ -811,16 +825,16 @@ int game_create()
 	{
 		game.P0cam.pos.x = 0;
 		game.P0cam.pos.y = 0;
-		game.P0cam.x      = cam_sx/2+1;
-		game.P0cam.y      = 0;
-		game.P0cam.sx     = cam_sx/2-1;
-		game.P0cam.sy     = cam_sy - pixels*2;
+		game.P0cam.x     = cam_sx/2 + 1;
+		game.P0cam.y     = 0;
+		game.P0cam.sx    = cam_sx/2 - 1;
+		game.P0cam.sy    = cam_sy - pixels*2;
 		game.P1cam.pos.x = 0;
 		game.P1cam.pos.y = 0;
-		game.P1cam.x      = 0;
-		game.P1cam.y      = 0;
-		game.P1cam.sx     = cam_sx-1;
-		game.P1cam.sy     = cam_sy - pixels*2;
+		game.P1cam.x     = 0;
+		game.P1cam.y     = 0;
+		game.P1cam.sx    = cam_sx/2 - 1;
+		game.P1cam.sy    = cam_sy - pixels*2;
 		ret = player_connect(c_p_P0);
 		ret = player_connect(c_p_P1);
 	};

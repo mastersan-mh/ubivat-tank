@@ -34,10 +34,10 @@ static int checkdamage(struct player_s * player, bull_t * bull)
 	if(
 			(bull->player != player  )&& //попали не в себя
 			(0<player->charact.health)&&
-			(player->move.orig.x-c_p_MDL_box/2<=bull->orig.x+wtable[bull->_weap_].bullbox/2)&&
-			(bull->orig.x-wtable[bull->_weap_].bullbox/2<=player->move.orig.x+c_p_MDL_box/2)&&
-			(player->move.orig.y-c_p_MDL_box/2<=bull->orig.y+wtable[bull->_weap_].bullbox/2)&&
-			(bull->orig.y-wtable[bull->_weap_].bullbox/2<=player->move.orig.y+c_p_MDL_box/2)
+			(player->move.pos.x-c_p_MDL_box/2<=bull->pos.x+wtable[bull->_weap_].bullbox/2)&&
+			(bull->pos.x-wtable[bull->_weap_].bullbox/2<=player->move.pos.x+c_p_MDL_box/2)&&
+			(player->move.pos.y-c_p_MDL_box/2<=bull->pos.y+wtable[bull->_weap_].bullbox/2)&&
+			(bull->pos.y-wtable[bull->_weap_].bullbox/2<=player->move.pos.y+c_p_MDL_box/2)
 	) return true;
 	return false;
 };
@@ -106,46 +106,43 @@ void bull_removeall()
 /*
  * рисование пули
  */
-void bull_draw(camera_t * cam, bull_t * bull, bool play)
+static void bull_draw(camera_t * cam, bull_t * bull)
 {
 	//размер кадра X,Y
 	int mdlbox = bull->image->IMG->sx;
 	//количество кадров
 	int Fmax = bull->image->IMG->sy / (mdlbox * 4);
-	if(play)
-	{
-		bull->frame = bull->frame + c_bull_FPS * dtimed1000;
-		if(bull->frame < 0 || Fmax<=bull->frame) bull->frame = 0;
-	};
 	if
 	(
-			(cam->pos.x-cam->sx/2<=bull->orig.x+(mdlbox >> 1)) && (bull->orig.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
-			(cam->pos.y-cam->sy/2<=bull->orig.y+(mdlbox >> 1)) && (bull->orig.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
+			(cam->pos.x-cam->sx/2<=bull->pos.x+(mdlbox >> 1)) && (bull->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
+			(cam->pos.y-cam->sy/2<=bull->pos.y+(mdlbox >> 1)) && (bull->pos.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
 	)
 	{
-		video_viewport_set(
-		cam->x,
-		cam->x+cam->sx-1,
-		cam->y,
-		cam->y+cam->sy-1
-		);
 		gr2D_setimage1(
-				roundf(cam->x+bull->orig.x-(cam->pos.x-cam->sx/2))-(mdlbox >> 1),
-				roundf(cam->y-bull->orig.y+(cam->pos.y+cam->sy/2))-(mdlbox >> 1),
+				roundf(cam->x+bull->pos.x-(cam->pos.x-cam->sx/2))-(mdlbox >> 1),
+				roundf(cam->y-bull->pos.y+(cam->pos.y+cam->sy/2))-(mdlbox >> 1),
 				bull->image,
 				0,
 				mdlbox*(bull->dir*Fmax+trunc(bull->frame)),
 				mdlbox,
 				mdlbox
 		);
-		video_viewport_set(
-			0.0f,
-			VIDEO_MODE_W-1,
-			0.0f,
-			VIDEO_MODE_H-1
-		);
 	};
 };
+
+
+
+void bull_draw_all(camera_t * cam)
+{
+	bull_t * bull = bullList;
+	while(bull)
+	{
+		bull_draw(cam, bull);
+		bull = bull->next;
+	}
+
+}
+
 /*
  * поведение пули
  */
@@ -163,29 +160,29 @@ void bull_control()
 		s = wtable[bull->_weap_].bullspeed * dtimed1000;
 		switch(bull->dir)
 		{
-		case 0: bull->orig.y = bull->orig.y+s;break; //c_p_DIR_up
-		case 1: bull->orig.y = bull->orig.y-s;break; //c_p_DIR_dn
-		case 2: bull->orig.x = bull->orig.x-s;break; //c_p_DIR_lf
-		case 3: bull->orig.x = bull->orig.x+s;break; //c_p_DIR_rt
+		case 0: bull->pos.y = bull->pos.y+s;break; //c_p_DIR_up
+		case 1: bull->pos.y = bull->pos.y-s;break; //c_p_DIR_dn
+		case 2: bull->pos.x = bull->pos.x-s;break; //c_p_DIR_lf
+		case 3: bull->pos.x = bull->pos.x+s;break; //c_p_DIR_rt
 		};
 		bull->delta_s = bull->delta_s+abs(s);                                //подсчитываем пройденный путь
 		if(
 				(-1<wtable[bull->_weap_].range) && (wtable[bull->_weap_].range<bull->delta_s)
 		)
 		{//предельное расстояние пройдено
-			explode_add(bull, bull->orig.x,bull->orig.y);
+			explode_add(bull, bull->pos.x,bull->pos.y);
 			bull_remove(&bull);
 		}
 		else
 		{                                                          //предел на расстояние не превышен
 			map_clip_find(                                                     //найдем препятствия
-					&bull->orig, wtable[bull->_weap_].bullbox,
+					&bull->pos, wtable[bull->_weap_].bullbox,
 					c_m_w_w0 | c_m_w_w1 | c_m_w_brick,
 					&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 			);
 			if((Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd) != 0)
 			{     //пуля попала в стену
-				explode_add(bull,bull->orig.x,bull->orig.y);
+				explode_add(bull,bull->pos.x,bull->pos.y);
 				bull_remove(&bull);
 			}
 			else {                                                         //пуля не попала в стену
@@ -198,13 +195,19 @@ void bull_control()
 				};
 				if(flag)
 				{                                              //попадание в игрока
-					explode_add(bull,bull->orig.x,bull->orig.y);
+					explode_add(bull,bull->pos.x,bull->pos.y);
 					bull_remove(&bull);
 				}
 				else
-				{                                                        //в игрока не попали, продолжение полета
-					bull_draw(&game.P0cam, bull, true);
-					if(game.P1) bull_draw(&game.P1cam, bull, false);
+				{
+					//в игрока не попали, продолжение полета
+
+
+					int mdlbox = bull->image->IMG->sx;
+					//количество кадров
+					int Fmax = bull->image->IMG->sy / (mdlbox * 4);
+					bull->frame = bull->frame + c_bull_FPS * dtimed1000;
+					if(bull->frame < 0 || Fmax<=bull->frame) bull->frame = 0;
 					bull = bull->next;
 				}
 			}
@@ -286,12 +289,11 @@ void explode_removeall()
 /*
  * отрисовка
  */
-void explode_draw(camera_t * cam, explode_t * explode, bool play)
+static void explode_draw(camera_t * cam, explode_t * explode)
 {
 	int mdlbox;
 
 	mdlbox = explode->image->IMG->sx;
-	if(play) explode->frame = explode->frame + c_explode_FPS * dtimed1000;
 	if(
 			(cam->pos.x-cam->sx/2<=explode->pos.x+(mdlbox >> 1)) &&
 			(explode->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
@@ -299,12 +301,6 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 			(explode->pos.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
 			)
 	{
-		video_viewport_set(
-			cam->x,
-			cam->x+cam->sx-1,
-			cam->y,
-			cam->y+cam->sy-1
-		);
 		gr2D_setimage1(
 			roundf(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
 			roundf(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
@@ -313,12 +309,6 @@ void explode_draw(camera_t * cam, explode_t * explode, bool play)
 			mdlbox * trunc(explode->frame),
 			mdlbox,
 			mdlbox
-		);
-		video_viewport_set(
-			0.0f,
-			VIDEO_MODE_W-1,
-			0.0f,
-			VIDEO_MODE_H-1
 		);
 	}
 }
@@ -375,8 +365,8 @@ void explode_control()
 			player = playerList;
 			while(player)
 			{
-				sp_x = player->move.orig.x-explode->pos.x;
-				sp_y = player->move.orig.y-explode->pos.y;
+				sp_x = player->move.pos.x-explode->pos.x;
+				sp_y = player->move.pos.y-explode->pos.y;
 				if(
 						(abs(sp_x)<=c_p_MDL_box/2) &&
 						(abs(sp_y)<=c_p_MDL_box/2)) r = 0;
@@ -401,12 +391,25 @@ void explode_control()
 				player = player->next;
 			};
 		};
-		if(c_explode_Famnt-1<explode->frame) explode->frame = c_explode_Famnt-1;
-		explode_draw(&game.P0cam, explode, true);                                  //рисуем взрыв
-		if(game.P1 != NULL) explode_draw(&game.P1cam, explode, false);             //рисуем взрыв
+		if(c_explode_Famnt - 1 < explode->frame) explode->frame = c_explode_Famnt-1;
+
+		explode->frame = explode->frame + c_explode_FPS * dtimed1000;
+
 		if(explode->frame > c_explode_Famnt - 1)
 			explode_remove(&explode);
 		else
 			explode = explode->next;
 	};
 };
+
+void explode_draw_all(camera_t * cam)
+{
+	explode_t *explode = explList;
+	while(explode)
+	{
+		explode_draw(cam, explode);
+		explode = explode->next;
+	}
+
+}
+

@@ -52,7 +52,7 @@ typedef struct bull_s
 {
 	struct bull_s * next;
 	//координаты
-	pos_t orig;
+	pos_t pos;
 	//игрок, выпустивший пулю
 	struct player_s * player;
 	//тип пули(оружие, из которого выпущена пуля)
@@ -92,12 +92,12 @@ extern explode_t * explList;
 void bull_add();
 void bull_remove(bull_t ** bull);
 void bull_removeall();
-void bull_draw(camera_t * cam, bull_t * bull, bool play);
 void bull_control();
+void bull_draw_all(camera_t * cam);
 void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl);
 void explode_remove(explode_t ** explode);
 void explode_removeall();
-void explode_draw(camera_t * cam, explode_t * explode, bool play);
 void explode_control();
+void explode_draw_all(camera_t * cam);
 
 #endif /* SRC_WEAP_H_ */

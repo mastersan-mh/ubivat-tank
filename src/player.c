@@ -311,10 +311,10 @@ void player_item_get(player_t * player)
 			{
 				//если предмет есть
 				if(
-						(item->orig.x-c_i_MDL_box/2< player->move.orig.x+c_p_MDL_box/2)&&
-						(player->move.orig.x-c_p_MDL_box/2<=item->orig.x+c_i_MDL_box/2)&&
-						(item->orig.y-c_i_MDL_box/2<=player->move.orig.y+c_p_MDL_box/2)&&
-						(player->move.orig.y-c_p_MDL_box/2< item->orig.y+c_i_MDL_box/2)
+						(item->orig.x-c_i_MDL_box/2< player->move.pos.x+c_p_MDL_box/2)&&
+						(player->move.pos.x-c_p_MDL_box/2<=item->orig.x+c_i_MDL_box/2)&&
+						(item->orig.y-c_i_MDL_box/2<=player->move.pos.y+c_p_MDL_box/2)&&
+						(player->move.pos.y-c_p_MDL_box/2< item->orig.y+c_i_MDL_box/2)
 				)
 				{
 					switch(item->class)
@@ -399,10 +399,10 @@ void player_obj_check(player_t * player)
 		while(obj)
 		{
 			if(
-					(obj->orig.x-c_o_MDL_box/2 <= player->move.orig.x + c_p_MDL_box / 2)&&
-					(player->move.orig.x-c_p_MDL_box/2 <= obj->orig.x + c_o_MDL_box / 2)&&
-					(obj->orig.y-c_o_MDL_box/2 <= player->move.orig.y + c_p_MDL_box / 2)&&
-					(player->move.orig.y-c_p_MDL_box/2 <= obj->orig.y + c_o_MDL_box / 2)
+					(obj->orig.x-c_o_MDL_box/2 <= player->move.pos.x + c_p_MDL_box / 2)&&
+					(player->move.pos.x-c_p_MDL_box/2 <= obj->orig.x + c_o_MDL_box / 2)&&
+					(obj->orig.y-c_o_MDL_box/2 <= player->move.pos.y + c_p_MDL_box / 2)&&
+					(player->move.pos.y-c_p_MDL_box/2 <= obj->orig.y + c_o_MDL_box / 2)
 			)
 			{
 				switch (obj->class)
@@ -421,57 +421,50 @@ void player_obj_check(player_t * player)
 /*
  * рисование игрока
  */
-void player_draw(camera_t * cam, player_t * player, bool play)
+static void player_draw(camera_t * cam, player_t * player)
 {
 	if(player->charact.health>0)
 	{ //если игрок жив
-		if(player->move.go)
-		{
-			if(play) {
-				player->Fbase = player->Fbase + PLAYER_FPS_RUN * dtimed1000;
-				if((player->Fbase<0)||(player->Fbase>3)) player->Fbase = 0;
-			};
-		};
 		if(
-				(cam->pos.x-cam->sx/2<=player->move.orig.x+(c_p_MDL_box/2))&&(player->move.orig.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
-				(cam->pos.y-cam->sy/2<=player->move.orig.y+(c_p_MDL_box/2))&&(player->move.orig.y-(c_p_MDL_box/2)<=cam->pos.y+cam->sy/2)
+				(cam->pos.x-cam->sx/2<=player->move.pos.x+(c_p_MDL_box/2))&&(player->move.pos.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
+				(cam->pos.y-cam->sy/2<=player->move.pos.y+(c_p_MDL_box/2))&&(player->move.pos.y-(c_p_MDL_box/2)<=cam->pos.y+cam->sy/2)
 		)
 		{
-			video_viewport_set(
-				cam->x,
-				cam->x+cam->sx-1,
-				cam->y,
-				cam->y+cam->sy-1
-			);
 			gr2D_setimage1(
-					round(cam->x+player->move.orig.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->move.orig.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+					round(cam->x+player->move.pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					round(cam->y-player->move.pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->Ibase,
 					0,
 					c_p_MDL_box*((player->move.dir * 4)+round(player->Fbase)),
 					c_p_MDL_box,
 					c_p_MDL_box
-			);//база
+			);
 			gr2D_setimage0(
-					round(cam->x+player->move.orig.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->move.orig.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+					round(cam->x+player->move.pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					round(cam->y-player->move.pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->Iflag
-			);//флаг
-			video_viewport_set(
-				0.0f,
-				VIDEO_MODE_W-1,
-				0.0f,
-				VIDEO_MODE_H-1
 			);
 		};
 	};
 };
+
+void player_draw_all(camera_t * cam)
+{
+	player_t * player = playerList;
+	while(player)
+	{
+		player_draw(cam, player);
+		player = player->next;
+	}
+}
+
+
 /*
  * передвижение игрока
  */
 static void player_move(player_t * player, int dir, coord_t * speed)
 {
-	pos_t * orig = &player->move.orig;
+	pos_t * orig = &player->move.pos;
 	coord_t dway = (*speed) * dtimed1000;
 	coord_t halfbox = c_p_MDL_box/2;
 	coord_t dist;
@@ -504,7 +497,7 @@ static void player_handle(player_t * player)
 			bull_add();
 			bullList->player = player;
 			bullList->_weap_ = 1;
-			explode_add(bullList,player->move.orig.x,player->move.orig.y);
+			explode_add(bullList,player->move.pos.x,player->move.pos.y);
 			bull_remove(&bullList);
 			player->charact.spawned = false;
 			player->charact.armor = 0;
@@ -526,6 +519,10 @@ static void player_handle(player_t * player)
 			//игрок едет
 			player->move.speed += PLAYER_ACCEL * dtime;
 			if(player->charact.speed < player->move.speed) player->move.speed = player->charact.speed;
+
+			player->Fbase = player->Fbase + PLAYER_FPS_RUN * dtimed1000;
+			if(player->Fbase < 0 || player->Fbase > 3) player->Fbase = 0;
+
 		}
 		else
 		{
@@ -541,10 +538,10 @@ static void player_handle(player_t * player)
 		switch(player->move.dir){
 		case DIR_UP:
 		case DIR_DOWN:
-			Sorig = player->move.orig;
+			Sorig = player->move.pos;
 			Sorig.x = Sorig.x-c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &L);
-			Sorig = player->move.orig;
+			Sorig = player->move.pos;
 			Sorig.x = Sorig.x+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &R);
 			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) player_move(player,DIR_LEFT, &speed_s);//strafe left
@@ -552,10 +549,10 @@ static void player_handle(player_t * player)
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
-			Sorig = player->move.orig;
+			Sorig = player->move.pos;
 			Sorig.y = Sorig.y-c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &D);
-			Sorig = player->move.orig;
+			Sorig = player->move.pos;
 			Sorig.y = Sorig.y+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->move.dir,0xF0,c_p_MDL_box/2+2, &U);
 			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) player_move(player,DIR_UP, &speed_s);//strafe up
@@ -599,8 +596,8 @@ static void player_handle(player_t * player)
 						// пули не кончились
 						player->w.reloadtime_d = c_p_WEAP_reloadtime;
 						bull_add();                                                       //создаем пулю
-						bullList->orig.x   = player->move.orig.x;                     //координаты
-						bullList->orig.y   = player->move.orig.y;                     //координаты
+						bullList->pos.x   = player->move.pos.x;                     //координаты
+						bullList->pos.y   = player->move.pos.y;                     //координаты
 						bullList->player   = player;                                  //игрок, выпустивший пулю
 						bullList->_weap_   = player->w.attack-1;                      //тип пули(оружие, из которого выпущена пуля)
 						if(bullList->_weap_ == 1) player->bull = bullList;
@@ -802,34 +799,29 @@ void player_spawn(player_t * player, spawn_t * spawn)
 	if(-1 < spawn->health && spawn->health <= player->charact.healthmax) player->charact.health = spawn->health;
 	else
 	{
-		if(
-				(player->charact.status==c_p_BOSS)||
-				(player->charact.status==c_p_ENEMY)
-		) player->charact.health = player->charact.healthmax;
+		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
+			player->charact.health = player->charact.healthmax;
 		else
 		{
 			if(game.flags & c_g_f_CASE) player->charact.health = player->charact.healthmax;//по выбору
 			else
-			{                                                         //по уровням
+			{
+				//по уровням
 				if(game.gamemap == mapList) player->charact.health = player->charact.healthmax;//первая карта
-				else
-				{                                                        //не первая карта
-					if((!player->charact.spawned)&&(player->charact.health<=0)) player->charact.health = player->charact.healthmax;
-				}
+				else //не первая карта
+					if(!player->charact.spawned && player->charact.health <= 0)
+						player->charact.health = player->charact.healthmax;
 			}
 		}
 	}
-	if((-1<spawn->armor )&&(spawn->armor <=player->charact.armormax )) player->charact.armor = spawn->armor;
+	if(-1 < spawn->armor && spawn->armor <= player->charact.armormax )
+		player->charact.armor = spawn->armor;
 	else
 	{
-		if(
-				(player->charact.status == c_p_BOSS)||
-				(player->charact.status == c_p_ENEMY)
-		) player->charact.armor = player->charact.armormax;
+		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
+			player->charact.armor = player->charact.armormax;
 		else
-		{
-			if((game.flags & c_g_f_CASE) == c_g_f_CASE) player->charact.armor = player->charact.armormax;
-		};
+			if(game.flags & c_g_f_CASE) player->charact.armor = player->charact.armormax;
 	};
 	player->charact.spawned   = true;
 	player->bull              = NULL;
@@ -867,8 +859,8 @@ int player_spawn_player(player_t * player)
 			for(count = 0; count < spawn_number; count ++) spawn = spawn->next;
 			if(spawn->class == MAP_SPAWN_PLAYER) flag = true;                      //это PLAYER спавн
 		}while(!flag);
-		player->move.orig.x = spawn->orig.x;
-		player->move.orig.y = spawn->orig.y;
+		player->move.pos.x = spawn->orig.x;
+		player->move.pos.y = spawn->orig.y;
 		player_spawn(player, spawn);
 		return 0;
 	}
@@ -894,8 +886,8 @@ int player_spawn_enemy()
 			if(spawn->class == MAP_SPAWN_BOSS ) error = player_connect(c_p_BOSS );
 			if(error != 1)
 			{
-				playerList->move.orig.x = spawn->orig.x;
-				playerList->move.orig.y = spawn->orig.y;
+				playerList->move.pos.x = spawn->orig.x;
+				playerList->move.pos.y = spawn->orig.y;
 				player_spawn(playerList, spawn);
 			}
 		}
@@ -947,7 +939,7 @@ void players_control()
 /*
  * вывод информации об игроке
  */
-void player_draw_status(camera_t * cam, player_t *player)
+void player_draw_status(camera_t * cam, player_t * player)
 {
 	gr2D.color.current = 1;
 	// gr2D_settext(cam->x,cam->y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');

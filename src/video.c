@@ -414,8 +414,8 @@ void video_delay()
 
 void video_viewport_set(
 	float x0,
-	float x1,
 	float y0,
+	float x1,
 	float y1
 )
 {
