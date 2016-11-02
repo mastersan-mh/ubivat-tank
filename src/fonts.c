@@ -291,6 +291,21 @@ void fonts_done()
 FT_Done_Face(face);
 FT_Done_FreeType(ft);
 }
+
+static uint8_t font_color[3];
+
+void font_color_set(
+	uint8_t R,
+	uint8_t G,
+	uint8_t B
+)
+{
+	font_color[0] = R;
+	font_color[1] = G;
+	font_color[2] = B;
+}
+
+
 /*
  * рисование указанного символа
  */
@@ -352,8 +367,7 @@ int video_print_char(
 	glLoadIdentity();
 	glTranslatef(xpos, ypos, 0.0f);
 	glBegin(GL_QUADS);
-	float grayColor = 0.35f;
-	glColor3f(grayColor, grayColor, grayColor);
+	glColor3f(font_color[0], font_color[1], font_color[2]);
 	glTexCoord2f(texture_x1, texture_y1); glVertex2f(w, h); // Верхний правый угол квадрата
 	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(w, 0.0f  ); // Нижний правый
 	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
@@ -396,3 +410,4 @@ void video_printf(
 		i++;
 	}
 }
+
