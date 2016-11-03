@@ -145,7 +145,7 @@ void game_init();
 void game_done();
 void game_main();
 
-void game_nextmap();
+bool game_nextmap();
 
 
 int game_cfg_save();

@@ -57,7 +57,7 @@ void font_color_sets(
 	color_t * color
 );
 
-int video_print_char(int out_x, int out_y, char ch);
+void video_print_char(int out_x, int out_y, char ch);
 
 void video_printf(
 	int px,

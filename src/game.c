@@ -362,8 +362,7 @@ int game_gameTick()
 		else
 		{
 			//игра по уровням
-			game_nextmap();
-			return MENU_INTERLEVEL;
+			if(game_nextmap() == true) return MENU_INTERLEVEL;
 		}
 	}
 	return MENU_MAIN;
@@ -435,7 +434,7 @@ void game_draw()
 /*
  * процедура перехода на следующую карту
  */
-void game_nextmap()
+bool game_nextmap()
 {
 	int ret;
 	//дисконнект всех монстров
@@ -450,32 +449,24 @@ void game_nextmap()
 	//menu_interlevel();
 	game.P0->charact.spawned = false;
 	if(game.P1) game.P1->charact.spawned = false;
-	if(game.gamemap->next)
+	game.gamemap = game.gamemap->next;
+	if(!game.gamemap)
 	{
-		game.gamemap = game.gamemap->next;
-		ret = map_load(game.gamemap->map);
-		if(ret)
-		{
-			game_msg_error(ret);
-			game_abort();
-			//game.menu = c_m_main;
-		}
-		else
-		{
-			ret = game_create();
-			if(!ret)
-			{
-				//game.menu = menu_save();       //сохраним игру в начале уровня
-				//menu_prelevel();
-			}
-		}
-	}
-	else
-	{
+		// конец игры, последняя карта
 		game.gamemap = mapList;
-		player_disconnect_all();                //дисконнект всех монстров
-		//game.menu = c_m_main;
+		//дисконнект всех монстров
+		player_disconnect_all();
+		return false;
 	}
+	ret = map_load(game.gamemap->map);
+	if(ret)
+	{
+		game_msg_error(ret);
+		game_abort();
+		return false;
+	}
+	ret = game_create();
+	return true;
 }
 
 
