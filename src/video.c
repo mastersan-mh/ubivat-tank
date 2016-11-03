@@ -351,7 +351,7 @@ int video_init()
 	}
 
 	window = SDL_CreateWindow(
-		"SDL2",
+		"Ubivat Tank 2016",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		VIDEO_MODE_W,

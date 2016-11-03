@@ -5,7 +5,8 @@
  *      Author: mastersan
  */
 
-#include <inttypes.h>
+#include <utf8.h>
+
 #include <limits.h>
 #include <string.h>
 #include <fontconfig/fontconfig.h>
@@ -63,7 +64,7 @@ ssize_t utf8nlen(const char * __string, size_t __size, int * __wchar)
 static int __utf8_stringloop(
 	const char * __string,
 	size_t __size,
-	int (*__charhandlecb)(int, uint32_t, int, int, void *),
+	int (*__charhandlecb)(int, ucs4_t, int, int, void *),
 	void * __userdata
 )
 {
@@ -101,7 +102,7 @@ static int __utf8_stringloop(
 /**
  * @description проход по строке
  * @param[in] __string - Строка
- * @param[in] void (*callback)(int __i, uint32_t __ucs4, int __lchar, int __wchar, void * __userdata)
+ * @param[in] void (*callback)(int __i, usc4_t __ucs4, int __lchar, int __wchar, void * __userdata)
  *            Функция обработки символа строки
  *            __i     - номер символа
  *            __ucs4  - символ в формате UCS4
@@ -112,7 +113,7 @@ static int __utf8_stringloop(
  */
 int utf8stringloop(
 	const char * __string,
-	int (*__charhandlecb)(int, uint32_t, int, int, void *),
+	int (*__charhandlecb)(int, ucs4_t, int, int, void *),
 	void * __userdata
 )
 {
@@ -123,7 +124,7 @@ int utf8stringloop(
 /**
  * @description проход по строке
  * @param[in] __string - Строка
- * @param[in] void (*callback)(int __i, uint32_t __ucs4, int __lchar, int __wchar, void * __userdata)
+ * @param[in] void (*callback)(int __i, usc4_t __ucs4, int __lchar, int __wchar, void * __userdata)
  *            Функция обработки символа строки
  *            __i     - номер символа
  *            __ucs4  - символ в формате UCS4
@@ -136,7 +137,7 @@ int utf8stringloop(
 int utf8nstringloop(
 	const char * __string,
 	size_t __size,
-	int (*__charhandlecb)(int, uint32_t, int, int, void *),
+	int (*__charhandlecb)(int, ucs4_t, int, int, void *),
 	void * userdata
 )
 {
@@ -148,7 +149,7 @@ void char_cp866_to_utf8(char cp866, char * string, int * clen)
 {
 	typedef struct
 	{
-		uint32_t utf8;
+		uint64_t utf8;
 		int lchar;
 	} code_t;
 	code_t code_table[128] =

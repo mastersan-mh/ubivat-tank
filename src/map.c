@@ -152,7 +152,7 @@ static void map_item_removeall()
  */
 static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 {
-#define BUFSIZE MAB_OBJ_MESAGE_SIZE
+#define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	obj_t * obj = Z_malloc(sizeof(*obj));
 

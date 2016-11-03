@@ -506,11 +506,12 @@ void font_color_sets(
 /*
  * рисование указанного символа
  */
-static int __video_print_char(
+static void __video_print_char(
 	int x,
 	int y,
 	uint32_t ch,
-	int wchar
+	int * adv_x,
+	int * adv_y
 )
 {
 /*
@@ -527,9 +528,21 @@ static int __video_print_char(
 	float cscalex = (8.0f / www);
 	float cscaley = (8.0f / hhh);
 
+	int __adv_x;
 
 	character = (character_t *)pairs_get(charpairs, ch);
-	if(!character) return www * cscalex;
+	if(!character)
+		__adv_x = www * cscalex;
+	else
+		__adv_x = (int)( (float) character->advance * cscalex);
+
+	if(adv_x)
+		*adv_x = __adv_x;
+	if(adv_y)
+		*adv_y = (int)( (float) hhh * cscaley);
+
+	if(!character) return;
+
 
 	// Size of glyph
 	//GLfloat mdl_sx = character->size_width;
@@ -572,17 +585,16 @@ static int __video_print_char(
 	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , h); // Верхний левый
 	glEnd();
 	//return character->advance;
-	return (int) ( (float) character->advance * cscalex);
 }
 
 
-int video_print_char(
+void video_print_char(
 	int x,
 	int y,
 	char ch
 )
 {
-	return __video_print_char(x, y, ch, 1);
+	__video_print_char(x, y, ch, NULL, NULL);
 }
 
 
@@ -595,8 +607,9 @@ typedef struct
 static int video_printf_char_handle(int i, uint32_t c, int lchar, int wchar, void * ud)
 {
 	video_printf_data_t * __ud = ud;
-	int adv = __video_print_char(__ud->x, __ud->y, c, wchar);
-	__ud->x += adv;
+	int adv_x;
+	__video_print_char(__ud->x, __ud->y, c, &adv_x, NULL);
+	__ud->x += adv_x;
 	return 0;
 }
 
@@ -633,6 +646,8 @@ void video_printf(
 
 typedef struct
 {
+	int start_x;
+	int start_y;
 	int x;
 	int y;
 	int pixels_width;
@@ -641,8 +656,15 @@ typedef struct
 static int video_printf_wide_char_handle(int i, uint32_t c, int lchar, int wchar, void * ud)
 {
 	video_printf_wide_data_t * __ud = ud;
-	int adv = __video_print_char(__ud->x, __ud->y, c, wchar);
-	__ud->x += adv;
+	int adv_x;
+	int adv_y;
+	__video_print_char(__ud->x, __ud->y, c, &adv_x, &adv_y);
+	__ud->x += adv_x;
+	if(__ud->x > __ud->pixels_width)
+	{
+		__ud->x = __ud->start_x;
+		__ud->y += adv_y;
+	}
 	return 0;
 }
 
@@ -669,9 +691,11 @@ void video_printf_wide(
 	va_end(argptr);
 
 	video_printf_wide_data_t ud = {
+			.start_x = x,
+			.start_y = y,
 			.x = x,
 			.y = y,
-			.pixels_width = pixels_width,
+			.pixels_width = pixels_width * VIDEO_SCALEX
 	};
 
 	utf8nstringloop(string, MAX_MESSAGE_SIZE - 1, video_printf_wide_char_handle, &ud);

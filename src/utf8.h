@@ -8,18 +8,22 @@
 #ifndef SRC_UTF8_H_
 #define SRC_UTF8_H_
 
+#include <inttypes.h>
+#include <sys/types.h>
 
-ssize_t utf8len(char * __str8, int * __wchar);
-ssize_t utf8nlen(char * __str8, size_t __maxlen, int * __wchar);
+typedef uint32_t ucs4_t;
+
+ssize_t utf8len(const char * __str8, int * __wchar);
+ssize_t utf8nlen(const char * __str8, size_t __maxlen, int * __wchar);
 
 int utf8stringloop(
 	const char * __string,
-	int (*__charhandlecb)(int, uint32_t, int, int, void * ),
+	int (*__charhandlecb)(int, ucs4_t, int, int, void * ),
 	void * __userdata
 );
 int utf8nstringloop(
 	const char * __string,
-	size_t __size, int (*__charhandlecb)(int, uint32_t, int, int, void *),
+	size_t __size, int (*__charhandlecb)(int, ucs4_t, int, int, void *),
 	void * __userdata
 );
 
