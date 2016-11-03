@@ -25,6 +25,7 @@ void * Z_realloc(void *__ptr, size_t __size)
 __THROW __attribute_warn_unused_result__;
 
 char * Z_strdup(const char * str);
+char * Z_strndup(const char * str, size_t size);
 
 void Z_free(void * ptr);
 

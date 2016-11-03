@@ -253,7 +253,7 @@ int IMG_add(const char * path, const char * IMGname)
 			p->data[iindex++] = _palette[pindex].R * intencity;
 			p->data[iindex++] = _palette[pindex].G * intencity;
 			p->data[iindex++] = _palette[pindex].B * intencity;
-			p->data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : OPAQUE;
+			p->data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : COLOR_ALPHA_OPAQUE;
 		}
 		iindex += (p->sx - IMG->sx)*COLOR_COMPONENT_AMOUNT;
 	}

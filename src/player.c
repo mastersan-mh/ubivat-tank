@@ -956,7 +956,7 @@ void player_draw_status(camera_t * cam, player_t * player)
 {
 	int ref_y = VIDEO_SCREEN_H - 16 * 2;
 
-	font_color_set(COLOR_1);
+	font_color_set3i(COLOR_1);
 	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
 	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
 

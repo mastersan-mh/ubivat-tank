@@ -48,19 +48,22 @@ typedef enum
 
 extern char * map_class_names[__MAP_NUM];
 
-/*
- * координаты
- */
+/* заголовок карты */
+typedef struct
+{
+	char sign[3];
+	char name[MAP_NAME_SIZE];
+	char brief[MAP_BRIEF_SIZE];
+} ATTR_PACKED map_data_header_t;
+
+/* координаты */
 typedef struct
 {
 	uint16_t x;
 	uint16_t y;
 } ATTR_PACKED map_data_position_t;
 
-/*
- * параметры
- */
-
+/* объекты */
 typedef struct
 {
 	//позиция
@@ -89,6 +92,8 @@ typedef struct
 	//сообщение
 	char message[MAB_OBJ_MESAGE_SIZE];
 } ATTR_PACKED map_data_obj_t;
+
+
 
 typedef struct
 {
@@ -148,7 +153,7 @@ typedef struct Tobj
 	//координаты
 	map_position_t orig;
 	//сообщение
-	char message[65];
+	char * message;
 	//изображение объекта
 	item_img_t * img;
 } obj_t;
@@ -161,9 +166,9 @@ typedef struct
 	//имя файла карты
 	char * _file;
 	//название карты
-	char name[MAP_NAME_SIZE];
+	char * name;
 	//краткое описание
-	char brief[MAP_BRIEF_SIZE];
+	char * brief;
 	//точки респавнинга
 	spawn_t * spawns;
 	//предметы

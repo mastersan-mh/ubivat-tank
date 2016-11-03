@@ -13,6 +13,9 @@
 
 #define ATTR_PACKED __attribute__ ((packed))
 
+#include <fonts.h>
+#include <Z_mem.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +23,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <Z_mem.h>
 
 #ifndef bool
 typedef enum {
@@ -141,11 +143,11 @@ typedef struct
 	int sy;
 }camera_t;
 
+#define ARRAYSIZE( x ) (sizeof((x))/sizeof(*(x)));
 
-
-extern char *c_strTITLE;
-extern char *c_strCORP;
-extern char *c_about[];
+extern char * c_strTITLE;
+extern char * c_strCORP;
+extern coloredtext_t c_about[];
 
 extern bool debug_noAI;
 
