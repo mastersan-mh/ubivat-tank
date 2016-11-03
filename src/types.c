@@ -7,23 +7,24 @@
 char *c_strTITLE = "Ubivat Tank v0.47b SecretCode Edition";
 char *c_strCORP ="Mad House Software (C)2004";
 
-char *c_about[] = {
-	"Ubivat Tank v0.47b SecretCode Edition",
-	"Mad House Software (C)2004",
-	"Programming:",
-	" Remnyov Alexander aka Master San[MH]",
-	"Artists:",
-	" Remnyov Alexander,",
-	" Vasilyev Artyom aka Timon",
-	"Designers:",
-	" Remnyov Alexander, Vasilyev Artyom",
-	"Levels designers:",
-	" Remnyov Alexander, Vasilyev Artyom",
-	"Special thanks:",
-	" Vasilyev Artyom",
-	" Данная редакция, в отличии от",
-	" коды, добавленые по многочисленным",
-	" просьбам."
+coloredtext_t c_about[] = {
+		{{COLOR_7 } , "Programming:"},
+		{{COLOR_15} , " Remnyov Alexander aka Master San[MH]"},
+		{{COLOR_7 } , "Artists:"},
+		{{COLOR_15} , " Remnyov Alexander,"},
+		{{COLOR_15} , " Vasilyev Artyom aka Timon"},
+		{{COLOR_7 } , "Designers:"},
+		{{COLOR_15} , " Remnyov Alexander, Vasilyev Artyom"},
+		{{COLOR_7 } , "Levels designers:"},
+		{{COLOR_15} , " Remnyov Alexander, Vasilyev Artyom"},
+		{{COLOR_7 } , "Special thanks:"},
+		{{COLOR_15} , " Vasilyev Artyom"},
+		{{COLOR_1 } , ""},
+		{{COLOR_13} , "Данная редакция, в отличии от"},
+		{{COLOR_13} , "обычной версии, содержит секретные"},
+		{{COLOR_13} , "коды, добавленые по многочисленным"},
+		{{COLOR_13} , "просьбам."},
+		{}
 };
 
 bool debug_noAI = false;

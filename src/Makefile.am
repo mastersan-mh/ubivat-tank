@@ -14,6 +14,7 @@ ubivat_tank_LDFLAGS =
 ubivat_tank_SOURCES = \
 Z_mem.c \
 system.c \
+utf8.c \
 types.c \
 video.c \
 fonts.c \

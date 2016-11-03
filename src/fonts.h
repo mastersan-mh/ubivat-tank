@@ -8,6 +8,8 @@
 #ifndef SRC__FONTS_H_
 #define SRC__FONTS_H_
 
+#include <inttypes.h>
+
 #define COLOR_1   0x00, 0x00, 0x2a
 #define COLOR_4   0x2a, 0x00, 0x00
 #define COLOR_7   0x2a, 0x2a, 0x2a
@@ -21,20 +23,38 @@
 #define COLOR_LIGHTGRAY COLOR_15
 #define COLOR_DARKGRAY COLOR_25
 
+typedef struct
+{
+	char r;
+	char g;
+	char b;
+} color_t;
+
+typedef struct
+{
+	color_t color;
+	char * text;
+} coloredtext_t;
+
 enum text_orient_e
 {
 	orient_horiz,
 	orient_vert
 };
 
+void fonts_test();
+
 void fonts_init();
 void fonts_done();
 
 
-extern void font_color_set(
-	uint8_t R,
-	uint8_t G,
-	uint8_t B
+extern void font_color_set3i(
+	uint8_t r,
+	uint8_t g,
+	uint8_t b
+);
+void font_color_sets(
+	color_t * color
 );
 
 int video_print_char(int out_x, int out_y, char ch);
@@ -45,7 +65,15 @@ void video_printf(
 	enum text_orient_e orientation,
 	const char * format,
 	...
-	);
+);
+
+void video_printf_wide(
+	int x,
+	int y,
+	int pixels_width,
+	const char * format,
+	...
+);
 
 
 #endif /* SRC__FONTS_H_ */

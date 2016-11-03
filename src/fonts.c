@@ -6,16 +6,22 @@
 
 #include <math.h>
 
+#include <utf8.h>
+
 #include <fttypes.h>
 #include <ftimage.h>
 #include FT_FREETYPE_H
 #include <freetype.h>
 #include <ft2build.h>
 /*
-#include <freetype2/freetype.h>
 #include <fontconfig/fcfreetype.h>
 */
 
+#include <fontconfig/fontconfig.h>
+
+/* unicode support */
+#include <ctype.h>
+#include <wctype.h>
 
 typedef struct
 {
@@ -127,7 +133,6 @@ void * pairs_get(pairs_t * pairs, int key)
 
 
 #define FONTPATH "/usr/share/fonts/"
-#define CHAR_AMOUNT (128)
 #define PLANES (4)
 #define TRANSPARENT_COLOR_INDEX (0)
 
@@ -148,15 +153,111 @@ typedef struct {
 	GLuint advance;
 }character_t;
 
-//#define CHAR_AMOUNT (2653)
-
-#define CHAR_AMOUNT (128)
-
 pairs_t * charpairs;
 
-//character_t characters[CHAR_AMOUNT];
+
+void fonts_test()
+{
+
+	/*
+	SDL2/SDL_stdinc.h:extern DECLSPEC size_t SDLCALL SDL_utf8strlcpy(SDL_OUT_Z_CAP(dst_bytes) char *dst, const char *src, size_t dst_bytes);
+	SDL2/SDL_stdinc.h:#define SDL_iconv_utf8_locale(S)    SDL_iconv_string("", "UTF-8", S, SDL_strlen(S)+1)
+	SDL2/SDL_stdinc.h:#define SDL_iconv_utf8_ucs2(S)      (Uint16 *)SDL_iconv_string("UCS-2-INTERNAL", "UTF-8", S, SDL_strlen(S)+1)
+	SDL2/SDL_stdinc.h:#define SDL_iconv_utf8_ucs4(S)      (Uint32 *)SDL_iconv_string("UCS-4-INTERNAL", "UTF-8", S, SDL_strlen(S)+1)
+	SDL2/SDL_opengl_glext.h:#define GL_UTF8_NV                        0x909A
+	SDL2/SDL_system.h:extern DECLSPEC const char * SDLCALL SDL_WinRTGetFSPathUTF8(SDL_WinRT_Path pathType);
+	SDL2/SDL_hints.h: *  The contents of this hint should be encoded as a UTF8 string.
+
+	fontconfig/fontconfig.h:FcUtf8ToUcs4 (const FcChar8 *src_orig,
+	fontconfig/fontconfig.h:FcUtf8Len (const FcChar8    *string,
+	fontconfig/fontconfig.h:#define FC_UTF8_MAX_LEN 6
+	fontconfig/fontconfig.h:FcUcs4ToUtf8 (FcChar32  ucs4,
+	fontconfig/fontconfig.h:              FcChar8   dest[FC_UTF8_MAX_LEN]);
+	 */
+
+	//char eng[] = "ABCD";
+	//char rus[] = "АБВГ";
+	//FcChar8 eng8[] = "ABCD";
+	//FcChar8 rusBig8[]   = "АБВГДЕЁЖЗИйКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+
+	char *rusSmall8[] =
+	{
+			"а",
+			"аб",
+			"абв",
+			"абвг",
+			"абвгд",
+			"абвгде",
+			"абвгдеё",
+			"абвгдеёж",
+			"абвгдеёжз",
+			"абвгдеёжзи",
+			"абвгдеёжзий",
+			"абвгдеёжзийк",
+			"абвгдеёжзийкл",
+			"абвгдеёжзийклм",
+			"абвгдеёжзийклмн",
+			"абвгдеёжзийклмно",
+			"абвгдеёжзийклмноп",
+			"абвгдеёжзийклмнопр",
+			"абвгдеёжзийклмнопрс",
+			"абвгдеёжзийклмнопрст",
+			"абвгдеёжзийклмнопрсту",
+			"абвгдеёжзийклмнопрстуф",
+			"абвгдеёжзийклмнопрстуфх",
+			"абвгдеёжзийклмнопрстуфхц",
+			"абвгдеёжзийклмнопрстуфхцч",
+			"абвгдеёжзийклмнопрстуфхцчш",
+			"абвгдеёжзийклмнопрстуфхцчшщ",
+			"абвгдеёжзийклмнопрстуфхцчшщъ",
+			"абвгдеёжзийклмнопрстуфхцчшщъы",
+			"абвгдеёжзийклмнопрстуфхцчшщъыь",
+			"абвгдеёжзийклмнопрстуфхцчшщъыьэ",
+			"абвгдеёжзийклмнопрстуфхцчшщъыьэю",
+			"абвгдеёжзийклмнопрстуфхцчшщъыьэюя",
+			NULL
+	};
+
+	int i = 0;
+	char * str8;
+	int wchar;
+	while((str8 =  rusSmall8[i++]) != NULL)
+	{
+		ssize_t len;
+		len = utf8len(str8, &wchar);
+		printf("str8 = %s; len = %ld; wchar = %d\n", str8, len, wchar);
+		len = utf8nlen(str8, 99, &wchar);
+		printf("str8 = %s; len = %ld; wchar = %d\n", str8, len, wchar);
+	}
+
+	char rus8[] =
+			"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+			"абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+
+	int handle(int i, uint32_t ucs4, int lchar, int wchar, void * ud)
+	{
+		union
+		{
+			uint32_t utf8;
+			char str[5];
+		} val;
+		FcUcs4ToUtf8 (ucs4, (FcChar8 *) val.str);
 
 
+		printf("i = %d; ucs4 = %d; utf8 = %d; lchar = %d; wchar = %d\n", i, ucs4, val.utf8, lchar, wchar);
+		return 0;
+	}
+
+	int ret = utf8stringloop(rus8, handle, NULL);
+	if(ret) exit(ret);
+/*
+	FcChar8 *pMyChar8 = argv[1];
+	     FcChar32 myChar32;
+
+	     FcUtf8ToUcs4(pMyChar8, &myChar32, strlen(pMyChar8));
+	*/
+	exit(0);
+}
 
 void fonts_init()
 {
@@ -174,14 +275,14 @@ void fonts_init()
     }
 
 	FT_Set_Pixel_Sizes(face, 0, 48);
-	/* FT_Encoding encoding = FT_ENCODING_UNICODE; */
+	FT_Encoding encoding = FT_ENCODING_UNICODE;
 
 	FT_CharMap charmap = NULL;
 	int i;
 	for ( i = 0; i < face->num_charmaps; i++ )
 	{
 		charmap = face->charmaps[i];
-		if ( charmap->encoding == FT_ENCODING_UNICODE ) break;
+		if ( charmap->encoding == encoding ) break;
 	}
 	if(!charmap)
 	{
@@ -198,12 +299,14 @@ void fonts_init()
 	//FT_ULong charcode = 0x1F028;//'П';
 	//FT_UInt char_index = FT_Get_Char_Index(face, charcode);
 
+	int width = 1;
+
 	charpairs = pairs_init();
 	int count = 0;
 	FT_UInt agindex;
 	FT_ULong charcode;
 	charcode = FT_Get_First_Char( face, &agindex );
-	while ( agindex != 0 && count < CHAR_AMOUNT)
+	while ( agindex != 0)
 	{
 		//... do something with (charcode,gindex) pair ...
 
@@ -228,7 +331,7 @@ void fonts_init()
 			buf[iindex++] = color;
 			buf[iindex++] = color;
 			buf[iindex++] = color;
-			buf[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : OPAQUE;
+			buf[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? COLOR_ALPHA_TRANSPARENT : COLOR_ALPHA_OPAQUE;
 		}
 
 		GLuint texture;
@@ -274,12 +377,97 @@ void fonts_init()
 
 		count++;
 
+		printf("fonts_init(): chars = %ld (0x%lx)\n", charcode, charcode);
+		if(charcode > 0x100) width = 2;
+
 		charcode = FT_Get_Next_Char( face, charcode, &agindex );
 
 
 	}
 
+	printf("fonts_init(): total chars = %d\n", count);
+	printf("fonts_init(): maxwidth = %d\n", width);
 
+
+	/*********************************/
+
+
+
+
+#define CHAR_AMOUNT (0)
+
+	FT_ULong char_code;
+	for (char_code = 0; char_code < CHAR_AMOUNT; char_code++)
+	{
+
+		// Load character glyph
+		if (FT_Load_Char(face, char_code, FT_LOAD_RENDER))
+		{
+			game_halt("ERROR::FREETYTPE: Failed to load Glyph");
+			continue;
+		}
+
+		int sx = face->glyph->bitmap.width;
+		int sy = face->glyph->bitmap.rows;
+		int size = sx * sy;
+#define PLANES (4)
+		uint8_t * buf = malloc(size * PLANES);
+
+#define TRANSPARENT_COLOR_INDEX (0)
+
+		int i = 0;
+		int iindex = 0;
+		float intencity = 1;
+		for(i = 0; i < size; i++)
+		{
+			int pindex = face->glyph->bitmap.buffer[i];
+			int color = pindex * intencity;
+			buf[iindex++] = color;
+			buf[iindex++] = color;
+			buf[iindex++] = color;
+		}
+		GLuint texture;
+		glGenTextures(1, &texture);
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			sx,
+			sy,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			buf
+		);
+
+		free(buf);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		character_t character = {
+				.textureId = texture,
+				.size_x    = sx,
+				.size_y    = sy,
+				.bearing_x = face->glyph->bitmap_left,
+				.bearing_y = face->glyph->bitmap_top,
+				.advance = face->glyph->advance.x >> 6
+		};
+
+		pairs_insert(charpairs, charcode, &character, sizeof(character));
+
+	}
+
+
+
+
+
+	/*********************************/
 
 
 
@@ -294,25 +482,35 @@ FT_Done_FreeType(ft);
 
 static uint8_t font_color[3];
 
-void font_color_set(
-	uint8_t R,
-	uint8_t G,
-	uint8_t B
+void font_color_set3i(
+	uint8_t r,
+	uint8_t g,
+	uint8_t b
 )
 {
-	font_color[0] = R;
-	font_color[1] = G;
-	font_color[2] = B;
+	font_color[0] = r;
+	font_color[1] = g;
+	font_color[2] = b;
+}
+
+void font_color_sets(
+	color_t * color
+)
+{
+	font_color[0] = color->r;
+	font_color[1] = color->g;
+	font_color[2] = color->b;
 }
 
 
 /*
  * рисование указанного символа
  */
-int video_print_char(
+static int __video_print_char(
 	int x,
 	int y,
-	char ch
+	uint32_t ch,
+	int wchar
 )
 {
 /*
@@ -330,8 +528,8 @@ int video_print_char(
 	float cscaley = (8.0f / hhh);
 
 
-	character = (character_t *)pairs_get(charpairs, ch%128);
-	if(!character) return 0;
+	character = (character_t *)pairs_get(charpairs, ch);
+	if(!character) return www * cscalex;
 
 	// Size of glyph
 	//GLfloat mdl_sx = character->size_width;
@@ -378,6 +576,30 @@ int video_print_char(
 }
 
 
+int video_print_char(
+	int x,
+	int y,
+	char ch
+)
+{
+	return __video_print_char(x, y, ch, 1);
+}
+
+
+typedef struct
+{
+	int x;
+	int y;
+}video_printf_data_t;
+
+static int video_printf_char_handle(int i, uint32_t c, int lchar, int wchar, void * ud)
+{
+	video_printf_data_t * __ud = ud;
+	int adv = __video_print_char(__ud->x, __ud->y, c, wchar);
+	__ud->x += adv;
+	return 0;
+}
+
 /*
  * вывод текста на экран
  */
@@ -387,7 +609,7 @@ void video_printf(
 	enum text_orient_e orientation,
 	const char * format,
 	...
-	)
+)
 {
 
 	static char string[MAX_MESSAGE_SIZE];
@@ -400,14 +622,58 @@ void video_printf(
 #endif
 	va_end(argptr);
 
-	int i = 0;
-	int adv;
+	video_printf_data_t ud = {
+			.x = x,
+			.y = y
+	};
 
-	while(string[i])
-	{
-		adv = video_print_char(x, y, string[i]);
-		x += adv;
-		i++;
-	}
+	utf8nstringloop(string, MAX_MESSAGE_SIZE - 1, video_printf_char_handle, &ud);
+
 }
 
+typedef struct
+{
+	int x;
+	int y;
+	int pixels_width;
+}video_printf_wide_data_t;
+
+static int video_printf_wide_char_handle(int i, uint32_t c, int lchar, int wchar, void * ud)
+{
+	video_printf_wide_data_t * __ud = ud;
+	int adv = __video_print_char(__ud->x, __ud->y, c, wchar);
+	__ud->x += adv;
+	return 0;
+}
+
+/*
+ * вывод текста на экран
+ */
+void video_printf_wide(
+	int x,
+	int y,
+	int pixels_width,
+	const char * format,
+	...
+)
+{
+
+	static char string[MAX_MESSAGE_SIZE];
+	va_list argptr;
+	va_start(argptr, format);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(string, MAX_MESSAGE_SIZE, format, argptr);
+#else
+	vsprintf(string, format, argptr);
+#endif
+	va_end(argptr);
+
+	video_printf_wide_data_t ud = {
+			.x = x,
+			.y = y,
+			.pixels_width = pixels_width,
+	};
+
+	utf8nstringloop(string, MAX_MESSAGE_SIZE - 1, video_printf_wide_char_handle, &ud);
+
+}

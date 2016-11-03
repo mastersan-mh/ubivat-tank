@@ -1,8 +1,14 @@
 
+#include <inttypes.h>
 #include <system.h>
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
+
+
+#include <fontconfig/fontconfig.h>
+
 
 #define TICRATE 1
 
@@ -60,3 +66,4 @@ unsigned long system_getTime_realTime_ms()
 
 	return (lasttimereply = thistimereply);
 }
+

@@ -107,6 +107,14 @@ char * Z_strdup(const char * str)
 	return dup;
 }
 
+char * Z_strndup(const char * str, size_t size)
+{
+	Z_block_t * block = _create_block();
+	char * dup = strndup(str, size);
+	block->ptr = dup;
+	return dup;
+}
+
 /**
  * очистка всей выделенной памяти
  */

@@ -12,7 +12,6 @@ void gr2D_setimage0(
 	item_img_t * image
 )
 {
-
 	GLfloat mdl_sx = image->IMG->sx * VIDEO_SCALEX;
 	GLfloat mdl_sy = image->IMG->sy * VIDEO_SCALEY;
 

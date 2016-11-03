@@ -9,6 +9,7 @@
 #include <img.h>
 #include <_gr2D.h>
 #include <fonts.h>
+#include <utf8.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -151,12 +152,16 @@ static void map_item_removeall()
  */
 static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 {
+#define BUFSIZE MAB_OBJ_MESAGE_SIZE
+	static char buf[BUFSIZE];
 	obj_t * obj = Z_malloc(sizeof(*obj));
 
 	obj->class  = mobj_type;
 	obj->orig.x = data->orig.x;
 	obj->orig.y = data->orig.y;
-	strncpy(obj->message, data->message, MAB_OBJ_MESAGE_SIZE-1);
+
+	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE, data->message);
+	obj->message = Z_strndup(buf, len);
 
 	switch(mobj_type)
 	{
@@ -166,6 +171,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 	};
 	obj->next = map.objs;
 	map.objs  = obj;
+#undef BUFSIZE
 }
 /*
  * удаление всех объектов
@@ -176,6 +182,7 @@ static void map_obj_removeall()
 	while(map.objs)
 	{
 		obj         = map.objs;
+		Z_free(obj->message);
 		map.objs = map.objs->next;
 		Z_free(obj);
 	}
@@ -438,10 +445,12 @@ int map_load(const char * mapname)
 			map_error = (err); \
 			return -1; \
 		}while(0);
-
+#define BUFSIZE 2048
+	static char buf[BUFSIZE];
 	int fd;
 	int ret;
 	char *path;
+	size_t len;
 
 	map_clear();
 	map._file = Z_strdup(mapname);
@@ -458,23 +467,22 @@ int map_load(const char * mapname)
 	Z_free(path);
 	if(fd < 0) RETURN_ERR(MAP_ERR_NOFILE);
 
-	ssize_t count;
-	char MAPheader[3];
-	count = read(fd, MAPheader, 3);
-	if(count != 3) RETURN_ERR(MAP_ERR_READ);
+	map_data_header_t header;
 
-	ret = memcmp(MAPheader, MAP_DATA_HEADER, 3);
+	ssize_t count;
+	count = read(fd, &header, sizeof(header));
+	if(count != sizeof(header)) RETURN_ERR(MAP_ERR_READ);
+
+	ret = memcmp(header.sign, MAP_DATA_HEADER, sizeof(header.sign));
 	if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
 	//название карты
-	count = read(fd, map.name, MAP_NAME_SIZE);
-	map.name[MAP_NAME_SIZE-1] = 0;
-	if(count != MAP_NAME_SIZE) RETURN_ERR(MAP_ERR_READ);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.name);
+	map.name = Z_strndup(buf, len);
 
 	//краткое описание
-	count = read(fd,map.brief, MAP_BRIEF_SIZE);
-	map.brief[MAP_BRIEF_SIZE-1] = 0;
-	if(count != MAP_BRIEF_SIZE) RETURN_ERR(MAP_ERR_READ);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.brief);
+	map.brief = Z_strndup(buf, len);
 
 	//чтение карты
 	count = read(fd, map.map, MAP_SX * MAP_SY);
@@ -524,6 +532,8 @@ int map_load(const char * mapname)
 void map_clear()
 {
 	Z_free(map._file);
+	Z_free(map.name);
+	Z_free(map.brief);
 	map_spawn_removeall();
 	map_item_removeall();
 	map_obj_removeall();

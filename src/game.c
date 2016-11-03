@@ -426,15 +426,8 @@ void game_draw()
 
 	if(game.msg)
 	{
-		int i = 0;
-		font_color_set(COLOR_1);
-		while(i < 64 && game.msg[i])
-		{
-			int x = ((i * 8 ) % 128)+96;
-			int y = ((i / 16) * 8  )+84;
-			video_print_char(x, y, game.msg[i]);
-			i++;
-		};
+		font_color_set3i(COLOR_1);
+		video_printf_wide(96, 84, 128, game.msg);
 		game.msg = NULL;
 	};
 
@@ -913,9 +906,9 @@ void game_msg_error(int error)
 
 	while(!quit)
 	{
-		font_color_set(COLOR_4);
+		font_color_set3i(COLOR_4);
 		video_printf(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
-		font_color_set(COLOR_15);
+		font_color_set3i(COLOR_15);
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
