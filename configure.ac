@@ -1,6 +1,6 @@
 AC_PREREQ(2.69)
 # AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_INIT([ubivat-tank], [1.0], [mastersan_mh@list.ru])
+AC_INIT([ubivat-tank], [0.47b], [mastersan_mh@list.ru])
 AM_CONFIG_HEADER(src/config.h)
 AC_CONFIG_SRCDIR(src/main.c)
 
@@ -8,6 +8,16 @@ AM_INIT_AUTOMAKE([1.13 foreign no-define subdir-objects])
 
 # Checks compiler
 AC_PROG_CC
+
+AC_CHECK_HEADERS([math.h], [], [ AC_MSG_ERROR([Unable to find math.h]) ] )
+AC_CHECK_HEADERS([GL/gl.h], [], [ AC_MSG_ERROR([Unable to find GL/gl.h]) ] )
+AC_CHECK_HEADERS([GL/glu.h], [], [ AC_MSG_ERROR([Unable to find GL/glu.h]) ] )
+
+AC_CHECK_HEADERS([SDL2/SDL.h], [], [ AC_MSG_ERROR([Unable to find SDL2/SDL.h]) ] )
+
+AC_CHECK_HEADERS([fontconfig/fontconfig.h], [], [ AC_MSG_ERROR([Unable to find fontconfig/fontconfig.h]) ] )
+
+AC_CHECK_HEADERS([freetype2/freetype/fttypes.h], [], [] )
 
 AC_CONFIG_FILES([
 Makefile
