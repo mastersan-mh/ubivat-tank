@@ -1,9 +1,11 @@
+#include <config.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <types.h>
 
-char *c_strTITLE = "Ubivat Tank v0.47b SecretCode Edition";
+char *c_strTITLE = PACKAGE_STRING" SecretCode Edition";
 char *c_strCORP ="Mad House Software (C)2004";
 
 coloredtext_t c_about[] = {
