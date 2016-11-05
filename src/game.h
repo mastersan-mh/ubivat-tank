@@ -138,6 +138,10 @@ extern long dtime;
 extern double dtimed;
 extern double dtimed1000;
 
+extern char * game_dir_conf;
+extern char * game_dir_saves;
+
+
 void game_action_enter_mainmenu();
 void game_action_win();
 

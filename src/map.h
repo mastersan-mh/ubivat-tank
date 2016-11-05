@@ -163,6 +163,7 @@ typedef struct Tobj
  */
 typedef struct
 {
+	bool loaded;
 	//имя файла карты
 	char * _file;
 	//название карты

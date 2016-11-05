@@ -52,7 +52,23 @@ AC_CHECK_HEADER([freetype2/ft2build.h], [], [],
 AC_CHECK_LIB([freetype], [FT_Init_FreeType])
 
 
+#AC_ARG_WITH(with-basedir,AC_HELP_STRING([--with-basedir],[Path to install base directory]),
+#UTANKBASEDIR="$withval",
+#if test "x$prefix" != xNONE; then
+#  UTANKBASEDIR="$prefix/share/games/ubivat-tank"
+#else
+#  UTANKBASEDIR="$ac_default_prefix/share/games/ubivat-tank"
+#fi
+#)
+#AC_DEFINE_UNQUOTED(UTANKBASEDIR,"$UTANKBASEDIR",[Path to install base directory])
 
+if test "x$prefix" != xNONE; then
+  UTANKBASEDIR="$prefix/share/games/ubivat-tank"
+else
+  UTANKBASEDIR="$ac_default_prefix/share/games/ubivat-tank"
+fi
+
+AC_DEFINE_UNQUOTED(UTANKBASEDIR,"$UTANKBASEDIR",[Path to install base directory])
 
 AC_CONFIG_FILES([
 Makefile

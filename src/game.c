@@ -40,53 +40,59 @@ double dtimed;
 /*  (s) */
 double dtimed1000;
 
+char * game_dir_home;
+char * game_dir_conf;
+char * game_dir_saves;
+
+
+
 struct image_table_ent_s images_info[] = {
-	{BASEDIR"menu/mhlogo.bii" ,"M_LOGO"     },
-	{BASEDIR"menu/conback.bii","M_CONBACK"  },
-	{BASEDIR"menu/interlv.bii","M_I_INTERLV"},
-	{BASEDIR"menu/game.bii"   ,"M_GAME"     },
-	{BASEDIR"menu/new_p1.bii" ,"M_G_NEW_P1" },
-	{BASEDIR"menu/new_p2.bii" ,"M_G_NEW_P2" },
-	{BASEDIR"menu/load.bii"   ,"M_G_LOAD"   },
-	{BASEDIR"menu/save.bii"   ,"M_G_SAVE"   },
-	{BASEDIR"menu/case.bii"   ,"M_CASE"     },
-	{BASEDIR"menu/options.bii","M_OPTIONS"  },
-	{BASEDIR"menu/about.bii"  ,"M_ABOUT"    },
-	{BASEDIR"menu/abort.bii"  ,"M_ABORT"    },
-	{BASEDIR"menu/quit.bii"   ,"M_QUIT"     },
-	{BASEDIR"menu/cur_0.bii"  ,"M_CUR_0"    },
-	{BASEDIR"menu/cur_1.bii"  ,"M_CUR_1"    },
-	{BASEDIR"menu/arrowl.bii" ,"M_ARROWL"   },
-	{BASEDIR"menu/arrowr.bii" ,"M_ARROWR"   },
-	{BASEDIR"menu/linel.bii"  ,"M_LINEL"    },
-	{BASEDIR"menu/linem.bii"  ,"M_LINEM"    },
-	{BASEDIR"menu/liner.bii"  ,"M_LINER"    },
-	{BASEDIR"pics/tank0.bii"   ,"TANK0"      },
-	{BASEDIR"pics/tank1.bii"   ,"TANK1"      },
-	{BASEDIR"pics/tank2.bii"   ,"TANK2"      },
-	{BASEDIR"pics/tank3.bii"   ,"TANK3"      },
-	{BASEDIR"pics/tank4.bii"   ,"TANK4"      },
-	{BASEDIR"pics/f_rus.bii"   ,"F_RUS"      },
-	{BASEDIR"pics/f_usa.bii"   ,"F_USA"      },
-	{BASEDIR"pics/f_white.bii" ,"F_WHITE"    },
-	{BASEDIR"pics/w_w0.bii"    ,"W_W0"       },
-	{BASEDIR"pics/w_w1.bii"    ,"W_W1"       },
-	{BASEDIR"pics/w_brick.bii" ,"W_BRICK"    },
-	{BASEDIR"pics/water0.bii"  ,"WATER0"     },
-	{BASEDIR"pics/water1.bii"  ,"WATER1"     },
-	{BASEDIR"pics/water2.bii"  ,"WATER2"     },
-	{BASEDIR"pics/i_health.bii","I_HEALTH"   },
-	{BASEDIR"pics/i_armor.bii" ,"I_ARMOR"    },
-	{BASEDIR"pics/i_star.bii"  ,"I_STAR"     },
-	{BASEDIR"pics/o_exit.bii"  ,"O_EXIT"     },
-	{BASEDIR"pics/w_bull.bii"  ,"W_BULL"     },
-	{BASEDIR"pics/w_rocket.bii","W_ROCKET"   },
-	{BASEDIR"pics/w_mine.bii"  ,"W_MINE"     },
-	{BASEDIR"pics/b_bull.bii"  ,"B_BULL"     },
-	{BASEDIR"pics/b_rocket.bii","B_ROCKET"   },
-	{BASEDIR"pics/b_mine.bii"  ,"B_MINE"     },
-	{BASEDIR"pics/e_small.bii" ,"E_SMALL"    },
-	{BASEDIR"pics/e_big.bii"   ,"E_BIG"      },
+	{BASEDIR"/menu/mhlogo.bii" ,"M_LOGO"     },
+	{BASEDIR"/menu/conback.bii","M_CONBACK"  },
+	{BASEDIR"/menu/interlv.bii","M_I_INTERLV"},
+	{BASEDIR"/menu/game.bii"   ,"M_GAME"     },
+	{BASEDIR"/menu/new_p1.bii" ,"M_G_NEW_P1" },
+	{BASEDIR"/menu/new_p2.bii" ,"M_G_NEW_P2" },
+	{BASEDIR"/menu/load.bii"   ,"M_G_LOAD"   },
+	{BASEDIR"/menu/save.bii"   ,"M_G_SAVE"   },
+	{BASEDIR"/menu/case.bii"   ,"M_CASE"     },
+	{BASEDIR"/menu/options.bii","M_OPTIONS"  },
+	{BASEDIR"/menu/about.bii"  ,"M_ABOUT"    },
+	{BASEDIR"/menu/abort.bii"  ,"M_ABORT"    },
+	{BASEDIR"/menu/quit.bii"   ,"M_QUIT"     },
+	{BASEDIR"/menu/cur_0.bii"  ,"M_CUR_0"    },
+	{BASEDIR"/menu/cur_1.bii"  ,"M_CUR_1"    },
+	{BASEDIR"/menu/arrowl.bii" ,"M_ARROWL"   },
+	{BASEDIR"/menu/arrowr.bii" ,"M_ARROWR"   },
+	{BASEDIR"/menu/linel.bii"  ,"M_LINEL"    },
+	{BASEDIR"/menu/linem.bii"  ,"M_LINEM"    },
+	{BASEDIR"/menu/liner.bii"  ,"M_LINER"    },
+	{BASEDIR"/pics/tank0.bii"   ,"TANK0"      },
+	{BASEDIR"/pics/tank1.bii"   ,"TANK1"      },
+	{BASEDIR"/pics/tank2.bii"   ,"TANK2"      },
+	{BASEDIR"/pics/tank3.bii"   ,"TANK3"      },
+	{BASEDIR"/pics/tank4.bii"   ,"TANK4"      },
+	{BASEDIR"/pics/f_rus.bii"   ,"F_RUS"      },
+	{BASEDIR"/pics/f_usa.bii"   ,"F_USA"      },
+	{BASEDIR"/pics/f_white.bii" ,"F_WHITE"    },
+	{BASEDIR"/pics/w_w0.bii"    ,"W_W0"       },
+	{BASEDIR"/pics/w_w1.bii"    ,"W_W1"       },
+	{BASEDIR"/pics/w_brick.bii" ,"W_BRICK"    },
+	{BASEDIR"/pics/water0.bii"  ,"WATER0"     },
+	{BASEDIR"/pics/water1.bii"  ,"WATER1"     },
+	{BASEDIR"/pics/water2.bii"  ,"WATER2"     },
+	{BASEDIR"/pics/i_health.bii","I_HEALTH"   },
+	{BASEDIR"/pics/i_armor.bii" ,"I_ARMOR"    },
+	{BASEDIR"/pics/i_star.bii"  ,"I_STAR"     },
+	{BASEDIR"/pics/o_exit.bii"  ,"O_EXIT"     },
+	{BASEDIR"/pics/w_bull.bii"  ,"W_BULL"     },
+	{BASEDIR"/pics/w_rocket.bii","W_ROCKET"   },
+	{BASEDIR"/pics/w_mine.bii"  ,"W_MINE"     },
+	{BASEDIR"/pics/b_bull.bii"  ,"B_BULL"     },
+	{BASEDIR"/pics/b_rocket.bii","B_ROCKET"   },
+	{BASEDIR"/pics/b_mine.bii"  ,"B_MINE"     },
+	{BASEDIR"/pics/e_small.bii" ,"E_SMALL"    },
+	{BASEDIR"/pics/e_big.bii"   ,"E_BIG"      },
 	{NULL, NULL}
 };
 
@@ -138,6 +144,25 @@ void game_rebind_keys_all()
 
 void game_init()
 {
+	char * home_dir = getenv("HOME");
+
+	game_dir_home = Z_malloc(strlen(home_dir) + strlen(GAME_DIR_HOME) + 1);
+	strcpy(game_dir_home, home_dir);
+	strcat(game_dir_home, GAME_DIR_HOME);
+
+	game_dir_conf = Z_malloc(strlen(home_dir) + strlen(GAME_DIR_CONF) + 1);
+	strcpy(game_dir_conf, home_dir);
+	strcat(game_dir_conf, GAME_DIR_CONF);
+
+	game_dir_saves = Z_malloc(strlen(home_dir) + strlen(GAME_DIR_SAVES) + 1);
+	strcpy(game_dir_saves, home_dir);
+	strcat(game_dir_saves, GAME_DIR_SAVES);
+
+	check_directory(game_dir_home);
+	check_directory(game_dir_conf);
+	check_directory(game_dir_saves);
+
+
 	game.P0         = NULL;
 	game.P1         = NULL;
 	game.msg        = NULL;
@@ -235,6 +260,9 @@ void game_init()
  */
 void game_done()
 {
+	Z_free(game_dir_home);
+	Z_free(game_dir_conf);
+	Z_free(game_dir_saves);
 	input_done();
 	video_done();
 	//прекратим игру
@@ -336,7 +364,6 @@ void game_main()
 
 	};
 }
-
 
 /*
  * главная процедура игры
@@ -477,8 +504,12 @@ int game_cfg_save()
 {
 	int ret = 0;
 	ssize_t count;
-	int fd;
-	fd = open(BASEDIR FILENAME_CONFIG, O_CREAT | O_WRONLY);
+
+	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
+	strcpy(path, game_dir_conf);
+	strcat(path, FILENAME_CONFIG);
+	int fd = open(path, O_CREAT | O_WRONLY, 0644);
+	Z_free(path);
 	if(fd <= 0)
 	{
 		ret = 1;
@@ -529,7 +560,12 @@ int game_cfg_load()
 	int ret = 0;
 	int fd;
 	ssize_t count;
-	fd = open(BASEDIR FILENAME_CONFIG, O_RDONLY);
+
+	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
+	strcpy(path, game_dir_conf);
+	strcat(path, FILENAME_CONFIG);
+	fd = open(path, O_RDONLY);
+	Z_free(path);
 	if(fd < 0) return game_cfg_new();
 	count = read(fd, game.controls, sizeof(game.controls));
 	if(count != sizeof(game.controls))
@@ -567,8 +603,8 @@ int game_pal_get()
 static bool game_record_load_info(const char * savename, gamesave_descr_t * rec)
 {
 	int fd;
-	char * path = Z_malloc(strlen(BASEDIR SAVESDIR)+strlen(savename) + 1);
-	strcpy(path, BASEDIR SAVESDIR);
+	char * path = Z_malloc(strlen(game_dir_saves)+strlen(savename) + 1);
+	strcpy(path, game_dir_saves);
 	strcat(path, savename);
 	fd = open(path, O_RDONLY);
 	Z_free(path);
@@ -581,18 +617,17 @@ static bool game_record_load_info(const char * savename, gamesave_descr_t * rec)
 		close(fd);
 		return false;
 	}
-	strncpy(rec->name, header.name, 16);
-	strncpy(rec->mapfilename, header.mapfilename, 16);
+	strncpy(rec->name, header.name, 15);
+	strncpy(rec->mapfilename, header.mapfilename, 15);
 	rec->flags = header.flags;
 	close(fd);
 	rec->exist = true;
-	Z_free(path);
 	return true;
 };
 
 static char * _make_gamesave_filename(char * filename, int i)
 {
-	sprintf(filename, "ut_s%02d." FILENAME_GAMESAVE_EXT, i);
+	sprintf(filename, "/ut_s%02d." FILENAME_GAMESAVE_EXT, i);
 	return filename;
 }
 
@@ -675,20 +710,12 @@ bool game_record_save(int isave)
 	int fd;
 	char filename[16];
 	_make_gamesave_filename(filename, isave);
+
+	check_directory(game_dir_saves);
+
 	char * path;
-
-	//если папка "SAVES" отсутствует, тогда создадим ее
-	path = Z_malloc(strlen(BASEDIR SAVESDIR)+1);
-
-	strcpy(path, BASEDIR SAVESDIR);
-	DIR * dir = opendir(path);
-	if(!dir) mkdir(path, 0755);
-	else closedir(dir);
-
-	Z_free(path);
-
-	path = Z_malloc(strlen(BASEDIR SAVESDIR) + strlen(filename) + 1);
-	strcpy(path, BASEDIR SAVESDIR);
+	path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
+	strcpy(path, game_dir_saves);
 	strcat(path, filename);
 	strcpy(rec->mapfilename, map._file);
 	ssize_t count;
@@ -698,8 +725,8 @@ bool game_record_save(int isave)
 	if(fd <= 0)return false;
 
 	game_savedata_header_t header;
-	strncpy(header.name, rec->name, 16);
-	strncpy(header.mapfilename, rec->mapfilename, 16);
+	strncpy(header.name, rec->name, 15);
+	strncpy(header.mapfilename, rec->mapfilename, 15);
 	header.flags = rec->flags;
 	count = write(fd, &header, sizeof(header));
 	if(count != sizeof(header))
@@ -723,8 +750,6 @@ bool game_record_save(int isave)
 int game_record_load(int isave)
 {
 	gamesave_descr_t * rec = &game.saveslist[isave];
-	char filename[16];
-	_make_gamesave_filename(filename, isave);
 	int ret;
 	int fd;
 
@@ -742,9 +767,10 @@ int game_record_load(int isave)
 	//закроем открытую карту
 	map_clear();
 
-	char * path = Z_malloc(sizeof(BASEDIR SAVESDIR) + sizeof(filename) + 1);
-
-	strcpy(path, BASEDIR SAVESDIR);
+	char filename[16];
+	_make_gamesave_filename(filename, isave);
+	char * path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
+	strcpy(path, game_dir_saves);
 	strcat(path, filename);
 	fd = open(path, O_RDONLY);
 	Z_free(path);
@@ -760,8 +786,8 @@ int game_record_load(int isave)
 		close(fd);
 		return false;
 	}
-	strncpy(rec->name, header.name, 16);
-	strncpy(rec->mapfilename, header.mapfilename, 16);
+	strncpy(rec->name, header.name, 15);
+	strncpy(rec->mapfilename, header.mapfilename, 15);
 	rec->flags = header.flags;
 
 	//прочитаем карту
