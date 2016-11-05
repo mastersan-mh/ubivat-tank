@@ -13,6 +13,7 @@
 
 #define ATTR_PACKED __attribute__ ((packed))
 
+#include <config.h>
 #include <fonts.h>
 #include <Z_mem.h>
 
@@ -36,9 +37,9 @@ typedef float coord_t;
 
 typedef void (*actionf_t)();
 
-#define FILENAME_CONFIG "config.cfg"
-#define FILENAME_MAPSLIST "maps.lst"
-#define FILENAME_PALETTE "palette.pal"
+#define FILENAME_CONFIG "/config.cfg"
+#define FILENAME_MAPSLIST "/maps.lst"
+#define FILENAME_PALETTE "/palette.pal"
 #define FILENAME_GAMESAVE_EXT "sav"
 //коды
 #define code_levelup "IAMSUPERTANK"
@@ -110,15 +111,21 @@ typedef void (*actionf_t)();
 
 //директория файлов игры
 #ifdef _DEBUG
-#define BASEDIR         "base/"
+#define BASEDIR         UTANKBASEDIR"/base"
 #else
-#define BASEDIR         "base/"
+#define BASEDIR         UTANKBASEDIR
 #endif
 
+
+#define GAME_DIR_HOME "/.ubivat-tank"
+
+#define GAME_DIR_CONF  GAME_DIR_HOME
 //директория записей
-#define SAVESDIR       "saves/"
+#define GAME_DIR_SAVES GAME_DIR_HOME"/saves"
 //директория карт
-#define MAPSDIR        "maps/"
+#define MAPSDIR        "/maps"
+
+
 
 //координаты
 typedef struct
@@ -159,6 +166,8 @@ void randomize();
 int xrand(int hi);
 
 char * str_addch(char * s0, char ch);
+
+void check_directory(const char * path);
 
 #endif /* SRC_TYPES_H_ */
 

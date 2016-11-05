@@ -163,6 +163,7 @@ typedef struct Tobj
  */
 typedef struct
 {
+	bool loaded;
 	//имя файла карты
 	char * _file;
 	//название карты
@@ -205,7 +206,7 @@ void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t D
 void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);
 
 extern mobj_type_t map_file_class_get(int fd);
-int map_load(const char *mapname);
+int map_load(const char * mapname);
 void map_clear();
 void map_draw(camera_t * cam);
 void map_list_add(const char * map,const char * name);

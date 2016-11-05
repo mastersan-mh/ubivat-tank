@@ -43,7 +43,7 @@ char * map_class_names[__MAP_NUM] =
 maplist_t * mapList;
 
 //карта
-map_t map;
+map_t map = {};
 
 enum
 {
@@ -160,7 +160,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 	obj->orig.x = data->orig.x;
 	obj->orig.y = data->orig.y;
 
-	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE, data->message);
+	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->message);
 	obj->message = Z_strndup(buf, len);
 
 	switch(mobj_type)
@@ -439,6 +439,7 @@ static bool map_load_obj(int fd, mobj_type_t mobj_type)
 //map_load=5 -не найден спавн-поинт для CASE игры
 int map_load(const char * mapname)
 {
+	if(map.loaded) return -1;
 #define RETURN_ERR(err) \
 		do{ \
 			close(fd); \
@@ -452,15 +453,15 @@ int map_load(const char * mapname)
 	char *path;
 	size_t len;
 
-	map_clear();
 	map._file = Z_strdup(mapname);
+
 	path = Z_malloc(
-			strlen(BASEDIR MAPSDIR)+
-			strlen(map._file)+
-			strlen(MAP_FILE_EXT)+
-			1
+		strlen(BASEDIR MAPSDIR "/")+
+		strlen(map._file)+
+		strlen(MAP_FILE_EXT)+
+		1
 	);
-	strcpy(path, BASEDIR MAPSDIR);
+	strcpy(path, BASEDIR MAPSDIR "/");
 	strcat(path, map._file);
 	strcat(path, MAP_FILE_EXT);
 	fd = open(path, O_RDONLY);
@@ -477,11 +478,11 @@ int map_load(const char * mapname)
 	if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
 	//название карты
-	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.name);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.name);
 	map.name = Z_strndup(buf, len);
 
 	//краткое описание
-	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.brief);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.brief);
 	map.brief = Z_strndup(buf, len);
 
 	//чтение карты
@@ -514,11 +515,13 @@ int map_load(const char * mapname)
 			break;
 		default:
 			game_console_send("map load error: no class %d", mobj_type);
+			map.loaded = true;
 			map_clear();
 			RETURN_ERR(MAP_ERR_READ);
 		}
 	}
 	close(fd);
+	map.loaded = true;
 	if(!player_spawn_exist)
 	{
 		map_clear();
@@ -531,12 +534,14 @@ int map_load(const char * mapname)
  */
 void map_clear()
 {
-	Z_free(map._file);
-	Z_free(map.name);
-	Z_free(map.brief);
+	if(!map.loaded)return;
+	Z_FREE(map._file);
+	Z_FREE(map.name);
+	Z_FREE(map.brief);
 	map_spawn_removeall();
 	map_item_removeall();
 	map_obj_removeall();
+	map.loaded = false;
 }
 /*
  * рисование объектов на карте
@@ -676,7 +681,7 @@ void map_load_list()
 
 	if ((fconf = fopen(BASEDIR FILENAME_MAPSLIST, "r")) == NULL)
 	{
-		game_halt("Could not load %s", FILENAME_MAPSLIST);
+		game_halt("Could not load %s", BASEDIR FILENAME_MAPSLIST);
 	}
 
 	mapList = NULL;

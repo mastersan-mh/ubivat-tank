@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 char *c_strTITLE = PACKAGE_STRING " SecretCode Edition";
 char *c_strCORP ="Mad House Software (C)2004";
@@ -122,4 +124,10 @@ char * str_addch(char * s0, char ch)
 	return s0;
 }
 
+void check_directory(const char * path)
+{
+	DIR * dir = opendir(path);
+	if(!dir) mkdir(path, 0755);
+	else closedir(dir);
+}
 

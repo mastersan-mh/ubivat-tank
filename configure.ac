@@ -31,4 +31,12 @@ AC_CHECK_LIB([SDL2], [SDL_GetVersion], [], [ AC_MSG_ERROR([Unable to find 'SDL2'
 AC_CHECK_LIB([freetype], [FT_Init_FreeType], [], [ AC_MSG_ERROR([Unable to find 'freetype']) ] )
 AC_CHECK_LIB([fontconfig], [FcUtf8Len], [], [ AC_MSG_ERROR([Unable to find 'fontconfig']) ] )
 
+if test "x$prefix" != xNONE; then
+    UTANKBASEDIR="$prefix/share/games/ubivat-tank"
+else
+    UTANKBASEDIR="$ac_default_prefix/share/games/ubivat-tank"
+fi
+
+AC_DEFINE_UNQUOTED([UTANKBASEDIR], ["$UTANKBASEDIR"], [Path to install base directory])
+
 AC_OUTPUT
