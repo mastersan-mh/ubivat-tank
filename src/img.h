@@ -41,7 +41,7 @@ typedef struct image_s
 	//изображение
 	BIIpic_t * IMG;
 	GLuint textures;
-	GLsizei sx;// размер, кратный 2 не менее 64
+	GLsizei sx;
 	GLsizei sy;
 	uint8_t * data;
 } item_img_t;

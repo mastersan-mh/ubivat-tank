@@ -11,7 +11,8 @@
 #include <stddef.h>
 #include <sys/cdefs.h>
 
-#define _ZMEM_DEBUG _DEBUG
+//#define _ZMEM_DEBUG _DEBUG
+//#define _ZMEM_MEMDUMP
 
 #if !defined(_ZMEM_DEBUG)
 #	define _ZMEM_ARGS2_DECL
@@ -30,7 +31,7 @@ do \
 { \
 	Z_free((x)); \
 	(x) = NULL; \
-}while(1);
+}while(0);
 
 void * Z_Z_malloc(size_t __size _ZMEM_ARGS2_DECL)
 ATTR_MALLOC;
@@ -49,11 +50,11 @@ void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL);
 
 
 #define Z_malloc(__size)             Z_Z_malloc ((__size)               _ZMEM_ARGS2)
-#define Z_calloc(__count, __eltsize) Z_Z_calloc ((__count), (__eltsize) _ZMEM_ARGS2);
-#define Z_realloc(__ptr, __size)     Z_Z_realloc((__ptr), (__size)      _ZMEM_ARGS2);
-#define Z_strdup(__str)              Z_Z_strdup ((__str)                _ZMEM_ARGS2);
-#define Z_strndup(__str, __size)     Z_Z_strndup((__str), (__size)      _ZMEM_ARGS2);
-#define Z_free(__ptr)                Z_Z_free   ((__ptr)                _ZMEM_ARGS2);
+#define Z_calloc(__count, __eltsize) Z_Z_calloc ((__count), (__eltsize) _ZMEM_ARGS2)
+#define Z_realloc(__ptr, __size)     Z_Z_realloc((__ptr), (__size)      _ZMEM_ARGS2)
+#define Z_strdup(__str)              Z_Z_strdup ((__str)                _ZMEM_ARGS2)
+#define Z_strndup(__str, __size)     Z_Z_strndup((__str), (__size)      _ZMEM_ARGS2)
+#define Z_free(__ptr)                Z_Z_free   ((__ptr)                _ZMEM_ARGS2)
 
 
 

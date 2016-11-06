@@ -13,6 +13,7 @@
 
 #define ATTR_PACKED __attribute__ ((packed))
 
+#include <config.h>
 #include <fonts.h>
 #include <Z_mem.h>
 
@@ -110,8 +111,7 @@ typedef void (*actionf_t)();
 
 //директория файлов игры
 #ifdef _DEBUG
-//#define BASEDIR         UTANKBASEDIR
-#define BASEDIR         "base"
+#define BASEDIR         UTANKBASEDIR"/base"
 #else
 #define BASEDIR         UTANKBASEDIR
 #endif

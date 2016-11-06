@@ -160,7 +160,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 	obj->orig.x = data->orig.x;
 	obj->orig.y = data->orig.y;
 
-	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE, data->message);
+	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->message);
 	obj->message = Z_strndup(buf, len);
 
 	switch(mobj_type)
@@ -454,11 +454,12 @@ int map_load(const char * mapname)
 	size_t len;
 
 	map._file = Z_strdup(mapname);
+
 	path = Z_malloc(
-			strlen(BASEDIR MAPSDIR "/")+
-			strlen(map._file)+
-			strlen(MAP_FILE_EXT)+
-			1
+		strlen(BASEDIR MAPSDIR "/")+
+		strlen(map._file)+
+		strlen(MAP_FILE_EXT)+
+		1
 	);
 	strcpy(path, BASEDIR MAPSDIR "/");
 	strcat(path, map._file);
@@ -477,11 +478,11 @@ int map_load(const char * mapname)
 	if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
 	//название карты
-	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.name);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.name);
 	map.name = Z_strndup(buf, len);
 
 	//краткое описание
-	len = strn_cpp866_to_utf8(buf, BUFSIZE, header.brief);
+	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.brief);
 	map.brief = Z_strndup(buf, len);
 
 	//чтение карты
@@ -680,7 +681,7 @@ void map_load_list()
 
 	if ((fconf = fopen(BASEDIR FILENAME_MAPSLIST, "r")) == NULL)
 	{
-		game_halt("Could not load %s", FILENAME_MAPSLIST);
+		game_halt("Could not load %s", BASEDIR FILENAME_MAPSLIST);
 	}
 
 	mapList = NULL;

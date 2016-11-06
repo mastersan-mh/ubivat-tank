@@ -291,6 +291,6 @@ size_t strn_cpp866_to_utf8(
 		__dest_utf8 += clen;
 		len += clen;
 	}
-	__dest_utf8 = 0;
+	*__dest_utf8 = 0;
 	return len;
 }

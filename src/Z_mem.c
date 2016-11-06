@@ -16,9 +16,17 @@
 #if !defined(_ZMEM_DEBUG)
 #	define _ZMEM_ARGS3_DECL
 #	define _ZMEM_ARGS3
+#	define _ZMEM_ARGS3STRNDUP
+#	define Z_MEM_DUMP()
 #else
 #	define _ZMEM_ARGS3_DECL size_t __size, const char * __file, int __line
-#	define _ZMEM_ARGS3 __size, __FILE__, __LINE__
+#	define _ZMEM_ARGS3 __size, __file, __line
+#	define _ZMEM_ARGS3STRNDUP __size + 1, __file, __line
+#	if !defined(_ZMEM_MEMDUMP)
+#		define Z_MEM_DUMP()
+#	else
+#		define Z_MEM_DUMP() Z_mem_dump()
+#	endif
 #endif
 
 
@@ -28,6 +36,7 @@ typedef struct Z_block_s
 	struct Z_block_s * next;
 #if defined(_ZMEM_DEBUG)
 #	define _ZMEM_FILENAME_LEN 1023
+	int id;
 	size_t size;
 	char file[_ZMEM_FILENAME_LEN + 1];
 	int line;
@@ -37,6 +46,50 @@ typedef struct Z_block_s
 
 
 static Z_block_t * Z_block = NULL;
+
+#include <sys/types.h>
+#include <unistd.h>
+
+
+#if defined(_ZMEM_DEBUG)
+static int mem_dump_i = 0;
+static int block_id = 0;
+#endif
+
+#if defined(_ZMEM_MEMDUMP)
+void Z_mem_dump()
+{
+#define BUF_SIZE 256
+
+	if(mem_dump_i == 0)
+	{
+		unlink("ubivat-tank-dump.log");
+	}
+
+	static char buf[BUF_SIZE];
+	size_t size;
+	FILE * fd = fopen("ubivat-tank-dump.log", "a");
+	if(fd == NULL)return;
+	fseek(fd, 0, SEEK_END);
+	Z_block_t * block;
+	block = Z_block;
+	fprintf(fd, "[ MEM DUMP %d ]\n", mem_dump_i);
+	int i = 0;
+	while(block)
+	{
+		fprintf(fd, "    %d:%d; id : %d , file: %s, line: %d, alloc size: %ld\n", mem_dump_i, i, block->id, block->file, block->line, block->size);
+		size = block->size > BUF_SIZE ? BUF_SIZE : block->size;
+		memcpy(buf, block->ptr, size);
+		buf[BUF_SIZE-1] = 0;
+		fprintf(fd, "        string: \"%s\"\n", buf);
+		block = block->next;
+		i++;
+	}
+
+	fclose(fd);
+	mem_dump_i++;
+}
+#endif
 
 #define MAX_MESSAGE_SIZE 2048
 static void Z_halt(const char * error, ...)
@@ -60,6 +113,7 @@ static void Z_halt(const char * error, ...)
 	{
 		fprintf(stderr, "Z-mem: %s\n", errmsg);
 	}
+	Z_MEM_DUMP();
 	exit(1);
 }
 
@@ -69,6 +123,7 @@ static Z_block_t * _create_block(_ZMEM_ARGS3_DECL)
 	block = calloc(1, sizeof(*block));
 	block->next = Z_block;
 #if defined(_ZMEM_DEBUG)
+	block->id = block_id++;
 	block->size = __size;
 	strncpy(block->file, __file, _ZMEM_FILENAME_LEN);
 	block->line = __line;
@@ -80,9 +135,9 @@ static Z_block_t * _create_block(_ZMEM_ARGS3_DECL)
 
 void * Z_Z_malloc(size_t __size _ZMEM_ARGS2_DECL)
 {
-
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	block->ptr = calloc(1, __size);
+	Z_MEM_DUMP();
 	return block->ptr;
 }
 
@@ -93,6 +148,7 @@ void * Z_Z_calloc(size_t __count, size_t __eltsize _ZMEM_ARGS2_DECL)
 #endif
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	block->ptr = calloc(__count, __eltsize);
+	Z_MEM_DUMP();
 	return block->ptr;
 }
 
@@ -130,7 +186,6 @@ void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 
 void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL)
 {
-	int block_found = 0;
 	if(!__ptr)return;
 	Z_block_t * block;
 	Z_block_t * prev = NULL;
@@ -139,27 +194,24 @@ void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL)
 	{
 		if(block->ptr == __ptr)
 		{
-			block_found = 1;
 			if(prev)
 				prev->next = block->next;
 			else
 				Z_block = block->next;
 			free(block->ptr);
 			free(block);
+			Z_MEM_DUMP();
 			return;
 		}
 		prev = block;
 		block = block->next;
 	}
-	if(!block_found)
-	{
 #if !defined(_ZMEM_DEBUG)
 #	define _TEXT "Block %p not found (already deallocated?)", __ptr
 #else
 #	define _TEXT "Block %p not found (already deallocated?) at %s: %d", __ptr, __file, __line
 #endif
-		Z_halt(_TEXT);
-	}
+	Z_halt(_TEXT);
 }
 
 char * Z_Z_strdup(const char * __str _ZMEM_ARGS2_DECL)
@@ -170,14 +222,16 @@ char * Z_Z_strdup(const char * __str _ZMEM_ARGS2_DECL)
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	char * dup = strdup(__str);
 	block->ptr = dup;
+	Z_MEM_DUMP();
 	return dup;
 }
 
 char * Z_Z_strndup(const char * __str, size_t __size _ZMEM_ARGS2_DECL)
 {
-	Z_block_t * block = _create_block(_ZMEM_ARGS3);
+	Z_block_t * block = _create_block(_ZMEM_ARGS3STRNDUP);
 	char * dup = strndup(__str, __size);
 	block->ptr = dup;
+	Z_MEM_DUMP();
 	return dup;
 }
 
