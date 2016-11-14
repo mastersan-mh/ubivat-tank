@@ -313,7 +313,15 @@ int video_init()
 
 
 	SDL_DisplayMode displayMode;
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+	//if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+
+
+
+	if (SDL_Init(
+//		SDL_INIT_AUDIO |
+		SDL_INIT_VIDEO |
+		SDL_INIT_EVENTS
+	) != 0)
 	{
 		printf("SDL_Init Error: %s\n", SDL_GetError());
 		return -1;

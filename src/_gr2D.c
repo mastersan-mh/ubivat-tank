@@ -80,3 +80,23 @@ void gr2D_setimage1(
 
 	glEnd();	// Закончили квадраты
 }
+
+
+void gr2D_setimage_indexed(
+	int x,
+	int y,
+	unsigned int sx,
+	unsigned int sy,
+	void * indexed_image
+)
+{
+	/* DUMMY */
+}
+
+void gr2D_color_index(int index){}
+void gr2D_line_h(int x, int y, int width){}
+void gr2D_line_v(int x, int y, int height){}
+void gr2D_rectangle_e(int x, int y, int sx, int sy){}
+void gr2D_rectangle_f(int x, int y, int sx, int sy){}
+void gr2D_setpixel(int x, int y){}
+

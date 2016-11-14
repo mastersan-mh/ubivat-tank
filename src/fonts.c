@@ -496,6 +496,13 @@ void font_color_sets(
 	font_color[2] = color->b;
 }
 
+void font_color_setindex(
+	uint8_t index
+)
+{
+	/*  DUMMY */
+}
+
 
 /*
  * рисование указанного символа

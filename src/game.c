@@ -14,6 +14,7 @@
 #include <weap.h>
 #include <img.h>
 #include <video.h>
+#include "audio.h"
 #include <_gr2D.h>
 #include <fonts.h>
 
@@ -39,6 +40,14 @@ long dtime;
 double dtimed;
 /*  (s) */
 double dtimed1000;
+
+/* (ms) */
+long menu_dtime;
+/* (ms) */
+double menu_dtimed;
+/*  (s) */
+double menu_dtimed1000;
+
 
 char * game_dir_home;
 char * game_dir_conf;
@@ -180,6 +189,11 @@ void game_init()
 	if(video_init())
 		game_halt("Video init failed");
 
+	audio_init();
+
+
+	//audio_init();
+
 	if(game_pal_get())
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
@@ -264,6 +278,7 @@ void game_done()
 	Z_free(game_dir_conf);
 	Z_free(game_dir_saves);
 	input_done();
+	audio_done();
 	video_done();
 	//прекратим игру
 	game_abort();
@@ -293,6 +308,10 @@ void game_main()
 		dtime = time_current - time_prev;
 		dtimed = (double)dtime;
 		dtimed1000 = dtimed/1000.0f;
+
+		menu_dtime = dtime;
+		menu_dtimed = dtimed;
+		menu_dtimed1000 = dtimed1000;
 
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
 

@@ -11,9 +11,10 @@ ubivat_tank_LDFLAGS = -lm -lSDL2 -lGL -lGLU -lfreetype -lfontconfig
 ubivat_tank_SOURCES = \
 Z_mem.c \
 system.c \
+video.c \
+audio.c \
 utf8.c \
 types.c \
-video.c \
 _gr2D.c \
 fonts.c \
 actions.c \

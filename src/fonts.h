@@ -10,6 +10,7 @@
 
 #include <inttypes.h>
 
+#define COLOR_0   0x00, 0x00, 0x00
 #define COLOR_1   0x00, 0x00, 0x2a
 #define COLOR_4   0x2a, 0x00, 0x00
 #define COLOR_7   0x2a, 0x2a, 0x2a
@@ -53,8 +54,12 @@ extern void font_color_set3i(
 	uint8_t g,
 	uint8_t b
 );
-void font_color_sets(
+extern void font_color_sets(
 	color_t * color
+);
+
+extern void font_color_setindex(
+	uint8_t index
 );
 
 void video_print_char(int out_x, int out_y, char ch);

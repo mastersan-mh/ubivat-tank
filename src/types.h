@@ -32,10 +32,17 @@ typedef enum {
 }bool;
 #endif
 
-typedef float coord_t;
+//директория файлов игры
+#define BASEDIR         UTANKBASEDIR"/base"
+//директория карт
+#define MAPSDIR        "/maps"
 
+// файлы пользователя
+#define GAME_DIR_HOME "/.ubivat-tank"
 
-typedef void (*actionf_t)();
+#define GAME_DIR_CONF  GAME_DIR_HOME
+//директория записей
+#define GAME_DIR_SAVES GAME_DIR_HOME"/saves"
 
 #define FILENAME_CONFIG "/config.cfg"
 #define FILENAME_MAPSLIST "/maps.lst"
@@ -109,23 +116,8 @@ typedef void (*actionf_t)();
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 
-//директория файлов игры
-#ifdef _DEBUG
-#define BASEDIR         UTANKBASEDIR"/base"
-#else
-#define BASEDIR         UTANKBASEDIR
-#endif
-
-
-#define GAME_DIR_HOME "/.ubivat-tank"
-
-#define GAME_DIR_CONF  GAME_DIR_HOME
-//директория записей
-#define GAME_DIR_SAVES GAME_DIR_HOME"/saves"
-//директория карт
-#define MAPSDIR        "/maps"
-
-
+typedef float coord_t;
+typedef void (*actionf_t)();
 
 //координаты
 typedef struct

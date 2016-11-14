@@ -50,6 +50,9 @@ ut_base_menu_data__DATA    = ./base/menu/*
 ut_base_pics_data_dir      = $(prefix)/share/games/ubivat-tank/base/pics
 ut_base_pics_data__DATA    = ./base/pics/*
 
+ut_base_sounds_data_dir      = $(prefix)/share/games/ubivat-tank/base/sounds
+ut_base_sounds_data__DATA    = ./base/sounds/*
+
 #utdata_DATA    = blah_one.xml
 
 #utdatarootdir = $(datarootdir)/ut-datarootdir

@@ -25,4 +25,19 @@ void gr2D_setimage1(
 	int sy
 	);
 
+void gr2D_setimage_indexed(
+	int x,
+	int y,
+	unsigned int sx,
+	unsigned int sy,
+	void * indexed_image
+);
+
+extern void gr2D_color_index(int);
+extern void gr2D_line_h(int, int, int);
+void gr2D_line_v(int, int, int);
+void gr2D_rectangle_e(int, int, int, int);
+void gr2D_rectangle_f(int, int, int, int);
+void gr2D_setpixel(int, int);
+
 #endif /* SRC__GR2D_H_ */
