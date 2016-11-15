@@ -1,12 +1,9 @@
-#include <video.h>
-#include <_gr2D.h>
-#include <fonts.h>
-
-#include <game.h>
-
-#include <math.h>
-
-#include <utf8.h>
+#include "video.h"
+#include "_gr2D.h"
+#include "fonts.h"
+#include "game.h"
+#include "math.h"
+#include "utf8.h"
 
 #include <fttypes.h>
 #include <ftimage.h>

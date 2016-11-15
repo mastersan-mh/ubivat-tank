@@ -21,6 +21,9 @@ typedef enum
 extern void audio_init();
 extern void audio_done();
 
+extern void audio_precache();
+
+extern void sound_play_start(sound_index_t isound);
 
 void audio_test();
 

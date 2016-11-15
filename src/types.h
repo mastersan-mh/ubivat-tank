@@ -13,7 +13,7 @@
 
 #define ATTR_PACKED __attribute__ ((packed))
 
-#include <config.h>
+#include "config.h"
 #include <fonts.h>
 #include <Z_mem.h>
 

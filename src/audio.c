@@ -5,8 +5,8 @@
  *      Author: mastersan
  */
 
-#include "audio.h"
 #include "types.h"
+#include "audio.h"
 #include "game.h"
 
 #include <SDL2/SDL.h>
@@ -23,22 +23,19 @@ char *sound_files[__SOUND_NUM] =
 
 typedef struct
 {
+	size_t wav_length;
+	uint8_t * wav_buffer;
+} sound_data_t;
+
+typedef struct
+{
+	sound_index_t index;
 	// global pointer to the audio buffer to be played
 	Uint8 * audio_pos;
 	// remaining length of the sample we have to play
 	int32_t audio_len;
 
 } userdata_t;
-typedef struct
-{
-	// length of our sample
-	Uint32 wav_length;
-	// buffer containing our audio file
-	Uint8 *wav_buffer;
-	// the specs of our piece of music
-	SDL_AudioSpec wav_spec;
-
-} sound_data_t;
 
 sound_data_t sound_table[__SOUND_NUM];
 
@@ -58,9 +55,9 @@ static int chan = 0;
 
 typedef struct snd_format_s
 {
-	unsigned int	speed;
-	unsigned short	width;
-	unsigned short	channels;
+	unsigned int    speed;
+	unsigned short  width;
+	unsigned short  channels;
 } snd_format_t;
 
 typedef struct snd_ringbuffer_s
@@ -74,7 +71,25 @@ typedef struct snd_ringbuffer_s
 									// may be smaller than startframe if the "ring" buffer has wrapped
 }snd_renderbuffer_t;
 
-snd_renderbuffer_t * snd_renderbuffer;
+snd_renderbuffer_t * snd_renderbuffer = NULL;
+
+/**
+ * wav mono 8 bit to 16 bit
+ */
+int16_t wav_mono_u8tos16(uint8_t sample8)
+{
+	return (int16_t) (sample8 - 0x80) << 8;
+}
+
+static int audioFormat2width(SDL_AudioFormat format)
+{
+	switch(format)
+	{
+		case AUDIO_U8    : return 1;
+		case AUDIO_S16SYS: return 2;
+	}
+	return 0;
+}
 
 // audio callback function
 // here you have to copy the data of your audio buffer into the
@@ -82,7 +97,6 @@ snd_renderbuffer_t * snd_renderbuffer;
 // you should only copy as much as the requested length (len)
 void my_audio_callback(void * userdata, Uint8 * stream, int len)
 {
-
 	//frame size
 	unsigned int factor;
 	unsigned int RequestedFrames;
@@ -116,16 +130,14 @@ void my_audio_callback(void * userdata, Uint8 * stream, int len)
 		}
 
 		sound_play_len = ( len > ud->audio_len ? ud->audio_len : len );
-
 		// simply copy from one buffer into the other
 		memcpy(stream, ud->audio_pos, sound_play_len);
-
 		//SDL_MixAudio(stream, __ud->audio_pos, len, SDL_MIX_MAXVOLUME);// mix from one buffer into another
 		// mix our audio against the silence, at 50% volume.
 		//SDL_MixAudioFormat(stream, mixData, deviceFormat, len, SDL_MIX_MAXVOLUME / 2);
-
 		ud->audio_pos += sound_play_len;
 		ud->audio_len -= sound_play_len;
+
 
 	}
 }
@@ -133,12 +145,14 @@ void my_audio_callback(void * userdata, Uint8 * stream, int len)
 void sound_play_start(sound_index_t isound)
 {
 	sound_data_t * sound = &sound_table[isound];
+	if(!sound->wav_buffer)return;
 	size_t i;
 	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
 	{
 		sound_play_t *sound_play = &sound_plays[i];
 		if(!sound_play->play)
 		{
+			sound_play->ud.index     = isound;
 			sound_play->ud.audio_len = sound->wav_length;
 			sound_play->ud.audio_pos = sound->wav_buffer;
 			sound_play->play = true;
@@ -147,27 +161,67 @@ void sound_play_start(sound_index_t isound)
 	}
 }
 
+/**
+ *
+ */
 void audio_precache()
 {
 	size_t i;
+
+
 	for(i = 0; i< __SOUND_NUM; i++)
 	{
+		SDL_AudioSpec wav_spec;
+		Uint8 * wav_buffer;
+		Uint32 wav_length;
 		sound_data_t * sound = &sound_table[i];
 		if(
 				SDL_LoadWAV(
 					sound_files[i],
-					&sound->wav_spec,
-					&sound->wav_buffer,
-					&sound->wav_length
+					&wav_spec,
+					&wav_buffer,
+					&wav_length
 				)
 				== NULL
 		)
 		{
 			game_halt("Unable to load wave file: %s, %s\n", sound_files[i], SDL_GetError());
 		}
+
+		int dev_width = snd_renderbuffer->format.width;
+		int play_width = audioFormat2width(wav_spec.format);
+
+		if(play_width < dev_width)
+		{
+
+			size_t buf_sh = 0;
+			uint8_t * buf = wav_buffer;
+
+			sound->wav_length = wav_length * dev_width;
+			sound->wav_buffer = Z_malloc(sound->wav_length);
+
+			for(buf_sh = 0; buf_sh < sound->wav_length; buf_sh += dev_width, buf++)
+			{
+				uint16_t s16data = wav_mono_u8tos16(*buf);
+				memcpy(sound->wav_buffer + buf_sh, &s16data, dev_width);
+			}
+
+		}
+		else if(play_width == dev_width)
+		{
+			sound->wav_length = wav_length;
+			sound->wav_buffer = Z_malloc(sound->wav_length);
+			memcpy(sound->wav_buffer, wav_buffer, wav_length);
+		}
+
+		SDL_FreeWAV(wav_buffer);
+
 	}
 }
 
+/**
+ *
+ */
 void audio_free()
 {
 	size_t i;
@@ -175,7 +229,7 @@ void audio_free()
 	for(i = 0; i< __SOUND_NUM; i++)
 	{
 		sound_data_t * sound = &sound_table[i];
-		SDL_FreeWAV(sound->wav_buffer);
+		Z_free(sound->wav_buffer);
 	}
 }
 
@@ -185,9 +239,6 @@ void audio_init()
 
 	if (SDL_Init(SDL_INIT_AUDIO) != 0)
 		game_halt("audio init failed");
-
-
-	audio_precache();
 
 	// set the callback function
 
@@ -206,14 +257,15 @@ void audio_init()
 
 	/* Open the audio device */
 
-
 	SDL_AudioSpec wantspec, obtainspec;
+
 	memset(&wantspec, 0, sizeof(wantspec));
 	//memset(&have, 0, sizeof(have));
 
 
 	int freq = 11025;
-	int width = 1;
+	//int freq = 22050;
+	int width = 2;
 	int channels = 1;
 
 	wantspec.freq = freq;//48000;
@@ -222,10 +274,6 @@ void audio_init()
 	wantspec.samples = 4096;
 	wantspec.callback = my_audio_callback;
 	wantspec.userdata = NULL;             /**< Userdata passed to callback (ignored for NULL callbacks). */
-
-
-
-
 
 	snd_renderbuffer = malloc(sizeof(*snd_renderbuffer));
 	snd_renderbuffer->format.speed    = freq;
@@ -260,37 +308,17 @@ void audio_init()
 
 	// Start playing
 	//SDL_PauseAudioDevice(dev, 0);
+
 	SDL_PauseAudio(0);
-	sound_play_start(SOUND_MUSIC1);
-
-	// wait until we're don't playing
-	int i = 0;
-	while ( 1 )
-	{
-		SDL_Delay(1000);
-		if(i == 3)
-		{
-			sound_play_start(SOUND_MUSIC2);
-		}
-		i++;
-	}
-
-	//SDL_PauseAudioDevice(dev, 1);
-	SDL_PauseAudio(1);
-
-	//SDL_CloseAudioDevice(dev);
-
-	audio_free();
-
-
 
 }
 
 void audio_done()
 {
-	free(snd_renderbuffer);
-
+	//SDL_PauseAudioDevice(dev, 1);
 	//SDL_CloseAudioDevice(dev);
+	SDL_PauseAudio(1);
+	free(snd_renderbuffer);
 	SDL_CloseAudio();
 }
 

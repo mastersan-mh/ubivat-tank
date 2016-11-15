@@ -191,8 +191,8 @@ void game_init()
 
 	audio_init();
 
+	audio_precache();
 
-	//audio_init();
 
 	if(game_pal_get())
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
@@ -278,6 +278,7 @@ void game_done()
 	Z_free(game_dir_conf);
 	Z_free(game_dir_saves);
 	input_done();
+	audio_free();
 	audio_done();
 	video_done();
 	//прекратим игру
@@ -298,6 +299,13 @@ void game_main()
 	menu_selector_t imenu = MENU_MAIN;
 	imenu = MENU_MAIN;
 	menu_selector_t imenu_process = imenu;
+
+	sound_play_start(SOUND_MUSIC1);
+	SDL_Delay(3000);
+	//sound_play_start(SOUND_MUSIC2);
+
+
+	//sound_play_start(SOUND_FIRE1);
 
 	unsigned long time_prev;
 	unsigned long time_current = system_getTime_realTime_ms();
