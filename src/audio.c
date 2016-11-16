@@ -15,16 +15,19 @@
 
 char *sound_files[__SOUND_NUM] =
 {
-		BASEDIR"/sounds/1fire1.wav",
-		BASEDIR"/sounds/1fire2.wav",
-		BASEDIR"/sounds/techno2.wav",
-		BASEDIR"/sounds/techno3.wav"
+		BASEDIR"/sounds/1fire1.wav",	// s16bit mono 22050
+//		BASEDIR"/sounds/1fire2.wav",	// s16bit mono 22050
+//		BASEDIR"/sounds/techno2.wav",	// u8bit mono 11025
+//		BASEDIR"/sounds/techno3.wav",	// u8bit mono 11025
+		BASEDIR"/sounds/start.wav"  	// u8bit mono 22050
 };
 
 typedef struct
 {
-	size_t wav_length;
 	uint8_t * wav_buffer;
+	size_t wav_length;
+	/* channels: 1 - mono, 2 - stereo*/
+	int channels;
 } sound_data_t;
 
 typedef struct
@@ -48,17 +51,9 @@ typedef struct
 
 }sound_play_t;
 
-#define SOUND_MIX_AMOUNT 8
+#define SOUND_MIX_AMOUNT 32
 sound_play_t sound_plays[SOUND_MIX_AMOUNT] = {};
 
-static int chan = 0;
-
-typedef struct snd_format_s
-{
-	unsigned int    speed;
-	unsigned short  width;
-	unsigned short  channels;
-} snd_format_t;
 
 typedef struct snd_ringbuffer_s
 {
@@ -76,9 +71,14 @@ snd_renderbuffer_t * snd_renderbuffer = NULL;
 /**
  * wav mono 8 bit to 16 bit
  */
-int16_t wav_mono_u8tos16(uint8_t sample8)
+static int16_t wav_mono_u8tos16(uint8_t sample8)
 {
 	return (int16_t) (sample8 - 0x80) << 8;
+}
+
+static uint8_t wav_mono_s16tou8(int16_t sample16)
+{
+	return (uint8_t)(sample16 >> 8) + 0x80;
 }
 
 static int audioFormat2width(SDL_AudioFormat format)
@@ -95,7 +95,7 @@ static int audioFormat2width(SDL_AudioFormat format)
 // here you have to copy the data of your audio buffer into the
 // requesting audio buffer (stream)
 // you should only copy as much as the requested length (len)
-void my_audio_callback(void * userdata, Uint8 * stream, int len)
+void audio_callback(void * userdata, Uint8 * stream, int len)
 {
 	//frame size
 	unsigned int factor;
@@ -108,11 +108,7 @@ void my_audio_callback(void * userdata, Uint8 * stream, int len)
 
 	RequestedFrames = (unsigned int)len / factor;
 
-	chan++;
-	//if(chan % 2 != 0)
-	//{
-		memset(stream, 0, len);
-	//}
+	memset(stream, 0, len);
 
 	size_t sound_play_len;
 	size_t i;
@@ -161,6 +157,134 @@ void sound_play_start(sound_index_t isound)
 	}
 }
 
+static void * convert(
+	const void * __src_buffer,
+	int __src_width , int __src_freq , size_t __src_length,
+	int __dest_width, int __dest_freq, size_t * __dest_length
+
+)
+{
+//#error сделать потоковое преобразование
+
+	typedef union
+	{
+		uint8_t  u8;
+		int8_t   s8;
+		uint16_t u16;
+		int16_t  s16;
+		uint16_t data;
+	}data_t;
+	data_t data_src;
+	data_src.data = 0;
+	data_t data_dest;
+	data_dest.data = 0;
+
+	void * __dest_buffer = NULL;
+	size_t src_sh;
+	uint8_t * buf = (uint8_t *) __src_buffer;
+	size_t dest_sh;
+	*__dest_length = 0;
+
+	int i = 0;
+
+	for(src_sh = 0, dest_sh = 0; src_sh < __src_length; src_sh += __src_width)
+	{
+		memcpy(&data_src, buf, __src_width);
+		buf += __src_width;
+
+		// ширина
+		switch(__src_width)
+		{
+			case 1:
+				switch(__dest_width)
+				{
+					case 1: data_dest.u8 = data_src.u8; break;
+					case 2: data_dest.s16 = wav_mono_u8tos16(data_src.u8); break;
+					default: goto error;
+				}
+				break;
+			case 2:
+				switch(__dest_width)
+				{
+					case 1: data_dest.u8  = wav_mono_s16tou8(data_src.s16); break;
+					case 2: data_dest.s16 = data_src.s16; break;
+					default: goto error;
+				}
+				break;
+			default: goto error;
+		}
+		data_src = data_dest;
+
+		// частота
+		if(__src_freq == __dest_freq)
+		{
+
+			// размер буфера назначения неизвестен, вычислим
+			if(!__dest_buffer)
+			{
+				*__dest_length = __src_length * __dest_width;
+				__dest_buffer = Z_malloc(*__dest_length);
+				if(!__dest_buffer) goto error;
+			}
+
+			memcpy(__dest_buffer + dest_sh, &data_src, __dest_width);
+			dest_sh += __dest_width;
+
+		}
+		else if(__src_freq < __dest_freq)
+		{
+
+			int freq_factor = __dest_freq / __src_freq;
+
+			// размер буфера назначения неизвестен, вычислим
+			if(!__dest_buffer)
+			{
+				*__dest_length = __src_length * __dest_width * freq_factor;
+				__dest_buffer = Z_malloc(*__dest_length);
+				if(!__dest_buffer) goto error;
+			}
+
+			for(int freq_repeat = 0; freq_repeat < freq_factor; freq_repeat++)
+			{
+				memcpy(__dest_buffer + dest_sh, &data_src, __dest_width);
+				dest_sh += __dest_width;
+			}
+
+		}
+		else
+		{
+			/* __src_freq > __dest_freq */
+
+			//goto error;
+
+			int freq_factor = __src_freq / __dest_freq;
+
+			// размер буфера назначения неизвестен, вычислим
+			if(!__dest_buffer)
+			{
+				*__dest_length = (__src_length * __dest_width) / freq_factor;
+				__dest_buffer = Z_malloc(*__dest_length);
+				if(!__dest_buffer) goto error;
+			}
+
+			i++;
+
+			if(i % freq_factor)
+			{
+				memcpy(__dest_buffer + dest_sh, &data_src, __dest_width);
+				dest_sh += __dest_width;
+			}
+
+		}
+
+	}
+	return __dest_buffer;
+	error:
+	Z_free(__dest_buffer);
+	return NULL;
+
+}
+
 /**
  *
  */
@@ -188,35 +312,44 @@ void audio_precache()
 			game_halt("Unable to load wave file: %s, %s\n", sound_files[i], SDL_GetError());
 		}
 
+		int wav_width = audioFormat2width(wav_spec.format);
+		int wav_freq = wav_spec.freq;
+
 		int dev_width = snd_renderbuffer->format.width;
-		int play_width = audioFormat2width(wav_spec.format);
+		int dev_freq = snd_renderbuffer->format.freq;
 
-		if(play_width < dev_width)
-		{
+		size_t tmpbuf_len;
+		void * tmpbuf;
 
-			size_t buf_sh = 0;
-			uint8_t * buf = wav_buffer;
-
-			sound->wav_length = wav_length * dev_width;
-			sound->wav_buffer = Z_malloc(sound->wav_length);
-
-			for(buf_sh = 0; buf_sh < sound->wav_length; buf_sh += dev_width, buf++)
-			{
-				uint16_t s16data = wav_mono_u8tos16(*buf);
-				memcpy(sound->wav_buffer + buf_sh, &s16data, dev_width);
-			}
-
-		}
-		else if(play_width == dev_width)
-		{
-			sound->wav_length = wav_length;
-			sound->wav_buffer = Z_malloc(sound->wav_length);
-			memcpy(sound->wav_buffer, wav_buffer, wav_length);
-		}
+		tmpbuf = convert(
+			wav_buffer,
+			wav_width, wav_freq, wav_length,
+			dev_width, dev_freq, &tmpbuf_len
+		);
 
 		SDL_FreeWAV(wav_buffer);
+		if(!tmpbuf)
+		{
+			game_halt("AUDIO: Can not convert");
+		}
 
+		sound->wav_buffer = tmpbuf;
+		sound->wav_length = tmpbuf_len;
+		sound->channels   = wav_spec.channels;
 	}
+}
+
+snd_renderbuffer_t * snd_buffer_alloc(const snd_format_t * requested)
+{
+	snd_renderbuffer_t * buf;
+	buf = Z_malloc(sizeof(*snd_renderbuffer));
+	buf->format = *requested;
+	return buf;
+}
+
+void snd_buffer_free(snd_renderbuffer_t * buf)
+{
+	Z_free(buf);
 }
 
 /**
@@ -234,51 +367,25 @@ void audio_free()
 }
 
 
-void audio_init()
+void audio_init(const snd_format_t * requested)
 {
 
 	if (SDL_Init(SDL_INIT_AUDIO) != 0)
 		game_halt("audio init failed");
 
-	// set the callback function
-
-	//wav_spec.freq = 22050;
-	//wav_spec.format = AUDIO_S16;
-	//wav_spec.channels = 2;    /* 1 = mono, 2 = stereo */
-	//wav_spec.samples = 1024;  /* Good low-latency value for callback */
-	//wav_spec.callback = fill_audio;
-	//wav_spec.userdata = NULL;
-
-	//sound->wav_spec.channels = 1;    /* 1 = mono, 2 = stereo */
-
-	//sound->wav_spec.callback = my_audio_callback;
-	//sound->wav_spec.userdata = &sound->ud;
-	// set our global static variables
-
 	/* Open the audio device */
-
 	SDL_AudioSpec wantspec, obtainspec;
 
 	memset(&wantspec, 0, sizeof(wantspec));
 	//memset(&have, 0, sizeof(have));
 
 
-	int freq = 11025;
-	//int freq = 22050;
-	int width = 2;
-	int channels = 1;
-
-	wantspec.freq = freq;//48000;
-	wantspec.format = ((width == 1) ? AUDIO_U8 : AUDIO_S16SYS);
-	wantspec.channels = channels;
+	wantspec.freq = requested->freq;//48000;
+	wantspec.format = ((requested->width == 1) ? AUDIO_U8 : AUDIO_S16SYS);
+	wantspec.channels = requested->channels;
 	wantspec.samples = 4096;
-	wantspec.callback = my_audio_callback;
-	wantspec.userdata = NULL;             /**< Userdata passed to callback (ignored for NULL callbacks). */
-
-	snd_renderbuffer = malloc(sizeof(*snd_renderbuffer));
-	snd_renderbuffer->format.speed    = freq;
-	snd_renderbuffer->format.width    = width;
-	snd_renderbuffer->format.channels = channels;
+	wantspec.callback = audio_callback;
+	wantspec.userdata = NULL;
 
 	// Open the audio device
 /*
@@ -306,6 +413,8 @@ void audio_init()
 		game_halt("Couldn't open audio: %s\n", SDL_GetError());
 	}
 
+	snd_renderbuffer = snd_buffer_alloc(requested);
+
 	// Start playing
 	//SDL_PauseAudioDevice(dev, 0);
 
@@ -318,7 +427,7 @@ void audio_done()
 	//SDL_PauseAudioDevice(dev, 1);
 	//SDL_CloseAudioDevice(dev);
 	SDL_PauseAudio(1);
-	free(snd_renderbuffer);
+	snd_buffer_free(snd_renderbuffer);
 	SDL_CloseAudio();
 }
 
@@ -343,65 +452,3 @@ void fill_audio(void *udata, Uint8 *stream, int len)
 	audio_pos += len;
 	audio_len -= len;
 }
-
-
-void audio_test()
-{
-
-	if (SDL_Init(SDL_INIT_AUDIO) != 0)
-		game_halt("audio init failed");
-
-	// length of our sample
-	static Uint32 wav_length;
-	// buffer containing our audio file
-	static Uint8 *wav_buffer;
-	// the specs of our piece of music
-	static SDL_AudioSpec wav_spec;
-
-
-	// Load the WAV
-	// the specs, length and buffer of our wav are filled
-	if( SDL_LoadWAV(sound_files[SOUND_MUSIC1], &wav_spec, &wav_buffer, &wav_length) == NULL )
-	{
-		game_halt("SDL_LoadWAV failed: %s\n", SDL_GetError());
-	}
-	// set the callback function
-
-	//wav_spec.freq = 22050;
-	//wav_spec.format = AUDIO_S16;
-	//wav_spec.channels = 2;    // 1 = mono, 2 = stereo
-	//wav_spec.samples = 1024;  // Good low-latency value for callback
-	//wav_spec.callback = fill_audio;
-	//wav_spec.userdata = NULL;
-
-	wav_spec.channels = 1;    // 1 = mono, 2 = stereo
-
-	wav_spec.callback = fill_audio;
-	wav_spec.userdata = NULL;
-	// set our global static variables
-	audio_pos = wav_buffer; // copy sound buffer
-	audio_len = wav_length; // copy file length
-
-	if ( SDL_OpenAudio(&wav_spec, NULL) < 0 )
-	{
-		game_halt("Couldn't open audio: %s\n", SDL_GetError());
-	}
-
-	// Start playing
-	SDL_PauseAudio(0);
-
-	// wait until we're don't playing
-	while ( audio_len > 0 )
-	{
-		SDL_Delay(100);
-	}
-
-	SDL_PauseAudio(1);
-	// shut everything down
-	SDL_FreeWAV(wav_buffer);
-/**/
-	exit(0);
-
-}
-
-

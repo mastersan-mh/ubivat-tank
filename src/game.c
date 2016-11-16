@@ -189,7 +189,18 @@ void game_init()
 	if(video_init())
 		game_halt("Video init failed");
 
-	audio_init();
+
+	snd_format_t requested =
+	{
+			.freq = 11025,
+			//.freq = 22050;
+			//.freq = 44100;
+			//.width = 2;
+			.width = 1,
+			.channels = 1
+	};
+
+	audio_init(&requested);
 
 	audio_precache();
 
@@ -299,9 +310,17 @@ void game_main()
 	menu_selector_t imenu = MENU_MAIN;
 	imenu = MENU_MAIN;
 	menu_selector_t imenu_process = imenu;
-
-	sound_play_start(SOUND_MUSIC1);
-	SDL_Delay(3000);
+/*
+	for(int i = 0; i< 100; i++)
+	{
+	sound_play_start(SOUND_FIRE1);
+	SDL_Delay(100);
+	}
+*/
+	//sound_play_start(SOUND_FIRE1);
+	//sound_play_start(SOUND_MUSIC1);
+	//SDL_Delay(3000);
+	sound_play_start(SOUND_START);
 	//sound_play_start(SOUND_MUSIC2);
 
 
