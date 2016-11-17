@@ -18,6 +18,9 @@ typedef float snd_max_sample_t;
 typedef double snd_max_sample_t;
 #endif
 
+#define MAX_8  256.0f
+#define MAX_16 32768.0f
+
 
 char *sound_files[__SOUND_NUM] =
 {
@@ -70,17 +73,17 @@ snd_renderbuffer_t * snd_renderbuffer = NULL;
 /**
  * wav mono 8 bit to 16 bit
  */
-static int16_t wav_mono_u8tos16(uint8_t sample8)
+static int16_t __wav_mono_u8tos16(uint8_t sample8)
 {
 	return (int16_t) (sample8 - 0x80) << 8;
 }
 
-static uint8_t wav_mono_s16tou8(int16_t sample16)
+static uint8_t __wav_mono_s16tou8(int16_t sample16)
 {
 	return (uint8_t)(sample16 >> 8) + 0x80;
 }
 
-static int audioFormat2width(SDL_AudioFormat format)
+static int __audioFormat2width(SDL_AudioFormat format)
 {
 	switch(format)
 	{
@@ -129,9 +132,6 @@ static void __mix_laurence(void * stream, size_t size)
 
 	static snd_max_sample_t samples[SOUND_MIX_AMOUNT];
 
-#define MAX_8  256.0f
-#define MAX_16 32768.0f
-
 	snd_max_sample_t max;
 	switch(width)
 	{
@@ -179,51 +179,7 @@ static void __mix_laurence(void * stream, size_t size)
 // here you have to copy the data of your audio buffer into the
 // requesting audio buffer (stream)
 // you should only copy as much as the requested length (len)
-static void audio_callback(void * userdata, Uint8 * stream, int len)
-{
-	//frame size
-	unsigned int factor;
-	unsigned int RequestedFrames;
-
-	factor = snd_renderbuffer->format.channels * snd_renderbuffer->format.width;
-
-	if ((unsigned int)len % factor != 0)
-		game_halt("SDL sound: invalid buffer length passed to Buffer_Callback (%d bytes)\n", len);
-
-	RequestedFrames = (unsigned int)len / factor;
-
-	// http://forum.vingrad.ru/forum/topic-74562.html
-	// http://www.muzoborudovanie.ru/equip/studio/seq/cubase5/mixing.php
-
-	//sound_mix_overlap(stream, len);
-	//sound_mix_max(stream, len);
-
-	__mix_laurence(stream, len);
-
-
-
-}
-
-void sound_play_start(sound_index_t isound)
-{
-	sound_data_t * sound = &sound_table[isound];
-	if(!sound->buffer)return;
-	size_t i;
-	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
-	{
-		sound_play_t *sound_play = &sound_plays[i];
-		if(!sound_play->play)
-		{
-			sound_play->sound_index = isound;
-			sound_play->len   = sound->length;
-			sound_play->pos   = sound->buffer;
-			sound_play->play = true;
-			break;
-		}
-	}
-}
-
-static void * convert(
+static void * __convert(
 	const void * __src_buffer,
 	int __src_width , int __src_freq , size_t __src_length,
 	int __dest_width, int __dest_freq, size_t * __dest_length
@@ -265,14 +221,14 @@ static void * convert(
 				switch(__dest_width)
 				{
 					case 1: data_dest.u8 = data_src.u8; break;
-					case 2: data_dest.s16 = wav_mono_u8tos16(data_src.u8); break;
+					case 2: data_dest.s16 = __wav_mono_u8tos16(data_src.u8); break;
 					default: goto error;
 				}
 				break;
 			case 2:
 				switch(__dest_width)
 				{
-					case 1: data_dest.u8  = wav_mono_s16tou8(data_src.s16); break;
+					case 1: data_dest.u8  = __wav_mono_s16tou8(data_src.s16); break;
 					case 2: data_dest.s16 = data_src.s16; break;
 					default: goto error;
 				}
@@ -351,10 +307,67 @@ static void * convert(
 
 }
 
+static void __audio_callback(void * userdata, Uint8 * stream, int len)
+{
+	//frame size
+	unsigned int factor;
+	unsigned int RequestedFrames;
+
+	factor = snd_renderbuffer->format.channels * snd_renderbuffer->format.width;
+
+	if ((unsigned int)len % factor != 0)
+		game_halt("SDL sound: invalid buffer length passed to Buffer_Callback (%d bytes)\n", len);
+
+	RequestedFrames = (unsigned int)len / factor;
+
+	// http://forum.vingrad.ru/forum/topic-74562.html
+	// http://www.muzoborudovanie.ru/equip/studio/seq/cubase5/mixing.php
+
+	//sound_mix_overlap(stream, len);
+	//sound_mix_max(stream, len);
+
+	__mix_laurence(stream, len);
+
+
+
+}
+
+static snd_renderbuffer_t * __buffer_alloc(const snd_format_t * requested)
+{
+	snd_renderbuffer_t * buf;
+	buf = Z_malloc(sizeof(*snd_renderbuffer));
+	buf->format = *requested;
+	return buf;
+}
+
+static void __buffer_free(snd_renderbuffer_t * buf)
+{
+	Z_free(buf);
+}
+
+void sound_play_start(sound_index_t isound)
+{
+	sound_data_t * sound = &sound_table[isound];
+	if(!sound->buffer)return;
+	size_t i;
+	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
+	{
+		sound_play_t *sound_play = &sound_plays[i];
+		if(!sound_play->play)
+		{
+			sound_play->sound_index = isound;
+			sound_play->len   = sound->length;
+			sound_play->pos   = sound->buffer;
+			sound_play->play = true;
+			break;
+		}
+	}
+}
+
 /**
  *
  */
-void audio_precache()
+void sound_precache()
 {
 	size_t i;
 
@@ -375,10 +388,10 @@ void audio_precache()
 				== NULL
 		)
 		{
-			game_halt("Unable to load wave file: %s, %s\n", sound_files[i], SDL_GetError());
+			game_halt("Unable to load wave file: %s", SDL_GetError());
 		}
 
-		int wav_width = audioFormat2width(wav_spec.format);
+		int wav_width = __audioFormat2width(wav_spec.format);
 		int wav_freq = wav_spec.freq;
 
 		int dev_width = snd_renderbuffer->format.width;
@@ -387,7 +400,7 @@ void audio_precache()
 		size_t tmpbuf_len;
 		void * tmpbuf;
 
-		tmpbuf = convert(
+		tmpbuf = __convert(
 			wav_buffer,
 			wav_width, wav_freq, wav_length,
 			dev_width, dev_freq, &tmpbuf_len
@@ -396,7 +409,7 @@ void audio_precache()
 		SDL_FreeWAV(wav_buffer);
 		if(!tmpbuf)
 		{
-			game_halt("AUDIO: Can not convert");
+			game_halt("AUDIO: Can not convert %s", sound_files[i]);
 		}
 
 		sound->buffer = tmpbuf;
@@ -405,23 +418,10 @@ void audio_precache()
 	}
 }
 
-snd_renderbuffer_t * snd_buffer_alloc(const snd_format_t * requested)
-{
-	snd_renderbuffer_t * buf;
-	buf = Z_malloc(sizeof(*snd_renderbuffer));
-	buf->format = *requested;
-	return buf;
-}
-
-void snd_buffer_free(snd_renderbuffer_t * buf)
-{
-	Z_free(buf);
-}
-
 /**
  *
  */
-void audio_free()
+void sound_precache_free()
 {
 	size_t i;
 	// shut everything down
@@ -433,7 +433,7 @@ void audio_free()
 }
 
 
-void audio_init(const snd_format_t * requested)
+void sound_init(const snd_format_t * requested)
 {
 
 	if (SDL_Init(SDL_INIT_AUDIO) != 0)
@@ -450,7 +450,7 @@ void audio_init(const snd_format_t * requested)
 	wantspec.format = ((requested->width == 1) ? AUDIO_U8 : AUDIO_S16SYS);
 	wantspec.channels = requested->channels;
 	wantspec.samples = 4096;
-	wantspec.callback = audio_callback;
+	wantspec.callback = __audio_callback;
 	wantspec.userdata = NULL;
 
 	// Open the audio device
@@ -479,7 +479,7 @@ void audio_init(const snd_format_t * requested)
 		game_halt("Couldn't open audio: %s\n", SDL_GetError());
 	}
 
-	snd_renderbuffer = snd_buffer_alloc(requested);
+	snd_renderbuffer = __buffer_alloc(requested);
 
 	// Start playing
 	//SDL_PauseAudioDevice(dev, 0);
@@ -488,11 +488,11 @@ void audio_init(const snd_format_t * requested)
 
 }
 
-void audio_done()
+void sound_done()
 {
 	//SDL_PauseAudioDevice(dev, 1);
 	//SDL_CloseAudioDevice(dev);
 	SDL_PauseAudio(1);
-	snd_buffer_free(snd_renderbuffer);
+	__buffer_free(snd_renderbuffer);
 	SDL_CloseAudio();
 }

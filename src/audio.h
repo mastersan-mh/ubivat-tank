@@ -26,11 +26,11 @@ typedef struct snd_format_s
 	unsigned short  channels;
 } snd_format_t;
 
-extern void audio_init(const snd_format_t * requested);
-extern void audio_done();
+extern void sound_init(const snd_format_t * requested);
+extern void sound_done();
 
-extern void audio_precache();
-extern void audio_free();
+extern void sound_precache();
+extern void sound_precache_free();
 
 extern void sound_play_start(sound_index_t isound);
 

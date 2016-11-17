@@ -200,9 +200,9 @@ void game_init()
 			.channels = 1
 	};
 
-	audio_init(&requested);
+	sound_init(&requested);
 
-	audio_precache();
+	sound_precache();
 
 
 	if(game_pal_get())
@@ -289,8 +289,8 @@ void game_done()
 	Z_free(game_dir_conf);
 	Z_free(game_dir_saves);
 	input_done();
-	audio_free();
-	audio_done();
+	sound_precache_free();
+	sound_done();
 	video_done();
 	//прекратим игру
 	game_abort();
