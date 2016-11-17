@@ -10,48 +10,47 @@
 #include "game.h"
 
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_mixer.h>
+
+#define SND_MIX_SAMPLE_DOUBLE 0
+#if SND_MIX_SAMPLE_DOUBLE == 1
+typedef float snd_max_sample_t;
+#else
+typedef double snd_max_sample_t;
+#endif
 
 
 char *sound_files[__SOUND_NUM] =
 {
 		BASEDIR"/sounds/1fire1.wav",	// s16bit mono 22050
-//		BASEDIR"/sounds/1fire2.wav",	// s16bit mono 22050
-//		BASEDIR"/sounds/techno2.wav",	// u8bit mono 11025
-//		BASEDIR"/sounds/techno3.wav",	// u8bit mono 11025
+		BASEDIR"/sounds/1fire2.wav",	// s16bit mono 22050
+		BASEDIR"/sounds/techno2.wav",	// u8bit mono 11025
+		BASEDIR"/sounds/techno3.wav",	// u8bit mono 11025
 		BASEDIR"/sounds/start.wav"  	// u8bit mono 22050
 };
 
 typedef struct
 {
-	uint8_t * wav_buffer;
-	size_t wav_length;
+	void * buffer;
+	size_t length;
 	/* channels: 1 - mono, 2 - stereo*/
 	int channels;
 } sound_data_t;
 
-typedef struct
-{
-	sound_index_t index;
-	// global pointer to the audio buffer to be played
-	Uint8 * audio_pos;
-	// remaining length of the sample we have to play
-	int32_t audio_len;
-
-} userdata_t;
-
 sound_data_t sound_table[__SOUND_NUM];
-
 
 typedef struct
 {
 	bool play;
 	sound_index_t sound_index;
-	userdata_t ud;
 
+	// global pointer to the audio buffer to be played
+	void * pos;
+	// remaining length of the sample we have to play
+	int32_t len;
 }sound_play_t;
 
 #define SOUND_MIX_AMOUNT 32
+
 sound_play_t sound_plays[SOUND_MIX_AMOUNT] = {};
 
 
@@ -91,11 +90,96 @@ static int audioFormat2width(SDL_AudioFormat format)
 	return 0;
 }
 
+/**
+ * смешать массив buf и записать результат в dest
+ */
+static snd_max_sample_t __sample_array_mix_laurence(snd_max_sample_t * buf, size_t amount, snd_max_sample_t max)
+{
+	snd_max_sample_t a;
+	snd_max_sample_t b;
+	size_t mid;
+	size_t size2;
+	switch(amount)
+	{
+		case 0: return 0.0;
+		case 1:	return buf[0];
+		default:
+			mid = amount / 2;
+			size2 = amount - mid;
+			a = ( mid   == 1 ? buf[0]   : __sample_array_mix_laurence(buf      , mid  , max) );
+			b = ( size2 == 1 ? buf[mid] : __sample_array_mix_laurence(&buf[mid], size2, max) );
+			return (a + b) / (1 + ( (a / max) * (b / max) ) );
+			//return (a + b) / (1 + (a * b) / ( max * max ) );
+	}
+}
+
+/**
+ *
+ */
+static void __mix_laurence(void * stream, size_t size)
+{
+	memset(stream, 0, size);
+
+	void * dest = stream;
+	size_t pos;
+	size_t width = snd_renderbuffer->format.width;
+
+	uint8_t vu8;
+	int16_t vs16;
+
+	static snd_max_sample_t samples[SOUND_MIX_AMOUNT];
+
+#define MAX_8  256.0f
+#define MAX_16 32768.0f
+
+	snd_max_sample_t max;
+	switch(width)
+	{
+		case 1: max = MAX_8;break;
+		case 2: max = MAX_16;break;
+	}
+
+	for(pos = 0; pos < size; pos += width)
+	{
+		size_t i;
+		size_t amount = 0;
+		for(i = 0; i < SOUND_MIX_AMOUNT; i++)
+		{
+			sound_play_t *sound_play = &sound_plays[i];
+			if(!sound_play->play) continue;
+
+			if(!sound_play->len)
+			{
+				sound_play->play = false;
+				continue;
+			}
+			switch(width)
+			{
+				case 1: samples[amount] = *((uint8_t *) sound_play->pos); break;
+				case 2: samples[amount] = *((int16_t *) sound_play->pos); break;
+			}
+			amount++;
+			sound_play->pos += width;
+			sound_play->len -= width;
+
+		}
+
+		snd_max_sample_t mixed = __sample_array_mix_laurence(samples, amount, max);
+
+		switch(width)
+		{
+			case 1: vu8  = mixed ; memcpy(dest, &vu8, 1);break;
+			case 2: vs16 = mixed ; memcpy(dest, &vs16, 2);break;
+		}
+		dest += width;
+	}
+}
+
 // audio callback function
 // here you have to copy the data of your audio buffer into the
 // requesting audio buffer (stream)
 // you should only copy as much as the requested length (len)
-void audio_callback(void * userdata, Uint8 * stream, int len)
+static void audio_callback(void * userdata, Uint8 * stream, int len)
 {
 	//frame size
 	unsigned int factor;
@@ -108,49 +192,31 @@ void audio_callback(void * userdata, Uint8 * stream, int len)
 
 	RequestedFrames = (unsigned int)len / factor;
 
-	memset(stream, 0, len);
+	// http://forum.vingrad.ru/forum/topic-74562.html
+	// http://www.muzoborudovanie.ru/equip/studio/seq/cubase5/mixing.php
 
-	size_t sound_play_len;
-	size_t i;
-	for(i = 0; i < SOUND_MIX_AMOUNT; i++)
-	{
-		sound_play_t *sound_play = &sound_plays[i];
-		if(!sound_play->play) continue;
+	//sound_mix_overlap(stream, len);
+	//sound_mix_max(stream, len);
 
-		userdata_t * ud = &sound_play->ud;
-
-		if(!ud->audio_len)
-		{
-			sound_play->play = false;
-			continue;
-		}
-
-		sound_play_len = ( len > ud->audio_len ? ud->audio_len : len );
-		// simply copy from one buffer into the other
-		memcpy(stream, ud->audio_pos, sound_play_len);
-		//SDL_MixAudio(stream, __ud->audio_pos, len, SDL_MIX_MAXVOLUME);// mix from one buffer into another
-		// mix our audio against the silence, at 50% volume.
-		//SDL_MixAudioFormat(stream, mixData, deviceFormat, len, SDL_MIX_MAXVOLUME / 2);
-		ud->audio_pos += sound_play_len;
-		ud->audio_len -= sound_play_len;
+	__mix_laurence(stream, len);
 
 
-	}
+
 }
 
 void sound_play_start(sound_index_t isound)
 {
 	sound_data_t * sound = &sound_table[isound];
-	if(!sound->wav_buffer)return;
+	if(!sound->buffer)return;
 	size_t i;
 	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
 	{
 		sound_play_t *sound_play = &sound_plays[i];
 		if(!sound_play->play)
 		{
-			sound_play->ud.index     = isound;
-			sound_play->ud.audio_len = sound->wav_length;
-			sound_play->ud.audio_pos = sound->wav_buffer;
+			sound_play->sound_index = isound;
+			sound_play->len   = sound->length;
+			sound_play->pos   = sound->buffer;
 			sound_play->play = true;
 			break;
 		}
@@ -333,8 +399,8 @@ void audio_precache()
 			game_halt("AUDIO: Can not convert");
 		}
 
-		sound->wav_buffer = tmpbuf;
-		sound->wav_length = tmpbuf_len;
+		sound->buffer = tmpbuf;
+		sound->length = tmpbuf_len;
 		sound->channels   = wav_spec.channels;
 	}
 }
@@ -362,7 +428,7 @@ void audio_free()
 	for(i = 0; i< __SOUND_NUM; i++)
 	{
 		sound_data_t * sound = &sound_table[i];
-		Z_free(sound->wav_buffer);
+		Z_free(sound->buffer);
 	}
 }
 
@@ -429,26 +495,4 @@ void audio_done()
 	SDL_PauseAudio(1);
 	snd_buffer_free(snd_renderbuffer);
 	SDL_CloseAudio();
-}
-
-
-static Uint8 * audio_pos;
-// remaining length of the sample we have to play
-static int32_t audio_len;
-
-
-static int i = 0;
-void fill_audio(void *udata, Uint8 *stream, int len)
-{
-	// Only play if we have data left
-	if ( audio_len == 0 )
-		return;
-
-	// Mix as much data as possible
-	len = ( len > audio_len ? audio_len : len );
-	SDL_MixAudio(stream, audio_pos, len, SDL_MIX_MAXVOLUME);
-	i++;
-	if(i % 2 != 0) return;
-	audio_pos += len;
-	audio_len -= len;
 }
