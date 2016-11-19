@@ -14,7 +14,7 @@
 #include <weap.h>
 #include <img.h>
 #include <video.h>
-#include "audio.h"
+#include "sound.h"
 #include <_gr2D.h>
 #include <fonts.h>
 
@@ -313,18 +313,18 @@ void game_main()
 
 
 	//sound_play_start(SOUND_FIRE1);
-	sound_play_start(SOUND_MUSIC1);
+	//sound_play_start(SOUND_MUSIC1, -1);
 	//SDL_Delay(3000);
 	//sound_play_start(SOUND_START);
 	//sound_play_start(SOUND_MUSIC2);
-
+/*
 	// выстрелов/мин: 650
 	for(int i = 0; i< 100; i++)
 	{
-		sound_play_start(SOUND_FIRE1);
+		sound_play_start(SOUND_FIRE1, 1);
 		SDL_Delay(92);
 	}
-
+*/
 
 
 	unsigned long time_prev;
@@ -521,8 +521,16 @@ bool game_nextmap()
 	game.ingame     = false;
 	game._win_      = false;
 	//menu_interlevel();
+
 	game.P0->charact.spawned = false;
-	if(game.P1) game.P1->charact.spawned = false;
+	//sound_play_stop(game.P0->soundId_move);
+
+	if(game.P1)
+	{
+		game.P1->charact.spawned = false;
+		//sound_play_stop(game.P1->soundId_move);
+	}
+
 	game.gamemap = game.gamemap->next;
 	if(!game.gamemap)
 	{
@@ -836,6 +844,7 @@ int game_record_load(int isave)
 	strncpy(rec->name, header.name, 15);
 	strncpy(rec->mapfilename, header.mapfilename, 15);
 	rec->flags = header.flags;
+	game.flags = rec->flags;
 
 	//прочитаем карту
 	ret = map_load(rec->mapfilename);

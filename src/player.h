@@ -128,6 +128,7 @@ typedef struct player_s
 	//№ кадра(база)
 	float Fbase;
 	// мозг
+	int soundId_move;
 	think_t brain;
 } player_t;
 

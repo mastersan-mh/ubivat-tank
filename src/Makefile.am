@@ -12,7 +12,7 @@ ubivat_tank_SOURCES = \
 Z_mem.c \
 system.c \
 video.c \
-audio.c \
+sound.c \
 utf8.c \
 types.c \
 _gr2D.c \

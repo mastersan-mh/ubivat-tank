@@ -6,7 +6,7 @@
  */
 
 #include "types.h"
-#include "audio.h"
+#include "sound.h"
 #include "game.h"
 
 #include <SDL2/SDL.h>
@@ -24,11 +24,33 @@ typedef double snd_max_sample_t;
 
 char *sound_files[__SOUND_NUM] =
 {
-		BASEDIR"/sounds/1fire1.wav",	// s16bit mono 22050
-		BASEDIR"/sounds/1fire2.wav",	// s16bit mono 22050
-		BASEDIR"/sounds/techno2.wav",	// u8bit mono 11025
-		BASEDIR"/sounds/techno3.wav",	// u8bit mono 11025
-		BASEDIR"/sounds/start.wav"  	// u8bit mono 22050
+		/* music */
+		"/sounds/music/esa3_loop.wav", //s16 m 22
+		"/sounds/music/start.wav",     //u8 m 22
+		"/sounds/music/techno2.wav",   //u8 m 11
+		"/sounds/music/techno3.wav",   //u8 m 11
+		/* menu */
+		"/sounds/menu/move.wav",
+		"/sounds/menu/enter.wav",
+		"/sounds/menu/select.wav",
+		/* walls */
+		"/sounds/walls/1shot_metalhit_02.wav", //s16 m 44
+		"/sounds/walls/1shot_metalhit_03.wav", //s16 m 44
+		"/sounds/walls/water1.wav",  //u8 m 11
+		"/sounds/walls/wind1.wav",   //u8 m 11
+		/* players */
+		"/sounds/players/change.wav",    //s16 m 22
+		"/sounds/players/tankmove2.wav", //u8  m 22
+		/* explodes */
+		"/sounds/explodes/explode_artillery.wav", //s16 m 22
+		"/sounds/explodes/explode_missile.wav",   //s16 m 22
+		"/sounds/explodes/explode_grenade.wav",   //s16 m 22
+		"/sounds/explodes/fireburst.wav",         //s16 m 22
+		/* weapons */
+		"/sounds/weapons/artillery/1fire1.wav",    //s16 m 22
+		"/sounds/weapons/artillery/1fire2.wav",    //s16 m 22
+		"/sounds/weapons/missile/lasercharge.wav", //u8 m 11
+		"/sounds/weapons/missile/missleloop.wav"   //s16 m 22
 };
 
 typedef struct
@@ -44,12 +66,14 @@ sound_data_t sound_table[__SOUND_NUM];
 typedef struct
 {
 	bool play;
+	bool paused;
 	sound_index_t sound_index;
 
 	// global pointer to the audio buffer to be played
 	void * pos;
 	// remaining length of the sample we have to play
 	int32_t len;
+	int loops;
 }sound_play_t;
 
 #define SOUND_MIX_AMOUNT 32
@@ -137,6 +161,7 @@ static void __mix_laurence(void * stream, size_t size)
 	{
 		case 1: max = MAX_8;break;
 		case 2: max = MAX_16;break;
+		default: return;
 	}
 
 	for(pos = 0; pos < size; pos += width)
@@ -146,12 +171,30 @@ static void __mix_laurence(void * stream, size_t size)
 		for(i = 0; i < SOUND_MIX_AMOUNT; i++)
 		{
 			sound_play_t *sound_play = &sound_plays[i];
-			if(!sound_play->play) continue;
+			if(!sound_play->play || sound_play->paused) continue;
 
-			if(!sound_play->len)
+			if(sound_play->len <= 0)
 			{
-				sound_play->play = false;
-				continue;
+
+				if(sound_play->len != 0)
+				{
+					game_halt("len != 0");
+				}
+//#error убрать баг воспроизведения больше чем задано на 1 раз
+				if(sound_play->loops > 0)
+				{
+					sound_play->loops--;
+				}
+				if(sound_play->loops == 0)
+				{
+					sound_play->play = false;
+					continue;
+				}
+				sound_data_t * sound = &sound_table[sound_play->sound_index];
+				if(!sound->buffer) /* TODO: console_send(play_error)*/ continue;
+				sound_play->len  = sound->length;
+				sound_play->pos  = sound->buffer;
+
 			}
 			switch(width)
 			{
@@ -186,8 +229,6 @@ static void * __convert(
 
 )
 {
-//#error сделать потоковое преобразование
-
 	typedef union
 	{
 		uint8_t  u8;
@@ -200,6 +241,19 @@ static void * __convert(
 	data_src.data = 0;
 	data_t data_dest;
 	data_dest.data = 0;
+
+	size_t factor = /* channels * */ __src_width;
+
+	if ( __src_length % factor != 0)
+		game_halt("SDL sound: invalid buffer length passed to Buffer_Callback (%d bytes)\n", __src_length);
+
+	size_t frames = __src_length / factor;
+
+
+/*
+
+
+*/
 
 	void * __dest_buffer = NULL;
 	size_t src_sh;
@@ -244,7 +298,7 @@ static void * __convert(
 			// размер буфера назначения неизвестен, вычислим
 			if(!__dest_buffer)
 			{
-				*__dest_length = __src_length * __dest_width;
+				*__dest_length = frames * __dest_width;
 				__dest_buffer = Z_malloc(*__dest_length);
 				if(!__dest_buffer) goto error;
 			}
@@ -261,7 +315,7 @@ static void * __convert(
 			// размер буфера назначения неизвестен, вычислим
 			if(!__dest_buffer)
 			{
-				*__dest_length = __src_length * __dest_width * freq_factor;
+				*__dest_length = frames * __dest_width * freq_factor;
 				__dest_buffer = Z_malloc(*__dest_length);
 				if(!__dest_buffer) goto error;
 			}
@@ -284,7 +338,7 @@ static void * __convert(
 			// размер буфера назначения неизвестен, вычислим
 			if(!__dest_buffer)
 			{
-				*__dest_length = (__src_length * __dest_width) / freq_factor;
+				*__dest_length = (frames * __dest_width) / freq_factor;
 				__dest_buffer = Z_malloc(*__dest_length);
 				if(!__dest_buffer) goto error;
 			}
@@ -345,22 +399,66 @@ static void __buffer_free(snd_renderbuffer_t * buf)
 	Z_free(buf);
 }
 
-void sound_play_start(sound_index_t isound)
+/**
+ * @description начать воспроизведение звука
+ * @param loops - количество повторов: < 0 - бесконечно
+ * @return = 0 - неудачно
+ * @return = идентификатор экземпляра
+ */
+int sound_play_start(sound_index_t sound_index, int loops)
 {
-	sound_data_t * sound = &sound_table[isound];
-	if(!sound->buffer)return;
+	if(!loops) return 0;
+	sound_data_t * sound = &sound_table[sound_index];
+	if(!sound->buffer)return -1;
 	size_t i;
 	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
 	{
-		sound_play_t *sound_play = &sound_plays[i];
+		sound_play_t * sound_play = &sound_plays[i];
 		if(!sound_play->play)
 		{
-			sound_play->sound_index = isound;
-			sound_play->len   = sound->length;
-			sound_play->pos   = sound->buffer;
+			sound_play->sound_index = sound_index;
+			sound_play->len  = sound->length;
+			sound_play->pos  = sound->buffer;
+			sound_play->loops = loops;
+			sound_play->paused = false;
 			sound_play->play = true;
-			break;
+			return i+1;
 		}
+	}
+	return 0;
+}
+
+/**
+ * приостановить / возобновить воспроизведение звука
+ */
+void sound_play_pause(int playId, bool pause)
+{
+	if(playId <= 0)return;
+	sound_play_t * sound_play = &sound_plays[playId - 1];
+	if(!sound_play->play) return;
+	sound_play->paused = pause;
+}
+
+/**
+ * приостановить / возобновить воспроизведение звука
+ */
+void sound_play_stop(int playId)
+{
+	if(playId <= 0)return;
+	sound_play_t * sound_play = &sound_plays[playId - 1];
+	sound_play->play = false;
+}
+
+/**
+ * @description остановить все звуки
+ */
+void sound_play_stop_all()
+{
+	for(int i = 0; i< SOUND_MIX_AMOUNT; i++)
+	{
+		sound_play_t * sound_play = &sound_plays[i];
+		sound_play->sound_index = SOUND_NULL;
+		sound_play->play = false;
 	}
 }
 
@@ -370,7 +468,8 @@ void sound_play_start(sound_index_t isound)
 void sound_precache()
 {
 	size_t i;
-
+	size_t path_len = 0;
+	char * path = NULL;
 
 	for(i = 0; i< __SOUND_NUM; i++)
 	{
@@ -378,9 +477,26 @@ void sound_precache()
 		Uint8 * wav_buffer;
 		Uint32 wav_length;
 		sound_data_t * sound = &sound_table[i];
+
+		size_t len = strlen(BASEDIR) + strlen(sound_files[i]);
+
+		if(!path || path_len < len)
+		{
+			char * tmp_path = Z_realloc(path, len + 1);
+			if(!tmp_path)
+			{
+				game_halt("Sound: out of memory");
+			}
+			path = tmp_path;
+			path_len = len;
+		}
+
+		strcpy(path, BASEDIR);
+		strcat(path, sound_files[i]);
+
 		if(
 				SDL_LoadWAV(
-					sound_files[i],
+					path,
 					&wav_spec,
 					&wav_buffer,
 					&wav_length
@@ -416,6 +532,7 @@ void sound_precache()
 		sound->length = tmpbuf_len;
 		sound->channels   = wav_spec.channels;
 	}
+	Z_free(path);
 }
 
 /**

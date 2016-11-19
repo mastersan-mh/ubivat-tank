@@ -10,6 +10,7 @@
 #include <img.h>
 #include <map.h>
 #include <_gr2D.h>
+#include "sound.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -236,9 +237,18 @@ void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl)
 	};
 	p->frame  = -1;                                                       //№ кадра
 	switch(bull->_weap_){                                                 //изображение взрыва
-	case 0: p->image = IMG_connect("E_SMALL"    );break;
+	case 0:
+		sound_play_start(SOUND_EXPLODE_ARTILLERY, 1);
+		p->image = IMG_connect("E_SMALL");
+		break;
 	case 1:
-	case 2: p->image = IMG_connect("E_BIG"      );break;
+		sound_play_start(SOUND_EXPLODE_MISSILE, 1);
+		p->image = IMG_connect("E_BIG");
+		break;
+	case 2:
+		sound_play_start(SOUND_EXPLODE_GRENADE, 1);
+		p->image = IMG_connect("E_BIG");
+		break;
 	};
 	p->next       = explList;
 	explList = p;

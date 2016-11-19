@@ -155,7 +155,10 @@ void * Z_Z_calloc(size_t __count, size_t __eltsize _ZMEM_ARGS2_DECL)
 
 void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 {
-	if(!__ptr)return NULL;
+	if(!__ptr)
+	{
+		return Z_malloc(__size _ZMEM_ARGS2_DECL);
+	}
 	Z_block_t * block;
 	Z_block_t * prev = NULL;
 	block = Z_block;
