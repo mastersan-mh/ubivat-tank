@@ -125,12 +125,13 @@ void game_action_win()
  */
 static void pics_load()
 {
-	int i;
 	struct image_table_ent_s * info;
 	int ret;
-	for(i = 0, info = &images_info[i]; info->filename != NULL; i++, info = &images_info[i])
+	int i = 0;
+
+	while((info = &images_info[i++])->filename)
 	{
-		ret = IMG_add(info->filename, info->id);
+		ret = IMG_create_from_bii(info->filename, info->id);
 		if(ret)
 		{
 			game_halt("Image \"%s\" load error %s", info->filename, IMG_errorGet());
@@ -210,37 +211,37 @@ void game_init()
 	//чтение изображений
 	printf("Images loading...\n");
 	pics_load();
-	game.m_i_logo     = IMG_connect("M_LOGO"     );
-	game.m_i_conback  = IMG_connect("M_CONBACK"  );
-	game.m_i_interlv  = IMG_connect("M_I_INTERLV");
-	game.m_i_game     = IMG_connect("M_GAME"     );
-	game.m_i_g_new_p1 = IMG_connect("M_G_NEW_P1" );
-	game.m_i_g_new_p2 = IMG_connect("M_G_NEW_P2" );
-	game.m_i_g_load   = IMG_connect("M_G_LOAD"   );
-	game.m_i_g_save   = IMG_connect("M_G_SAVE"   );
-	game.m_i_case     = IMG_connect("M_CASE"     );
-	game.m_i_options  = IMG_connect("M_OPTIONS"  );
-	game.m_i_about    = IMG_connect("M_ABOUT"    );
-	game.m_i_abort    = IMG_connect("M_ABORT"    );
-	game.m_i_quit     = IMG_connect("M_QUIT"     );
-	game.m_i_cur_0    = IMG_connect("M_CUR_0"    );
-	game.m_i_cur_1    = IMG_connect("M_CUR_1"    );
-	game.m_i_arrowL   = IMG_connect("M_ARROWL"   );
-	game.m_i_arrowR   = IMG_connect("M_ARROWR"   );
-	game.m_i_lineL    = IMG_connect("M_LINEL"    );
-	game.m_i_lineM    = IMG_connect("M_LINEM"    );
-	game.m_i_lineR    = IMG_connect("M_LINER"    );
-	game.m_i_flagRUS  = IMG_connect("F_RUS"      );
-	game.m_i_flagUSA  = IMG_connect("F_USA"      );
-	game.w_w0         = IMG_connect("W_W0"       );
-	game.w_w1         = IMG_connect("W_W1"       );
-	game.w_brick      = IMG_connect("W_BRICK"    );
-	game.w_water[0]   = IMG_connect("WATER0"     );
-	game.w_water[1]   = IMG_connect("WATER1"     );
-	game.w_water[2]   = IMG_connect("WATER2"     );
-	game.i_health     = IMG_connect("I_HEALTH"   );
-	game.i_armor      = IMG_connect("I_ARMOR"    );
-	game.i_star       = IMG_connect("I_STAR"     );
+	game.m_i_logo     = IMG_get("M_LOGO"     );
+	game.m_i_conback  = IMG_get("M_CONBACK"  );
+	game.m_i_interlv  = IMG_get("M_I_INTERLV");
+	game.m_i_game     = IMG_get("M_GAME"     );
+	game.m_i_g_new_p1 = IMG_get("M_G_NEW_P1" );
+	game.m_i_g_new_p2 = IMG_get("M_G_NEW_P2" );
+	game.m_i_g_load   = IMG_get("M_G_LOAD"   );
+	game.m_i_g_save   = IMG_get("M_G_SAVE"   );
+	game.m_i_case     = IMG_get("M_CASE"     );
+	game.m_i_options  = IMG_get("M_OPTIONS"  );
+	game.m_i_about    = IMG_get("M_ABOUT"    );
+	game.m_i_abort    = IMG_get("M_ABORT"    );
+	game.m_i_quit     = IMG_get("M_QUIT"     );
+	game.m_i_cur_0    = IMG_get("M_CUR_0"    );
+	game.m_i_cur_1    = IMG_get("M_CUR_1"    );
+	game.m_i_arrowL   = IMG_get("M_ARROWL"   );
+	game.m_i_arrowR   = IMG_get("M_ARROWR"   );
+	game.m_i_lineL    = IMG_get("M_LINEL"    );
+	game.m_i_lineM    = IMG_get("M_LINEM"    );
+	game.m_i_lineR    = IMG_get("M_LINER"    );
+	game.m_i_flagRUS  = IMG_get("F_RUS"      );
+	game.m_i_flagUSA  = IMG_get("F_USA"      );
+	game.w_w0         = IMG_get("W_W0"       );
+	game.w_w1         = IMG_get("W_W1"       );
+	game.w_brick      = IMG_get("W_BRICK"    );
+	game.w_water[0]   = IMG_get("WATER0"     );
+	game.w_water[1]   = IMG_get("WATER1"     );
+	game.w_water[2]   = IMG_get("WATER2"     );
+	game.i_health     = IMG_get("I_HEALTH"   );
+	game.i_armor      = IMG_get("I_ARMOR"    );
+	game.i_star       = IMG_get("I_STAR"     );
 
 	//чтение конфига
 	printf("Config init...\n");
@@ -256,7 +257,7 @@ void game_init()
 	wtable[0].range      = -1;                                          //дальность
 	wtable[0].bullspeed  = 75;                                         //скорость пули
 	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = IMG_connect("W_BULL"     );     //изображение оружия
+	wtable[0].icon       = IMG_get("W_BULL"     );     //изображение оружия
 	strcpy(wtable[1].name, "Rocket");                                    //название оружия
 	wtable[1].damage     = 100;                                         //повреждение
 	wtable[1].selfdamage = 50;                                          //повреждение
@@ -265,7 +266,7 @@ void game_init()
 	wtable[1].range      = -1;                                          //дальность
 	wtable[1].bullspeed  = 80;                                         //скорость пули
 	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = IMG_connect("W_ROCKET"   );     //изображение оружия
+	wtable[1].icon       = IMG_get("W_ROCKET"   );     //изображение оружия
 	strcpy(wtable[2].name, "Mine");                                      //название оружия
 	wtable[2].damage     = 200;                                         //повреждение
 	wtable[2].selfdamage = 100;                                         //повреждение
@@ -274,7 +275,7 @@ void game_init()
 	wtable[2].range      = 100;                                         //дальность
 	wtable[2].bullspeed  = -80;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = IMG_connect("W_MINE"     );     //изображение оружия
+	wtable[2].icon       = IMG_get("W_MINE"     );     //изображение оружия
 	input_init();
 
 	game_rebind_keys_all();

@@ -12,16 +12,16 @@ void gr2D_setimage0(
 	item_img_t * image
 )
 {
-	GLfloat mdl_sx = image->IMG->sx * VIDEO_SCALEX;
-	GLfloat mdl_sy = image->IMG->sy * VIDEO_SCALEY;
+	GLfloat mdl_sx = image->img_sx * VIDEO_SCALEX;
+	GLfloat mdl_sy = image->img_sy * VIDEO_SCALEY;
 
-	GLfloat texture_sx = image->sx;
-	GLfloat texture_sy = image->sy;
+	GLfloat texture_sx = image->texture_sx;
+	GLfloat texture_sy = image->texture_sy;
 
-	GLfloat texture_x1 = image->IMG->sx/texture_sx;
-	GLfloat texture_y1 = image->IMG->sy/texture_sy;
+	GLfloat texture_x1 = image->img_sx/texture_sx;
+	GLfloat texture_y1 = image->img_sy/texture_sy;
 
-	glBindTexture(GL_TEXTURE_2D, image->textures);
+	glBindTexture(GL_TEXTURE_2D, image->texture);
 	glLoadIdentity();
 	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
 	glBegin(GL_QUADS);
@@ -53,10 +53,8 @@ void gr2D_setimage1(
 	GLfloat mdl_sx = image->IMG->sx * scalex;
 	GLfloat mdl_sy = image->IMG->sy * scaley;
 */
-	GLfloat texture_sx = image->sx;
-	GLfloat texture_sy = image->sy;
-
-
+	GLfloat texture_sx = image->texture_sx;
+	GLfloat texture_sy = image->texture_sy;
 
 	GLfloat texture_x0 = get_x/texture_sx;
 	GLfloat texture_y0 = get_y/texture_sy;
@@ -67,7 +65,7 @@ void gr2D_setimage1(
 	GLfloat texture_y1 = image->IMG->sy/texture_sy;
 */
 
-	glBindTexture(GL_TEXTURE_2D, image->textures);
+	glBindTexture(GL_TEXTURE_2D, image->texture);
 	glLoadIdentity();
 	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
 	glBegin(GL_QUADS);		// Рисуем куб

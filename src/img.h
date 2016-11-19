@@ -39,10 +39,11 @@ typedef struct image_s
 	/* идентификатор рисунка */
 	char * name;
 	//изображение
-	BIIpic_t * IMG;
-	GLuint textures;
-	GLsizei sx;
-	GLsizei sy;
+	int img_sx;
+	int img_sy;
+	GLuint texture;
+	GLsizei texture_sx;
+	GLsizei texture_sy;
 	uint8_t * data;
 } item_img_t;
 
@@ -55,9 +56,17 @@ char * IMG_errorGet();
 int img_palette_read(const char * filename);
 
 item_img_t * IMG_find(const char * name);
-int IMG_add(const char * path, const char * IMGname);
+int IMG_create_from_bii(const char * path, const char * IMGname);
+
+int IMG_create_from_bitmap(
+	void * bitmap,
+	int sx,
+	int sy,
+	const char * IMGname
+);
+
 void IMG_removeall();
-item_img_t * IMG_connect(const char * IMGname);
+item_img_t * IMG_get(const char * IMGname);
 
 
 #endif /* SRC_IMG_H_ */

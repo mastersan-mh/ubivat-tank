@@ -205,6 +205,112 @@ GLsizei make_gl_size(int size)
 	return size2;
 	*/
 }
+
+static void * __create_image_from_bitmap8(
+	void * palette,
+	uint8_t intencity,
+	uint8_t * bitmap,
+	int sx,
+	int sy,
+	int bitmap_sx,
+	int bitmap_sy
+)
+{
+	size_t size = bitmap_sx * bitmap_sy;
+	struct
+	{
+		uint8_t R;
+		uint8_t G;
+		uint8_t B;
+	} * pal = palette;
+	int i = 0;
+	int iindex = 0;
+#define COLOR_COMPONENT_AMOUNT 4
+	uint8_t * data = Z_malloc(size*COLOR_COMPONENT_AMOUNT);
+	for(int y = 0; y < sy; y++)
+	{
+		for(int x = 0;x < sx;x++)
+		{
+			int pindex = bitmap[i++];
+			data[iindex++] = pal[pindex].R * intencity;
+			data[iindex++] = pal[pindex].G * intencity;
+			data[iindex++] = pal[pindex].B * intencity;
+			data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? COLOR_ALPHA_TRANSPARENT : COLOR_ALPHA_OPAQUE;
+		}
+		iindex += (bitmap_sx - sx)*COLOR_COMPONENT_AMOUNT;
+	}
+	return data;
+
+}
+
+
+static int __create_from_bitmap(
+	void * bitmap,
+	int sx,
+	int sy,
+	const char * IMGname
+)
+{
+
+	item_img_t * p;
+
+	p = Z_malloc(sizeof(*p));
+	p->img_sx = sx;
+	p->img_sy = sy;
+	p->texture_sx = make_gl_size(sx);
+	p->texture_sy = make_gl_size(sy);
+	p->data = __create_image_from_bitmap8(
+		_palette,
+		4,
+		bitmap,
+		sx,
+		sy,
+		p->texture_sx,
+		p->texture_sy
+		);
+
+	GL_CHECK(glGenTextures(1, &p->texture));
+	if(!p->texture) return -1;
+
+	glBindTexture(GL_TEXTURE_2D, p->texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(
+		GL_TEXTURE_2D,    //GLenum  target
+		0,                //GLint  level
+		GL_RGBA, //4,     //GLint  internalFormat
+		p->texture_sx,    //GLsizei  width
+		p->texture_sy,    //GLsizei  height
+		0,                //GLint  border
+		GL_RGBA,          //GLenum  format
+		GL_UNSIGNED_BYTE, //GLenum  type
+		p->data           //const GLvoid * data
+	);
+
+	p->name = Z_strdup(IMGname);
+	p->next = images;
+	images = p;
+	return 0;
+}
+
+
+int IMG_create_from_bitmap(
+	void * bitmap,
+	int sx,
+	int sy,
+	const char * IMGname
+)
+{
+	if(IMG_find(IMGname)) return -1;
+	int ret = __create_from_bitmap(
+		bitmap,
+		sx,
+		sy,
+		IMGname
+	);
+	return ret;
+}
+
 /**
  * загрузка изображений
  * @param[in] указ.на_голову_списка;
@@ -216,82 +322,28 @@ GLsizei make_gl_size(int size)
  * @return = 3 изображение уже загружено
  * @return = 4 изображение уже загружено
  */
-int IMG_add(const char * path, const char * IMGname)
+int IMG_create_from_bii(const char * path, const char * IMGname)
 {
-	item_img_t * p;
-	item_img_t * find;
+	if(IMG_find(IMGname)) return -1;
 
-	find = IMG_find(IMGname); //ищем в списке
-	if(find) return 4;               //нашли
 	//не нашли, прочитаем новую
-	BIIpic_t * IMG = BII_load(path);
-	if(!IMG)
-	{
-		return -1;
-	}
-	p = Z_malloc(sizeof(*p));
-	p->IMG = IMG;
-	//прочитали успешно, добавим в список
-
-	uint8_t * buf = IMG->pic;
-
-	p->sx = make_gl_size(IMG->sx);
-	p->sy = make_gl_size(IMG->sy);
-
-	size_t size = p->sx * p->sy;
-	int x,y;
-	int i = 0;
-	int iindex = 0;
-#define COLOR_COMPONENT_AMOUNT 4
-	p->data = Z_malloc(size*COLOR_COMPONENT_AMOUNT);
-	uint8_t intencity = 4;
-	for(y = 0; y < IMG->sy; y++)
-	{
-		for(x = 0;x < IMG->sx;x++)
-		{
-			int pindex = buf[i++];
-			p->data[iindex++] = _palette[pindex].R * intencity;
-			p->data[iindex++] = _palette[pindex].G * intencity;
-			p->data[iindex++] = _palette[pindex].B * intencity;
-			p->data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? 255 : COLOR_ALPHA_OPAQUE;
-		}
-		iindex += (p->sx - IMG->sx)*COLOR_COMPONENT_AMOUNT;
-	}
-
-	// Загрузка картинки
-	// Создание текстуры
-	GL_CHECK(glGenTextures(1, &p->textures));
-	GLenum error = glGetError();
-	if(error != GL_NO_ERROR || p->textures == 0)
-	{
-		abort();
-	}
-	glBindTexture(GL_TEXTURE_2D, p->textures);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(
-		GL_TEXTURE_2D,		//GLenum  target
-		0,					//GLint  level
-		GL_RGBA, //4,					//GLint  internalFormat
-		p->sx,			//GLsizei  width
-		p->sy,			//GLsizei  height
-		0,					//GLint  border
-		GL_RGBA,				//GLenum  format
-		GL_UNSIGNED_BYTE,	//GLenum  type
-		p->data		//const GLvoid * data
+	BIIpic_t * bii_image = BII_load(path);
+	if(!bii_image) return -1;
+	int ret = __create_from_bitmap(
+		bii_image->pic,
+		bii_image->sx,
+		bii_image->sy,
+		IMGname
 	);
-
-	p->next = images;
-	p->name = Z_strdup(IMGname);
-	images = p;
-
-
-
-
-	return 0;
+	BII_free(bii_image);
+	return ret;
 }
+
+
+
+
 /*
- * удаление всех моделей из списка
+ * удаление всех изображений из списка
  */
 void IMG_removeall()
 {
@@ -300,9 +352,8 @@ void IMG_removeall()
 	{
 		img = images;
 
-		glDeleteTextures(1, &img->textures);
+		glDeleteTextures(1, &img->texture);
 
-		BII_free(img->IMG);
 		images = images->next;
 		Z_free(img->data);
 		Z_free(img->name);
@@ -314,7 +365,7 @@ void IMG_removeall()
  * @return =NULL  соединение не удалось
  * @return != NULL адрес изображения
  */
-item_img_t * IMG_connect(const char * IMGname)
+item_img_t * IMG_get(const char * IMGname)
 {
 	return IMG_find(IMGname);
 };

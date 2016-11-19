@@ -128,7 +128,7 @@ static int map_item_add(mobj_type_t mobj_type, map_data_item_t * data)
 	case MAP_ITEM_MINE  : i = 4; break;
 	default: return -1;
 	};
-	item->img  = IMG_connect(itemList[i]);
+	item->img  = IMG_get(itemList[i]);
 	item->next = map.items;
 	map.items  = item;
 	return 0;
@@ -165,7 +165,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 
 	switch(mobj_type)
 	{
-	case MAP_OBJ_EXIT: obj->img = IMG_connect("O_EXIT");break;
+	case MAP_OBJ_EXIT: obj->img = IMG_get("O_EXIT");break;
 	case MAP_OBJ_MESS: obj->img = NULL                 ;break;
 	default:;
 	};
