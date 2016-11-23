@@ -4,6 +4,7 @@
  * by Master San
  */
 
+#include "game.h"
 #include <img.h>
 #include <_gr2D.h>
 #include <Z_mem.h>
@@ -18,6 +19,66 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_image.h>
+
+#define IMG_SFACTOR GL_SRC_ALPHA
+#define IMG_DFACTOR GL_ONE_MINUS_SRC_ALPHA
+
+static char * image_files[__IMAGE_NUM] = {
+	"/menu/mhlogo.bii"  , /* M_LOGO */
+	"/menu/conback.bii" , /* M_CONBACK */
+	"/menu/interlv.bii" , /* M_I_INTERLV */
+	"/menu/game.bii"    , /* M_GAME */
+	"/menu/new_p1.bii"  , /* M_G_NEW_P1 */
+	"/menu/new_p2.bii"  , /* M_G_NEW_P2 */
+	"/menu/load.bii"    , /* M_G_LOAD */
+	"/menu/save.bii"    , /* M_G_SAVE */
+	"/menu/case.bii"    , /* M_CASE */
+	"/menu/options.bii" , /* M_OPTIONS */
+	"/menu/about.bii"   , /* M_ABOUT */
+	"/menu/abort.bii"   , /* M_ABORT */
+	"/menu/quit.bii"    , /* M_QUIT */
+	"/menu/cur_0.bii"   , /* M_CUR_0 */
+	"/menu/cur_1.bii"   , /* M_CUR_1 */
+	"/menu/arrowl.bii"  , /* M_ARROWL */
+	"/menu/arrowr.bii"  , /* M_ARROWR */
+	"/menu/linel.bii"   , /* M_LINEL */
+	"/menu/linem.bii"   , /* M_LINEM */
+	"/menu/liner.bii"   , /* M_LINER */
+	"/pics/tank0.bii"   , /* TANK0 */
+	"/pics/tank1.bii"   , /* TANK1 */
+	"/pics/tank2.bii"   , /* TANK2 */
+	"/pics/tank3.bii"   , /* TANK3 */
+	"/pics/tank4.bii"   , /* TANK4 */
+
+	"/pics/f_rus.bii"   , /* F_RUS */
+	"/pics/f_usa.bii"   , /* F_USA */
+	"/pics/f_white.bii" , /* F_WHITE */
+
+	"/pics/world_w0.bii"      , /* W_W0 */
+	"/pics/world_w1.bii"      , /* W_W1 */
+	"/pics/world_brick.bii"   , /* W_BRICK */
+	"/pics/world_water0.bii"  , /* WATER0 */
+	"/pics/world_water1.bii"  , /* WATER1 */
+	"/pics/world_water2.bii"  , /* WATER2 */
+	"/pics/i_health.bii"      , /* I_HEALTH */
+	"/pics/i_armor.bii"       , /* I_ARMOR */
+	"/pics/i_star.bii"        , /* I_STAR */
+	"/pics/o_exit.bii"        , /* O_EXIT */
+	"/pics/ammo_artillery.bii", /* W_BULL */
+	"/pics/ammo_missile.bii"  , /* W_ROCKET */
+	"/pics/ammo_mine.bii"     , /* W_MINE */
+	"/pics/bull_bull.bii"     , /* B_BULL */
+	"/pics/bull_missile.bii"  , /* B_ROCKET */
+	"/pics/bull_mine.bii"     , /* B_MINE */
+	"/pics/explode_small.bii" , /* E_SMALL */
+	"/pics/explode_big.bii"   , /* E_BIG */
+};
+
+
+static item_img_t image_table[__IMAGE_NUM];
+
 typedef struct
 {
 	char R,G,B;
@@ -27,7 +88,6 @@ typedef T2DRGBcolor T2Dpal[256];
 
 int BII_errno;
 
-item_img_t * images = NULL;
 //палитра
 static T2Dpal _palette;
 #define TRANSPARENT_COLOR_INDEX (255)
@@ -82,7 +142,7 @@ char * IMG_errorGet()
  * @return = 3 ошибка формата
  * @return = 4 ошибка чтения
  */
-static BIIpic_t * BII_load(const char * fname)
+static BIIpic_t * __BII_load(const char * fname)
 {
 #define BII_HEADER     "BII"
 #define BII_BUF_SIZE (3+2+2)
@@ -165,29 +225,13 @@ static BIIpic_t * BII_load(const char * fname)
 	return img;
 };
 
-static void BII_free(BIIpic_t * pic)
+static void __BII_free(BIIpic_t * pic)
 {
 	Z_free(pic->pic);
 	Z_free(pic);
 }
 
-/*
- * поиск модели в существующем списке
- * @return =NULL  -модель не найдена
- * @return != NULL -указатель на модель
- */
-item_img_t * IMG_find(const char * name)
-{
-	item_img_t * img = images;
-	while(img)
-	{
-		if(!strcmp(img->name, name)) return img;
-		img = img->next;
-	}
-	return NULL;
-};
-
-GLsizei make_gl_size(int size)
+static GLsizei __make_gl_size(int size)
 {
 	return size;
 /*
@@ -232,10 +276,20 @@ static void * __create_image_from_bitmap8(
 		for(int x = 0;x < sx;x++)
 		{
 			int pindex = bitmap[i++];
-			data[iindex++] = pal[pindex].R * intencity;
-			data[iindex++] = pal[pindex].G * intencity;
-			data[iindex++] = pal[pindex].B * intencity;
-			data[iindex++] = (pindex == TRANSPARENT_COLOR_INDEX) ? COLOR_ALPHA_TRANSPARENT : COLOR_ALPHA_OPAQUE;
+			if(pindex == TRANSPARENT_COLOR_INDEX)
+			{
+				data[iindex++] = 255;
+				data[iindex++] = 255;
+				data[iindex++] = 255;
+				data[iindex++] = COLOR_ALPHA_TRANSPARENT;
+			}
+			else
+			{
+				data[iindex++] = pal[pindex].R * intencity;
+				data[iindex++] = pal[pindex].G * intencity;
+				data[iindex++] = pal[pindex].B * intencity;
+				data[iindex++] = COLOR_ALPHA_OPAQUE;
+			}
 		}
 		iindex += (bitmap_sx - sx)*COLOR_COMPONENT_AMOUNT;
 	}
@@ -248,17 +302,18 @@ static int __create_from_bitmap(
 	void * bitmap,
 	int sx,
 	int sy,
-	const char * IMGname
+	image_index_t i
 )
 {
 
-	item_img_t * p;
+	item_img_t * p = &image_table[i];
 
-	p = Z_malloc(sizeof(*p));
+	p->sfactor = IMG_SFACTOR;
+	p->dfactor = IMG_DFACTOR;
 	p->img_sx = sx;
 	p->img_sy = sy;
-	p->texture_sx = make_gl_size(sx);
-	p->texture_sy = make_gl_size(sy);
+	p->texture_sx = __make_gl_size(sx);
+	p->texture_sy = __make_gl_size(sy);
 	p->data = __create_image_from_bitmap8(
 		_palette,
 		4,
@@ -287,29 +342,9 @@ static int __create_from_bitmap(
 		p->data           //const GLvoid * data
 	);
 
-	p->name = Z_strdup(IMGname);
-	p->next = images;
-	images = p;
 	return 0;
 }
 
-
-int IMG_create_from_bitmap(
-	void * bitmap,
-	int sx,
-	int sy,
-	const char * IMGname
-)
-{
-	if(IMG_find(IMGname)) return -1;
-	int ret = __create_from_bitmap(
-		bitmap,
-		sx,
-		sy,
-		IMGname
-	);
-	return ret;
-}
 
 /**
  * загрузка изображений
@@ -322,51 +357,195 @@ int IMG_create_from_bitmap(
  * @return = 3 изображение уже загружено
  * @return = 4 изображение уже загружено
  */
-int IMG_create_from_bii(const char * path, const char * IMGname)
+static int __create_image_from_bii(const char * path, image_index_t i)
 {
-	if(IMG_find(IMGname)) return -1;
-
 	//не нашли, прочитаем новую
-	BIIpic_t * bii_image = BII_load(path);
+	BIIpic_t * bii_image = __BII_load(path);
 	if(!bii_image) return -1;
 	int ret = __create_from_bitmap(
 		bii_image->pic,
 		bii_image->sx,
 		bii_image->sy,
-		IMGname
+		i
 	);
-	BII_free(bii_image);
+	__BII_free(bii_image);
 	return ret;
 }
 
 
+static int __create_image_from_jpeg_png(const char * path, image_index_t i)
+{
+
+	//Uint32 dest_pixel_format = SDL_PIXELFORMAT_RGBA8888;
+	Uint32 dest_pixel_format = SDL_PIXELFORMAT_ABGR8888;
+	SDL_Surface * img_tmp = IMG_Load(path);
+	if(!img_tmp)
+	{
+		return -1;
+	}
+	SDL_Surface * img = NULL;
+	if(img_tmp->format->format == dest_pixel_format)
+	{
+		img = img_tmp;
+		img_tmp = NULL;
+	}
+	else
+	{
+		img = SDL_ConvertSurfaceFormat(img_tmp, dest_pixel_format, 0);
+	}
+	SDL_FreeSurface(img_tmp);
+
+	item_img_t * p = &image_table[i];
+
+	int sx = img->w;
+	int sy = img->h;
+
+	//SDL_PixelFormat format = img_tmp->format;
+
+	p->sfactor = IMG_SFACTOR;
+	p->dfactor = IMG_DFACTOR;
+	p->img_sx = sx;
+	p->img_sy = sy;
+	p->texture_sx = __make_gl_size(sx);
+	p->texture_sy = __make_gl_size(sy);
+	p->data = (uint8_t *) img->pixels;
+
+	GL_CHECK(glGenTextures(1, &p->texture));
+	if(!p->texture) return -1;
+
+	glBindTexture(GL_TEXTURE_2D, p->texture);
+
+	//p->sfactor = GL_ONE;
+	//p->dfactor = GL_ONE_MINUS_SRC_ALPHA;
+	//p->sfactor = GL_ONE;
+	//p->dfactor = GL_SRC_ALPHA;
+	//p->sfactor = GL_ZERO;
+	//p->dfactor = GL_ONE_MINUS_SRC_ALPHA;
+	p->sfactor = GL_SRC_ALPHA;
+	p->dfactor = GL_ONE_MINUS_SRC_ALPHA;
 
 
 /*
- * удаление всех изображений из списка
- */
-void IMG_removeall()
-{
-	item_img_t * img;
-	while(images)
-	{
-		img = images;
+	p->sfactor = GL_ZERO;
+	p->dfactor = GL_SRC_ALPHA;
+*/
 
-		glDeleteTextures(1, &img->texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(
+		GL_TEXTURE_2D,    //GLenum  target
+		0,                //GLint  level
+		GL_RGBA, //4,     //GLint  internalFormat
+		p->texture_sx,    //GLsizei  width
+		p->texture_sy,    //GLsizei  height
+		0,                //GLint  border
+		GL_RGBA,          //GLenum  format
+		GL_UNSIGNED_BYTE, //GLenum  type
+		p->data           //const GLvoid * data
+	);
 
-		images = images->next;
-		Z_free(img->data);
-		Z_free(img->name);
-		Z_free(img);
-	}
+
+
+	SDL_FreeSurface(img);
+
+	return 0;
 }
+
+
+
 /*
  * соединение объекта с моделью
  * @return =NULL  соединение не удалось
  * @return != NULL адрес изображения
  */
-item_img_t * IMG_get(const char * IMGname)
+/*
+ * открытие файлов с рисунками меню
+ */
+static void __images_precache()
 {
-	return IMG_find(IMGname);
+
+	int ret;
+	size_t i = 0;
+	size_t path_len = 0;
+	char * path = NULL;
+
+	struct image_table_ent_s * info;
+
+
+	for(i = 0; i < __IMAGE_NUM; i++)
+	{
+		char * filename = image_files[i];
+		size_t len = strlen(BASEDIR) + strlen(filename);
+		if(!path || path_len < len)
+		{
+			char * tmp_path = Z_realloc(path, len + 1);
+			if(!tmp_path) game_halt("Image load: out of memory");
+			path = tmp_path;
+			path_len = len;
+		}
+		strcpy(path, BASEDIR);
+		strcat(path, filename);
+
+		ret = __create_image_from_jpeg_png(path, i);
+		if(ret)
+			ret = __create_image_from_bii(path, i);
+		if(ret) game_halt("Image \"%s\" load error %s", path, IMG_errorGet());
+	}
+	Z_free(path);
 };
+
+/*
+ * удаление всех изображений из списка
+ */
+static void __cache_free()
+{
+	int i;
+	for(i = 0; i < __IMAGE_NUM; i++)
+	{
+		item_img_t * img = &image_table[i];
+
+		glDeleteTextures(1, &img->texture);
+
+		Z_free(img->data);
+	}
+}
+
+/*
+ * открытие файлов с рисунками меню
+ */
+int image_create_from_bitmap(
+	void * bitmap,
+	int sx,
+	int sy,
+	image_index_t iimage
+)
+{
+	int ret = __create_from_bitmap(
+		bitmap,
+		sx,
+		sy,
+		iimage
+	);
+	return ret;
+}
+
+void images_init()
+{
+	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+	__images_precache();
+
+};
+
+void images_done()
+{
+	__cache_free();
+	IMG_Quit();
+}
+
+item_img_t * image_get(image_index_t iimage)
+{
+	return &image_table[iimage];
+};
+
+
 

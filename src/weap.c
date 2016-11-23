@@ -239,15 +239,15 @@ void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl)
 	switch(bull->_weap_){                                                 //изображение взрыва
 	case 0:
 		sound_play_start(SOUND_EXPLODE_ARTILLERY, 1);
-		p->image = IMG_get("E_SMALL");
+		p->image = image_get(E_SMALL);
 		break;
 	case 1:
 		sound_play_start(SOUND_EXPLODE_MISSILE, 1);
-		p->image = IMG_get("E_BIG");
+		p->image = image_get(E_BIG);
 		break;
 	case 2:
 		sound_play_start(SOUND_EXPLODE_GRENADE, 1);
-		p->image = IMG_get("E_BIG");
+		p->image = image_get(E_BIG);
 		break;
 	};
 	p->next       = explList;

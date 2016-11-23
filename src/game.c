@@ -34,6 +34,9 @@
 //состояние игры
 game_t game;
 
+int game_video_dfactor = 7;
+int game_video_sfactor = 6;
+
 /* (ms) */
 long dtime;
 /* (ms) */
@@ -55,72 +58,6 @@ char * game_dir_saves;
 
 
 
-struct image_table_ent_s images_info[] = {
-	{BASEDIR"/menu/mhlogo.bii"  , "M_LOGO"     },
-
-	{BASEDIR"/menu/conback.bii" , "M_CONBACK"  },
-	{BASEDIR"/menu/interlv.bii" , "M_I_INTERLV"},
-	{BASEDIR"/menu/game.bii"    , "M_GAME"     },
-	{BASEDIR"/menu/new_p1.bii"  , "M_G_NEW_P1" },
-	{BASEDIR"/menu/new_p2.bii"  , "M_G_NEW_P2" },
-	{BASEDIR"/menu/load.bii"    , "M_G_LOAD"   },
-	{BASEDIR"/menu/save.bii"    , "M_G_SAVE"   },
-	{BASEDIR"/menu/case.bii"    , "M_CASE"     },
-	{BASEDIR"/menu/options.bii" , "M_OPTIONS"  },
-	{BASEDIR"/menu/about.bii"   , "M_ABOUT"    },
-	{BASEDIR"/menu/abort.bii"   , "M_ABORT"    },
-	{BASEDIR"/menu/quit.bii"    , "M_QUIT"     },
-	{BASEDIR"/menu/cur_0.bii"   , "M_CUR_0"    },
-	{BASEDIR"/menu/cur_1.bii"   , "M_CUR_1"    },
-	{BASEDIR"/menu/arrowl.bii"  , "M_ARROWL"   },
-	{BASEDIR"/menu/arrowr.bii"  , "M_ARROWR"   },
-	{BASEDIR"/menu/linel.bii"   , "M_LINEL"    },
-	{BASEDIR"/menu/linem.bii"   , "M_LINEM"    },
-	{BASEDIR"/menu/liner.bii"   , "M_LINER"    },
-	{BASEDIR"/pics/tank0.bii"   , "TANK0"      },
-	{BASEDIR"/pics/tank1.bii"   , "TANK1"      },
-	{BASEDIR"/pics/tank2.bii"   , "TANK2"      },
-	{BASEDIR"/pics/tank3.bii"   , "TANK3"      },
-	{BASEDIR"/pics/tank4.bii"   , "TANK4"      },
-
-	{BASEDIR"/pics/f_rus.bii"   , "F_RUS"      },
-	{BASEDIR"/pics/f_usa.bii"   , "F_USA"      },
-	{BASEDIR"/pics/f_white.bii" , "F_WHITE"    },
-
-	{BASEDIR"/pics/world_w0.bii"      , "W_W0"       },
-	{BASEDIR"/pics/world_w1.bii"      , "W_W1"       },
-	{BASEDIR"/pics/world_brick.bii"   , "W_BRICK"    },
-	{BASEDIR"/pics/world_water0.bii"  , "WATER0"     },
-	{BASEDIR"/pics/world_water1.bii"  , "WATER1"     },
-	{BASEDIR"/pics/world_water2.bii"  , "WATER2"     },
-	{BASEDIR"/pics/i_health.bii"      , "I_HEALTH"   },
-	{BASEDIR"/pics/i_armor.bii"       , "I_ARMOR"    },
-	{BASEDIR"/pics/i_star.bii"        , "I_STAR"     },
-	{BASEDIR"/pics/o_exit.bii"        , "O_EXIT"     },
-	{BASEDIR"/pics/ammo_artillery.bii", "W_BULL"     },
-	{BASEDIR"/pics/ammo_missile.bii"  , "W_ROCKET"   },
-	{BASEDIR"/pics/ammo_mine.bii"     , "W_MINE"     },
-	{BASEDIR"/pics/bull_bull.bii"     , "B_BULL"     },
-	{BASEDIR"/pics/bull_missile.bii"  , "B_ROCKET"   },
-	{BASEDIR"/pics/bull_mine.bii"     , "B_MINE"     },
-	{BASEDIR"/pics/explode_small.bii" , "E_SMALL"    },
-	{BASEDIR"/pics/explode_big.bii"   , "E_BIG"      },
-
-	/* изображения специфичные для редактора */
-	//объекты
-	{BASEDIR"/epics/o_mess.bii"  , "O_MESS"     },
-	// shadowed-стены
-	{BASEDIR"/epics/sw_w0.bii"   , "SW_W0"      },
-	{BASEDIR"/epics/sw_w1.bii"   , "SW_W1"      },
-	{BASEDIR"/epics/sw_brick.bii", "SW_BRICK"   },
-	{BASEDIR"/epics/swater0.bii" , "SWATER0"    },
-	{BASEDIR"/epics/swater1.bii" , "SWATER1"    },
-	{BASEDIR"/epics/swater2.bii" , "SWATER2"    },
-	{BASEDIR"/epics/sground.bii" , "SGROUND"    },
-	{BASEDIR"/epics/wground.bii" , "WGROUND"    },
-
-	{NULL, NULL}
-};
 
 static int game_gameTick();
 
@@ -136,27 +73,6 @@ void game_action_win()
 {
 	game._win_ = true;
 }
-
-/*
- * открытие файлов с рисунками меню
- */
-static void pics_load()
-{
-	struct image_table_ent_s * info;
-	int ret;
-	int i = 0;
-
-	while((info = &images_info[i++])->filename)
-	{
-		ret = IMG_create_from_bii(info->filename, info->id);
-		if(ret)
-		{
-			game_halt("Image \"%s\" load error %s", info->filename, IMG_errorGet());
-		}
-	}
-};
-
-
 
 void game_rebind_keys_all()
 {
@@ -226,39 +142,38 @@ void game_init()
 	if(game_pal_get())
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
-	printf("Images loading...\n");
-	pics_load();
-	game.m_i_logo     = IMG_get("M_LOGO"     );
-	game.m_i_conback  = IMG_get("M_CONBACK"  );
-	game.m_i_interlv  = IMG_get("M_I_INTERLV");
-	game.m_i_game     = IMG_get("M_GAME"     );
-	game.m_i_g_new_p1 = IMG_get("M_G_NEW_P1" );
-	game.m_i_g_new_p2 = IMG_get("M_G_NEW_P2" );
-	game.m_i_g_load   = IMG_get("M_G_LOAD"   );
-	game.m_i_g_save   = IMG_get("M_G_SAVE"   );
-	game.m_i_case     = IMG_get("M_CASE"     );
-	game.m_i_options  = IMG_get("M_OPTIONS"  );
-	game.m_i_about    = IMG_get("M_ABOUT"    );
-	game.m_i_abort    = IMG_get("M_ABORT"    );
-	game.m_i_quit     = IMG_get("M_QUIT"     );
-	game.m_i_cur_0    = IMG_get("M_CUR_0"    );
-	game.m_i_cur_1    = IMG_get("M_CUR_1"    );
-	game.m_i_arrowL   = IMG_get("M_ARROWL"   );
-	game.m_i_arrowR   = IMG_get("M_ARROWR"   );
-	game.m_i_lineL    = IMG_get("M_LINEL"    );
-	game.m_i_lineM    = IMG_get("M_LINEM"    );
-	game.m_i_lineR    = IMG_get("M_LINER"    );
-	game.m_i_flagRUS  = IMG_get("F_RUS"      );
-	game.m_i_flagUSA  = IMG_get("F_USA"      );
-	game.w_w0         = IMG_get("W_W0"       );
-	game.w_w1         = IMG_get("W_W1"       );
-	game.w_brick      = IMG_get("W_BRICK"    );
-	game.w_water[0]   = IMG_get("WATER0"     );
-	game.w_water[1]   = IMG_get("WATER1"     );
-	game.w_water[2]   = IMG_get("WATER2"     );
-	game.i_health     = IMG_get("I_HEALTH"   );
-	game.i_armor      = IMG_get("I_ARMOR"    );
-	game.i_star       = IMG_get("I_STAR"     );
+	images_init();
+	game.m_i_logo     = image_get(IMG_MENU_LOGO     );
+	game.m_i_conback  = image_get(M_CONBACK  );
+	game.m_i_interlv  = image_get(M_I_INTERLV);
+	game.m_i_game     = image_get(M_GAME     );
+	game.m_i_g_new_p1 = image_get(M_G_NEW_P1 );
+	game.m_i_g_new_p2 = image_get(M_G_NEW_P2 );
+	game.m_i_g_load   = image_get(M_G_LOAD   );
+	game.m_i_g_save   = image_get(M_G_SAVE   );
+	game.m_i_case     = image_get(M_CASE     );
+	game.m_i_options  = image_get(M_OPTIONS  );
+	game.m_i_about    = image_get(M_ABOUT    );
+	game.m_i_abort    = image_get(M_ABORT    );
+	game.m_i_quit     = image_get(M_QUIT     );
+	game.m_i_cur_0    = image_get(M_CUR_0    );
+	game.m_i_cur_1    = image_get(M_CUR_1    );
+	game.m_i_arrowL   = image_get(M_ARROWL   );
+	game.m_i_arrowR   = image_get(M_ARROWR   );
+	game.m_i_lineL    = image_get(M_LINEL    );
+	game.m_i_lineM    = image_get(M_LINEM    );
+	game.m_i_lineR    = image_get(M_LINER    );
+	game.m_i_flagRUS  = image_get(F_RUS      );
+	game.m_i_flagUSA  = image_get(F_USA      );
+	game.w_w0         = image_get(W_W0       );
+	game.w_w1         = image_get(W_W1       );
+	game.w_brick      = image_get(W_BRICK    );
+	game.w_water[0]   = image_get(WATER0     );
+	game.w_water[1]   = image_get(WATER1     );
+	game.w_water[2]   = image_get(WATER2     );
+	game.i_health     = image_get(I_HEALTH   );
+	game.i_armor      = image_get(I_ARMOR    );
+	game.i_star       = image_get(I_STAR     );
 
 	//чтение конфига
 	printf("Config init...\n");
@@ -274,7 +189,7 @@ void game_init()
 	wtable[0].range      = -1;                                          //дальность
 	wtable[0].bullspeed  = 75;                                         //скорость пули
 	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = IMG_get("W_BULL"     );     //изображение оружия
+	wtable[0].icon       = image_get(W_BULL);     //изображение оружия
 	strcpy(wtable[1].name, "Rocket");                                    //название оружия
 	wtable[1].damage     = 100;                                         //повреждение
 	wtable[1].selfdamage = 50;                                          //повреждение
@@ -283,7 +198,7 @@ void game_init()
 	wtable[1].range      = -1;                                          //дальность
 	wtable[1].bullspeed  = 80;                                         //скорость пули
 	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = IMG_get("W_ROCKET"   );     //изображение оружия
+	wtable[1].icon       = image_get(W_ROCKET);     //изображение оружия
 	strcpy(wtable[2].name, "Mine");                                      //название оружия
 	wtable[2].damage     = 200;                                         //повреждение
 	wtable[2].selfdamage = 100;                                         //повреждение
@@ -292,7 +207,7 @@ void game_init()
 	wtable[2].range      = 100;                                         //дальность
 	wtable[2].bullspeed  = -80;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = IMG_get("W_MINE"     );     //изображение оружия
+	wtable[2].icon       = image_get(W_MINE);     //изображение оружия
 	input_init();
 
 	game_rebind_keys_all();
@@ -315,7 +230,7 @@ void game_done()
 	//очистим список карт
 	map_list_removeall();
 	//очистим память от изображений
-	IMG_removeall();
+	images_done();
 };
 
 
@@ -382,7 +297,18 @@ void game_main()
 
 			}
 			else
+			{
+				switch(event.type)
+				{
+				case SDL_KEYDOWN:
+					input_key_setState(event.key.keysym.scancode, true);
+					break;
+				case SDL_KEYUP:
+					input_key_setState(event.key.keysym.scancode, false);
+					break;
+				}
 				menu_send_event(&event);
+			}
 
 			switch(event.type)
 			{
@@ -656,6 +582,8 @@ int game_cfg_load()
 	}
 	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
 	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
+	game.controls[ACTION_SFACTOR] = SDL_SCANCODE_X;
+	game.controls[ACTION_DFACTOR] = SDL_SCANCODE_C;
 	return ret ? -1 : 0;
 }
 

@@ -1,6 +1,29 @@
 
+// delete it
+#include "game.h"
+
 #include <_gr2D.h>
 #include <video.h>
+
+static int list[14] =
+{
+		GL_ZERO,
+		GL_ONE, // 1
+		GL_SRC_COLOR,
+		GL_ONE_MINUS_SRC_COLOR,
+		GL_DST_COLOR,
+
+		GL_ONE_MINUS_DST_COLOR,
+		GL_SRC_ALPHA,//6
+		GL_ONE_MINUS_SRC_ALPHA,//7
+		GL_DST_ALPHA,
+		GL_ONE_MINUS_DST_ALPHA,
+
+		GL_CONSTANT_COLOR,
+		GL_ONE_MINUS_CONSTANT_COLOR,
+		GL_CONSTANT_ALPHA,
+		GL_ONE_MINUS_CONSTANT_ALPHA
+};
 
 /*
  * вывод байтового образа bytemap размерами full_x,full_y, в позицию
@@ -20,12 +43,20 @@ void gr2D_setimage0(
 
 	GLfloat texture_x1 = image->img_sx/texture_sx;
 	GLfloat texture_y1 = image->img_sy/texture_sy;
+/*
+	int sfactor = list[game_video_sfactor];
+	int dfactor = list[game_video_dfactor];
+	glBlendFunc(sfactor, dfactor);
+*/
+
+	glBlendFunc(image->sfactor, image->dfactor);
 
 	glBindTexture(GL_TEXTURE_2D, image->texture);
 	glLoadIdentity();
 	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
 	glBegin(GL_QUADS);
 	glColor3f(1.0f, 1.0f, 1.0f);
+//	glColor3f(0.5f, 0.5f, 0.5f);
 	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
 	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
 	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый

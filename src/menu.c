@@ -195,13 +195,21 @@ static void menu_main_draw(const void * ctx)
 	font_color_set3i(COLOR_1);
 	video_printf(1     ,183          , orient_horiz, c_strTITLE);
 	video_printf(1     ,191          , orient_horiz, c_strCORP);
-	gr2D_setimage0(120, 30+23*0 ,game.m_i_game);
-	gr2D_setimage0(120, 30+23*1 ,game.m_i_case);
-	gr2D_setimage0(120, 30+23*2 ,game.m_i_options);
-	gr2D_setimage0(120, 30+23*3 ,game.m_i_about);
-	if(game.created)
-		gr2D_setimage0(120,30+23*4 , game.m_i_abort);
-	gr2D_setimage0(120,30+23 * 5   , game.m_i_quit);
+
+	static image_index_t list[] =
+	{
+			M_GAME,
+			M_CASE,
+			M_OPTIONS,
+			M_ABOUT,
+			M_ABORT,
+			M_QUIT
+	};
+	for(int i = 0; i < 6; i++)
+	{
+		if(i != 4 || game.created)
+			gr2D_setimage0(120, 30 + 23 * i, image_get(list[i]));
+	}
 	gr2D_setimage0( 97,30+23 * menu, game.m_i_cur_0);
 }
 /*
@@ -730,7 +738,7 @@ int menu_interlevel(void * ctx)
 	case RIGHT  : break;
 	case ENTER  : return
 		sound_play_start(SOUND_MENU_ENTER, 1);
-		MENU_GAME_SAVE;
+		return MENU_GAME_SAVE;
 	case LEAVE  :
 		sound_play_start(SOUND_MENU_ENTER, 1);
 		return MENU_GAME_SAVE;

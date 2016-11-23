@@ -48,13 +48,6 @@ typedef struct
 	uint8_t  status;
 } ATTR_PACKED game_savedata_player_t;
 
-
-struct image_table_ent_s
-{
-	char * filename;
-	char * id;
-};
-
 typedef uint32_t control_t[__ACTION_NUM];
 
 //запись иры
@@ -148,6 +141,8 @@ extern double menu_dtimed1000;
 extern char * game_dir_conf;
 extern char * game_dir_saves;
 
+extern int game_video_dfactor;
+extern int game_video_sfactor;
 
 void game_action_enter_mainmenu();
 void game_action_win();

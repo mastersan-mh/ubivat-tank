@@ -22,7 +22,7 @@ typedef double snd_max_sample_t;
 #define MAX_16 32768.0f
 
 
-char *sound_files[__SOUND_NUM] =
+static char * sound_files[__SOUND_NUM] =
 {
 		/* music */
 		"/sounds/music/esa3_loop.wav", //s16 m 22
@@ -61,7 +61,7 @@ typedef struct
 	int channels;
 } sound_data_t;
 
-sound_data_t sound_table[__SOUND_NUM];
+static sound_data_t sound_table[__SOUND_NUM];
 
 typedef struct
 {
@@ -483,10 +483,7 @@ void sound_precache()
 		if(!path || path_len < len)
 		{
 			char * tmp_path = Z_realloc(path, len + 1);
-			if(!tmp_path)
-			{
-				game_halt("Sound: out of memory");
-			}
+			if(!tmp_path) game_halt("Sound: out of memory");
 			path = tmp_path;
 			path_len = len;
 		}

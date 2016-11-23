@@ -6,7 +6,7 @@
 
 #include <video.h>
 #include <game.h>
-#include <img.h>
+#include "img.h"
 #include <_gr2D.h>
 #include <fonts.h>
 #include <utf8.h>
@@ -104,12 +104,12 @@ static void map_spawn_removeall()
  */
 static int map_item_add(mobj_type_t mobj_type, map_data_item_t * data)
 {
-	static char *itemList[] = {
-			"I_HEALTH",
-			"I_ARMOR" ,
-			"I_STAR"  ,
-			"W_ROCKET",
-			"W_MINE"
+	static image_index_t itemList[] = {
+			I_HEALTH,
+			I_ARMOR ,
+			I_STAR  ,
+			W_ROCKET,
+			W_MINE
 	};
 	item_t * item = Z_malloc(sizeof(*item));
 	item->class = mobj_type;
@@ -128,7 +128,7 @@ static int map_item_add(mobj_type_t mobj_type, map_data_item_t * data)
 	case MAP_ITEM_MINE  : i = 4; break;
 	default: return -1;
 	};
-	item->img  = IMG_get(itemList[i]);
+	item->img  = image_get(itemList[i]);
 	item->next = map.items;
 	map.items  = item;
 	return 0;
@@ -165,7 +165,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 
 	switch(mobj_type)
 	{
-	case MAP_OBJ_EXIT: obj->img = IMG_get("O_EXIT");break;
+	case MAP_OBJ_EXIT: obj->img = image_get(O_EXIT);break;
 	case MAP_OBJ_MESS: obj->img = NULL                 ;break;
 	default:;
 	};

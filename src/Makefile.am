@@ -6,7 +6,7 @@ bin_PROGRAMS = ubivat-tank
 SUBDIRS = 
 
 ubivat_tank_CFLAGS = -std=c99 -Wall -D_DEFAULT_SOURCE -I/usr/include/freetype2
-ubivat_tank_LDFLAGS = -lm -lSDL2 -lGL -lGLU -lfreetype -lfontconfig
+ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
 Z_mem.c \
