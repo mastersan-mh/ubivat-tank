@@ -32,6 +32,7 @@
 
 typedef enum
 {
+	MAP_UNKNOWN     = -1,
 	MAP_SPAWN_PLAYER,
 	MAP_SPAWN_ENEMY ,
 	MAP_SPAWN_BOSS  ,
@@ -42,11 +43,10 @@ typedef enum
 	MAP_ITEM_MINE   ,
 	MAP_OBJ_EXIT    ,
 	MAP_OBJ_MESS    ,
-	MAP_UNKNOWN     ,
-	__MAP_NUM
+	__MAP_OBJ_NUM
 } mobj_type_t;
 
-extern char * map_class_names[__MAP_NUM];
+extern char * map_class_names[__MAP_OBJ_NUM];
 
 /* заголовок карты */
 typedef struct
@@ -94,6 +94,12 @@ typedef struct
 } ATTR_PACKED map_data_obj_t;
 
 
+typedef union
+{
+	map_data_spawn_t spawn;
+	map_data_item_t item;
+	map_data_obj_t obj;
+} ATTR_PACKED map_data_mobj_t;
 
 typedef struct
 {

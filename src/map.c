@@ -24,7 +24,7 @@
 // Map Ubivat Tank
 #define MAP_DATA_HEADER "MUT"
 
-char * map_class_names[__MAP_NUM] =
+char * map_class_names[__MAP_OBJ_NUM] =
 {
 		"SPAWN.PLAYER",
 		"SPAWN.ENEMY" ,
@@ -36,7 +36,7 @@ char * map_class_names[__MAP_NUM] =
 		"ITEM.MINE"   ,
 		"OBJ.EXIT"    ,
 		"OBJ.MESS"    ,
-		""
+		NULL
 };
 
 //список карт
@@ -166,7 +166,7 @@ static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
 	switch(mobj_type)
 	{
 	case MAP_OBJ_EXIT: obj->img = image_get(O_EXIT);break;
-	case MAP_OBJ_MESS: obj->img = NULL                 ;break;
+	case MAP_OBJ_MESS: obj->img = NULL             ;break;
 	default:;
 	};
 	obj->next = map.objs;
@@ -359,11 +359,17 @@ void map_clip_find_near_wall(pos_t * orig, int dir, float * dist, char * wall)
 	}
 }
 
-static bool _eof;
-bool map_eof()
+static mobj_type_t mobj_type_name_to_value(const char * class)
 {
-	return _eof;
+	int mobj_type;
+	for(mobj_type = 0; mobj_type < __MAP_OBJ_NUM; mobj_type++)
+	{
+		if(strcmp(class, map_class_names[mobj_type]) == 0) return mobj_type;
+	}
+	return MAP_UNKNOWN;
 }
+
+
 
 /*
  * чтение класса предмета
@@ -380,55 +386,82 @@ mobj_type_t map_file_class_get(int fd)
 		class[i] = ch;
 		i++;
 	}while(count != 0 && ch!=0 );
-	_eof = (count == 0);
-	for(i = 0; i < __MAP_NUM; i++)
+	mobj_type_t mobj_type = mobj_type_name_to_value(class);
+	return mobj_type;
+}
+
+
+/**
+ * чтение класса предмета
+ */
+static int map_load_mobj(int fd, mobj_type_t * mobj_type, map_data_mobj_t * data)
+{
+	static size_t datasize[__MAP_OBJ_NUM] =
 	{
-		if(strcmp(class, map_class_names[i]) == 0) return i;
+			sizeof(map_data_spawn_t),	/* MAP_SPAWN_PLAYER */
+			sizeof(map_data_spawn_t),	/* MAP_SPAWN_ENEMY */
+			sizeof(map_data_spawn_t),	/* MAP_SPAWN_BOSS */
+			sizeof(map_data_item_t),	/* MAP_ITEM_HEALTH */
+			sizeof(map_data_item_t),	/* MAP_ITEM_ARMOR */
+			sizeof(map_data_item_t),	/* MAP_ITEM_STAR */
+			sizeof(map_data_item_t),	/* MAP_ITEM_ROCKET */
+			sizeof(map_data_item_t),	/* MAP_ITEM_MINE */
+			sizeof(map_data_obj_t),	/* MAP_OBJ_EXIT */
+			sizeof(map_data_obj_t)	/* MAP_OBJ_MESS */
+	};
+	char class[256];
+	char ch;
+	int i = 0;
+	ssize_t count;
+	do
+	{
+		count = read(fd, &ch, 1);
+		class[i++] = ch;
+	}while(count != 0 && ch != 0);
+	if(count == 0) return 1;
+
+	*mobj_type = mobj_type_name_to_value(class);
+	if(*mobj_type == MAP_UNKNOWN)
+	{
+		game_console_send("map load error: no class %d", *mobj_type);
+		return -1;
 	}
-	return MAP_UNKNOWN;
+	count = read(fd, data, datasize[*mobj_type]);
+	if(count == 0) return 1;
+	if(count != datasize[*mobj_type])return 1;
+	return 0;
 }
-/*
- * создание спавн-поита
- */
-static bool map_load_spawn(int fd, mobj_type_t mobj_type)
+
+static int map_load_mobj__(int fd, mobj_type_t * mobj_type)
 {
-	map_data_spawn_t data;
+	map_data_mobj_t data;
+	int ret = map_load_mobj(fd, mobj_type, &data);
+	if(ret)return ret;
 
-	ssize_t count = read(fd, &data, sizeof(data));
-	_eof = (count == 0);
-	if(count != sizeof(data))return false;
-
-	map_spawn_add(mobj_type, &data);
-	return true;
+	switch(*mobj_type)
+	{
+	case MAP_SPAWN_PLAYER:
+	case MAP_SPAWN_ENEMY :
+	case MAP_SPAWN_BOSS  :
+		map_spawn_add(*mobj_type, &data.spawn);
+		break;
+	case MAP_ITEM_HEALTH :
+	case MAP_ITEM_ARMOR  :
+	case MAP_ITEM_STAR   :
+	case MAP_ITEM_ROCKET :
+	case MAP_ITEM_MINE   :
+		map_item_add(*mobj_type, &data.item);
+		break;
+	case MAP_OBJ_EXIT    :
+	case MAP_OBJ_MESS    :
+		map_obj_add(*mobj_type, &data.obj);
+		break;
+	default:
+		return MAP_UNKNOWN;
+	}
+	return 0;
 }
-/*
- * создание предмета
- */
-static bool map_load_item(int fd, mobj_type_t mobj_type)
-{
-	map_data_item_t data;
 
-	ssize_t count = read(fd, &data, sizeof(data));
-	_eof = (count == 0);
-	if(count != sizeof(data))return false;
-
-	map_item_add(mobj_type, &data);
-	return true;
-}
-/*
- * попытка создания объекта
- */
-static bool map_load_obj(int fd, mobj_type_t mobj_type)
-{
-	map_data_obj_t data;
-
-	ssize_t count = read(fd, &data, sizeof(data));
-	_eof = (count == 0);
-	if(count != sizeof(data))return false;
-
-	map_obj_add(mobj_type, &data);
-	return true;
-};
 
 /********открытие и чтение карты********/
 //map_load=0 -нет ошибок
@@ -439,6 +472,9 @@ static bool map_load_obj(int fd, mobj_type_t mobj_type)
 //map_load=5 -не найден спавн-поинт для CASE игры
 int map_load(const char * mapname)
 {
+
+	bool parental_lock = !strcmp(mapname, "map02");
+
 	if(map.loaded) return -1;
 #define RETURN_ERR(err) \
 		do{ \
@@ -489,41 +525,30 @@ int map_load(const char * mapname)
 	count = read(fd, map.map, MAP_SX * MAP_SY);
 	if(count != MAP_SX * MAP_SY) RETURN_ERR(MAP_ERR_READ);
 
-	_eof = false;
 	bool player_spawn_exist = false;
+	int i = 0;
 	for(;;)
 	{
-		mobj_type_t mobj_type = map_file_class_get(fd);
-		if(map_eof(fd)) break;
-		switch(mobj_type)
-		{
-		case MAP_SPAWN_PLAYER: player_spawn_exist = true;
-		case MAP_SPAWN_ENEMY :
-		case MAP_SPAWN_BOSS  :
-			ret = map_load_spawn(fd, mobj_type);
-			break;
-		case MAP_ITEM_HEALTH :
-		case MAP_ITEM_ARMOR  :
-		case MAP_ITEM_STAR   :
-		case MAP_ITEM_ROCKET :
-		case MAP_ITEM_MINE   :
-			ret = map_load_item(fd, mobj_type);
-			break;
-		case MAP_OBJ_EXIT    :
-		case MAP_OBJ_MESS    :
-			ret = map_load_obj(fd, mobj_type);
-			break;
-		default:
-			game_console_send("map load error: no class %d", mobj_type);
-			map.loaded = true;
-			map_clear();
-			RETURN_ERR(MAP_ERR_READ);
-		}
+		i++;
+		/*
+		if (
+				parental_lock &&
+				(
+						i == 12 || i == 13 || i == 30 || i == 32
+				)
+		) continue;
+		*/
+		mobj_type_t mobj_type;
+		ret = map_load_mobj__(fd, &mobj_type);
+		if(ret) break;
+		if(mobj_type == MAP_SPAWN_PLAYER) player_spawn_exist = true;
+
 	}
 	close(fd);
 	map.loaded = true;
-	if(!player_spawn_exist)
+	if(!player_spawn_exist || ret < 0)
 	{
+		map.loaded = true;
 		map_clear();
 		RETURN_ERR(MAP_ERR_READ);
 	}
