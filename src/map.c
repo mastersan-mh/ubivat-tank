@@ -63,46 +63,14 @@ void map_clear();
 
 void map_init()
 {
-	map.spawns = NULL;
-	map.items  = NULL;
-	map.objs   = NULL;
+	map.mobjs = NULL;
 }
 
 
 /*
- * добавление точки спавна
+ * добавление объекта
  */
-static void map_spawn_add(mobj_type_t mobj_type, map_data_spawn_t * data)
-{
-	spawn_t * spawn = Z_malloc(sizeof(*spawn));
-	spawn->class  = mobj_type;
-	spawn->orig.x = data->orig.x;
-	spawn->orig.y = data->orig.y;
-	spawn->scores = data->scores;
-	spawn->health = data->health;
-	spawn->armor  = data->armor;
-
-	spawn->next   = map.spawns;
-	map.spawns = spawn;
-}
-/*
- * удаление всех точек спавна
- */
-static void map_spawn_removeall()
-{
-	spawn_t * spawn;
-	while(map.spawns)
-	{
-		spawn         = map.spawns;
-		map.spawns = map.spawns->next;
-		Z_free(spawn);
-	}
-}
-
-/*
- * добавление предмета на карту
- */
-static int map_item_add(mobj_type_t mobj_type, map_data_item_t * data)
+static void map_mobj_add(mobj_type_t mobj_type, map_data_mobj_t * data)
 {
 	static image_index_t itemList[] = {
 			I_HEALTH,
@@ -111,82 +79,95 @@ static int map_item_add(mobj_type_t mobj_type, map_data_item_t * data)
 			W_ROCKET,
 			W_MINE
 	};
-	item_t * item = Z_malloc(sizeof(*item));
-	item->class = mobj_type;
-	item->orig.x = data->orig.x;
-	item->orig.y = data->orig.y;
-	item->amount = data->amount;
-	item->exist = true;
-
-	int i;
-	switch(mobj_type)
-	{
-	case MAP_ITEM_HEALTH: i = 0; break;
-	case MAP_ITEM_ARMOR : i = 1; break;
-	case MAP_ITEM_STAR  : i = 2; break;
-	case MAP_ITEM_ROCKET: i = 3; break;
-	case MAP_ITEM_MINE  : i = 4; break;
-	default: return -1;
-	};
-	item->img  = image_get(itemList[i]);
-	item->next = map.items;
-	map.items  = item;
-	return 0;
-}
-/*
- * удаление всех предметов
- */
-static void map_item_removeall()
-{
-	item_t * item;
-	while(map.items)
-	{
-		item         = map.items;
-		map.items = map.items->next;
-		Z_free(item);
-	}
-}
-
-/*
- * добавление объекта на карту
- */
-static void map_obj_add(mobj_type_t mobj_type, map_data_obj_t * data)
-{
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
-	obj_t * obj = Z_malloc(sizeof(*obj));
+	int i;
 
-	obj->class  = mobj_type;
-	obj->orig.x = data->orig.x;
-	obj->orig.y = data->orig.y;
+	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
-	size_t len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->message);
-	obj->message = Z_strndup(buf, len);
-
+	mobj->class  = mobj_type;
+	mobj->pos.x = data->pos.x;
+	mobj->pos.y = data->pos.y;
+	mobj->img = NULL;
 	switch(mobj_type)
 	{
-	case MAP_OBJ_EXIT: obj->img = image_get(O_EXIT);break;
-	case MAP_OBJ_MESS: obj->img = NULL             ;break;
-	default:;
-	};
-	obj->next = map.objs;
-	map.objs  = obj;
+	case MAP_SPAWN_PLAYER:
+	case MAP_SPAWN_ENEMY :
+	case MAP_SPAWN_BOSS  :
+		mobj->spawn.scores = data->spawn.scores;
+		mobj->spawn.health = data->spawn.health;
+		mobj->spawn.armor  = data->spawn.armor;
+		break;
+	case MAP_ITEM_HEALTH :
+	case MAP_ITEM_ARMOR  :
+	case MAP_ITEM_STAR   :
+	case MAP_ITEM_ROCKET :
+	case MAP_ITEM_MINE   :
+	{
+		mobj->item.amount = data->item.amount;
+		mobj->item.exist = true;
+		switch(mobj_type)
+		{
+		case MAP_ITEM_HEALTH: i = 0; break;
+		case MAP_ITEM_ARMOR : i = 1; break;
+		case MAP_ITEM_STAR  : i = 2; break;
+		case MAP_ITEM_ROCKET: i = 3; break;
+		case MAP_ITEM_MINE  : i = 4; break;
+		default: ;
+		};
+		mobj->img = image_get(itemList[i]);
+		break;
+	}
+	case MAP_OBJ_EXIT    :
+	case MAP_OBJ_MESS    :
+	{
+		size_t len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
+		mobj->obj.message = Z_strndup(buf, len);
+		switch(mobj_type)
+		{
+		case MAP_OBJ_EXIT: mobj->img = image_get(O_EXIT);break;
+		case MAP_OBJ_MESS: break;
+		default:;
+		};
+
+		break;
+	}
+	default: break;
+	}
+	mobj->next = map.mobjs;
+	map.mobjs = mobj;
 #undef BUFSIZE
 }
 /*
- * удаление всех объектов
+ * удаление всех точек спавна
  */
-static void map_obj_removeall()
+static void map_mobj_removeall()
 {
-	obj_t * obj;
-	while(map.objs)
+	mobj_t * mobj;
+	while(map.mobjs)
 	{
-		obj         = map.objs;
-		Z_free(obj->message);
-		map.objs = map.objs->next;
-		Z_free(obj);
+		mobj = map.mobjs;
+		map.mobjs = map.mobjs->next;
+		switch(mobj->class)
+		{
+		case MAP_SPAWN_PLAYER:
+		case MAP_SPAWN_ENEMY :
+		case MAP_SPAWN_BOSS  : break;
+		case MAP_ITEM_HEALTH :
+		case MAP_ITEM_ARMOR  :
+		case MAP_ITEM_STAR   :
+		case MAP_ITEM_ROCKET :
+		case MAP_ITEM_MINE   : break;
+		case MAP_OBJ_EXIT    :
+		case MAP_OBJ_MESS    :
+			Z_free(mobj->obj.message);
+			break;
+		default: break;
+		}
+		Z_free(mobj);
 	}
 }
+
 /*
  * поиск препятствия на карте
  */
@@ -432,38 +413,9 @@ static int map_load_mobj(int fd, mobj_type_t * mobj_type, map_data_mobj_t * data
 	return 0;
 }
 
-static int map_load_mobj__(int fd, mobj_type_t * mobj_type)
-{
-	map_data_mobj_t data;
-	int ret = map_load_mobj(fd, mobj_type, &data);
-	if(ret)return ret;
-
-	switch(*mobj_type)
-	{
-	case MAP_SPAWN_PLAYER:
-	case MAP_SPAWN_ENEMY :
-	case MAP_SPAWN_BOSS  :
-		map_spawn_add(*mobj_type, &data.spawn);
-		break;
-	case MAP_ITEM_HEALTH :
-	case MAP_ITEM_ARMOR  :
-	case MAP_ITEM_STAR   :
-	case MAP_ITEM_ROCKET :
-	case MAP_ITEM_MINE   :
-		map_item_add(*mobj_type, &data.item);
-		break;
-	case MAP_OBJ_EXIT    :
-	case MAP_OBJ_MESS    :
-		map_obj_add(*mobj_type, &data.obj);
-		break;
-	default:
-		return MAP_UNKNOWN;
-	}
-	return 0;
-}
-
-
-/********открытие и чтение карты********/
+/*
+ * открытие и чтение карты
+ */
 //map_load=0 -нет ошибок
 //map_load=1 -файл карты не найден
 //map_load=2 -ошибка формата
@@ -539,10 +491,11 @@ int map_load(const char * mapname)
 		) continue;
 		*/
 		mobj_type_t mobj_type;
-		ret = map_load_mobj__(fd, &mobj_type);
+		map_data_mobj_t data;
+		int ret = map_load_mobj(fd, &mobj_type, &data);
 		if(ret) break;
 		if(mobj_type == MAP_SPAWN_PLAYER) player_spawn_exist = true;
-
+		map_mobj_add(mobj_type, &data);
 	}
 	close(fd);
 	map.loaded = true;
@@ -563,65 +516,67 @@ void map_clear()
 	Z_FREE(map._file);
 	Z_FREE(map.name);
 	Z_FREE(map.brief);
-	map_spawn_removeall();
-	map_item_removeall();
-	map_obj_removeall();
+	map_mobj_removeall();
 	map.loaded = false;
 }
+
+bool map_mobj_is_item(mobj_t * mobj)
+{
+	return
+			(
+					mobj->class == MAP_ITEM_HEALTH ||
+					mobj->class == MAP_ITEM_ARMOR  ||
+					mobj->class == MAP_ITEM_STAR   ||
+					mobj->class == MAP_ITEM_ROCKET ||
+					mobj->class == MAP_ITEM_MINE
+			);
+}
+
 /*
  * рисование объектов на карте
  */
 void map_draw(camera_t * cam)
 {
-	item_t * item;
-	obj_t * obj;
+	mobj_t * mobj = map.mobjs;
+	while(mobj)
+	{
+		if(
+				mobj->img != NULL &&
+				cam->pos.x-cam->sx/2 <= mobj->pos.x+(c_i_MDL_box/2) &&
+				mobj->pos.x - (c_i_MDL_box/2)<=cam->pos.x+cam->sx/2 &&
+				cam->pos.y-cam->sy/2 <= mobj->pos.y+(c_i_MDL_box/2) &&
+				mobj->pos.y - (c_i_MDL_box/2)<=cam->pos.y+cam->sy/2
+			)
+		{
+			bool draw;
+			if(map_mobj_is_item(mobj))
+				draw = mobj->item.exist;
+			else
+				draw = false;
+			if(draw)
+			{
+				gr2D_setimage0(
+					round(cam->x+mobj->pos.x-(cam->pos.x-cam->sx/2))+c_i_MDL_pos,
+					round(cam->y-mobj->pos.y+(cam->pos.y+cam->sy/2))+c_i_MDL_pos,
+					mobj->img
+				);
+			}
+		}
+		mobj = mobj->next;
+	}
+
 	int x, y;
 	int x0,x1;
 	int y0,y1;
-
-	item = map.items;
-	while(item)
-	{
-		if(
-				(item->exist) &&
-				(cam->pos.x-cam->sx/2 <= item->orig.x+(c_i_MDL_box/2))&&(item->orig.x - (c_i_MDL_box/2)<=cam->pos.x+cam->sx/2) &&
-				(cam->pos.y-cam->sy/2 <= item->orig.y+(c_i_MDL_box/2))&&(item->orig.y - (c_i_MDL_box/2)<=cam->pos.y+cam->sy/2)
-			)
-		{
-			gr2D_setimage0(
-					round(cam->x+item->orig.x-(cam->pos.x-cam->sx/2))+c_i_MDL_pos,
-					round(cam->y-item->orig.y+(cam->pos.y+cam->sy/2))+c_i_MDL_pos,
-					item->img
-			);
-		}
-		item = item->next;
-	}
-
-	obj = map.objs;
-	while(obj){
-		if(
-				(obj->img) &&
-				(cam->pos.x-cam->sx/2<=obj->orig.x+(c_o_MDL_box/2))&&(obj->orig.x-(c_o_MDL_box/2)<=cam->pos.x+cam->sx/2) &&
-				(cam->pos.y-cam->sy/2<=obj->orig.y+(c_o_MDL_box/2))&&(obj->orig.y-(c_o_MDL_box/2)<=cam->pos.y+cam->sy/2)
-		)
-		{
-			gr2D_setimage0(
-					round(cam->x+obj->orig.x-(cam->pos.x-cam->sx/2))+c_o_MDL_pos,
-					round(cam->y-obj->orig.y+(cam->pos.y+cam->sy/2))+c_o_MDL_pos,
-					obj->img
-			);
-		};
-		obj = obj->next;
-	};
 
 	x0 = trunc((cam->pos.x-(cam->sx / 2))/8);
 	if(x0 < 0) x0 = 0;
 	y0 = trunc((cam->pos.y-(cam->sy / 2))/8);
 	if(y0 < 0) y0 = 0;
-	x1 = x0+(cam->sx / 8)+1;
-	if(MAP_SX<=x1) x1 = MAP_SX-1;
-	y1 = y0+(cam->sy / 8)+1;
-	if(MAP_SY<=y1) y1 = MAP_SY-1;
+	x1 = x0 + (cam->sx / 8) + 1;
+	if(MAP_SX <= x1) x1 = MAP_SX-1;
+	y1 = y0 + (cam->sy / 8) + 1;
+	if(MAP_SY <= y1) y1 = MAP_SY-1;
 
 	for(y = y0; y <= y1; y++)
 	{
@@ -631,9 +586,9 @@ void map_draw(camera_t * cam)
 			item_img_t * img = NULL;
 			switch(map_block)
 			{
-			case c_m_w_w0   : img = game.w_w0; break;
-			case c_m_w_w1   : img = game.w_w1; break;
-			case c_m_w_brick: img = game.w_brick; break;
+			case c_m_w_w0   : img = image_get(IMG_WALL_W0); break;
+			case c_m_w_w1   : img = image_get(IMG_WALL_W1); break;
+			case c_m_w_brick: img = image_get(IMG_WALL_BRICK); break;
 			case c_m_water  : img = game.w_water[xrand(3)]; break;
 			}
 			if(img)

@@ -67,7 +67,7 @@ typedef struct
 typedef struct
 {
 	//позиция
-	map_data_position_t orig;
+	map_data_position_t pos;
 	//очки(-1 не используется)
 	int32_t scores;
 	//здоровье у танка
@@ -79,7 +79,7 @@ typedef struct
 typedef struct
 {
 	//позиция
-	map_data_position_t orig;
+	map_data_position_t pos;
 	// количество
 	int16_t amount;
 } ATTR_PACKED map_data_item_t;
@@ -88,7 +88,7 @@ typedef struct
 typedef struct
 {
 	//позиция
-	map_data_position_t orig;
+	map_data_position_t pos;
 	//сообщение
 	char message[MAB_OBJ_MESAGE_SIZE];
 } ATTR_PACKED map_data_obj_t;
@@ -96,6 +96,7 @@ typedef struct
 
 typedef union
 {
+	map_data_position_t pos;
 	map_data_spawn_t spawn;
 	map_data_item_t item;
 	map_data_obj_t obj;
@@ -120,69 +121,65 @@ typedef struct maplist_s
  */
 typedef struct spawn_s
 {
-	struct spawn_s * next;
-	//класс
-	mobj_type_t class;
-	//позиция
-	map_position_t orig;
 	//очки(-1 не используется)
 	long scores;
 	//здоровье у танка
 	int health;
 	//броня у танка
 	int armor;
-}spawn_t;
+} mobj_spawn_t;
 
 /*
  * предметы
  */
 typedef struct item_s
 {
-	struct item_s * next;
-	//класс
-	mobj_type_t class;
-	// координаты
-	map_position_t orig;
 	// количество
 	int amount;
 	// флаг присутствия
 	bool exist;
-	// изображение предмета
-	item_img_t * img;
-}item_t;
+} mobj_item_t;
 
-typedef struct Tobj
+typedef struct obj_s
 {
-	struct Tobj *next;
-	//предмет
-	mobj_type_t class;
-	//координаты
-	map_position_t orig;
 	//сообщение
 	char * message;
+} mobj_obj_t;
+
+typedef struct mobj_s
+{
+	struct mobj_s *next;
+	//класс
+	mobj_type_t class;
+	//позиция
+	map_position_t pos;
 	//изображение объекта
 	item_img_t * img;
-} obj_t;
-/********************************************************************/
+	union
+	{
+		mobj_spawn_t spawn;
+		mobj_item_t  item;
+		mobj_obj_t   obj;
+	};
+
+
+} mobj_t;
+
 /*
  * карта
  */
 typedef struct
 {
 	bool loaded;
-	//имя файла карты
+	// имя файла карты
 	char * _file;
-	//название карты
+	// название карты
 	char * name;
-	//краткое описание
+	// краткое описание
 	char * brief;
-	//точки респавнинга
-	spawn_t * spawns;
-	//предметы
-	item_t * items;
-	//обьекты
-	obj_t * objs;
-	//66 X 50 = 3300 матрица карты
+	// объекты карты
+	mobj_t * mobjs;
+	// 66 X 50 = 3300 матрица карты
 	char map[MAP_SY][MAP_SX];
 } map_t;
 
@@ -210,6 +207,7 @@ void map_clip_find(
 
 void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist);
 void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);
+bool map_mobj_is_item(mobj_t * mobj);
 
 extern mobj_type_t map_file_class_get(int fd);
 int map_load(const char * mapname);

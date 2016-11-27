@@ -58,7 +58,7 @@ typedef enum
 typedef struct
 {
 	//кол-во боеприпасов(-1 - не используется)
-	long ammo[3];
+	int ammo[3];
 	//атака
 	weapon_t attack;
 	//время на перезарядку
@@ -87,7 +87,7 @@ typedef struct
 typedef struct
 {
 	//очки
-	long scores;
+	int scores;
 	//номер
 	int id;
 	//статус игрока
@@ -174,7 +174,7 @@ player_t * player_find(int status);
 int  player_connect(int status);
 void player_disconnect_monsters();
 void player_disconnect_all();
-void player_spawn(player_t * player, spawn_t * spawn);
+void player_spawn(player_t * player, mobj_t * spawn);
 int player_spawn_player(player_t * player);
 int player_spawn_enemy();
 void player_spawn_all();

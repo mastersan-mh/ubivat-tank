@@ -165,12 +165,9 @@ void game_init()
 	game.m_i_lineR    = image_get(M_LINER    );
 	game.m_i_flagRUS  = image_get(F_RUS      );
 	game.m_i_flagUSA  = image_get(F_USA      );
-	game.w_w0         = image_get(W_W0       );
-	game.w_w1         = image_get(W_W1       );
-	game.w_brick      = image_get(W_BRICK    );
-	game.w_water[0]   = image_get(WATER0     );
-	game.w_water[1]   = image_get(WATER1     );
-	game.w_water[2]   = image_get(WATER2     );
+	game.w_water[0]   = image_get(IMG_WATER0     );
+	game.w_water[1]   = image_get(IMG_WATER1     );
+	game.w_water[2]   = image_get(IMG_WATER2     );
 	game.i_health     = image_get(I_HEALTH   );
 	game.i_armor      = image_get(I_ARMOR    );
 	game.i_star       = image_get(I_STAR     );
