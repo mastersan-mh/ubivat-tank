@@ -24,7 +24,7 @@
 // Map Ubivat Tank
 #define MAP_DATA_HEADER "MUT"
 
-char * map_class_names[__MAP_OBJ_NUM] =
+char * map_class_names[__MAPDATA_MOBJ_NUM] =
 {
 		"SPAWN.PLAYER",
 		"SPAWN.ENEMY" ,
@@ -70,7 +70,7 @@ void map_init()
 /*
  * добавление объекта
  */
-static void map_mobj_add(mobj_type_t mobj_type, map_data_mobj_t * data)
+static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t * data)
 {
 	static image_index_t itemList[] = {
 			I_HEALTH,
@@ -81,58 +81,103 @@ static void map_mobj_add(mobj_type_t mobj_type, map_data_mobj_t * data)
 	};
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
-	int i;
-
+	size_t len;
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
-	mobj->class  = mobj_type;
-	mobj->pos.x = data->pos.x;
-	mobj->pos.y = data->pos.y;
-	mobj->img = NULL;
-	switch(mobj_type)
+	switch(mapdata_mobj_type)
 	{
-	case MAP_SPAWN_PLAYER:
-	case MAP_SPAWN_ENEMY :
-	case MAP_SPAWN_BOSS  :
+	case MAPDATA_MOBJ_SPAWN_PLAYER:
+		mobj->type = MOBJ_SPAWN;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = NULL;
+		mobj->spawn.type = SPAWN_PLAYER;
 		mobj->spawn.scores = data->spawn.scores;
 		mobj->spawn.health = data->spawn.health;
 		mobj->spawn.armor  = data->spawn.armor;
 		break;
-	case MAP_ITEM_HEALTH :
-	case MAP_ITEM_ARMOR  :
-	case MAP_ITEM_STAR   :
-	case MAP_ITEM_ROCKET :
-	case MAP_ITEM_MINE   :
-	{
+	case MAPDATA_MOBJ_SPAWN_ENEMY:
+		mobj->type = MOBJ_SPAWN;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = NULL;
+		mobj->spawn.type = SPAWN_ENEMY;
+		mobj->spawn.scores = data->spawn.scores;
+		mobj->spawn.health = data->spawn.health;
+		mobj->spawn.armor  = data->spawn.armor;
+		break;
+	case MAPDATA_MOBJ_SPAWN_BOSS:
+		mobj->type = MOBJ_SPAWN;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = NULL;
+		mobj->spawn.type = SPAWN_BOSS;
+		mobj->spawn.scores = data->spawn.scores;
+		mobj->spawn.health = data->spawn.health;
+		mobj->spawn.armor  = data->spawn.armor;
+		break;
+	case MAPDATA_MOBJ_ITEM_HEALTH :
+		mobj->type = MOBJ_ITEM;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(itemList[0]);
+		mobj->item.type = ITEM_HEALTH;
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
-		switch(mobj_type)
-		{
-		case MAP_ITEM_HEALTH: i = 0; break;
-		case MAP_ITEM_ARMOR : i = 1; break;
-		case MAP_ITEM_STAR  : i = 2; break;
-		case MAP_ITEM_ROCKET: i = 3; break;
-		case MAP_ITEM_MINE  : i = 4; break;
-		default: ;
-		};
-		mobj->img = image_get(itemList[i]);
 		break;
-	}
-	case MAP_OBJ_EXIT    :
-	case MAP_OBJ_MESS    :
-	{
-		size_t len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj->obj.message = Z_strndup(buf, len);
-		switch(mobj_type)
-		{
-		case MAP_OBJ_EXIT: mobj->img = image_get(O_EXIT);break;
-		case MAP_OBJ_MESS: break;
-		default:;
-		};
-
+	case MAPDATA_MOBJ_ITEM_ARMOR:
+		mobj->type = MOBJ_ITEM;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(itemList[1]);
+		mobj->item.type = ITEM_ARMOR;
+		mobj->item.amount = data->item.amount;
+		mobj->item.exist = true;
 		break;
-	}
-	default: break;
+	case MAPDATA_MOBJ_ITEM_STAR   :
+		mobj->type = MOBJ_ITEM;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(itemList[2]);
+		mobj->item.type = ITEM_STAR;
+		mobj->item.amount = data->item.amount;
+		mobj->item.exist = true;
+		break;
+	case MAPDATA_MOBJ_ITEM_ROCKET:
+		mobj->type = MOBJ_ITEM;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(itemList[3]);
+		mobj->item.type = ITEM_ROCKET;
+		mobj->item.amount = data->item.amount;
+		mobj->item.exist = true;
+		break;
+	case MAPDATA_MOBJ_ITEM_MINE   :
+		mobj->type = MOBJ_ITEM;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(itemList[4]);
+		mobj->item.type = ITEM_MINE;
+		mobj->item.amount = data->item.amount;
+		mobj->item.exist = true;
+		break;
+	case MAPDATA_MOBJ_OBJ_EXIT:
+		mobj->type = MOBJ_MESSAGE;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = image_get(O_EXIT);
+		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
+		mobj->exit.message = Z_strndup(buf, len);
+		break;
+	case MAPDATA_MOBJ_OBJ_MESS:
+		mobj->type = MOBJ_MESSAGE;
+		mobj->pos.x = data->pos.x;
+		mobj->pos.y = data->pos.y;
+		mobj->img = NULL;
+		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
+		mobj->mesage.message = Z_strndup(buf, len);
+		break;
+	default: ;
 	}
 	mobj->next = map.mobjs;
 	map.mobjs = mobj;
@@ -148,20 +193,12 @@ static void map_mobj_removeall()
 	{
 		mobj = map.mobjs;
 		map.mobjs = map.mobjs->next;
-		switch(mobj->class)
+		switch(mobj->type)
 		{
-		case MAP_SPAWN_PLAYER:
-		case MAP_SPAWN_ENEMY :
-		case MAP_SPAWN_BOSS  : break;
-		case MAP_ITEM_HEALTH :
-		case MAP_ITEM_ARMOR  :
-		case MAP_ITEM_STAR   :
-		case MAP_ITEM_ROCKET :
-		case MAP_ITEM_MINE   : break;
-		case MAP_OBJ_EXIT    :
-		case MAP_OBJ_MESS    :
-			Z_free(mobj->obj.message);
-			break;
+		case MOBJ_SPAWN  : break;
+		case MOBJ_ITEM   : break;
+		case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
+		case MOBJ_EXIT   : Z_free(mobj->exit.message); break;
 		default: break;
 		}
 		Z_free(mobj);
@@ -340,14 +377,14 @@ void map_clip_find_near_wall(pos_t * orig, int dir, float * dist, char * wall)
 	}
 }
 
-static mobj_type_t mobj_type_name_to_value(const char * class)
+static mapdata_mobj_type_t mobj_type_name_to_value(const char * class)
 {
-	int mobj_type;
-	for(mobj_type = 0; mobj_type < __MAP_OBJ_NUM; mobj_type++)
+	int mapdata_mobj_type;
+	for(mapdata_mobj_type = 0; mapdata_mobj_type < __MAPDATA_MOBJ_NUM; mapdata_mobj_type++)
 	{
-		if(strcmp(class, map_class_names[mobj_type]) == 0) return mobj_type;
+		if(strcmp(class, map_class_names[mapdata_mobj_type]) == 0) return mapdata_mobj_type;
 	}
-	return MAP_UNKNOWN;
+	return MAPDATA_MOBJ_UNKNOWN;
 }
 
 
@@ -355,7 +392,7 @@ static mobj_type_t mobj_type_name_to_value(const char * class)
 /*
  * чтение класса предмета
  */
-mobj_type_t map_file_class_get(int fd)
+mapdata_mobj_type_t map_file_class_get(int fd)
 {
 	char class[256];
 	char ch;
@@ -375,9 +412,9 @@ mobj_type_t map_file_class_get(int fd)
 /**
  * чтение класса предмета
  */
-static int map_load_mobj(int fd, mobj_type_t * mobj_type, map_data_mobj_t * data)
+static int map_load_mobj(int fd, mapdata_mobj_type_t * mapdata_mobj_type, map_data_mobj_t * data)
 {
-	static size_t datasize[__MAP_OBJ_NUM] =
+	static size_t datasize[__MAPDATA_MOBJ_NUM] =
 	{
 			sizeof(map_data_spawn_t),	/* MAP_SPAWN_PLAYER */
 			sizeof(map_data_spawn_t),	/* MAP_SPAWN_ENEMY */
@@ -401,15 +438,15 @@ static int map_load_mobj(int fd, mobj_type_t * mobj_type, map_data_mobj_t * data
 	}while(count != 0 && ch != 0);
 	if(count == 0) return 1;
 
-	*mobj_type = mobj_type_name_to_value(class);
-	if(*mobj_type == MAP_UNKNOWN)
+	*mapdata_mobj_type = mobj_type_name_to_value(class);
+	if(*mapdata_mobj_type == MAPDATA_MOBJ_UNKNOWN)
 	{
-		game_console_send("map load error: no class %d", *mobj_type);
+		game_console_send("map load error: no map object type %s", class);
 		return -1;
 	}
-	count = read(fd, data, datasize[*mobj_type]);
+	count = read(fd, data, datasize[*mapdata_mobj_type]);
 	if(count == 0) return 1;
-	if(count != datasize[*mobj_type])return 1;
+	if(count != datasize[*mapdata_mobj_type])return 1;
 	return 0;
 }
 
@@ -490,12 +527,12 @@ int map_load(const char * mapname)
 				)
 		) continue;
 		*/
-		mobj_type_t mobj_type;
+		mapdata_mobj_type_t mapdata_mobj_type;
 		map_data_mobj_t data;
-		int ret = map_load_mobj(fd, &mobj_type, &data);
+		int ret = map_load_mobj(fd, &mapdata_mobj_type, &data);
 		if(ret) break;
-		if(mobj_type == MAP_SPAWN_PLAYER) player_spawn_exist = true;
-		map_mobj_add(mobj_type, &data);
+		if(mapdata_mobj_type == MAPDATA_MOBJ_SPAWN_PLAYER) player_spawn_exist = true;
+		map_mobj_add(mapdata_mobj_type, &data);
 	}
 	close(fd);
 	map.loaded = true;
@@ -520,18 +557,6 @@ void map_clear()
 	map.loaded = false;
 }
 
-bool map_mobj_is_item(mobj_t * mobj)
-{
-	return
-			(
-					mobj->class == MAP_ITEM_HEALTH ||
-					mobj->class == MAP_ITEM_ARMOR  ||
-					mobj->class == MAP_ITEM_STAR   ||
-					mobj->class == MAP_ITEM_ROCKET ||
-					mobj->class == MAP_ITEM_MINE
-			);
-}
-
 /*
  * рисование объектов на карте
  */
@@ -549,7 +574,7 @@ void map_draw(camera_t * cam)
 			)
 		{
 			bool draw;
-			if(map_mobj_is_item(mobj))
+			if(mobj->type == MOBJ_ITEM)
 				draw = mobj->item.exist;
 			else
 				draw = false;

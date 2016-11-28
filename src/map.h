@@ -30,23 +30,34 @@
 // размер карты OY
 #define MAP_SY 50
 
+
 typedef enum
 {
-	MAP_UNKNOWN     = -1,
-	MAP_SPAWN_PLAYER,
-	MAP_SPAWN_ENEMY ,
-	MAP_SPAWN_BOSS  ,
-	MAP_ITEM_HEALTH ,
-	MAP_ITEM_ARMOR  ,
-	MAP_ITEM_STAR   ,
-	MAP_ITEM_ROCKET ,
-	MAP_ITEM_MINE   ,
-	MAP_OBJ_EXIT    ,
-	MAP_OBJ_MESS    ,
-	__MAP_OBJ_NUM
+	MAPDATA_MOBJ_UNKNOWN     = -1,
+	MAPDATA_MOBJ_SPAWN_PLAYER,
+	MAPDATA_MOBJ_SPAWN_ENEMY ,
+	MAPDATA_MOBJ_SPAWN_BOSS  ,
+	MAPDATA_MOBJ_ITEM_HEALTH ,
+	MAPDATA_MOBJ_ITEM_ARMOR  ,
+	MAPDATA_MOBJ_ITEM_STAR   ,
+	MAPDATA_MOBJ_ITEM_ROCKET ,
+	MAPDATA_MOBJ_ITEM_MINE   ,
+	MAPDATA_MOBJ_OBJ_EXIT    ,
+	MAPDATA_MOBJ_OBJ_MESS    ,
+	__MAPDATA_MOBJ_NUM
+} mapdata_mobj_type_t;
+
+
+typedef enum
+{
+	MOBJ_SPAWN,
+	MOBJ_ITEM,
+	MOBJ_MESSAGE,
+	MOBJ_EXIT,
+	__MOBJ_NUM
 } mobj_type_t;
 
-extern char * map_class_names[__MAP_OBJ_NUM];
+extern char * map_class_names[__MAPDATA_MOBJ_NUM];
 
 /* заголовок карты */
 typedef struct
@@ -119,8 +130,14 @@ typedef struct maplist_s
 /*
  * точка респавнинга
  */
-typedef struct spawn_s
+typedef struct
 {
+	enum
+	{
+		SPAWN_PLAYER,
+		SPAWN_ENEMY,
+		SPAWN_BOSS
+	} type;
 	//очки(-1 не используется)
 	long scores;
 	//здоровье у танка
@@ -132,34 +149,49 @@ typedef struct spawn_s
 /*
  * предметы
  */
-typedef struct item_s
+typedef struct
 {
+	enum
+	{
+		ITEM_HEALTH,
+		ITEM_ARMOR ,
+		ITEM_STAR  ,
+		ITEM_ROCKET,
+		ITEM_MINE
+	} type;
 	// количество
 	int amount;
 	// флаг присутствия
 	bool exist;
 } mobj_item_t;
 
-typedef struct obj_s
+typedef struct
 {
 	//сообщение
 	char * message;
-} mobj_obj_t;
+} mobj_message_t;
+
+typedef struct
+{
+	//сообщение
+	char * message;
+} mobj_exit_t;
 
 typedef struct mobj_s
 {
 	struct mobj_s *next;
 	//класс
-	mobj_type_t class;
+	mobj_type_t type;
 	//позиция
 	map_position_t pos;
 	//изображение объекта
 	item_img_t * img;
 	union
 	{
-		mobj_spawn_t spawn;
-		mobj_item_t  item;
-		mobj_obj_t   obj;
+		mobj_spawn_t   spawn;
+		mobj_item_t    item;
+		mobj_message_t mesage;
+		mobj_exit_t    exit;
 	};
 
 
@@ -209,7 +241,7 @@ void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t D
 void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);
 bool map_mobj_is_item(mobj_t * mobj);
 
-extern mobj_type_t map_file_class_get(int fd);
+extern mapdata_mobj_type_t map_file_class_get(int fd);
 int map_load(const char * mapname);
 void map_clear();
 void map_draw(camera_t * cam);

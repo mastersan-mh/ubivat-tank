@@ -654,7 +654,7 @@ static bool game_record_save_player(int fd, player_t * player)
 	{
 	case c_p_P0:
 	case c_p_P1:
-		write(fd, map_class_names[MAP_SPAWN_PLAYER], strlen(map_class_names[MAP_SPAWN_PLAYER])+1);
+		write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
 		break;
 	default:
 		return false;
@@ -681,8 +681,8 @@ static bool game_record_save_player(int fd, player_t * player)
  */
 static bool game_record_load_player(int fd, player_t * player)
 {
-	mobj_type_t mobj_type = map_file_class_get(fd);
-	if(mobj_type != MAP_SPAWN_PLAYER) return false;
+	mapdata_mobj_type_t mapdata_mobj_type = map_file_class_get(fd);
+	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER) return false;
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
