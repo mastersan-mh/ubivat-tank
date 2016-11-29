@@ -183,7 +183,7 @@ void player_class_init(player_t * player);
 
 void player_draw_status(camera_t * cam, player_t * player);
 
-void player_getdamage(player_t * player, explode_t * explode, bool self, float radius);
+void player_getdamage(player_t * player, mobj_t * explode, bool self, float radius);
 
 void players_control();
 

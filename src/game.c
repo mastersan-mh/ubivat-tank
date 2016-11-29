@@ -358,9 +358,9 @@ void game_main()
  */
 int game_gameTick()
 {
+	mobjs_handle();
 	players_control();
 	bull_control();
-	explode_control();
 
 	if(
 			game._win_ &&                                           //победа
@@ -408,7 +408,6 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 	map_draw(cam);
 
 	player_draw_all(cam);
-	explode_draw_all(cam);
 	bull_draw_all(cam);
 
 	video_viewport_set(
@@ -453,7 +452,6 @@ bool game_nextmap()
 {
 	int ret;
 	//дисконнект всех монстров
-	explode_removeall();
 	bull_removeall();
 	player_disconnect_monsters();
 	//закроем карту
@@ -861,7 +859,6 @@ void game_abort(void)
 	game.gamemap = mapList;
 	//дисконнект всех игроков
 	player_disconnect_all();
-	explode_removeall();
 	bull_removeall();
 	//закроем карту
 	map_clear();

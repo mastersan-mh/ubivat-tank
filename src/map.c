@@ -11,6 +11,8 @@
 #include <fonts.h>
 #include <utf8.h>
 
+#include "explode.h"
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -82,15 +84,12 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	size_t len;
-	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
+	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y);
 
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
 		mobj->type = MOBJ_SPAWN;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
-		mobj->img = NULL;
 		mobj->spawn.type = SPAWN_PLAYER;
 		mobj->spawn.scores = data->spawn.scores;
 		mobj->spawn.health = data->spawn.health;
@@ -98,9 +97,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		mobj->type = MOBJ_SPAWN;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
-		mobj->img = NULL;
 		mobj->spawn.type = SPAWN_ENEMY;
 		mobj->spawn.scores = data->spawn.scores;
 		mobj->spawn.health = data->spawn.health;
@@ -108,9 +104,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		mobj->type = MOBJ_SPAWN;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
-		mobj->img = NULL;
 		mobj->spawn.type = SPAWN_BOSS;
 		mobj->spawn.scores = data->spawn.scores;
 		mobj->spawn.health = data->spawn.health;
@@ -118,8 +111,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		mobj->type = MOBJ_ITEM;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(itemList[0]);
 		mobj->item.type = ITEM_HEALTH;
 		mobj->item.amount = data->item.amount;
@@ -127,8 +118,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
 		mobj->type = MOBJ_ITEM;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(itemList[1]);
 		mobj->item.type = ITEM_ARMOR;
 		mobj->item.amount = data->item.amount;
@@ -136,8 +125,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR   :
 		mobj->type = MOBJ_ITEM;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(itemList[2]);
 		mobj->item.type = ITEM_STAR;
 		mobj->item.amount = data->item.amount;
@@ -145,8 +132,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
 		mobj->type = MOBJ_ITEM;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(itemList[3]);
 		mobj->item.type = ITEM_ROCKET;
 		mobj->item.amount = data->item.amount;
@@ -154,8 +139,6 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
 		mobj->type = MOBJ_ITEM;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(itemList[4]);
 		mobj->item.type = ITEM_MINE;
 		mobj->item.amount = data->item.amount;
@@ -163,47 +146,23 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		mobj->type = MOBJ_MESSAGE;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(O_EXIT);
 		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
 		mobj->exit.message = Z_strndup(buf, len);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		mobj->type = MOBJ_MESSAGE;
-		mobj->pos.x = data->pos.x;
-		mobj->pos.y = data->pos.y;
 		mobj->img = NULL;
 		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
 		mobj->mesage.message = Z_strndup(buf, len);
 		break;
 	default: ;
 	}
-	mobj->next = map.mobjs;
-	map.mobjs = mobj;
 #undef BUFSIZE
 }
-/*
- * удаление всех точек спавна
- */
-static void map_mobj_removeall()
-{
-	mobj_t * mobj;
-	while(map.mobjs)
-	{
-		mobj = map.mobjs;
-		map.mobjs = map.mobjs->next;
-		switch(mobj->type)
-		{
-		case MOBJ_SPAWN  : break;
-		case MOBJ_ITEM   : break;
-		case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
-		case MOBJ_EXIT   : Z_free(mobj->exit.message); break;
-		default: break;
-		}
-		Z_free(mobj);
-	}
-}
+
+
+
 
 /*
  * поиск препятствия на карте
@@ -552,7 +511,7 @@ void map_clear()
 	Z_FREE(map._file);
 	Z_FREE(map.name);
 	Z_FREE(map.brief);
-	map_mobj_removeall();
+	mobjs_erase_all();
 	map.loaded = false;
 }
 
@@ -561,33 +520,7 @@ void map_clear()
  */
 void map_draw(camera_t * cam)
 {
-	mobj_t * mobj = map.mobjs;
-	while(mobj)
-	{
-		if(
-				mobj->img != NULL &&
-				cam->pos.x-cam->sx/2 <= mobj->pos.x+(c_i_MDL_box/2) &&
-				mobj->pos.x - (c_i_MDL_box/2)<=cam->pos.x+cam->sx/2 &&
-				cam->pos.y-cam->sy/2 <= mobj->pos.y+(c_i_MDL_box/2) &&
-				mobj->pos.y - (c_i_MDL_box/2)<=cam->pos.y+cam->sy/2
-			)
-		{
-			bool draw;
-			if(mobj->type == MOBJ_ITEM)
-				draw = mobj->item.exist;
-			else
-				draw = false;
-			if(draw)
-			{
-				gr2D_setimage0(
-					round(cam->x+mobj->pos.x-(cam->pos.x-cam->sx/2))+c_i_MDL_pos,
-					round(cam->y-mobj->pos.y+(cam->pos.y+cam->sy/2))+c_i_MDL_pos,
-					mobj->img
-				);
-			}
-		}
-		mobj = mobj->next;
-	}
+	mobjs_draw(cam);
 
 	int x, y;
 	int x0,x1;

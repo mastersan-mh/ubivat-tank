@@ -10,6 +10,7 @@
 
 #include <types.h>
 #include <img.h>
+#include "mobjs.h"
 
 //броня0
 #define c_m_w_w0        0x01
@@ -47,15 +48,6 @@ typedef enum
 	__MAPDATA_MOBJ_NUM
 } mapdata_mobj_type_t;
 
-
-typedef enum
-{
-	MOBJ_SPAWN,
-	MOBJ_ITEM,
-	MOBJ_MESSAGE,
-	MOBJ_EXIT,
-	__MOBJ_NUM
-} mobj_type_t;
 
 extern char * map_class_names[__MAPDATA_MOBJ_NUM];
 
@@ -113,12 +105,6 @@ typedef union
 	map_data_obj_t obj;
 } ATTR_PACKED map_data_mobj_t;
 
-typedef struct
-{
-	coord_t x;
-	coord_t y;
-}map_position_t;
-
 typedef struct maplist_s
 {
 	struct maplist_s * prev;
@@ -127,75 +113,6 @@ typedef struct maplist_s
 	char * name;
 } maplist_t;
 
-/*
- * точка респавнинга
- */
-typedef struct
-{
-	enum
-	{
-		SPAWN_PLAYER,
-		SPAWN_ENEMY,
-		SPAWN_BOSS
-	} type;
-	//очки(-1 не используется)
-	long scores;
-	//здоровье у танка
-	int health;
-	//броня у танка
-	int armor;
-} mobj_spawn_t;
-
-/*
- * предметы
- */
-typedef struct
-{
-	enum
-	{
-		ITEM_HEALTH,
-		ITEM_ARMOR ,
-		ITEM_STAR  ,
-		ITEM_ROCKET,
-		ITEM_MINE
-	} type;
-	// количество
-	int amount;
-	// флаг присутствия
-	bool exist;
-} mobj_item_t;
-
-typedef struct
-{
-	//сообщение
-	char * message;
-} mobj_message_t;
-
-typedef struct
-{
-	//сообщение
-	char * message;
-} mobj_exit_t;
-
-typedef struct mobj_s
-{
-	struct mobj_s *next;
-	//класс
-	mobj_type_t type;
-	//позиция
-	map_position_t pos;
-	//изображение объекта
-	item_img_t * img;
-	union
-	{
-		mobj_spawn_t   spawn;
-		mobj_item_t    item;
-		mobj_message_t mesage;
-		mobj_exit_t    exit;
-	};
-
-
-} mobj_t;
 
 /*
  * карта
@@ -222,6 +139,7 @@ extern maplist_t * mapList;
 int map_error_get();
 
 void map_init();
+
 
 void map_clip_find(
 		pos_t * orig,

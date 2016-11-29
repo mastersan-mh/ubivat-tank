@@ -14,6 +14,9 @@
 #include <fonts.h>
 #include <player.h>
 
+#include "mobjs.h"
+#include "explode.h"
+
 #include "sound.h"
 
 #include <string.h>
@@ -514,11 +517,7 @@ static void player_handle(player_t * player)
 		//если игрок мертв
 		if(player->charact.spawned)
 		{
-			bull_add();
-			bullList->player = player;
-			bullList->_weap_ = 1;
-			explode_add(bullList,player->move.pos.x,player->move.pos.y);
-			bull_remove(&bullList);
+			explode_new(player->move.pos.x,player->move.pos.y, EXPLODE_MISSILE, player);
 			player->charact.spawned = false;
 			player->charact.armor = 0;
 			if(0<player->w.ammo[1]) player->w.ammo[1] = 0;
@@ -1104,19 +1103,19 @@ void player_class_init(player_t * player)
 /*
  * вычисление повреждения наносимого игроку
  */
-void player_getdamage(player_t * player, explode_t * explode, bool self, float radius)
+void player_getdamage(player_t * player, mobj_t * explode, bool self, float radius)
 {
 	float damage_full;
 	float armor;
 
-	if(
-			(player->charact.health>0) && (radius<=wtable[explode->_weap_].radius)
-	)
+	weapon_info_t * weapinfo = &wtable[explode->explode.type];
+
+	if( player->charact.health > 0 && radius<=weapinfo->radius )
 	{
 		if(self)
-			damage_full = wtable[explode->_weap_].selfdamage*(1-radius/wtable[explode->_weap_].radius);
+			damage_full = weapinfo->selfdamage*(1-radius/weapinfo->radius);
 		else
-			damage_full = wtable[explode->_weap_].damage    *(1-radius/wtable[explode->_weap_].radius);
+			damage_full = weapinfo->damage    *(1-radius/weapinfo->radius);
 		armor = player->charact.armor-damage_full*2/3;
 		player->charact.health = player->charact.health-roundf(damage_full/3);
 		if(armor < 0)
@@ -1130,18 +1129,18 @@ void player_getdamage(player_t * player, explode_t * explode, bool self, float r
 			if(!self)
 			{
 				//атакующему добавим очки
-				explode->player->charact.scores += c_score_pertank;
-				explode->player->charact.fragstotal++;
-				explode->player->charact.frags++;
+				explode->explode.owner->charact.scores += c_score_pertank;
+				explode->explode.owner->charact.fragstotal++;
+				explode->explode.owner->charact.frags++;
 			}
 			else
 			{
 				//атакующий умер от своей пули
-				explode->player->charact.scores = 0;
-				explode->player->charact.fragstotal--;
-				explode->player->charact.frags--;
+				explode->explode.owner->charact.scores = 0;
+				explode->explode.owner->charact.fragstotal--;
+				explode->explode.owner->charact.frags--;
 			}
-			player_class_init(explode->player);
+			player_class_init(explode->explode.owner);
 		}
 	}
 }

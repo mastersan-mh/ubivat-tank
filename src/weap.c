@@ -12,6 +12,9 @@
 #include <_gr2D.h>
 #include "sound.h"
 
+#include "mobjs.h"
+#include "explode.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -23,7 +26,6 @@ weapon_info_t wtable[3];
 
 //список пуль
 bull_t * bullList = NULL;
-explode_t * explList = NULL;
 
 extern player_t * playerList;
 
@@ -171,7 +173,7 @@ void bull_control()
 				(-1<wtable[bull->_weap_].range) && (wtable[bull->_weap_].range<bull->delta_s)
 		)
 		{//предельное расстояние пройдено
-			explode_add(bull, bull->pos.x,bull->pos.y);
+			explode_new(bull->pos.x, bull->pos.y, bull_type_to_explode_type(bull->_weap_), bull->player);
 			bull_remove(&bull);
 		}
 		else
@@ -183,7 +185,7 @@ void bull_control()
 			);
 			if((Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd) != 0)
 			{     //пуля попала в стену
-				explode_add(bull,bull->pos.x,bull->pos.y);
+				explode_new(bull->pos.x,bull->pos.y, bull_type_to_explode_type(bull->_weap_), bull->player);
 				bull_remove(&bull);
 			}
 			else {                                                         //пуля не попала в стену
@@ -196,7 +198,7 @@ void bull_control()
 				};
 				if(flag)
 				{                                              //попадание в игрока
-					explode_add(bull,bull->pos.x,bull->pos.y);
+					explode_new(bull->pos.x,bull->pos.y, bull_type_to_explode_type(bull->_weap_), bull->player);
 					bull_remove(&bull);
 				}
 				else
@@ -215,211 +217,8 @@ void bull_control()
 		}
 	}
 }
-/*
- * добавление взрыва
- */
-void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl)
-{
-	explode_t * p;
 
-	p = Z_malloc(sizeof(*p));
-	p->pos.x = Xexpl;                                                    //координаты
-	p->pos.y = Yexpl;                                                    //координаты
-	if(!bull)
-	{
-		p->player = NULL;                                                     //игрок, выпустивший пулю
-		p->_weap_ = 1;                                                       //
-	}
-	else
-	{
-		p->player = bull->player;                                            //игрок, выпустивший пулю
-		p->_weap_ = bull->_weap_;                                            //
-	};
-	p->frame  = -1;                                                       //№ кадра
-	switch(bull->_weap_){                                                 //изображение взрыва
-	case 0:
-		sound_play_start(SOUND_EXPLODE_ARTILLERY, 1);
-		p->image = image_get(E_SMALL);
-		break;
-	case 1:
-		sound_play_start(SOUND_EXPLODE_MISSILE, 1);
-		p->image = image_get(E_BIG);
-		break;
-	case 2:
-		sound_play_start(SOUND_EXPLODE_GRENADE, 1);
-		p->image = image_get(E_BIG);
-		break;
-	};
-	p->next       = explList;
-	explList = p;
-}
-/*
- * удаление взрыва из списка, после удаления
- *        explode указывает на предыдущий эл-т если
- *        он существует, если нет - то на следующий
- */
-void explode_remove(explode_t ** explode)
-{
-	explode_t * p;
 
-	if (explList && *explode != NULL)
-	{
-		p = explList;
-		if(explList== *explode) {                                    //если HEAD и explode совпадают
-			explList = p->next;
-			*explode          = explList;
-			Z_free(p);
-			p = NULL;
-		}
-		else
-		{
-			if(p->next)
-			{                                         //если в списке не один эл-т
-				while(p && p->next != *explode) p = p->next;                     //находим ссылку на нужный эл-т
-				p->next = (*explode)->next;
-				Z_free(*explode);                                                    //удаляем его
-				*explode = p;                                                          //bull указ. на пред. эл-т
-			}
-		}
-	}
-}
-/*
- * удаление всех взрывов
- */
-void explode_removeall()
-{
-	explode_t * explode;
-	while(explList)
-	{
-		explode          = explList;
-		explList = explList->next;
-		Z_free(explode);
-	};
-};
-/*
- * отрисовка
- */
-static void explode_draw(camera_t * cam, explode_t * explode)
-{
-	int mdlbox;
 
-	mdlbox = explode->image->img_sx;
-	if(
-			(cam->pos.x-cam->sx/2<=explode->pos.x+(mdlbox >> 1)) &&
-			(explode->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
-			(cam->pos.y-cam->sy/2<=explode->pos.y+(mdlbox >> 1)) &&
-			(explode->pos.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
-			)
-	{
-		gr2D_setimage1(
-			roundf(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
-			roundf(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
-			explode->image,
-			0,
-			mdlbox * trunc(explode->frame),
-			mdlbox,
-			mdlbox
-		);
-	}
-}
-/*
- * управление взрывом
- */
-void explode_control()
-{
-	explode_t * explode;
-	player_t * player;
-	float r,sp_x,sp_y;
-	bool self;
-	int x,y;
-	char wall;
-	char wall_type;
 
-	explode = explList;
-	while(explode)
-	{
-		if(explode->frame == -1)
-		{
-			explode->frame = 0;
-//проверка попаданий в стены
-			for(y = -wtable[explode->_weap_].radius; y<= wtable[explode->_weap_].radius; y++)
-			{
-				for(x = -wtable[explode->_weap_].radius; x<= wtable[explode->_weap_].radius; x++)
-				{
-					if(
-							(0<=trunc((explode->pos.x+x)/8)) && (trunc((explode->pos.x+x)/8)<=MAP_SX) &&
-							(0<=trunc((explode->pos.y+y)/8)) && (trunc((explode->pos.y+y)/8)<=MAP_SY)
-					)
-					{
-						wall = map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)];
-						if(wall & c_m_f_clip)
-						{                   //присутствует зажим
-							wall_type = wall & 0x0F;
-							if((wall_type | c_m_w_w0 | c_m_water) != (c_m_w_w0 | c_m_water))
-							{//если не броня0 и не вода
-								if(
-										(wall_type == c_m_w_brick) ||//если кирпич
-										(
-												(wall_type == c_m_w_w1) &&
-												((explode->_weap_==1)||(explode->_weap_==2)))//если броня1
-								)
-								{
-									map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)] = 0;
-								}
-							}
-						}
-					}
-				}
-			}
-//проверка попаданий в игрока
-			player = playerList;
-			while(player)
-			{
-				sp_x = player->move.pos.x-explode->pos.x;
-				sp_y = player->move.pos.y-explode->pos.y;
-				if(
-						(abs(sp_x)<=c_p_MDL_box/2) &&
-						(abs(sp_y)<=c_p_MDL_box/2)) r = 0;
-				else
-				{
-					r = sqrt(sp_x*sp_x+sp_y*sp_y)-sqrt(sqrf(c_p_MDL_box/2)+sqrf(c_p_MDL_box/2))/2;
-					if(r<=wtable[explode->_weap_].bullbox) r = 0;
-				};
-				if((0<wtable[explode->_weap_].radius) && (r<=wtable[explode->_weap_].radius))
-				{
-					if(
-							(explode->player == player) ||
-							(
-									((explode->player==game.P0) || (explode->player==game.P1))&&
-									((player == game.P0)||(player == game.P1))
-							)
-					)
-						self = true;          //взрывом задели себя или товарища по команде(не для монстров)
-					else self = false;                                                  //взрывом задели другого игрока
-					player_getdamage(player, explode, self, r);
-				};
-				player = player->next;
-			};
-		};
-		if(c_explode_Famnt - 1 < explode->frame) explode->frame = c_explode_Famnt-1;
-
-		explode->frame = explode->frame + c_explode_FPS * dtimed1000;
-
-		if(explode->frame > c_explode_Famnt - 1)
-			explode_remove(&explode);
-		else
-			explode = explode->next;
-	};
-};
-
-void explode_draw_all(camera_t * cam)
-{
-	explode_t *explode = explList;
-	while(explode)
-	{
-		explode_draw(cam, explode);
-		explode = explode->next;
-	}
-
-}
 

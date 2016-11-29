@@ -24,6 +24,8 @@ game.c \
 img.c \
 main.c \
 map.c \
+mobjs.c \
+explode.c \
 menu.c \
 player.c \
 weap.c
