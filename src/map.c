@@ -152,7 +152,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
 		break;
-	case MAPDATA_MOBJ_ITEM_MINE   :
+	case MAPDATA_MOBJ_ITEM_MINE:
 		mobj->type = MOBJ_ITEM;
 		mobj->pos.x = data->pos.x;
 		mobj->pos.y = data->pos.y;
@@ -518,20 +518,19 @@ int map_load(const char * mapname)
 	int i = 0;
 	for(;;)
 	{
-		i++;
-		/*
-		if (
-				parental_lock &&
-				(
-						i == 12 || i == 13 || i == 30 || i == 32
-				)
-		) continue;
-		*/
 		mapdata_mobj_type_t mapdata_mobj_type;
 		map_data_mobj_t data;
 		int ret = map_load_mobj(fd, &mapdata_mobj_type, &data);
 		if(ret) break;
 		if(mapdata_mobj_type == MAPDATA_MOBJ_SPAWN_PLAYER) player_spawn_exist = true;
+
+		i++;
+		if (
+				parental_lock &&
+				(
+						i == 12 || i == 30
+				)
+		) continue;
 		map_mobj_add(mapdata_mobj_type, &data);
 	}
 	close(fd);
