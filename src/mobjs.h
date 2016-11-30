@@ -35,6 +35,14 @@ typedef struct
 	coord_t y;
 }mobj_position_t;
 
+typedef enum
+{
+	DIR_UP,
+	DIR_DOWN,
+	DIR_LEFT,
+	DIR_RIGHT
+} direction_t;
+
 /*
  * точка респавнинга
  */
@@ -88,9 +96,6 @@ typedef struct
 	struct player_s * owner;
 	//тип пули(оружие, из которого выпущена пуля)
 	int _weap_;
-	//направление движения
-	//0 - вверх;1 - вниз;2 - влево;3 - вправо
-	int dir;
 	//изменение расстояния
 	coord_t delta_s;
 	//время
@@ -124,6 +129,8 @@ typedef struct mobj_s
 	mobj_type_t type;
 	//позиция
 	mobj_position_t pos;
+	/* направление взгляда/движения */
+	direction_t dir;
 	//изображение объекта
 	item_img_t * img;
 	union
@@ -146,7 +153,7 @@ extern void mobjs_handle();
 
 extern void mobjs_draw(camera_t * cam);
 
-mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y);
+mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y, direction_t dir);
 
 void mobjs_erase_all();
 

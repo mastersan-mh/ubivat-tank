@@ -144,33 +144,33 @@ void game_init()
 	//чтение изображений
 	images_init();
 	game.m_i_logo     = image_get(IMG_MENU_LOGO     );
-	game.m_i_conback  = image_get(M_CONBACK  );
-	game.m_i_interlv  = image_get(M_I_INTERLV);
-	game.m_i_game     = image_get(M_GAME     );
-	game.m_i_g_new_p1 = image_get(M_G_NEW_P1 );
-	game.m_i_g_new_p2 = image_get(M_G_NEW_P2 );
-	game.m_i_g_load   = image_get(M_G_LOAD   );
-	game.m_i_g_save   = image_get(M_G_SAVE   );
-	game.m_i_case     = image_get(M_CASE     );
-	game.m_i_options  = image_get(M_OPTIONS  );
-	game.m_i_about    = image_get(M_ABOUT    );
-	game.m_i_abort    = image_get(M_ABORT    );
-	game.m_i_quit     = image_get(M_QUIT     );
-	game.m_i_cur_0    = image_get(M_CUR_0    );
-	game.m_i_cur_1    = image_get(M_CUR_1    );
-	game.m_i_arrowL   = image_get(M_ARROWL   );
-	game.m_i_arrowR   = image_get(M_ARROWR   );
-	game.m_i_lineL    = image_get(M_LINEL    );
-	game.m_i_lineM    = image_get(M_LINEM    );
-	game.m_i_lineR    = image_get(M_LINER    );
-	game.m_i_flagRUS  = image_get(F_RUS      );
-	game.m_i_flagUSA  = image_get(F_USA      );
+	game.m_i_conback  = image_get(IMG_MENU_CONBACK  );
+	game.m_i_interlv  = image_get(IMG_MENU_I_INTERLV);
+	game.m_i_game     = image_get(IMG_MENU_GAME     );
+	game.m_i_g_new_p1 = image_get(IMG_MENU_G_NEW_P1 );
+	game.m_i_g_new_p2 = image_get(IMG_MENU_G_NEW_P2 );
+	game.m_i_g_load   = image_get(IMG_MENU_G_LOAD   );
+	game.m_i_g_save   = image_get(IMG_MENU_G_SAVE   );
+	game.m_i_case     = image_get(IMG_MENU_CASE     );
+	game.m_i_options  = image_get(IMG_MENU_OPTIONS  );
+	game.m_i_about    = image_get(IMG_MENU_ABOUT    );
+	game.m_i_abort    = image_get(IMG_MENU_ABORT    );
+	game.m_i_quit     = image_get(IMG_MENU_QUIT     );
+	game.m_i_cur_0    = image_get(IMG_MENU_CUR_0    );
+	game.m_i_cur_1    = image_get(IMG_MENU_CUR_1    );
+	game.m_i_arrowL   = image_get(IMG_MENU_ARROWL   );
+	game.m_i_arrowR   = image_get(IMG_MENU_ARROWR   );
+	game.m_i_lineL    = image_get(IMG_MENU_LINEL    );
+	game.m_i_lineM    = image_get(IMG_MENU_LINEM    );
+	game.m_i_lineR    = image_get(IMG_MENU_LINER    );
+	game.m_i_flagRUS  = image_get(IMG_FLAG_RUS      );
+	game.m_i_flagUSA  = image_get(IMG_FLAG_USA      );
 	game.w_water[0]   = image_get(IMG_WATER0     );
 	game.w_water[1]   = image_get(IMG_WATER1     );
 	game.w_water[2]   = image_get(IMG_WATER2     );
-	game.i_health     = image_get(I_HEALTH   );
-	game.i_armor      = image_get(I_ARMOR    );
-	game.i_star       = image_get(I_STAR     );
+	game.i_health     = image_get(IMG_ITEM_HEALTH);
+	game.i_armor      = image_get(IMG_ITEM_ARMOR );
+	game.i_star       = image_get(IMG_ITEM_STAR  );
 
 	//чтение конфига
 	printf("Config init...\n");
@@ -186,7 +186,7 @@ void game_init()
 	wtable[0].range      = -1;                                          //дальность
 	wtable[0].bullspeed  = 75;                                         //скорость пули
 	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = image_get(W_BULL);     //изображение оружия
+	wtable[0].icon       = image_get(IMG_WEAPON_ARTILLERY);     //изображение оружия
 	strcpy(wtable[1].name, "Rocket");                                    //название оружия
 	wtable[1].damage     = 100;                                         //повреждение
 	wtable[1].selfdamage = 50;                                          //повреждение
@@ -195,7 +195,7 @@ void game_init()
 	wtable[1].range      = -1;                                          //дальность
 	wtable[1].bullspeed  = 80;                                         //скорость пули
 	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = image_get(W_ROCKET);     //изображение оружия
+	wtable[1].icon       = image_get(IMG_WEAPON_MISSILE);     //изображение оружия
 	strcpy(wtable[2].name, "Mine");                                      //название оружия
 	wtable[2].damage     = 200;                                         //повреждение
 	wtable[2].selfdamage = 100;                                         //повреждение
@@ -204,7 +204,7 @@ void game_init()
 	wtable[2].range      = 100;                                         //дальность
 	wtable[2].bullspeed  = -80;                                        //скорость пули
 	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = image_get(W_MINE);     //изображение оружия
+	wtable[2].icon       = image_get(IMG_WEAPON_MINE);     //изображение оружия
 	input_init();
 
 	game_rebind_keys_all();

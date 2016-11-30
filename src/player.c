@@ -531,7 +531,7 @@ static void player_handle(player_t * player)
 		//игрок жив
 		if(player->bull)
 		{
-			player->bull->bull.dir = player->move.dir;
+			player->bull->dir = player->move.dir;
 			player->move.go = false;
 		};
 		if(player->move.go)
@@ -743,17 +743,17 @@ int player_connect(int status)
 	{
 		switch(player->charact.status)
 		{
-		case c_p_BOSS : player->Iflag = image_get(F_USA);break;
-		case c_p_ENEMY: player->Iflag = image_get(F_WHITE);break;
+		case c_p_BOSS : player->Iflag = image_get(IMG_FLAG_USA);break;
+		case c_p_ENEMY: player->Iflag = image_get(IMG_FLAG_WHITE);break;
 		case c_p_P0   :
 			game.P0 = player;
 			player->charact.frags = 0;
-			player->Iflag = image_get(F_RUS);
+			player->Iflag = image_get(IMG_FLAG_RUS);
 			break;
 		case c_p_P1   :
 			game.P1 = player;
 			player->charact.frags = 0;
-			player->Iflag = image_get(F_RUS);
+			player->Iflag = image_get(IMG_FLAG_RUS);
 			break;
 		}
 		player->charact.spawned = false;
@@ -1037,7 +1037,7 @@ void player_class_init(player_t * player)
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(TANK0);                    //база
+			player->Ibase = image_get(IMG_TANK0);                    //база
 			break;
 		case 1:
 			player->charact.healthmax = 100;                                      //здоровье max
@@ -1046,7 +1046,7 @@ void player_class_init(player_t * player)
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(TANK1);                    //база
+			player->Ibase = image_get(IMG_TANK1);                    //база
 			break;
 		case 2:
 			player->charact.healthmax = 100;                                      //здоровье max
@@ -1057,7 +1057,7 @@ void player_class_init(player_t * player)
 				player->w.ammo[1] = 99;
 			else if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(TANK2);                    //база
+			player->Ibase = image_get(IMG_TANK2);                    //база
 			break;
 		case 3:
 			player->charact.healthmax = 200;                                      //здоровье max
@@ -1069,7 +1069,7 @@ void player_class_init(player_t * player)
 			else
 				if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(TANK3);                    //база
+			player->Ibase = image_get(IMG_TANK3);                    //база
 			break;
 		case 4:
 			player->charact.healthmax = 200;                                      //здоровье max
@@ -1088,7 +1088,7 @@ void player_class_init(player_t * player)
 				player->w.ammo[2] = 99;
 			else
 				if(player->w.ammo[2] < 0) player->w.ammo[2] = 0;
-			player->Ibase = image_get(TANK4);
+			player->Ibase = image_get(IMG_TANK4);
 			break;
 	};
 	if(player->charact.status == c_p_BOSS)

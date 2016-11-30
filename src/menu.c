@@ -198,12 +198,12 @@ static void menu_main_draw(const void * ctx)
 
 	static image_index_t list[] =
 	{
-			M_GAME,
-			M_CASE,
-			M_OPTIONS,
-			M_ABOUT,
-			M_ABORT,
-			M_QUIT
+			IMG_MENU_GAME,
+			IMG_MENU_CASE,
+			IMG_MENU_OPTIONS,
+			IMG_MENU_ABOUT,
+			IMG_MENU_ABORT,
+			IMG_MENU_QUIT
 	};
 	for(int i = 0; i < 6; i++)
 	{

@@ -18,9 +18,9 @@ mobj_t * explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, pla
 {
 	static image_index_t img_list[] =
 	{
-			E_SMALL,
-			E_BIG,
-			E_BIG
+			IMG_EXPLODE_SMALL,
+			IMG_EXPLODE_BIG,
+			IMG_EXPLODE_BIG
 	};
 	static sound_index_t sound_list[] =
 	{
@@ -28,7 +28,7 @@ mobj_t * explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, pla
 			SOUND_EXPLODE_MISSILE,
 			SOUND_EXPLODE_GRENADE
 	};
-	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y);
+	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y, DIR_UP);
 
 	mobj->explode.owner = owner;
 	mobj->explode.type  = explode_type;

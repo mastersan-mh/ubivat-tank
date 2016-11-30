@@ -110,7 +110,7 @@ void mobjs_draw(camera_t * cam)
 /*
  * добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y)
+mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y, direction_t dir)
 {
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
@@ -118,6 +118,7 @@ mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y)
 	mobj->type = mobj_type;
 	mobj->pos.x = x;
 	mobj->pos.y = y;
+	mobj->dir   = dir;
 
 	mobj->next = map.mobjs;
 	map.mobjs = mobj;

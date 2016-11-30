@@ -469,9 +469,6 @@ static void __images_precache()
 	size_t path_len = 0;
 	char * path = NULL;
 
-	struct image_table_ent_s * info;
-
-
 	for(i = 0; i < __IMAGE_NUM; i++)
 	{
 		char * filename = image_files[i];

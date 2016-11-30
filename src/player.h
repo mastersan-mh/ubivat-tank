@@ -47,13 +47,6 @@
 //скорость проигрывания кадров: бег
 #define PLAYER_FPS_RUN      20
 
-typedef enum
-{
-	DIR_UP,
-	DIR_DOWN,
-	DIR_LEFT,
-	DIR_RIGHT
-} direction_t;
 
 typedef struct
 {

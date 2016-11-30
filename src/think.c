@@ -73,7 +73,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 		)
 		{
 			if(
-					(bull->bull.dir == DIR_UP || weapinfo->bullspeed < 0) &&
+					(bull->dir == DIR_UP || weapinfo->bullspeed < 0) &&
 					(abs(player->move.pos.y-bull->pos.y)<Ddist) &&
 					(bull->pos.y+ weapinfo->radius<player->move.pos.y-c_p_MDL_box/2)
 			)
@@ -93,7 +93,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 			else
 			{
 				if(
-						(bull->bull.dir == DIR_DOWN ||  weapinfo->bullspeed<0) &&
+						(bull->dir == DIR_DOWN ||  weapinfo->bullspeed<0) &&
 						(abs(player->move.pos.y-bull->pos.y)<Udist) &&
 						(player->move.pos.y+c_p_MDL_box/2<bull->pos.y- weapinfo->radius)
 				)
@@ -119,7 +119,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 			)
 			{
 				if (
-						(bull->bull.dir == DIR_LEFT || weapinfo->bullspeed < 0)&&
+						(bull->dir == DIR_LEFT || weapinfo->bullspeed < 0)&&
 						(abs(player->move.pos.x-bull->pos.x)<Rdist)&&
 						(player->move.pos.x+c_p_MDL_box/2<bull->pos.x- weapinfo->radius)
 				)
@@ -139,7 +139,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 				else
 				{
 					if(
-							(bull->bull.dir == DIR_RIGHT || weapinfo->bullspeed < 0) &&
+							(bull->dir == DIR_RIGHT || weapinfo->bullspeed < 0) &&
 							(abs(player->move.pos.x-bull->pos.x)<Ldist) &&
 							(bull->pos.x + weapinfo->radius < player->move.pos.x - c_p_MDL_box / 2)
 					)
@@ -164,7 +164,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 	if(!player->brain.danger)
 	{
 		player->brain.Fdanger = false;
-		//player->move.go = $00;
+		//player->move.go = false;
 	}
 }
 /*
@@ -205,7 +205,7 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 		return;
 	};
 	//если оружие не перезарядилось
-	if(0<player->w.reloadtime_d) return;
+	if(0 < player->w.reloadtime_d) return;
 	player->brain.target = NULL;
 	if(
 			(player->move.pos.x-c_p_MDL_box/2<target->move.pos.x) &&
@@ -273,23 +273,23 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 			}
 			if(
 					(dist-c_p_MDL_box/2<wtable[player->brain.weapon-1].radius)&&
-					((wall==c_m_w_w0+c_m_f_clip)||(wall==c_m_w_w1+c_m_f_clip))
+					(wall == (c_m_w_w0 | c_m_f_clip) || wall == (c_m_w_w1 | c_m_f_clip))
 			) player->brain.weapon = 0;
 		}
 	}
 	else
 	{
 		if(
-				(player->move.pos.y-c_p_MDL_box/2<target->move.pos.y)&&
-				(target->move.pos.y<player->move.pos.y+c_p_MDL_box/2)
+				(player->move.pos.y - c_p_MDL_box/2 < target->move.pos.y)&&
+				(target->move.pos.y < player->move.pos.y + c_p_MDL_box/2)
 		)
 		{
 			if(target->move.pos.x<player->move.pos.x) player->move.dir = DIR_LEFT;
-			else                                        player->move.dir = DIR_RIGHT;
-			map_clip_find_near_wall(&player->move.pos,player->move.dir,&dist,&wall);
+			else                                      player->move.dir = DIR_RIGHT;
+			map_clip_find_near_wall(&player->move.pos, player->move.dir, &dist, &wall);
 			if(
 					//противник в прямой видимости
-					(abs(player->move.pos.x-target->move.pos.x)<dist-c_p_MDL_box/2)||
+					(abs(player->move.pos.x - target->move.pos.x) < dist - c_p_MDL_box/2)||
 					(wall       ) == c_m_w_w0  ||
 					(wall       ) == c_m_w_w1  ||
 					(wall & 0x0F) == c_m_water ||
@@ -317,15 +317,16 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 						if((wall & 0x0F)==c_m_w_w1) {                           //слабая броня
 							if(player->w.ammo[2]>0) {
 								player->brain.weapon = 1+1+xrand(2);                            //выбираем наугад ракету или мину
-								if(player->brain.weapon==1+2) {                          //мина
-									if(player->move.dir==DIR_LEFT)
+								if(player->brain.weapon == 1+2)
+								{ //мина
+									if(player->move.dir == DIR_LEFT)
 										player->move.dir = DIR_RIGHT;
 									else
 										player->move.dir = DIR_LEFT;
 								};
 							}
 							else {
-								if(player->w.ammo[1]>0)
+								if(player->w.ammo[1] > 0)
 									player->brain.weapon = 1+1;
 								else
 									player->brain.weapon = 0;

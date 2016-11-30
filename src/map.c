@@ -75,16 +75,16 @@ void map_init()
 static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t * data)
 {
 	static image_index_t itemList[] = {
-			I_HEALTH,
-			I_ARMOR ,
-			I_STAR  ,
-			W_ROCKET,
-			W_MINE
+			IMG_ITEM_HEALTH,
+			IMG_ITEM_ARMOR ,
+			IMG_ITEM_STAR  ,
+			IMG_WEAPON_MISSILE,
+			IMG_WEAPON_MINE
 	};
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	size_t len;
-	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y);
+	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP);
 
 	switch(mapdata_mobj_type)
 	{
@@ -146,7 +146,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		mobj->type = MOBJ_MESSAGE;
-		mobj->img = image_get(O_EXIT);
+		mobj->img = image_get(IMG_OBJ_EXIT);
 		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
 		mobj->exit.message = Z_strndup(buf, len);
 		break;
