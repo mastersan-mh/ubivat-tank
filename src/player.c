@@ -95,7 +95,7 @@ void player_attack_weapon1_OFF()
 
 void player_attack_weapon2_ON()
 {
-	game.P0->w.attack = WEAP_ROCKET;
+	game.P0->w.attack = WEAP_MISSILE;
 }
 void player_attack_weapon2_OFF()
 {
@@ -181,7 +181,7 @@ void player2_attack_weapon1_OFF()
 void player2_attack_weapon2_ON()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_ROCKET;
+	game.P1->w.attack = WEAP_MISSILE;
 }
 void player2_attack_weapon2_OFF()
 {
@@ -621,7 +621,7 @@ static void player_handle(player_t * player)
 				{
 					//если не стреляем управляемой ракетой
 					if(
-							(wtable[player->w.attack-1].ammo == c_WEAP_indefinit)||            //если пуль бесконечно много
+							(wtable[player->w.attack-1].ammo == WEAP_AMMO_INFINITE)||            //если пуль бесконечно много
 							(player->w.ammo[player->w.attack-1]>0)
 					)
 					{
@@ -1004,9 +1004,9 @@ void player_draw_status(camera_t * cam, player_t * player)
 	ref_y += 16;
 
 	gr2D_setimage1(cam->x + 16 * 0, ref_y, player->Ibase, 0, 0, c_p_MDL_box,c_p_MDL_box);
-	gr2D_setimage0(cam->x + 16 * 4, ref_y, wtable[0].icon);
-	gr2D_setimage0(cam->x + 16 * 6, ref_y, wtable[1].icon);
-	gr2D_setimage0(cam->x + 16 * 8, ref_y, wtable[2].icon);
+	gr2D_setimage0(cam->x + 16 * 4, ref_y, image_get(wtable[0].icon));
+	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get(wtable[1].icon));
+	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get(wtable[2].icon));
 
 	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "%d", player->w.ammo[0]);
 	if(player->w.ammo[1]>-1)

@@ -77,8 +77,6 @@ typedef enum {
 //позиция изображения
 #define c_o_MDL_pos     (-8)
 //оружия
-//оружие бесконечно
-#define c_WEAP_indefinit 0
 //очки
 //сколько очков нужно набрать для повышения уровня танка
 #define c_score_perclass 200

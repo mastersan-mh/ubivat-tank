@@ -176,35 +176,6 @@ void game_init()
 	printf("Config init...\n");
 	game_cfg_load();
 
-	//инициализация оружий
-	printf("Weapons init...\n");
-	strcpy(wtable[0].name, "Pulki");                                     //название оружия
-	wtable[0].damage     = 15;                                          //повреждение
-	wtable[0].selfdamage = 7;//0;                                       //повреждение
-	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
-	wtable[0].radius     = 7;                                           //радиус действия
-	wtable[0].range      = -1;                                          //дальность
-	wtable[0].bullspeed  = 75;                                         //скорость пули
-	wtable[0].bullbox    = 2;                                           //bodybox
-	wtable[0].icon       = image_get(IMG_WEAPON_ARTILLERY);     //изображение оружия
-	strcpy(wtable[1].name, "Rocket");                                    //название оружия
-	wtable[1].damage     = 100;                                         //повреждение
-	wtable[1].selfdamage = 50;                                          //повреждение
-	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[1].radius     = 11;                                          //радиус действия
-	wtable[1].range      = -1;                                          //дальность
-	wtable[1].bullspeed  = 80;                                         //скорость пули
-	wtable[1].bullbox    = 8;                                           //bodybox
-	wtable[1].icon       = image_get(IMG_WEAPON_MISSILE);     //изображение оружия
-	strcpy(wtable[2].name, "Mine");                                      //название оружия
-	wtable[2].damage     = 200;                                         //повреждение
-	wtable[2].selfdamage = 100;                                         //повреждение
-	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
-	wtable[2].radius     = 11;                                          //радиус действия
-	wtable[2].range      = 100;                                         //дальность
-	wtable[2].bullspeed  = -80;                                        //скорость пули
-	wtable[2].bullbox    = 8;                                           //bodybox
-	wtable[2].icon       = image_get(IMG_WEAPON_MINE);     //изображение оружия
 	input_init();
 
 	game_rebind_keys_all();

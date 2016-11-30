@@ -15,9 +15,13 @@ typedef enum
 {
 	WEAP_NONE,
 	WEAP_BULL,
-	WEAP_ROCKET,
+	WEAP_MISSILE,
 	WEAP_MINE,
+	__WEAP_NUM
 } weapon_t;
+
+//оружие бесконечно
+#define WEAP_AMMO_INFINITE 0
 
 
 /*
@@ -26,7 +30,7 @@ typedef enum
 typedef struct
 {
 	//название оружия
-	char name[17];
+	char * name;
 	//повреждение
 	int damage;
 	//повреждение
@@ -42,10 +46,9 @@ typedef struct
 	//bodybox
 	coord_t bullbox;
 	//изображение оружия
-	item_img_t * icon;
+	image_index_t icon;
 } weapon_info_t;
 
-
-extern weapon_info_t wtable[];
+extern weapon_info_t wtable[3];
 
 #endif /* SRC_WEAP_H_ */
