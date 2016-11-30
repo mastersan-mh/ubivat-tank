@@ -25,6 +25,7 @@ img.c \
 main.c \
 map.c \
 mobjs.c \
+bull.c \
 explode.c \
 menu.c \
 player.c \

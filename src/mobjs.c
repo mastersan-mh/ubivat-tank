@@ -7,13 +7,14 @@
 
 #include "mobjs.h"
 #include "explode.h"
+#include "bull.h"
 #include "map.h"
 
 #include "_gr2D.h"
 
 mobj_explode_type_t bull_type_to_explode_type(int bull_type)
 {
-	switch(bullList->_weap_)
+	switch(bull_type)
 	{
 	case 0: return EXPLODE_ARTILLERY;
 	case 1: return EXPLODE_MISSILE;
@@ -33,6 +34,9 @@ void mobjs_handle()
 		case MOBJ_SPAWN: break;
 		case MOBJ_ITEM: break;
 		case MOBJ_MESSAGE: break;
+		case MOBJ_BULL:
+			bull_handle(mobj);
+			break;
 		case MOBJ_EXPLODE:
 			explode_handle(mobj);
 			break;
@@ -88,6 +92,9 @@ void mobjs_draw(camera_t * cam)
 				break;
 			case MOBJ_MESSAGE:
 				break;
+			case MOBJ_BULL:
+				bull_draw(cam, mobj);
+				break;
 			case MOBJ_EXPLODE:
 				explode_draw(cam, mobj);
 				break;
@@ -124,6 +131,7 @@ void mobj_free_internal(mobj_t * mobj)
 	case MOBJ_SPAWN  : break;
 	case MOBJ_ITEM   : break;
 	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
+	case MOBJ_BULL   : break;
 	case MOBJ_EXPLODE: break;
 	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;
 	default: break;

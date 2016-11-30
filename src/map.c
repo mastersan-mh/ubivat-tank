@@ -168,25 +168,25 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
  * поиск препятствия на карте
  */
 void map_clip_find(
-		pos_t * orig,
-		float BOX,
-		char mask,
-		bool * Ul,
-		bool * Ur,
-		bool * Dl,
-		bool * Dr,
-		bool * Lu,
-		bool * Ld,
-		bool * Ru,
-		bool * Rd
-		)
+	mobj_position_t * orig,
+	float BOX,
+	char mask,
+	bool * Ul,
+	bool * Ur,
+	bool * Dl,
+	bool * Dr,
+	bool * Lu,
+	bool * Ld,
+	bool * Ru,
+	bool * Rd
+)
 {
 	float count;
 	float hbox;
-	*Ul = false;*Ur = false;
-	*Dl = false;*Dr = false;
-	*Lu = false;*Ld = false;
-	*Ru = false;*Rd = false;
+	*Ul = false; *Ur = false;
+	*Dl = false; *Dr = false;
+	*Lu = false; *Ld = false;
+	*Ru = false; *Rd = false;
 	hbox = BOX/2;
 	count = 0;
 	while(

@@ -142,18 +142,18 @@ void map_init();
 
 
 void map_clip_find(
-		pos_t * orig,
-		float BOX,
-		char mask,
-		bool * Ul,
-		bool * Ur,
-		bool * Dl,
-		bool * Dr,
-		bool * Lu,
-		bool * Ld,
-		bool * Ru,
-		bool * Rd
-		);
+	mobj_position_t * orig,
+	float BOX,
+	char mask,
+	bool * Ul,
+	bool * Ur,
+	bool * Dl,
+	bool * Dr,
+	bool * Lu,
+	bool * Ld,
+	bool * Ru,
+	bool * Rd
+);
 
 void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist);
 void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);

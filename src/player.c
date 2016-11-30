@@ -15,6 +15,7 @@
 #include <player.h>
 
 #include "mobjs.h"
+#include "bull.h"
 #include "explode.h"
 
 #include "sound.h"
@@ -530,7 +531,7 @@ static void player_handle(player_t * player)
 		//игрок жив
 		if(player->bull)
 		{
-			player->bull->dir = player->move.dir;
+			player->bull->bull.dir = player->move.dir;
 			player->move.go = false;
 		};
 		if(player->move.go)
@@ -626,30 +627,27 @@ static void player_handle(player_t * player)
 					{
 						// пули не кончились
 						player->w.reloadtime_d = c_p_WEAP_reloadtime;
-						bull_add();                                                       //создаем пулю
-						bullList->pos.x   = player->move.pos.x;                     //координаты
-						bullList->pos.y   = player->move.pos.y;                     //координаты
-						bullList->player   = player;                                  //игрок, выпустивший пулю
-						bullList->_weap_   = player->w.attack-1;                      //тип пули(оружие, из которого выпущена пуля)
-						if(bullList->_weap_ == 1) player->bull = bullList;
-						bullList->dir    = player->move.dir;                          //направление движения
-						bullList->delta_s  = 0;                                     //изменение расстояния
-						bullList->frame    = 0;
+						int bull_type = player->w.attack - 1;
+						mobj_t * bull = bull_new(
+							player->move.pos.x,
+							player->move.pos.y,
+							bull_type,
+							player->move.dir,
+							player
+							);                                                       //создаем пулю
+						if(bull_type == 1) player->bull = bull;
 						//присоединяем изображение пули
 						switch(player->w.attack)
 						{
 						case 1:
-							bullList->image = image_get(B_BULL);
 							sound_play_start(SOUND_WEAPON_ARTILLERY_1, 1);
 							break;
 						case 2:
-							bullList->image = image_get(B_ROCKET);
 							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
 							break;
 						case 3:
-							bullList->image = image_get(B_MINE);
 							break;
-						default: bullList->image = NULL;
+						default: ;
 						};
 						if(
 								wtable[player->w.attack-1].ammo > 0 && //если пули у оружия не бесконечны и

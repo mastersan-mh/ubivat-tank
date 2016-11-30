@@ -4,6 +4,7 @@
  *  Created on: 29 нояб. 2016 г.
  *      Author: mastersan
  */
+
 #include "mobjs.h"
 #include "game.h"
 #include "player.h"
@@ -13,6 +14,34 @@
 /*
  * обработчик
  */
+mobj_t * explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, player_t * owner)
+{
+	static image_index_t img_list[] =
+	{
+			E_SMALL,
+			E_BIG,
+			E_BIG
+	};
+	static sound_index_t sound_list[] =
+	{
+			SOUND_EXPLODE_ARTILLERY,
+			SOUND_EXPLODE_MISSILE,
+			SOUND_EXPLODE_GRENADE
+	};
+	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y);
+
+	mobj->explode.owner = owner;
+	mobj->explode.type  = explode_type;
+	mobj->explode.frame = -1;
+	mobj->img = image_get(img_list[explode_type]);
+	sound_play_start(sound_list[explode_type], 1);
+
+	return mobj;
+}
+
+
+
+
 void explode_handle(mobj_t * mobj)
 {
 	mobj_t * explode = mobj;
@@ -22,7 +51,6 @@ void explode_handle(mobj_t * mobj)
 	int x,y;
 	char wall;
 	char wall_type;
-
 
 	weapon_info_t * weapinfo = &wtable[explode->explode.type];
 
@@ -105,37 +133,6 @@ void explode_handle(mobj_t * mobj)
 /*
  * добавление взрыва
  */
-void explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, player_t * owner)
-{
-	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y);
-
-	mobj->explode.owner = owner;
-	mobj->explode.type = explode_type;
-
-	//№ кадра
-	mobj->explode.frame  = -1;
-
-	//изображение взрыва
-	switch(explode_type)
-	{
-	case EXPLODE_ARTILLERY:
-		sound_play_start(SOUND_EXPLODE_ARTILLERY, 1);
-		mobj->img = image_get(E_SMALL);
-		break;
-	case EXPLODE_MISSILE:
-		sound_play_start(SOUND_EXPLODE_MISSILE, 1);
-		mobj->img = image_get(E_BIG);
-		break;
-	case EXPLODE_MINE:
-		sound_play_start(SOUND_EXPLODE_GRENADE, 1);
-		mobj->img = image_get(E_BIG);
-		break;
-	};
-}
-
-
-
-
 /*
  * отрисовка
  */

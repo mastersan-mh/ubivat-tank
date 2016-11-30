@@ -116,7 +116,7 @@ typedef struct player_s
 	//характеристика
 	Tcharacter charact;
 	//для управляемой ракеты
-	struct bull_s * bull;
+	mobj_t * bull;
 	//передвижения
 	Tmove move;
 	//оружия

@@ -45,36 +45,7 @@ typedef struct
 	item_img_t * icon;
 } weapon_info_t;
 
-/*
- * пуля
- */
-typedef struct bull_s
-{
-	struct bull_s * next;
-	//координаты
-	pos_t pos;
-	//игрок, выпустивший пулю
-	struct player_s * player;
-	//тип пули(оружие, из которого выпущена пуля)
-	int _weap_;
-	//направление движения
-	//0 - вверх;1 - вниз;2 - влево;3 - вправо
-	int dir;
-	//изменение расстояния
-	coord_t delta_s;
-	//время
-	float frame;
-	//изображение пули
-	item_img_t * image;
-} bull_t;
 
 extern weapon_info_t wtable[];
-extern bull_t * bullList;
-
-void bull_add();
-void bull_remove(bull_t ** bull);
-void bull_removeall();
-void bull_control();
-void bull_draw_all(camera_t * cam);
 
 #endif /* SRC_WEAP_H_ */

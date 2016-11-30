@@ -16,6 +16,7 @@ typedef enum
 	MOBJ_SPAWN,
 	MOBJ_ITEM,
 	MOBJ_MESSAGE,
+	MOBJ_BULL,
 	MOBJ_EXPLODE,
 	MOBJ_EXIT,
 	__MOBJ_NUM
@@ -79,6 +80,24 @@ typedef struct
 } mobj_message_t;
 
 /*
+ * пуля
+ */
+typedef struct
+{
+	//игрок, выпустивший пулю
+	struct player_s * owner;
+	//тип пули(оружие, из которого выпущена пуля)
+	int _weap_;
+	//направление движения
+	//0 - вверх;1 - вниз;2 - влево;3 - вправо
+	int dir;
+	//изменение расстояния
+	coord_t delta_s;
+	//время
+	float frame;
+} mobj_bull_t;
+
+/*
  * взрыв
  */
 typedef struct
@@ -112,6 +131,7 @@ typedef struct mobj_s
 		mobj_spawn_t   spawn;
 		mobj_item_t    item;
 		mobj_message_t mesage;
+		mobj_bull_t    bull;
 		mobj_explode_t explode;
 		mobj_exit_t    exit;
 	};
