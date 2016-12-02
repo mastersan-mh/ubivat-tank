@@ -37,8 +37,6 @@ typedef struct
 	int selfdamage;
 	//макс кол-во боеприпасов(0 - бесконечно)
 	int ammo;
-	//радиус действия
-	coord_t radius;
 	//дальность
 	coord_t range;
 	//начальная скорость пули

@@ -5,6 +5,7 @@
  */
 #include <game.h>
 #include <weap.h>
+#include "explode.h"
 #include <map.h>
 #include <player.h>
 
@@ -54,6 +55,8 @@ static void ctrl_AI_checkdanger(player_t * player)
 
 		weapon_info_t * weapinfo = &wtable[bull->bull._weap_];
 
+		explodeinfo_t * explodeinfo = &explodeinfo_table[bull->bull._weap_];
+
 		//верхняя ближайшая стена
 		map_clip_find_near(&player->move.pos, 0, DIR_UP, 0xF0, 100, &Udist);
 		//нижняя ближайшая стена
@@ -62,20 +65,20 @@ static void ctrl_AI_checkdanger(player_t * player)
 		map_clip_find_near(&player->move.pos, 0, DIR_LEFT, 0xF0, 160, &Ldist);
 		//правая ближайшая стена
 		map_clip_find_near(&player->move.pos, 0, DIR_RIGHT, 0xF0, 160, &Rdist);
-		Ud = (player->move.pos.y+Udist-c_p_MDL_box/2)-(bull->pos.y+ weapinfo->radius);
-		Dd = (bull->pos.y- weapinfo->radius)-(player->move.pos.y-Ddist+c_p_MDL_box/2);
-		Rd = (player->move.pos.x+Rdist-c_p_MDL_box/2)-(bull->pos.x+ weapinfo->radius);
-		Ld = (bull->pos.x- weapinfo->radius)-(player->move.pos.x-Ldist+c_p_MDL_box/2);
+		Ud = (player->move.pos.y+Udist-c_p_MDL_box/2)-(bull->pos.y+ explodeinfo->radius);
+		Dd = (bull->pos.y- explodeinfo->radius)-(player->move.pos.y-Ddist+c_p_MDL_box/2);
+		Rd = (player->move.pos.x+Rdist-c_p_MDL_box/2)-(bull->pos.x+ explodeinfo->radius);
+		Ld = (bull->pos.x- explodeinfo->radius)-(player->move.pos.x-Ldist+c_p_MDL_box/2);
 		if(
-				(player->move.pos.x-c_p_MDL_box/2 <= bull->pos.x+ weapinfo->radius)&&
-				(bull->pos.x- weapinfo->radius <= player->move.pos.x+c_p_MDL_box/2)&&
+				(player->move.pos.x-c_p_MDL_box/2 <= bull->pos.x+ explodeinfo->radius)&&
+				(bull->pos.x- explodeinfo->radius <= player->move.pos.x+c_p_MDL_box/2)&&
 				(abs(player->move.pos.y-bull->pos.y) < 128)
 		)
 		{
 			if(
 					(bull->dir == DIR_UP || weapinfo->bullspeed < 0) &&
 					(abs(player->move.pos.y-bull->pos.y)<Ddist) &&
-					(bull->pos.y+ weapinfo->radius<player->move.pos.y-c_p_MDL_box/2)
+					(bull->pos.y+ explodeinfo->radius<player->move.pos.y-c_p_MDL_box/2)
 			)
 			{
 				danger = true;
@@ -93,9 +96,9 @@ static void ctrl_AI_checkdanger(player_t * player)
 			else
 			{
 				if(
-						(bull->dir == DIR_DOWN ||  weapinfo->bullspeed<0) &&
+						(bull->dir == DIR_DOWN ||  weapinfo->bullspeed < 0) &&
 						(abs(player->move.pos.y-bull->pos.y)<Udist) &&
-						(player->move.pos.y+c_p_MDL_box/2<bull->pos.y- weapinfo->radius)
+						(player->move.pos.y+c_p_MDL_box/2<bull->pos.y- explodeinfo->radius)
 				)
 				{
 					danger = true;
@@ -113,15 +116,15 @@ static void ctrl_AI_checkdanger(player_t * player)
 		}
 		else {
 			if(
-					(player->move.pos.y - c_p_MDL_box/2 <= bull->pos.y + weapinfo->radius) &&
-					(bull->pos.y - weapinfo->radius <= player->move.pos.y + c_p_MDL_box/2) &&
+					(player->move.pos.y - c_p_MDL_box/2 <= bull->pos.y + explodeinfo->radius) &&
+					(bull->pos.y - explodeinfo->radius <= player->move.pos.y + c_p_MDL_box/2) &&
 					(abs(player->move.pos.x - bull->pos.x) < 128)
 			)
 			{
 				if (
 						(bull->dir == DIR_LEFT || weapinfo->bullspeed < 0)&&
 						(abs(player->move.pos.x-bull->pos.x)<Rdist)&&
-						(player->move.pos.x+c_p_MDL_box/2<bull->pos.x- weapinfo->radius)
+						(player->move.pos.x+c_p_MDL_box/2<bull->pos.x- explodeinfo->radius)
 				)
 				{
 					danger = true;
@@ -141,7 +144,7 @@ static void ctrl_AI_checkdanger(player_t * player)
 					if(
 							(bull->dir == DIR_RIGHT || weapinfo->bullspeed < 0) &&
 							(abs(player->move.pos.x-bull->pos.x)<Ldist) &&
-							(bull->pos.x + weapinfo->radius < player->move.pos.x - c_p_MDL_box / 2)
+							(bull->pos.x + explodeinfo->radius < player->move.pos.x - c_p_MDL_box / 2)
 					)
 					{
 						danger = true;
@@ -172,6 +175,9 @@ static void ctrl_AI_checkdanger(player_t * player)
  */
 static void ctrl_AI_attack(player_t * player, player_t * target)
 {
+	weapon_info_t * weap_info = &wtable[player->brain.weapon - 1];
+	explodeinfo_t * explode_info = &explodeinfo_table[player->brain.weapon - 1];
+
 	float dist;
 	char wall;
 	if( player->bull && player->brain.target )
@@ -272,7 +278,7 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 				}
 			}
 			if(
-					(dist-c_p_MDL_box/2<wtable[player->brain.weapon-1].radius)&&
+					(dist-c_p_MDL_box/2 < explode_info->radius)&&
 					(wall == (c_m_w_w0 | c_m_f_clip) || wall == (c_m_w_w1 | c_m_f_clip))
 			) player->brain.weapon = 0;
 		}
@@ -335,7 +341,7 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 					}
 				}
 				if(
-						(dist-c_p_MDL_box/2 < wtable[player->brain.weapon-1].radius) &&
+						(dist-c_p_MDL_box/2 < explode_info->radius) &&
 						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
 				)
 					player->brain.weapon = 0;
@@ -346,7 +352,7 @@ static void ctrl_AI_attack(player_t * player, player_t * target)
 			if(player->w.ammo[1]>0) {
 				map_clip_find_near_wall(&player->move.pos,player->move.dir, &dist, &wall);
 				if(
-						(dist-c_p_MDL_box/2<wtable[1].radius) &&
+						(dist-c_p_MDL_box/2<explodeinfo_table[1].radius) &&
 						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
 				)
 					player->brain.weapon = 0;

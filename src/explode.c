@@ -6,10 +6,19 @@
  */
 
 #include "mobjs.h"
+#include "explode.h"
 #include "game.h"
 #include "player.h"
 #include "_gr2D.h"
 #include "sound.h"
+
+//оружия
+explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
+{
+		{  15,   7,  7},
+		{ 100,  50, 11},
+		{ 200, 100, 11}
+};
 
 /*
  * обработчик
@@ -52,15 +61,15 @@ void explode_handle(mobj_t * mobj)
 	char wall;
 	char wall_type;
 
-	weapon_info_t * weapinfo = &wtable[explode->explode.type];
+	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->explode.type];
 
 	if(explode->explode.frame == -1)
 	{
 		explode->explode.frame = 0;
 		//проверка попаданий в стены
-		for(y = -weapinfo->radius; y<= weapinfo->radius; y++)
+		for(y = -explodeinfo->radius; y<= explodeinfo->radius; y++)
 		{
-			for(x = -weapinfo->radius; x<= weapinfo->radius; x++)
+			for(x = -explodeinfo->radius; x<= explodeinfo->radius; x++)
 			{
 				if(
 						(0<=trunc((explode->pos.x+x)/8)) && (trunc((explode->pos.x+x)/8)<=MAP_SX) &&
@@ -104,9 +113,9 @@ void explode_handle(mobj_t * mobj)
 			else
 			{
 				r = sqrt(sp_x*sp_x+sp_y*sp_y)-sqrt(sqrf(c_p_MDL_box/2)+sqrf(c_p_MDL_box/2))/2;
-				if(r <= weapinfo->bullbox) r = 0;
+				//if(r <= explodeinfo->bullbox) r = 0;
 			};
-			if(0 < weapinfo->radius && r <= weapinfo->radius)
+			if(0 < explodeinfo->radius && r <= explodeinfo->radius)
 			{
 				if(
 						(explode->explode.owner == player) ||

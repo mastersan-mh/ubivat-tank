@@ -26,7 +26,8 @@ typedef enum
 {
 	EXPLODE_ARTILLERY,
 	EXPLODE_MISSILE,
-	EXPLODE_MINE
+	EXPLODE_MINE,
+	__EXPLODE_NUM
 } mobj_explode_type_t;
 
 typedef struct

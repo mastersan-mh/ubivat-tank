@@ -24,9 +24,9 @@
 //оружия
 weapon_info_t wtable[3] =
 {
-		{ "Artillery",  15,   7, WEAP_AMMO_INFINITE,  7,  -1,  75, 2, IMG_WEAPON_ARTILLERY },
-		{ "Missile"  , 100,  50, 50                , 11,  -1,  80, 8, IMG_WEAPON_MISSILE   },
-		{ "Mine"     , 200, 100, 50                , 11, 100, -80, 8, IMG_WEAPON_MINE      }
+		{ "Artillery",  15,   7, WEAP_AMMO_INFINITE,  -1,  75, 2, IMG_WEAPON_ARTILLERY },
+		{ "Missile"  , 100,  50, 50                ,  -1,  80, 8, IMG_WEAPON_MISSILE   },
+		{ "Mine"     , 200, 100, 50                , 100, -80, 8, IMG_WEAPON_MINE      }
 };
 
 

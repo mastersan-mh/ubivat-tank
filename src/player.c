@@ -1106,14 +1106,15 @@ void player_getdamage(player_t * player, mobj_t * explode, bool self, float radi
 	float damage_full;
 	float armor;
 
-	weapon_info_t * weapinfo = &wtable[explode->explode.type];
+	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
+	explodeinfo_t * explode_info = &explodeinfo_table[explode->explode.type];
 
-	if( player->charact.health > 0 && radius<=weapinfo->radius )
+	if( player->charact.health > 0 && radius<=explode_info->radius )
 	{
 		if(self)
-			damage_full = weapinfo->selfdamage*(1-radius/weapinfo->radius);
+			damage_full = explode_info->selfdamage*(1-radius/explode_info->radius);
 		else
-			damage_full = weapinfo->damage    *(1-radius/weapinfo->radius);
+			damage_full = explode_info->damage    *(1-radius/explode_info->radius);
 		armor = player->charact.armor-damage_full*2/3;
 		player->charact.health = player->charact.health-roundf(damage_full/3);
 		if(armor < 0)
