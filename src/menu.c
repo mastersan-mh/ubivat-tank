@@ -243,18 +243,18 @@ int menu_game(void * ctx)
 	return MENU_GAME;
 }
 
-
 static void menu_game_draw(const void * ctx)
 {
 	const menu_game_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
-	gr2D_setimage0(120,30-23*1       ,game.m_i_game    );
-	gr2D_setimage0(120,30+23*0       ,game.m_i_g_new_p1);
-	gr2D_setimage0(120,30+23*1       ,game.m_i_g_new_p2);
-	gr2D_setimage0(120,30+23*2       ,game.m_i_g_load  );
-	gr2D_setimage0( 97,30+23* __ctx->menu, game.m_i_cur_0);
+	gr2D_setimage0(120, 30-23*1       ,game.m_i_game    );
+	gr2D_setimage0(120, 30+23*0       ,game.m_i_g_new_p1);
+	gr2D_setimage0(120, 30+23*1       ,game.m_i_g_new_p2);
+	gr2D_setimage0(120, 30+23*2       ,game.m_i_g_load  );
+	gr2D_setimage0( 97, 30+23* __ctx->menu, game.m_i_cur_0);
 };
+
 int menu_game_new1P(void * ctx)
 {
 	int ret;
@@ -761,7 +761,7 @@ static void menu_interlevel_draw(const void * ctx)
 		);
 		font_color_set3i(COLOR_15);
 		video_printf(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,84+4+8*1, orient_horiz, "%ld", game.P0->charact.scores);
+		video_printf(48+8*00,84+4+8*1, orient_horiz, "%d", game.P0->items[ITEM_SCORES]);
 		video_printf(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->charact.frags );
 		video_printf(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->charact.fragstotal);
 	}
@@ -778,10 +778,10 @@ static void menu_interlevel_draw(const void * ctx)
 		);
 		font_color_set3i(COLOR_15);
 		video_printf(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.scores     );
+		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%d" , game.P0->items[ITEM_SCORES] );
 		video_printf(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.frags      );
 		video_printf(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.fragstotal );
-		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.scores     );
+		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%d" , game.P1->items[ITEM_SCORES] );
 		video_printf(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.frags      );
 		video_printf(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.fragstotal );
 	}

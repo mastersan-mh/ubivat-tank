@@ -9,6 +9,7 @@
 #define SRC_THINK_H_
 
 #include <types.h>
+#include "weap.h"
 //искуственный интеллект
 typedef struct
 {
@@ -16,8 +17,8 @@ typedef struct
 	bool danger;
 	//флаг опастности
 	bool Fdanger;
-	//0 -нет атаки;[1..3] -атака
-	int weapon;
+	bool attack;
+	weapontype_t weap;
 	//цель
 	struct player_s * target;
 	//счетчик

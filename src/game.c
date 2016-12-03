@@ -334,8 +334,8 @@ int game_gameTick()
 
 	if(
 			game._win_ &&                                           //победа
-			(game.P0->charact.health > 0) &&                        //оба игрока должны быть живы
-			(!game.P1 || (game.P1 && game.P1->charact.health > 0))  //
+			(game.P0->items[ITEM_HEALTH] > 0) &&                        //оба игрока должны быть живы
+			(!game.P1 || (game.P1 && game.P1->items[ITEM_HEALTH] > 0))  //
 	)
 	{
 		if(game.flags & c_g_f_CASE)
@@ -627,14 +627,14 @@ static bool game_record_save_player(int fd, player_t * player)
 	};
 	game_savedata_player_t savedata =
 	{
-		.scores     = player->charact.scores,
+		.scores     = player->items[ITEM_SCORES],
 		.fragstotal = player->charact.fragstotal,
 		.frags      = player->charact.frags,
-		.health     = player->charact.health,
-		.armor      = player->charact.armor,
-		.ammo1      = player->w.ammo[0],
-		.ammo2      = player->w.ammo[1],
-		.ammo3      = player->w.ammo[2],
+		.health     = player->items[ITEM_HEALTH],
+		.armor      = player->items[ITEM_ARMOR],
+		.ammo1      = player->items[ITEM_AMMO_ARTILLERY],
+		.ammo2      = player->items[ITEM_AMMO_MISSILE],
+		.ammo3      = player->items[ITEM_AMMO_MINE],
 		.status     = player->charact.status
 	};
 	write(fd, &savedata, sizeof(savedata));
@@ -652,14 +652,14 @@ static bool game_record_load_player(int fd, player_t * player)
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	player->charact.scores     = savedata.scores;
+	player->items[ITEM_SCORES] = savedata.scores;
 	player->charact.fragstotal = savedata.fragstotal;
 	player->charact.frags      = savedata.frags;
-	player->charact.health     = savedata.health;
-	player->charact.armor      = savedata.armor;
-	player->w.ammo[0]          = savedata.ammo1;
-	player->w.ammo[1]          = savedata.ammo2;
-	player->w.ammo[2]          = savedata.ammo3;
+	player->items[ITEM_HEALTH] = savedata.health;
+	player->items[ITEM_ARMOR]  = savedata.armor;
+	player->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
+	player->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
+	player->items[ITEM_AMMO_MINE]      = savedata.ammo3;
 	player->charact.status     = savedata.status;
 	player_class_init(player);
 	return true;

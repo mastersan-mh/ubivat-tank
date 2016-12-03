@@ -83,6 +83,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 	};
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
+	int i;
 	size_t len;
 	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP);
 
@@ -91,23 +92,26 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
 		mobj->type = MOBJ_SPAWN;
 		mobj->spawn.type = SPAWN_PLAYER;
-		mobj->spawn.scores = data->spawn.scores;
-		mobj->spawn.health = data->spawn.health;
-		mobj->spawn.armor  = data->spawn.armor;
+		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
+		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
+		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
+		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		mobj->type = MOBJ_SPAWN;
 		mobj->spawn.type = SPAWN_ENEMY;
-		mobj->spawn.scores = data->spawn.scores;
-		mobj->spawn.health = data->spawn.health;
-		mobj->spawn.armor  = data->spawn.armor;
+		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
+		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
+		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
+		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		mobj->type = MOBJ_SPAWN;
 		mobj->spawn.type = SPAWN_BOSS;
-		mobj->spawn.scores = data->spawn.scores;
-		mobj->spawn.health = data->spawn.health;
-		mobj->spawn.armor  = data->spawn.armor;
+		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
+		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
+		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
+		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		mobj->type = MOBJ_ITEM;
@@ -123,24 +127,24 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
 		break;
-	case MAPDATA_MOBJ_ITEM_STAR   :
+	case MAPDATA_MOBJ_ITEM_STAR:
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[2]);
-		mobj->item.type = ITEM_STAR;
+		mobj->item.type = ITEM_SCORES;
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[3]);
-		mobj->item.type = ITEM_ROCKET;
+		mobj->item.type = ITEM_AMMO_MISSILE;
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[4]);
-		mobj->item.type = ITEM_MINE;
+		mobj->item.type = ITEM_AMMO_MINE;
 		mobj->item.amount = data->item.amount;
 		mobj->item.exist = true;
 		break;

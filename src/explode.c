@@ -23,7 +23,7 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 /*
  * обработчик
  */
-mobj_t * explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, player_t * owner)
+mobj_t * explode_new(coord_t x, coord_t y, mobj_explodetype_t explode_type, player_t * owner)
 {
 	static image_index_t img_list[] =
 	{

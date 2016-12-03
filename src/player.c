@@ -15,6 +15,7 @@
 #include <player.h>
 
 #include "mobjs.h"
+#include "items.h"
 #include "bull.h"
 #include "explode.h"
 
@@ -25,6 +26,18 @@
 #include <types.h>
 
 player_t * playerList = NULL;
+
+
+playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
+{
+		/*SCORES, HEALTH, ARMOR,                   AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE */
+		{ { ITEM_SCOREPERCLASS * 1,  100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, IMG_TANK0 },
+		{ { ITEM_SCOREPERCLASS * 2,  100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, IMG_TANK1 },
+		{ { ITEM_SCOREPERCLASS * 3,  100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, IMG_TANK2 },
+		{ { ITEM_SCOREPERCLASS * 4,  200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, IMG_TANK3 },
+		{ { ITEM_SCOREPERCLASS * 5,  200,   200, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 },
+		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
+};
 
 int player_spawn_player(player_t * player);
 
@@ -86,29 +99,32 @@ void player_moveRight_OFF()
 
 void player_attack_weapon1_ON()
 {
-	game.P0->w.attack = WEAP_BULL;
+	game.P0->weap = WEAP_ARTILLERY;
+	game.P0->attack = true;
 }
 void player_attack_weapon1_OFF()
 {
-	game.P0->w.attack = WEAP_NONE;
+	game.P0->attack = false;
 }
 
 void player_attack_weapon2_ON()
 {
-	game.P0->w.attack = WEAP_MISSILE;
+	game.P0->weap = WEAP_MISSILE;
+	game.P0->attack = true;
 }
 void player_attack_weapon2_OFF()
 {
-	game.P0->w.attack = WEAP_NONE;
+	game.P0->attack = false;
 }
 
 void player_attack_weapon3_ON()
 {
-	game.P0->w.attack = WEAP_MINE;
+	game.P0->weap = WEAP_MINE;
+	game.P0->attack = true;
 }
 void player_attack_weapon3_OFF()
 {
-	game.P0->w.attack = WEAP_NONE;
+	game.P0->attack = false;
 }
 
 void player2_moveUp_ON()
@@ -170,34 +186,37 @@ void player2_moveRight_OFF()
 void player2_attack_weapon1_ON()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_BULL;
+	game.P1->weap = WEAP_ARTILLERY;
+	game.P1->attack = true;
 }
 void player2_attack_weapon1_OFF()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_NONE;
+	game.P1->attack = false;
 }
 
 void player2_attack_weapon2_ON()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_MISSILE;
+	game.P1->weap = WEAP_MISSILE;
+	game.P1->attack = true;
 }
 void player2_attack_weapon2_OFF()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_NONE;
+	game.P1->attack = false;
 }
 
 void player2_attack_weapon3_ON()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_MINE;
+	game.P1->weap = WEAP_MINE;
+	game.P1->attack = true;
 }
 void player2_attack_weapon3_OFF()
 {
 	if(!game.P1)return;
-	game.P1->w.attack = WEAP_NONE;
+	game.P1->attack = false;
 }
 
 /*
@@ -318,7 +337,7 @@ void player_item_get(player_t * player)
 {
 	if(!
 			(
-					(player->charact.health>0) &&
+					(player->items[ITEM_HEALTH] > 0) &&
 					((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
 			)
 	)return;
@@ -339,63 +358,31 @@ void player_item_get(player_t * player)
 				(mobj->type == MOBJ_ITEM)
 		)
 		{
-			switch(mobj->item.type)
-			{
-			case ITEM_HEALTH:
-				if((player->charact.health<player->charact.healthmax)|| item->amount < 0)
-				{
-					item->exist = false;
-					player->charact.health += item->amount;
-					check_value_int(&player->charact.health, 0, player->charact.healthmax);
-				};
-				break;
-			case ITEM_ARMOR:
-				if((player->charact.armor<player->charact.armormax)||(item->amount<0))
-				{
-					item->exist = false;
-					player->charact.armor += item->amount;
-					check_value_int(&player->charact.armor, 0, player->charact.armormax);
-				};
-				break;
-			case ITEM_STAR:
-				if((player->charact.scores<c_score_max)||(item->amount<0))
-				{
-					item->exist = false;
-					player->charact.scores += item->amount;
-					check_value_int(&player->charact.scores, 0, c_score_max);
-				};
-				player_class_init(player);
-				if(5 <= player->charact.scores / c_score_perclass)
-				{
-					if(player->charact.health < player->charact.healthmax)
-						player->charact.health = player->charact.healthmax;
-					if(player->charact.armor < player->charact.armormax)
-						player->charact.armor  = player->charact.armormax;
-				};
-				break;
-			case ITEM_ROCKET:
-				if(
-						player->w.ammo[1] != PLAYER_WEAP_NOTACCESSIBLE &&
-						(player->w.ammo[1] < wtable[1].ammo || item->amount<0)
+			playerinfo_t *playerinfo = &playerinfo_table[player->level];
+			itemtype_t itemtype = mobj->item.type;
 
-				)
+			if(
+					playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
+					playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
+					((player->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
+			)
+			{
+				item->exist = false;
+				player->items[itemtype] += item->amount;
+				check_value_int(&player->items[itemtype], 0, playerinfo->items[itemtype]);
+			};
+
+
+			if(itemtype == ITEM_SCORES)
+			{
+				player_class_init(player);
+				if(5 <= player->items[ITEM_SCORES] / ITEM_SCOREPERCLASS)
 				{
-					item->exist = false;
-					player->w.ammo[1] += item->amount;
-					check_value_int(&player->w.ammo[1], 0, wtable[1].ammo);
-				};
-				break;
-			case ITEM_MINE:
-				if(
-						player->w.ammo[2] != PLAYER_WEAP_NOTACCESSIBLE &&
-						(player->w.ammo[2] < wtable[2].ammo || item->amount < 0)
-				)
-				{
-					item->exist = false;
-					player->w.ammo[2] += item->amount;
-					check_value_int(&player->w.ammo[2], 0, wtable[2].ammo);
-				};
-				break;
+					if(player->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
+						player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					if(player->items[ITEM_ARMOR] < player->items[ITEM_ARMOR])
+						player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+				}
 			}
 		}
 	} //end for
@@ -441,7 +428,7 @@ void player_obj_check(player_t * player)
  */
 static void player_draw(camera_t * cam, player_t * player)
 {
-	if(player->charact.health>0)
+	if(player->items[ITEM_HEALTH] > 0)
 	{ //если игрок жив
 		if(
 				(cam->pos.x-cam->sx/2<=player->move.pos.x+(c_p_MDL_box/2))&&(player->move.pos.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
@@ -507,7 +494,8 @@ static void player_handle(player_t * player)
 	coord_t L,R,U,D;
 	coord_t speed_s;
 
-	if(player->charact.health<=0)
+	playerinfo_t * playerinfo = &playerinfo_table[player->level];
+	if(player->items[ITEM_HEALTH] <= 0)
 	{
 		if(player->soundId_move)
 		{
@@ -520,9 +508,9 @@ static void player_handle(player_t * player)
 		{
 			explode_new(player->move.pos.x,player->move.pos.y, EXPLODE_MISSILE, player);
 			player->charact.spawned = false;
-			player->charact.armor = 0;
-			if(0<player->w.ammo[1]) player->w.ammo[1] = 0;
-			if(0<player->w.ammo[2]) player->w.ammo[2] = 0;
+			player->items[ITEM_ARMOR] = 0;
+			player->items[ITEM_AMMO_MISSILE] = 0;
+			player->items[ITEM_AMMO_MINE] = 0;
 		};
 		if(player->charact.status == c_p_BOSS) game._win_ = true;
 	}
@@ -538,7 +526,7 @@ static void player_handle(player_t * player)
 		{
 			//игрок едет
 			player->move.speed += PLAYER_ACCEL * dtime;
-			if(player->charact.speed < player->move.speed) player->move.speed = player->charact.speed;
+			if(player->move.speed > playerinfo->speed) player->move.speed = playerinfo->speed;
 
 			player->Fbase = player->Fbase + PLAYER_FPS_RUN * dtimed1000;
 			if(player->Fbase < 0 || player->Fbase > 3) player->Fbase = 0;
@@ -564,7 +552,7 @@ static void player_handle(player_t * player)
 		}
 		player_move(player, player->move.dir, &player->move.speed);
 
-		speed_s = player->charact.speed / 4;
+		speed_s = playerinfo->speed / 4;
 
 		//стрейф
 		switch(player->move.dir){
@@ -593,15 +581,15 @@ static void player_handle(player_t * player)
 		}
 	}
 //стрельба
-	if(player->w.attack == 0)
+	if(!player->attack)
 	{
 		//игрок не атакует
-		if(player->w.reloadtime_d>0) player->w.reloadtime_d -= dtime;//учитываем время на перезарядку
+		if(player->reloadtime_d>0) player->reloadtime_d -= dtime;//учитываем время на перезарядку
 	}
 	else
 	{
 		//игрок атакует
-		if(player->charact.health<=0)
+		if(player->items[ITEM_HEALTH] <= 0)
 		{
 			if(
 				((game.flags & c_g_f_2PLAYERS) != 0) &&
@@ -609,57 +597,67 @@ static void player_handle(player_t * player)
 				)
 			{
 				player_spawn_player(player);
-				player->w.reloadtime_d = c_p_WEAP_reloadtime;
+				player->reloadtime_d = c_p_WEAP_reloadtime;
 			};
 		}
 		else
 		{
-			if(player->w.reloadtime_d>0) player->w.reloadtime_d -= dtime;//учитываем время на перезарядку
+			if(player->reloadtime_d>0) player->reloadtime_d -= dtime;//учитываем время на перезарядку
 			else
 			{
 				if(!player->bull)
 				{
+					int item;
+					switch(player->weap)
+					{
+					case WEAP_ARTILLERY: item = ITEM_AMMO_ARTILLERY; break;
+					case WEAP_MISSILE  : item = ITEM_AMMO_MISSILE; break;
+					case WEAP_MINE     : item = ITEM_AMMO_MINE; break;
+					default: item = ITEM_AMMO_ARTILLERY;
+					}
+
 					//если не стреляем управляемой ракетой
 					if(
-							(wtable[player->w.attack-1].ammo == WEAP_AMMO_INFINITE)||            //если пуль бесконечно много
-							(player->w.ammo[player->w.attack-1]>0)
+							(playerinfo->items[item] == ITEM_AMOUNT_INF)||            //если пуль бесконечно много
+							(player->items[item] > 0)
 					)
 					{
 						// пули не кончились
-						player->w.reloadtime_d = c_p_WEAP_reloadtime;
-						int bull_type = player->w.attack - 1;
+						player->reloadtime_d = c_p_WEAP_reloadtime;
+						mobj_bulltype_t bulltype = mobj_weapon_type_to_bull_type(player->weap);
 						mobj_t * bull = bull_new(
 							player->move.pos.x,
 							player->move.pos.y,
-							bull_type,
+							bulltype,
 							player->move.dir,
 							player
 							);                                                       //создаем пулю
-						if(bull_type == 1) player->bull = bull;
+						if(bulltype == BULL_MISSILE) player->bull = bull;
 						//присоединяем изображение пули
-						switch(player->w.attack)
+						switch(player->weap)
 						{
-						case 1:
+						case WEAP_ARTILLERY:
 							sound_play_start(SOUND_WEAPON_ARTILLERY_1, 1);
 							break;
-						case 2:
+						case WEAP_MISSILE:
 							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
 							break;
-						case 3:
+						case WEAP_MINE:
+							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
 							break;
 						default: ;
 						};
 						if(
-								wtable[player->w.attack-1].ammo > 0 && //если пули у оружия не бесконечны и
+								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
 								(player->charact.status==c_p_P0 || player->charact.status == c_p_P1) // игрок не монстр(у монстрюков пули не кончаются)
 						)
-							player->w.ammo[player->w.attack-1]--;
+							player->items[item]--;
 					}
 				}
 			}
 		}
 	}
-	if(player->w.reloadtime_d < 0) player->w.reloadtime_d = 0;
+	if(player->reloadtime_d < 0) player->reloadtime_d = 0;
 	//подбираем предметы
 	player_item_get (player);
 	//проверяем объекты
@@ -727,16 +725,8 @@ int player_connect(int status)
 		player = Z_malloc(sizeof(*player));
 		player->next = playerList;
 		playerList = player;
-		player->charact.scores     = 0;
 		player->charact.id         = id;
 		player->charact.status     = status;
-		player->charact.health     = 0;
-		player->charact.armor      = 0;
-		player->charact.fragstotal = 0;
-		player->charact.frags      = 0;
-		player->w.ammo[0] = 0;
-		player->w.ammo[1] = 0;
-		player->w.ammo[2] = 0;
 		ctrl_AI_init(&player->brain);
 	};
 	if( !error || error == 2 )
@@ -836,42 +826,48 @@ void player_disconnect_all()
 void player_spawn(player_t * player, mobj_t * mobj)
 {
 	mobj_spawn_t * sp = &mobj->spawn;
-	if(-1 < sp->scores && sp->scores <= c_score_max) player->charact.scores = sp->scores;
+	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
+		player->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
 	player_class_init(player);
-	if(-1 < sp->health && sp->health <= player->charact.healthmax) player->charact.health = sp->health;
+	playerinfo_t * playerinfo = &playerinfo_table[player->level];
+
+	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
+		player->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
 	else
 	{
 		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
-			player->charact.health = player->charact.healthmax;
+			player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 		else
 		{
-			if(game.flags & c_g_f_CASE) player->charact.health = player->charact.healthmax;//по выбору
+			if(game.flags & c_g_f_CASE)
+				player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 			else
 			{
 				//по уровням
-				if(game.gamemap == mapList) player->charact.health = player->charact.healthmax;//первая карта
-				else //не первая карта
-					if(!player->charact.spawned && player->charact.health <= 0)
-						player->charact.health = player->charact.healthmax;
+				if(game.gamemap == mapList) // первая карта
+					player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+				else // не первая карта
+					if(!player->charact.spawned && player->items[ITEM_HEALTH] <= 0)
+						player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 			}
 		}
 	}
-	if(-1 < sp->armor && sp->armor <= player->charact.armormax )
-		player->charact.armor = sp->armor;
+	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
+		player->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
 	else
 	{
 		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
-			player->charact.armor = player->charact.armormax;
+			player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 		else
-			if(game.flags & c_g_f_CASE) player->charact.armor = player->charact.armormax;
+			if(game.flags & c_g_f_CASE) player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 	};
 	player->charact.spawned   = true;
 	player->bull              = NULL;
 	player->move.speed        = 0;
 	player->move.go           = false;
-	player->move.dir          = 0;
-	player->w.attack          = false;
-	player->w.reloadtime_d    = 0;
+	player->move.dir          = DIR_UP;
+	player->attack            = false;
+	player->reloadtime_d    = 0;
 	player->soundId_move      = 0;
 };
 /*
@@ -986,6 +982,7 @@ void players_control()
  */
 void player_draw_status(camera_t * cam, player_t * player)
 {
+	playerinfo_t * playerinfo = &playerinfo_table[player->level];
 	int ref_y = VIDEO_SCREEN_H - 16 * 2;
 
 	font_color_set3i(COLOR_1);
@@ -995,10 +992,10 @@ void player_draw_status(camera_t * cam, player_t * player)
 	gr2D_setimage0(cam->x + 16 * 0     , ref_y, game.i_health);
 	gr2D_setimage0(cam->x + 16 * 6     , ref_y, game.i_armor);
 
-	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", player->charact.health);
-	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", player->charact.armor);
-	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, orient_horiz, "%d", player->charact.healthmax);
-	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, orient_horiz, "%d", player->charact.armormax);
+	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", player->items[ITEM_HEALTH]);
+	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", player->items[ITEM_ARMOR]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_HEALTH]);
+	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_ARMOR]);
 
 	/* вторая строка */
 	ref_y += 16;
@@ -1008,12 +1005,12 @@ void player_draw_status(camera_t * cam, player_t * player)
 	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get(wtable[1].icon));
 	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get(wtable[2].icon));
 
-	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "%d", player->w.ammo[0]);
-	if(player->w.ammo[1]>-1)
-		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", player->w.ammo[1]);
-	if(player->w.ammo[2]>-1)
-		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", player->w.ammo[2]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", player->charact.scores);
+	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "@"); // player->items[ITEM_AMMO_ARTILLERY]
+	if(player->items[ITEM_AMMO_MISSILE] >= 0)
+		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", player->items[ITEM_AMMO_MISSILE]);
+	if(player->items[ITEM_AMMO_MINE] >= 0)
+		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", player->items[ITEM_AMMO_MINE]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", player->items[ITEM_SCORES]);
 
 }
 
@@ -1022,80 +1019,32 @@ void player_draw_status(camera_t * cam, player_t * player)
  */
 void player_class_init(player_t * player)
 {
-	long level;
-
 	player->Fbase = 0;                                                       //№ кадра(база)
-	level = player->charact.scores / c_score_perclass;
-	if(level>4) level = 4;
+	int level = player->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
+	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
+	if(player->charact.status == c_p_BOSS) level = PLAYER_LEVEL_BOSS;
+	player->level = level;
+	playerinfo_t * playerinfo = &playerinfo_table[level];
 
-	switch(level)
+	int i;
+	for(i = 0; i< __ITEM_NUM; i++)
 	{
-		case 0:                                                             //нулевой
-			player->charact.healthmax = 100;                                      //здоровье max
-			player->charact.armormax  = 000;                                      //броня max
-			player->charact.speed = 40/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
-			player->w.ammo[0] = 99;
-			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(IMG_TANK0);                    //база
-			break;
-		case 1:
-			player->charact.healthmax = 100;                                      //здоровье max
-			player->charact.armormax  = 050;                                      //броня max
-			player->charact.speed = 50/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
-			player->w.ammo[0] = 99;
-			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(IMG_TANK1);                    //база
-			break;
-		case 2:
-			player->charact.healthmax = 100;                                      //здоровье max
-			player->charact.armormax  = 100;                                      //броня max
-			player->charact.speed = 60/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
-			player->w.ammo[0] = 99;
-			if((player->charact.status==c_p_ENEMY)||(player->charact.status==c_p_BOSS ))
-				player->w.ammo[1] = 99;
-			else if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
-			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(IMG_TANK2);                    //база
-			break;
-		case 3:
-			player->charact.healthmax = 200;                                      //здоровье max
-			player->charact.armormax  = 150;                                      //броня max
-			player->charact.speed = 70/2* SPEEDSCALE;                                          //максимальная скорость при ходьбе
-			player->w.ammo[0] = 99;
-			if((player->charact.status==c_p_ENEMY)||(player->charact.status==c_p_BOSS ))
-				player->w.ammo[1] = 99;
-			else
-				if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
-			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
-			player->Ibase = image_get(IMG_TANK3);                    //база
-			break;
-		case 4:
-			player->charact.healthmax = 200;                                      //здоровье max
-			player->charact.armormax  = 200;                                      //броня max
-			player->charact.speed = 90/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
-			player->w.ammo[0] = 99;
-
-			//player->w.ammo[1] = 90;
-			//player->w.ammo[2] = 90;
-
-			if( player->charact.status == c_p_ENEMY || player->charact.status == c_p_BOSS )
-				player->w.ammo[1] = 99;
-			else
-				if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
-			if(player->charact.status == c_p_ENEMY || player->charact.status == c_p_BOSS )
-				player->w.ammo[2] = 99;
-			else
-				if(player->w.ammo[2] < 0) player->w.ammo[2] = 0;
-			player->Ibase = image_get(IMG_TANK4);
-			break;
-	};
-	if(player->charact.status == c_p_BOSS)
-	{
-		player->charact.healthmax = 5000;                                      //здоровье max
-		player->charact.armormax  = 5000;                                      //броня max
+		if(playerinfo->items[i] == ITEM_AMOUNT_NA)
+			player->items[i] = playerinfo->items[i];
+		else if(playerinfo->items[i] == ITEM_AMOUNT_INF)
+			player->items[i] = playerinfo->items[i];
+		else
+		{
+			if(player->items[i] < 0) player->items[i] = 0;
+			if( player->charact.status==c_p_ENEMY || player->charact.status==c_p_BOSS )
+			{
+				player->items[i] = playerinfo->items[i];
+			}
+		}
 	}
+
+	player->Ibase = image_get(playerinfo->imageindex);
+
 }
 
 /*
@@ -1103,39 +1052,44 @@ void player_class_init(player_t * player)
  */
 void player_getdamage(player_t * player, mobj_t * explode, bool self, float radius)
 {
-	float damage_full;
-	float armor;
+	int damage_full;
+	int armor;
 
 	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
 	explodeinfo_t * explode_info = &explodeinfo_table[explode->explode.type];
 
-	if( player->charact.health > 0 && radius<=explode_info->radius )
+	if( player->items[ITEM_HEALTH] > 0 && radius <= explode_info->radius )
 	{
 		if(self)
 			damage_full = explode_info->selfdamage*(1-radius/explode_info->radius);
 		else
 			damage_full = explode_info->damage    *(1-radius/explode_info->radius);
-		armor = player->charact.armor-damage_full*2/3;
-		player->charact.health = player->charact.health-roundf(damage_full/3);
+
+		int damage_armor = damage_full*2/3;
+		int damage_health = damage_full - damage_armor;
+
+		armor = player->items[ITEM_ARMOR] - damage_armor;
+		player->items[ITEM_HEALTH] = player->items[ITEM_HEALTH] - damage_health;
 		if(armor < 0)
 		{
-			player->charact.health = player->charact.health+roundf(armor);
-			player->charact.armor = 0;
+			player->items[ITEM_HEALTH] = player->items[ITEM_HEALTH] + armor;
+			player->items[ITEM_ARMOR] = 0;
 		}
-		else player->charact.armor = roundf(armor);
-		if(player->charact.health <= 0)
+		else
+			player->items[ITEM_ARMOR] = armor;
+		if(player->items[ITEM_HEALTH] <= 0)
 		{
 			if(!self)
 			{
 				//атакующему добавим очки
-				explode->explode.owner->charact.scores += c_score_pertank;
+				explode->explode.owner->items[ITEM_SCORES] += c_score_pertank;
 				explode->explode.owner->charact.fragstotal++;
 				explode->explode.owner->charact.frags++;
 			}
 			else
 			{
 				//атакующий умер от своей пули
-				explode->explode.owner->charact.scores = 0;
+				explode->explode.owner->items[ITEM_SCORES] = 0;
 				explode->explode.owner->charact.fragstotal--;
 				explode->explode.owner->charact.frags--;
 			}

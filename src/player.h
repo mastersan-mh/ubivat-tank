@@ -37,8 +37,6 @@
 /* pix/(ms^2) */
 #define MPS2_TO_PIXPMS2 ( (0.001f * 0.001f) / MPPIX)
 
-//оружие не используется
-#define PLAYER_WEAP_NOTACCESSIBLE (-1)
 //ускорение игрока, м/с^2
 #define PLAYER_ACCEL       (0.05f * MPS2_TO_PIXPS2)
 //#define PLAYER_ACCEL       12
@@ -48,15 +46,23 @@
 #define PLAYER_FPS_RUN      20
 
 
+enum
+{
+	PLAYER_LEVEL1,
+	PLAYER_LEVEL2,
+	PLAYER_LEVEL3,
+	PLAYER_LEVEL4,
+	PLAYER_LEVEL5,
+	PLAYER_LEVEL_BOSS,
+	__PLAYER_LEVEL_NUM
+};
+
 typedef struct
 {
-	//кол-во боеприпасов(-1 - не используется)
-	int ammo[3];
-	//атака
-	weapon_t attack;
-	//время на перезарядку
-	long reloadtime_d;
-} TINVweap;
+	int items[__ITEM_NUM];
+	coord_t speed;
+	image_index_t imageindex;
+} playerinfo_t;
 
 /*
  * перемещения игрока
@@ -79,26 +85,14 @@ typedef struct
  */
 typedef struct
 {
-	//очки
-	int scores;
 	//номер
 	int id;
 	//статус игрока
 	char status;
-	//здоровье max
-	int healthmax;
-	//здоровье
-	int health;
-	//броня max
-	int armormax;
-	//броня
-	int armor;
 	//фрагов за пройденые карты
 	long fragstotal;
 	//фрагов на карте
 	long frags;
-	//максимальная скорость при ходьбе
-	long speed;
 	//ирок на карте
 	bool spawned;
 } Tcharacter;
@@ -106,14 +100,20 @@ typedef struct
 typedef struct player_s
 {
 	struct player_s * next;
+	int level;
+	int items[__ITEM_NUM];
+
 	//характеристика
 	Tcharacter charact;
 	//для управляемой ракеты
 	mobj_t * bull;
 	//передвижения
 	Tmove move;
-	//оружия
-	TINVweap w;
+	bool attack;
+	weapontype_t weap;
+	//время на перезарядку
+	long reloadtime_d;
+
 	//флаг
 	item_img_t * Iflag;
 	//база
@@ -121,8 +121,8 @@ typedef struct player_s
 	//№ кадра(база)
 	float Fbase;
 	// мозг
-	int soundId_move;
 	think_t brain;
+	int soundId_move;
 } player_t;
 
 extern player_t * playerList;

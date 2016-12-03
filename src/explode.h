@@ -22,7 +22,7 @@ typedef struct
 
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
-mobj_t * explode_new(coord_t x, coord_t y, mobj_explode_type_t explode_type, player_t * owner);
+mobj_t * explode_new(coord_t x, coord_t y, mobj_explodetype_t explode_type, player_t * owner);
 
 void explode_handle(mobj_t * mobj);
 

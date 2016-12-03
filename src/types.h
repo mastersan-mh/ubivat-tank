@@ -78,12 +78,10 @@ typedef enum {
 #define c_o_MDL_pos     (-8)
 //оружия
 //очки
-//сколько очков нужно набрать для повышения уровня танка
-#define c_score_perclass 200
 //очки за 1 убитый танк
 #define c_score_pertank 5
 //макс. кол-во очков
-#define c_score_max     2000000000l
+#define c_score_max     2000000
 //пуля
 //скорость проигрывания кадров взрыва
 #define c_bull_FPS      8

@@ -12,13 +12,26 @@
 
 #include "_gr2D.h"
 
-mobj_explode_type_t bull_type_to_explode_type(int bull_type)
+mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type)
+{
+	switch(type)
+	{
+	case WEAP_ARTILLERY: return EXPLODE_ARTILLERY;
+	case WEAP_MISSILE  : return EXPLODE_MISSILE;
+	case WEAP_MINE     : return EXPLODE_MINE;
+	default: ;
+	}
+	return EXPLODE_ARTILLERY;
+}
+
+mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type)
 {
 	switch(bull_type)
 	{
-	case 0: return EXPLODE_ARTILLERY;
-	case 1: return EXPLODE_MISSILE;
-	case 2: return EXPLODE_MINE;
+	case BULL_ARTILLERY: return EXPLODE_ARTILLERY;
+	case BULL_MISSILE  : return EXPLODE_MISSILE;
+	case BULL_MINE     : return EXPLODE_MINE;
+	default: ;
 	}
 	return EXPLODE_ARTILLERY;
 }
@@ -34,6 +47,8 @@ void mobjs_handle()
 		case MOBJ_SPAWN: break;
 		case MOBJ_ITEM: break;
 		case MOBJ_MESSAGE: break;
+		case MOBJ_PLAYER : break;
+		case MOBJ_ENEMY  : break;
 		case MOBJ_BULL:
 			bull_handle(mobj);
 			break;
@@ -92,6 +107,8 @@ void mobjs_draw(camera_t * cam)
 				break;
 			case MOBJ_MESSAGE:
 				break;
+			case MOBJ_PLAYER : break;
+			case MOBJ_ENEMY  : break;
 			case MOBJ_BULL:
 				bull_draw(cam, mobj);
 				break;
@@ -132,6 +149,8 @@ void mobj_free_internal(mobj_t * mobj)
 	case MOBJ_SPAWN  : break;
 	case MOBJ_ITEM   : break;
 	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
+	case MOBJ_PLAYER : break;
+	case MOBJ_ENEMY  : break;
 	case MOBJ_BULL   : break;
 	case MOBJ_EXPLODE: break;
 	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;

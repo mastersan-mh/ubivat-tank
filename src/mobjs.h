@@ -10,17 +10,29 @@
 
 #include "types.h"
 #include "img.h"
+#include "items.h"
 
 typedef enum
 {
 	MOBJ_SPAWN,
 	MOBJ_ITEM,
 	MOBJ_MESSAGE,
+	MOBJ_PLAYER,
+	MOBJ_ENEMY,
 	MOBJ_BULL,
 	MOBJ_EXPLODE,
 	MOBJ_EXIT,
 	__MOBJ_NUM
 } mobj_type_t;
+
+
+typedef enum
+{
+	BULL_ARTILLERY,
+	BULL_MISSILE,
+	BULL_MINE,
+	__BULL_NUM
+} mobj_bulltype_t;
 
 typedef enum
 {
@@ -28,7 +40,7 @@ typedef enum
 	EXPLODE_MISSILE,
 	EXPLODE_MINE,
 	__EXPLODE_NUM
-} mobj_explode_type_t;
+} mobj_explodetype_t;
 
 typedef struct
 {
@@ -55,12 +67,7 @@ typedef struct
 		SPAWN_ENEMY,
 		SPAWN_BOSS
 	} type;
-	//очки(-1 не используется)
-	long scores;
-	//здоровье у танка
-	int health;
-	//броня у танка
-	int armor;
+	int items[__ITEM_NUM];
 } mobj_spawn_t;
 
 /*
@@ -68,14 +75,7 @@ typedef struct
  */
 typedef struct
 {
-	enum
-	{
-		ITEM_HEALTH,
-		ITEM_ARMOR ,
-		ITEM_STAR  ,
-		ITEM_ROCKET,
-		ITEM_MINE
-	} type;
+	itemtype_t type;
 	// количество
 	int amount;
 	// флаг присутствия
@@ -95,8 +95,8 @@ typedef struct
 {
 	//игрок, выпустивший пулю
 	struct player_s * owner;
-	//тип пули(оружие, из которого выпущена пуля)
-	int _weap_;
+	//тип пули
+	mobj_bulltype_t type;
 	//изменение расстояния
 	coord_t delta_s;
 	//время
@@ -109,7 +109,7 @@ typedef struct
 typedef struct
 {
 	//игрок, выпустивший пулю
-	mobj_explode_type_t type;
+	mobj_explodetype_t type;
 	struct player_s * owner;
 	int state;
 	float frame;
@@ -147,8 +147,8 @@ typedef struct mobj_s
 
 } mobj_t;
 
-
-mobj_explode_type_t bull_type_to_explode_type(int bull_type);
+mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type);
+mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type);
 
 extern void mobjs_handle();
 
