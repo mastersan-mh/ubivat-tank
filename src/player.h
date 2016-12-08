@@ -11,6 +11,8 @@
 #include <weap.h>
 #include <map.h>
 #include <types.h>
+#include "mobjs.h"
+#include "think.h"
 
 /*
 	pix/s -> m/s -> km/h
@@ -60,7 +62,7 @@ enum
 typedef struct
 {
 	int items[__ITEM_NUM];
-	coord_t speed;
+	vec_t speed;
 	image_index_t imageindex;
 } playerinfo_t;
 
@@ -69,24 +71,18 @@ typedef struct
  */
 typedef struct
 {
-	//координаты
-	pos_t pos;
 	//скорость движения игрока
-	coord_t speed;
+	vec_t speed;
 	//игрок движется
 	bool go;
 	//направление движения
-	//0 - вверх;1 - вниз;2 - влево;3 - вправо
-	direction_t dir;
-} Tmove;
+} move_t;
 
 /*
  * характеристика игрока
  */
 typedef struct
 {
-	//номер
-	int id;
 	//статус игрока
 	char status;
 	//фрагов за пройденые карты
@@ -95,20 +91,19 @@ typedef struct
 	long frags;
 	//ирок на карте
 	bool spawned;
-} Tcharacter;
+} stat_t;
 
-typedef struct player_s
+typedef struct mobj_player_s
 {
-	struct player_s * next;
 	int level;
 	int items[__ITEM_NUM];
 
 	//характеристика
-	Tcharacter charact;
+	stat_t charact;
 	//для управляемой ракеты
-	mobj_t * bull;
+	struct mobj_s * bull;
 	//передвижения
-	Tmove move;
+	move_t move;
 	bool attack;
 	weapontype_t weap;
 	//время на перезарядку
@@ -116,16 +111,15 @@ typedef struct player_s
 
 	//флаг
 	item_img_t * Iflag;
-	//база
-	item_img_t * Ibase;
 	//№ кадра(база)
 	float Fbase;
 	// мозг
 	think_t brain;
 	int soundId_move;
-} player_t;
+} mobj_player_t;
 
-extern player_t * playerList;
+void mobj_player_init();
+
 
 void player_moveUp_ON();
 void player_moveUp_OFF();
@@ -158,27 +152,26 @@ void player2_attack_weapon3_ON();
 void player2_attack_weapon3_OFF();
 
 
+mobj_t * player_spawn_get();
+int player_respawn(mobj_t * player);
+
 void player_checkcode();
-void player_item_get(player_t * player);
-void player_obj_check(player_t * player);
-void player_draw_all(camera_t * cam);
+void player_item_get(struct mobj_s * player);
+void player_obj_check(struct mobj_s * player);
 
-player_t * player_find(int status);
-int  player_connect(int status);
-void player_disconnect_monsters();
-void player_disconnect_all();
-void player_spawn(player_t * player, mobj_t * spawn);
-int player_spawn_player(player_t * player);
-int player_spawn_enemy();
-void player_spawn_all();
+void player_draw(camera_t * cam, struct mobj_s * player);
 
-void player_class_init(player_t * player);
+void player_spawn_init(mobj_t * player, const mobj_spawn_t * sp);
 
-void player_draw_status(camera_t * cam, player_t * player);
+mobj_t * player_create_player(const mobj_t * spawn);
+int player_create_enemy(const mobj_t * spawn);
 
-void player_getdamage(player_t * player, mobj_t * explode, bool self, float radius);
+void player_draw_status(camera_t * cam, struct mobj_s * player);
 
-void players_control();
+void player_getdamage(struct mobj_s * player, struct mobj_s * explode, bool self, float radius);
+
+void player_handle(struct mobj_s * player);
+void player_class_init(struct mobj_s * player);
 
 
 #endif /* SRC_PLAYER_H_ */

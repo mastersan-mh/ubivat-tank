@@ -10,7 +10,9 @@
 
 #include "types.h"
 #include "img.h"
+#include "weap.h"
 #include "items.h"
+//#include "player.h"
 
 typedef enum
 {
@@ -42,13 +44,7 @@ typedef enum
 	__EXPLODE_NUM
 } mobj_explodetype_t;
 
-typedef struct
-{
-	coord_t x;
-	coord_t y;
-}mobj_position_t;
-
-typedef enum
+typedef enum direction_e
 {
 	DIR_UP,
 	DIR_DOWN,
@@ -94,11 +90,11 @@ typedef struct
 typedef struct
 {
 	//игрок, выпустивший пулю
-	struct player_s * owner;
+	struct mobj_s * owner;
 	//тип пули
 	mobj_bulltype_t type;
 	//изменение расстояния
-	coord_t delta_s;
+	vec_t delta_s;
 	//время
 	float frame;
 } mobj_bull_t;
@@ -110,7 +106,7 @@ typedef struct
 {
 	//игрок, выпустивший пулю
 	mobj_explodetype_t type;
-	struct player_s * owner;
+	struct mobj_s * owner;
 	int state;
 	float frame;
 } mobj_explode_t;
@@ -123,22 +119,25 @@ typedef struct
 
 typedef struct mobj_s
 {
-	struct mobj_s *next;
+	struct mobj_s * next;
 	// удалить объект
 	bool erase;
 	//класс
 	mobj_type_t type;
 	//позиция
-	mobj_position_t pos;
+	vec2_t pos;
 	/* направление взгляда/движения */
 	direction_t dir;
 	//изображение объекта
 	item_img_t * img;
+
+	struct mobj_register_s * info;
 	union
 	{
 		mobj_spawn_t   spawn;
 		mobj_item_t    item;
 		mobj_message_t mesage;
+		struct mobj_player_s * player;
 		mobj_bull_t    bull;
 		mobj_explode_t explode;
 		mobj_exit_t    exit;
@@ -147,6 +146,24 @@ typedef struct mobj_s
 
 } mobj_t;
 
+
+typedef void* (*mobjinit_t)(const mobj_t * mobj);
+
+typedef struct mobj_register_s
+{
+	char * name;
+	void * (*mobjinit)(const mobj_t * mobj);
+
+	void * (*connect)(const mobj_t * mobj);
+	void * (*client_store)(const mobj_t * mobj);
+	void * (*client_restore)(const mobj_t * mobj);
+
+}mobj_register_t;
+
+void mobjinfo_register(const mobj_register_t * info);
+const mobj_register_t * mobjinjfo_get(const char * name);
+
+
 mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type);
 mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type);
 
@@ -154,7 +171,7 @@ extern void mobjs_handle();
 
 extern void mobjs_draw(camera_t * cam);
 
-mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y, direction_t dir);
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir);
 
 void mobjs_erase_all();
 

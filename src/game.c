@@ -17,6 +17,7 @@
 #include "sound.h"
 #include <_gr2D.h>
 #include <fonts.h>
+#include "client.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -179,6 +180,9 @@ void game_init()
 	input_init();
 
 	game_rebind_keys_all();
+
+	mobj_player_init();
+
 }
 
 /*
@@ -330,12 +334,11 @@ void game_main()
 int game_gameTick()
 {
 	mobjs_handle();
-	players_control();
 
 	if(
 			game._win_ &&                                           //победа
-			(game.P0->items[ITEM_HEALTH] > 0) &&                        //оба игрока должны быть живы
-			(!game.P1 || (game.P1 && game.P1->items[ITEM_HEALTH] > 0))  //
+			(game.P0->player->items[ITEM_HEALTH] > 0) &&                        //оба игрока должны быть живы
+			(!game.P1 || (game.P1 && game.P1->player->items[ITEM_HEALTH] > 0))  //
 	)
 	{
 		if(game.flags & c_g_f_CASE)
@@ -354,18 +357,18 @@ int game_gameTick()
 }
 
 
-static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
+static void game_draw_cam(mobj_t * player, camera_t * cam)
 {
 
-	if(player->bull)
+	if(player->player->bull)
 	{
-		cam->pos.x = player->bull->pos.x;
-		cam->pos.y = player->bull->pos.y;
+		cam->pos.x = player->player->bull->pos.x;
+		cam->pos.y = player->player->bull->pos.y;
 	}
 	else
 	{
-		cam->pos.x = player->move.pos.x;
-		cam->pos.y = player->move.pos.y;
+		cam->pos.x = player->pos.x;
+		cam->pos.y = player->pos.y;
 	}
 
 	video_viewport_set(
@@ -376,8 +379,6 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 	);
 
 	map_draw(cam);
-
-	player_draw_all(cam);
 
 	video_viewport_set(
 		0.0f,
@@ -391,11 +392,11 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 void game_draw()
 {
 
-	game_draw_cam(game.P0, &game.P0cam, true);
+	game_draw_cam(game.P0, &game.P0cam);
 
 	if(game.P1)
 	{
-		game_draw_cam(game.P1, &game.P1cam, false);
+		game_draw_cam(game.P1, &game.P1cam);
 	}
 
 	video_viewport_set(
@@ -417,48 +418,6 @@ void game_draw()
 /*
  * процедура перехода на следующую карту
  */
-bool game_nextmap()
-{
-	int ret;
-	//дисконнект всех монстров
-	player_disconnect_monsters();
-	//закроем карту
-	map_clear();
-	game.created    = false;
-	game.ingame     = false;
-	game._win_      = false;
-	//menu_interlevel();
-
-	game.P0->charact.spawned = false;
-	//sound_play_stop(game.P0->soundId_move);
-
-	if(game.P1)
-	{
-		game.P1->charact.spawned = false;
-		//sound_play_stop(game.P1->soundId_move);
-	}
-
-	game.gamemap = game.gamemap->next;
-	if(!game.gamemap)
-	{
-		// конец игры, последняя карта
-		game.gamemap = mapList;
-		//дисконнект всех монстров
-		player_disconnect_all();
-		return false;
-	}
-	ret = map_load(game.gamemap->map);
-	if(ret)
-	{
-		game_msg_error(ret);
-		game_abort();
-		return false;
-	}
-	ret = game_create();
-	return true;
-}
-
-
 /*
  * запись конфига
  */
@@ -614,9 +573,9 @@ void game_record_getsaves()
  * запись игрока
  * @return = true | false
  */
-static bool game_record_save_player(int fd, player_t * player)
+static bool game_record_save_player(int fd, mobj_t * player)
 {
-	switch(player->charact.status)
+	switch(player->player->charact.status)
 	{
 	case c_p_P0:
 	case c_p_P1:
@@ -627,15 +586,15 @@ static bool game_record_save_player(int fd, player_t * player)
 	};
 	game_savedata_player_t savedata =
 	{
-		.scores     = player->items[ITEM_SCORES],
-		.fragstotal = player->charact.fragstotal,
-		.frags      = player->charact.frags,
-		.health     = player->items[ITEM_HEALTH],
-		.armor      = player->items[ITEM_ARMOR],
-		.ammo1      = player->items[ITEM_AMMO_ARTILLERY],
-		.ammo2      = player->items[ITEM_AMMO_MISSILE],
-		.ammo3      = player->items[ITEM_AMMO_MINE],
-		.status     = player->charact.status
+		.scores     = player->player->items[ITEM_SCORES],
+		.fragstotal = player->player->charact.fragstotal,
+		.frags      = player->player->charact.frags,
+		.health     = player->player->items[ITEM_HEALTH],
+		.armor      = player->player->items[ITEM_ARMOR],
+		.ammo1      = player->player->items[ITEM_AMMO_ARTILLERY],
+		.ammo2      = player->player->items[ITEM_AMMO_MISSILE],
+		.ammo3      = player->player->items[ITEM_AMMO_MINE],
+		.status     = player->player->charact.status
 	};
 	write(fd, &savedata, sizeof(savedata));
 	return true;
@@ -645,22 +604,22 @@ static bool game_record_save_player(int fd, player_t * player)
  * чтение игрока
  * @return true | false
  */
-static bool game_record_load_player(int fd, player_t * player)
+static bool game_record_load_player(int fd, mobj_t * player)
 {
 	mapdata_mobj_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER) return false;
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	player->items[ITEM_SCORES] = savedata.scores;
-	player->charact.fragstotal = savedata.fragstotal;
-	player->charact.frags      = savedata.frags;
-	player->items[ITEM_HEALTH] = savedata.health;
-	player->items[ITEM_ARMOR]  = savedata.armor;
-	player->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
-	player->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
-	player->items[ITEM_AMMO_MINE]      = savedata.ammo3;
-	player->charact.status     = savedata.status;
+	player->player->items[ITEM_SCORES] = savedata.scores;
+	player->player->charact.fragstotal = savedata.fragstotal;
+	player->player->charact.frags      = savedata.frags;
+	player->player->items[ITEM_HEALTH] = savedata.health;
+	player->player->items[ITEM_ARMOR]  = savedata.armor;
+	player->player->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
+	player->player->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
+	player->player->items[ITEM_AMMO_MINE]      = savedata.ammo3;
+	player->player->charact.status     = savedata.status;
 	player_class_init(player);
 	return true;
 };
@@ -779,7 +738,7 @@ int game_record_load(int isave)
  */
 int game_create()
 {
-	int ret;
+	game.gamemap = mapList;
 
 	int cam_sx = VIDEO_SCREEN_W;
 	int cam_sy = VIDEO_SCREEN_H;
@@ -794,7 +753,6 @@ int game_create()
 		game.P0cam.y     = 0;
 		game.P0cam.sx    = cam_sx;
 		game.P0cam.sy    = cam_sy - statusbar_h;//184
-		ret = player_connect(c_p_P0);
 	}
 	else
 	{
@@ -810,11 +768,7 @@ int game_create()
 		game.P1cam.y     = 0;
 		game.P1cam.sx    = cam_sx/2 - 1;
 		game.P1cam.sy    = cam_sy - statusbar_h;
-		ret = player_connect(c_p_P0);
-		ret = player_connect(c_p_P1);
 	};
-	//спавним всех игроков и монстров
-	player_spawn_all();
 	game.created    = true;
 	game.ingame     = false;
 	return 0;
@@ -824,9 +778,10 @@ int game_create()
  */
 void game_abort(void)
 {
-	game.gamemap = mapList;
 	//дисконнект всех игроков
-	player_disconnect_all();
+
+	client_disconnect_all();
+
 	//закроем карту
 	map_clear();
 	game.created    = false;
@@ -837,6 +792,39 @@ void game_abort(void)
 /*
  * сообщения об ошибках
  */
+bool game_nextmap()
+{
+	int ret;
+	client_unspawn(0);
+	client_unspawn(1);
+
+	//закроем карту
+	map_clear();
+	game.ingame     = false;
+	game._win_      = false;
+	//menu_interlevel();
+
+	game.gamemap = game.gamemap->next;
+	if(!game.gamemap)
+	{
+		// конец игры, последняя карта
+		game_abort();
+		return false;
+	}
+	ret = map_load(game.gamemap->map);
+	if(ret)
+	{
+		game_msg_error(ret);
+		game_abort();
+		return false;
+	}
+
+	client_spawn(0);
+	client_spawn(1);
+
+	return true;
+}
+
 void game_msg_error(int error)
 {
 #define sx (256)

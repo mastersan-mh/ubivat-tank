@@ -29,4 +29,5 @@ bull.c \
 explode.c \
 menu.c \
 player.c \
+client.c \
 weap.c

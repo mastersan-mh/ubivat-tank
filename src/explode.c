@@ -23,7 +23,7 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 /*
  * обработчик
  */
-mobj_t * explode_new(coord_t x, coord_t y, mobj_explodetype_t explode_type, player_t * owner)
+mobj_t * explode_new(vec_t x, vec_t y, mobj_explodetype_t explode_type, mobj_t * owner)
 {
 	static image_index_t img_list[] =
 	{
@@ -54,7 +54,7 @@ mobj_t * explode_new(coord_t x, coord_t y, mobj_explodetype_t explode_type, play
 void explode_handle(mobj_t * mobj)
 {
 	mobj_t * explode = mobj;
-	player_t * player;
+	mobj_t * player;
 	float r,sp_x,sp_y;
 	bool self;
 	int x,y;
@@ -102,11 +102,16 @@ void explode_handle(mobj_t * mobj)
 			}
 		}
 		//проверка попаданий в игрока
-		player = playerList;
+		player = map.mobjs;
 		while(player)
 		{
-			sp_x = player->move.pos.x-explode->pos.x;
-			sp_y = player->move.pos.y-explode->pos.y;
+			if(player->type != MOBJ_PLAYER)
+			{
+				player = player->next;
+				continue;
+			}
+			sp_x = player->pos.x-explode->pos.x;
+			sp_y = player->pos.y-explode->pos.y;
 			if(
 					(abs(sp_x)<=c_p_MDL_box/2) &&
 					(abs(sp_y)<=c_p_MDL_box/2)) r = 0;

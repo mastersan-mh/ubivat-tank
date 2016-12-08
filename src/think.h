@@ -9,7 +9,9 @@
 #define SRC_THINK_H_
 
 #include <types.h>
+#include "mobjs.h"
 #include "weap.h"
+#include "player.h"
 //искуственный интеллект
 typedef struct
 {
@@ -20,7 +22,7 @@ typedef struct
 	bool attack;
 	weapontype_t weap;
 	//цель
-	struct player_s * target;
+	struct mobj_s * target;
 	//счетчик
 	long count;
 }think_t;
@@ -28,8 +30,8 @@ typedef struct
 void ctrl_AI_init       (think_t * brain);
 void ctrl_AI_done       (think_t * brain);
 
-void think_human(int Pnum, struct player_s * player);
-void think_enemy(struct player_s * player);
+void think_human(int Pnum, mobj_t * player);
+void think_enemy(mobj_t * player);
 
 
 

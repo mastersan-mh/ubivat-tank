@@ -104,6 +104,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
 		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
 		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		player_create_enemy(mobj);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		mobj->type = MOBJ_SPAWN;
@@ -112,6 +113,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
 		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
 		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		player_create_enemy(mobj);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		mobj->type = MOBJ_ITEM;
@@ -172,7 +174,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
  * поиск препятствия на карте
  */
 void map_clip_find(
-	mobj_position_t * orig,
+	vec2_t * orig,
 	float BOX,
 	char mask,
 	bool * Ul,
@@ -235,7 +237,7 @@ void map_clip_find(
 /*
  * вычисление расстояния до ближайшей стены
  */
-void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist)
+void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist)
 {
 	char wall;
 	float c;
@@ -304,7 +306,7 @@ void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t D
 /*
  * вычисление расстояния до ближайшей стены и определение стены
  */
-void map_clip_find_near_wall(pos_t * orig, int dir, float * dist, char * wall)
+void map_clip_find_near_wall(vec2_t * orig, int dir, float * dist, char * wall)
 {
 	*dist = 0;
 	switch(dir)
@@ -547,10 +549,10 @@ void map_draw(camera_t * cam)
 			item_img_t * img = NULL;
 			switch(map_block)
 			{
-			case c_m_w_w0   : img = image_get(IMG_WALL_W0); break;
-			case c_m_w_w1   : img = image_get(IMG_WALL_W1); break;
-			case c_m_w_brick: img = image_get(IMG_WALL_BRICK); break;
-			case c_m_water  : img = game.w_water[xrand(3)]; break;
+				case c_m_w_w0   : img = image_get(IMG_WALL_W0); break;
+				case c_m_w_w1   : img = image_get(IMG_WALL_W1); break;
+				case c_m_w_brick: img = image_get(IMG_WALL_BRICK); break;
+				case c_m_water  : img = game.w_water[xrand(3)]; break;
 			}
 			if(img)
 			{

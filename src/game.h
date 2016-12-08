@@ -10,8 +10,8 @@
 
 #include <types.h>
 #include <map.h>
-#include <player.h>
-#include <actions.h>
+#include "mobjs.h"
+#include "actions.h"
 
 #define GAME_LOGO \
 		"          _____    ______              __     ______ \n"\
@@ -70,9 +70,9 @@ typedef struct
 	//камера игрока 1
 	camera_t P1cam;
 	//PTR игрока 0
-	player_t * P0;
+	mobj_t * P0;
 	//PTR игрока 1
-	player_t * P1;
+	mobj_t * P1;
 	char * msg;
 
 	//флаги состояния игры

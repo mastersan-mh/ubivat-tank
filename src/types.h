@@ -99,8 +99,6 @@ typedef enum {
 #define c_p_ENEMY       2
 //босс
 #define c_p_BOSS        3
-//макс. кол-во игроков
-#define c_p_Pmax        128
 //body box
 #define c_p_MDL_box     16
 //позиция изображения
@@ -112,24 +110,21 @@ typedef enum {
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 
-typedef float coord_t;
+typedef float vec_t;
 typedef void (*actionf_t)();
 
 //координаты
 typedef struct
 {
-	coord_t x;
-	coord_t y;
-}pos_t;
-
-#include <think.h>
-
+	vec_t x;
+	vec_t y;
+}vec2_t;
 
 //камера
 typedef struct
 {
 	//координаты
-	pos_t pos;
+	vec2_t pos;
 	//позиция на экране
 	int x;
 	int y;

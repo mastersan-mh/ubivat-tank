@@ -5,12 +5,46 @@
  *      Author: mastersan
  */
 
+#include "game.h"
 #include "mobjs.h"
 #include "explode.h"
 #include "bull.h"
+#include "think.h"
 #include "map.h"
+#include "sound.h"
 
 #include "_gr2D.h"
+
+
+static const mobj_register_t ** mobj_registers = NULL;
+static size_t mobj_register_size = 0;
+static size_t mobj_register_num = 0;
+
+void mobjinfo_register(const mobj_register_t * info)
+{
+	const mobj_register_t ** tmp;
+
+	if(mobj_register_size < mobj_register_num + 1)
+	{
+		if(mobj_register_size == 0) mobj_register_size = 1;
+		else mobj_register_size *= 2;
+		tmp = Z_realloc(mobj_registers, mobj_register_size);
+		if(!tmp)game_halt("mobj_register(): failed");
+		mobj_registers = tmp;
+	}
+	mobj_registers[mobj_register_num] = info;
+	mobj_register_num++;
+}
+
+const mobj_register_t * mobjinjfo_get(const char * name)
+{
+	size_t i;
+	for(i = 0; i < mobj_register_num; i++)
+	{
+		if(!strncmp(mobj_registers[mobj_register_num]->name, name, 64))return mobj_registers[mobj_register_num];
+	}
+	return NULL;
+}
 
 mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type)
 {
@@ -47,8 +81,25 @@ void mobjs_handle()
 		case MOBJ_SPAWN: break;
 		case MOBJ_ITEM: break;
 		case MOBJ_MESSAGE: break;
-		case MOBJ_PLAYER : break;
-		case MOBJ_ENEMY  : break;
+		case MOBJ_PLAYER :
+		case MOBJ_ENEMY  :
+
+			switch(mobj->player->charact.status)
+			{
+			case c_p_BOSS:
+			case c_p_ENEMY:
+				think_enemy(mobj);
+				break;
+			case c_p_P0:
+				think_human(0, mobj);
+				break;
+			case c_p_P1:
+				think_human(1, mobj);
+				break;
+			}
+			player_handle(mobj);
+
+			break;
 		case MOBJ_BULL:
 			bull_handle(mobj);
 			break;
@@ -107,8 +158,10 @@ void mobjs_draw(camera_t * cam)
 				break;
 			case MOBJ_MESSAGE:
 				break;
-			case MOBJ_PLAYER : break;
-			case MOBJ_ENEMY  : break;
+			case MOBJ_PLAYER :
+			case MOBJ_ENEMY  :
+				player_draw(cam, mobj);
+				break;
 			case MOBJ_BULL:
 				bull_draw(cam, mobj);
 				break;
@@ -124,10 +177,11 @@ void mobjs_draw(camera_t * cam)
 }
 
 
+
 /*
  * добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, coord_t x, coord_t y, direction_t dir)
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir)
 {
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
@@ -149,8 +203,12 @@ void mobj_free_internal(mobj_t * mobj)
 	case MOBJ_SPAWN  : break;
 	case MOBJ_ITEM   : break;
 	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
-	case MOBJ_PLAYER : break;
-	case MOBJ_ENEMY  : break;
+	case MOBJ_PLAYER :
+	case MOBJ_ENEMY  :
+		sound_play_stop(mobj->player->soundId_move);
+		ctrl_AI_done(&(mobj->player->brain));
+		Z_free(mobj->player);
+		break;
 	case MOBJ_BULL   : break;
 	case MOBJ_EXPLODE: break;
 	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;

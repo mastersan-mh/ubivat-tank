@@ -10,6 +10,9 @@
 #include "types.h"
 #include "video.h"
 #include "sound.h"
+#include "mobjs.h"
+#include "player.h"
+#include "client.h"
 
 /* MENU_MAIN */
 menu_main_ctx_t menu_main_ctx = {};
@@ -260,14 +263,24 @@ int menu_game_new1P(void * ctx)
 	int ret;
 	if(game.created) return MENU_MAIN;
 	game.gamemap = mapList;
-	ret = map_load(game.gamemap->map);
+	game.flags = 0;
+	ret = game_create();
 	if(ret)
 	{
 		game_msg_error(map_error_get());
 		return MENU_ABORT;
 	}
-	game.flags = 0;
-	ret = game_create();
+	ret = map_load(game.gamemap->map);
+	if(ret)
+	{
+		game_abort();
+		game_msg_error(map_error_get());
+		return MENU_ABORT;
+	}
+
+	client_connect();
+	client_spawn(0);
+
 	return MENU_PRELEVEL;
 }
 
@@ -276,14 +289,26 @@ int menu_game_new2P(void * ctx)
 	int ret;
 	if(game.created) return MENU_MAIN;
 	game.gamemap = mapList;
+	game.flags = c_g_f_2PLAYERS;
+	ret = game_create();
+	if(ret)
+	{
+		game_msg_error(map_error_get());
+		return MENU_ABORT;
+	}
 	ret = map_load(game.gamemap->map);
 	if(ret)
 	{
+		game_abort();
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
-	game.flags = c_g_f_2PLAYERS;
-	ret = game_create();
+
+	client_connect();
+	client_connect();
+	client_spawn(0);
+	client_spawn(1);
+
 	return MENU_PRELEVEL;
 }
 
@@ -756,34 +781,34 @@ static void menu_interlevel_draw(const void * ctx)
 	{
 		//один игрок
 		gr2D_setimage1(26, 92,
-				game.P0->Ibase,
+				game.P0->img,
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		font_color_set3i(COLOR_15);
 		video_printf(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,84+4+8*1, orient_horiz, "%d", game.P0->items[ITEM_SCORES]);
-		video_printf(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->charact.frags );
-		video_printf(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->charact.fragstotal);
+		video_printf(48+8*00,84+4+8*1, orient_horiz, "%d", game.P0->player->items[ITEM_SCORES]);
+		video_printf(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->player->charact.frags );
+		video_printf(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->player->charact.fragstotal);
 	}
 	else
 	{
 		//два игрока
 		gr2D_setimage1(26,84+18*0-1,
-				game.P0->Ibase,
+				game.P0->img,
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		gr2D_setimage1(26,84+18*1+1,
-				game.P1->Ibase,
+				game.P1->img,
 				0,0,c_p_MDL_box,c_p_MDL_box
 		);
 		font_color_set3i(COLOR_15);
 		video_printf(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%d" , game.P0->items[ITEM_SCORES] );
-		video_printf(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.frags      );
-		video_printf(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->charact.fragstotal );
-		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%d" , game.P1->items[ITEM_SCORES] );
-		video_printf(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.frags      );
-		video_printf(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->charact.fragstotal );
+		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%d" , game.P0->player->items[ITEM_SCORES] );
+		video_printf(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->player->charact.frags      );
+		video_printf(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->player->charact.fragstotal );
+		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%d" , game.P1->player->items[ITEM_SCORES] );
+		video_printf(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->player->charact.frags      );
+		video_printf(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->player->charact.fragstotal );
 	}
 }
 

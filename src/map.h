@@ -127,7 +127,7 @@ typedef struct
 	// краткое описание
 	char * brief;
 	// объекты карты
-	mobj_t * mobjs;
+	struct mobj_s * mobjs;
 	// 66 X 50 = 3300 матрица карты
 	char map[MAP_SY][MAP_SX];
 } map_t;
@@ -142,7 +142,7 @@ void map_init();
 
 
 void map_clip_find(
-	mobj_position_t * orig,
+	vec2_t * orig,
 	float BOX,
 	char mask,
 	bool * Ul,
@@ -155,8 +155,8 @@ void map_clip_find(
 	bool * Rd
 );
 
-void map_clip_find_near(pos_t * orig, coord_t box, int dir, char mask, coord_t DISTmax, coord_t * dist);
-void map_clip_find_near_wall(pos_t * orig, int dir, coord_t * dist, char * wall);
+void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist);
+void map_clip_find_near_wall(vec2_t * orig, int dir, vec_t * dist, char * wall);
 bool map_mobj_is_item(mobj_t * mobj);
 
 extern mapdata_mobj_type_t map_file_class_get(int fd);

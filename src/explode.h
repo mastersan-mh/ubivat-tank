@@ -17,12 +17,12 @@ typedef struct
 	//повреждение
 	int selfdamage;
 	//радиус действия
-	coord_t radius;
+	vec_t radius;
 } explodeinfo_t;
 
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
-mobj_t * explode_new(coord_t x, coord_t y, mobj_explodetype_t explode_type, player_t * owner);
+mobj_t * explode_new(vec_t x, vec_t y, mobj_explodetype_t explode_type, mobj_t * owner);
 
 void explode_handle(mobj_t * mobj);
 
