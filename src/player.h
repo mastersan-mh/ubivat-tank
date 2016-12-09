@@ -83,8 +83,6 @@ typedef struct
  */
 typedef struct
 {
-	//статус игрока
-	char status;
 	//фрагов за пройденые карты
 	long fragstotal;
 	//фрагов на карте
@@ -93,7 +91,7 @@ typedef struct
 	bool spawned;
 } stat_t;
 
-typedef struct mobj_player_s
+typedef struct
 {
 	int level;
 	int items[__ITEM_NUM];
@@ -116,7 +114,12 @@ typedef struct mobj_player_s
 	// мозг
 	think_t brain;
 	int soundId_move;
-} mobj_player_t;
+} player_t;
+
+
+extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
+
+
 
 void mobj_player_init();
 
@@ -161,17 +164,14 @@ void player_obj_check(struct mobj_s * player);
 
 void player_draw(camera_t * cam, struct mobj_s * player);
 
-void player_spawn_init(mobj_t * player, const mobj_spawn_t * sp);
-
-mobj_t * player_create_player(const mobj_t * spawn);
-int player_create_enemy(const mobj_t * spawn);
+void player_spawn_init(mobj_t * player, player_t * pl, mobj_t * spawn);
 
 void player_draw_status(camera_t * cam, struct mobj_s * player);
 
 void player_getdamage(struct mobj_s * player, struct mobj_s * explode, bool self, float radius);
 
 void player_handle(struct mobj_s * player);
-void player_class_init(struct mobj_s * player);
+void player_class_init(mobj_t * player, player_t * pl);
 
 
 #endif /* SRC_PLAYER_H_ */

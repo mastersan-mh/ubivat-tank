@@ -732,6 +732,7 @@ int menu_prelevel(void * ctx)
 	case LEAVE  :
 	case SPACE  :
 		sound_play_stop(__ctx->sound_playId);
+		__ctx->sound_playId = 0;
 		sound_play_start(SOUND_MENU_ENTER, 1);
 		game.ingame = true;
 		return MENU_MAIN;
@@ -777,38 +778,27 @@ static void menu_interlevel_draw(const void * ctx)
 	gr2D_setimage0(0, 0, game.m_i_interlv);
 	font_color_set3i(COLOR_15);
 	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
-	if(!game.P1)
+
+	int i;
+	int num = client_num_get();
+
+	int refy;
+	if(num == 0) refy = 84;
+	else refy = 76;
+
+	font_color_set3i(COLOR_15);
+	video_printf(48 + 8 * 00, refy      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+
+	for(i = 0; i < num; i++)
 	{
-		//один игрок
-		gr2D_setimage1(26, 92,
-				game.P0->img,
-				0,0,c_p_MDL_box,c_p_MDL_box
-		);
+		client_t * client = client_get(i);
+		playerinfo_t * playerinfo =  &playerinfo_table[client->storedata.level];
+		item_img_t * img = image_get(playerinfo->imageindex);
+		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
-		video_printf(48+8*00,84      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,84+4+8*1, orient_horiz, "%d", game.P0->player->items[ITEM_SCORES]);
-		video_printf(48+8*10,84+4+8*1, orient_horiz, "%ld", game.P0->player->charact.frags );
-		video_printf(48+8*21,84+4+8*1, orient_horiz, "%ld", game.P0->player->charact.fragstotal);
-	}
-	else
-	{
-		//два игрока
-		gr2D_setimage1(26,84+18*0-1,
-				game.P0->img,
-				0,0,c_p_MDL_box,c_p_MDL_box
-		);
-		gr2D_setimage1(26,84+18*1+1,
-				game.P1->img,
-				0,0,c_p_MDL_box,c_p_MDL_box
-		);
-		font_color_set3i(COLOR_15);
-		video_printf(48+8*00,76      -1, orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-		video_printf(48+8*00,76+4+8*1-1, orient_horiz, "%d" , game.P0->player->items[ITEM_SCORES] );
-		video_printf(48+8*10,76+4+8*1-1, orient_horiz, "%ld", game.P0->player->charact.frags      );
-		video_printf(48+8*21,76+4+8*1-1, orient_horiz, "%ld", game.P0->player->charact.fragstotal );
-		video_printf(48+8*00,76+4+8*3+1, orient_horiz, "%d" , game.P1->player->items[ITEM_SCORES] );
-		video_printf(48+8*10,76+4+8*3+1, orient_horiz, "%ld", game.P1->player->charact.frags      );
-		video_printf(48+8*21,76+4+8*3+1, orient_horiz, "%ld", game.P1->player->charact.fragstotal );
+		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, orient_horiz, "%d" , client->storedata.scores);
+		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.frags);
+		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.fragstotal);
 	}
 }
 

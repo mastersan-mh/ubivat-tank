@@ -10,6 +10,7 @@
 #include "explode.h"
 #include "map.h"
 #include "player.h"
+#include "client.h"
 
 #include <stdlib.h>
 #include <types.h>
@@ -46,6 +47,7 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 	float Ld;
 	float Rd;
 
+	player_t * pl = player->data;
 
 	bool danger = false;
 
@@ -85,10 +87,10 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 			)
 			{
 				danger = true;
-				if(!player->player->brain.Fdanger)
+				if(!pl->brain.Fdanger)
 				{
-					player->player->move.go = true;
-					player->player->brain.Fdanger = true;
+					pl->move.go = true;
+					pl->brain.Fdanger = true;
 					if(0 <= Ld && 0 <= Rd) player->dir = xrand(2) + 2;
 					else
 						if(0 < Ld) player->dir = DIR_LEFT;
@@ -105,9 +107,9 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 				)
 				{
 					danger = true;
-					if(!player->player->brain.Fdanger) {
-						player->player->move.go = true;
-						player->player->brain.Fdanger = true;
+					if(!pl->brain.Fdanger) {
+						pl->move.go = true;
+						pl->brain.Fdanger = true;
 						if( 0 <= Ld && 0 <= Rd) player->dir = xrand(2)+2;
 						else
 							if(0 < Ld) player->dir = DIR_LEFT;
@@ -131,10 +133,10 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 				)
 				{
 					danger = true;
-					if(!player->player->brain.Fdanger)
+					if(!pl->brain.Fdanger)
 					{
-						player->player->move.go = true;
-						player->player->brain.Fdanger = true;
+						pl->move.go = true;
+						pl->brain.Fdanger = true;
 						if(0 <= Ud && 0 <= Dd) player->dir = xrand(2);
 						else
 							if(0 < Ud) player->dir = DIR_UP;
@@ -151,10 +153,10 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 					)
 					{
 						danger = true;
-						if(!player->player->brain.Fdanger)
+						if(!pl->brain.Fdanger)
 						{
-							player->player->move.go = true;
-							player->player->brain.Fdanger = true;
+							pl->move.go = true;
+							pl->brain.Fdanger = true;
 							if(0 <= Ud && 0 <= Dd) player->dir = xrand(2);
 							else
 								if(0 < Ud) player->dir = DIR_UP;
@@ -166,10 +168,10 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 			}
 		}
 	} // end for;
-	player->player->brain.danger = danger;
-	if(!player->player->brain.danger)
+	pl->brain.danger = danger;
+	if(!pl->brain.danger)
 	{
-		player->player->brain.Fdanger = false;
+		pl->brain.Fdanger = false;
 		//player->move.go = false;
 	}
 }
@@ -178,29 +180,31 @@ static void ctrl_AI_checkdanger(mobj_t * player)
  */
 static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 {
+	player_t * pl = player->data;
+
 	explodeinfo_t * explodeinfo = &explodeinfo_table[
 													mobj_weapon_type_to_bull_type(
-														mobj_weapon_type_to_bull_type(player->player->brain.weap)
+														mobj_weapon_type_to_bull_type(pl->brain.weap)
 													)
 													];
 
 	float dist;
 	char wall;
-	if( player->player->bull && player->player->brain.target )
+	if( pl->bull && pl->brain.target )
 	{
 		if(
-				abs(player->player->bull->pos.y - player->player->brain.target->pos.y) <
-				abs(player->player->bull->pos.x - player->player->brain.target->pos.x)
+				abs(pl->bull->pos.y - pl->brain.target->pos.y) <
+				abs(pl->bull->pos.x - pl->brain.target->pos.x)
 		)
 		{
-			if(player->player->bull->pos.x < player->player->brain.target->pos.x)
+			if(pl->bull->pos.x < pl->brain.target->pos.x)
 				player->dir = DIR_RIGHT;
 			else
 				player->dir = DIR_LEFT;
 		}
 		else
 		{
-			if(player->player->bull->pos.y < player->player->brain.target->pos.y)
+			if(pl->bull->pos.y < pl->brain.target->pos.y)
 				player->dir = DIR_UP;
 			else
 				player->dir = DIR_DOWN;
@@ -213,12 +217,12 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 			abs(player->pos.y - target->pos.y) > 100.0
 	)
 	{
-		player->player->attack = false;
+		pl->attack = false;
 		return;
 	};
 	//если оружие не перезарядилось
-	if(0 < player->player->reloadtime_d) return;
-	player->player->brain.target = NULL;
+	if(0 < pl->reloadtime_d) return;
+	pl->brain.target = NULL;
 	if(
 			(player->pos.x-c_p_MDL_box/2<target->pos.x) &&
 			(target->pos.x<player->pos.x+c_p_MDL_box/2)
@@ -237,11 +241,11 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 				(wall & 0x0F) == c_m_water  ||
 				(wall       ) == c_m_f_clip
 		){
-			if(player->player->items[ITEM_AMMO_MINE] > 0)
+			if(pl->items[ITEM_AMMO_MINE] > 0)
 			{
 				//выбираем наугад ракету или мину
-				player->player->brain.weap = 1+xrand(2);
-				if(player->player->brain.weap == WEAP_MINE)
+				pl->brain.weap = 1+xrand(2);
+				if(pl->brain.weap == WEAP_MINE)
 				{
 					//мина
 					if(player->dir == DIR_DOWN)
@@ -252,33 +256,33 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 			}
 			else
 			{
-				if(player->player->items[ITEM_AMMO_MISSILE] > 0)
-					player->player->brain.weap = WEAP_MISSILE;
+				if(pl->items[ITEM_AMMO_MISSILE] > 0)
+					pl->brain.weap = WEAP_MISSILE;
 				else
-					player->player->brain.weap = WEAP_ARTILLERY;
-				player->player->brain.attack = true;
+					pl->brain.weap = WEAP_ARTILLERY;
+				pl->brain.attack = true;
 			}
 		}
 		else
 		{ //противник за стеной, пытаемся пробиться через стену
 			if((wall & 0x0F) == c_m_w_w0)
-				player->player->brain.attack = false;              //сильная броня, не стреляем
+				pl->brain.attack = false;              //сильная броня, не стреляем
 			else
 			{
 				if((wall & 0x0F)==c_m_w_brick)
 				{
-					player->player->brain.weap = WEAP_ARTILLERY;          //кирпич
-					player->player->brain.attack = true;
+					pl->brain.weap = WEAP_ARTILLERY;          //кирпич
+					pl->brain.attack = true;
 				}
 				else
 				{
 					if((wall & 0x0F) == c_m_w_w1)
 					{                            //слабая броня
-						if(player->player->items[ITEM_AMMO_MINE] > 0)
+						if(pl->items[ITEM_AMMO_MINE] > 0)
 						{
-							player->player->brain.weap = 1+xrand(2);                             //выбираем наугад ракету или мину
-							player->player->brain.attack = true;
-							if(player->player->brain.weap == WEAP_MINE)
+							pl->brain.weap = 1+xrand(2);                             //выбираем наугад ракету или мину
+							pl->brain.attack = true;
+							if(pl->brain.weap == WEAP_MINE)
 							{                           //мина
 								if(player->dir == DIR_DOWN)
 									player->dir = DIR_UP;
@@ -288,11 +292,11 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 						}
 						else
 						{
-							if(player->player->items[ITEM_AMMO_MISSILE] > 0)
-								player->player->brain.weap = WEAP_MISSILE;
+							if(pl->items[ITEM_AMMO_MISSILE] > 0)
+								pl->brain.weap = WEAP_MISSILE;
 							else
-								player->player->brain.weap = WEAP_ARTILLERY;
-							player->player->brain.attack = true;
+								pl->brain.weap = WEAP_ARTILLERY;
+							pl->brain.attack = true;
 						}
 					}
 				}
@@ -300,7 +304,7 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 			if(
 					(dist-c_p_MDL_box/2 < explodeinfo->radius)&&
 					(wall == (c_m_w_w0 | c_m_f_clip) || wall == (c_m_w_w1 | c_m_f_clip))
-			) player->player->brain.attack = false;
+			) pl->brain.attack = false;
 		}
 	}
 	else
@@ -322,10 +326,10 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 					(wall       ) == c_m_f_clip
 			)
 			{
-				if(player->player->items[ITEM_AMMO_MINE] > 0)
+				if(pl->items[ITEM_AMMO_MINE] > 0)
 				{
-					player->player->brain.weap = 1+xrand(2);                               //выбираем наугад ракету или мину
-					if(player->player->brain.weap == WEAP_MINE)
+					pl->brain.weap = 1+xrand(2);                               //выбираем наугад ракету или мину
+					if(pl->brain.weap == WEAP_MINE)
 					{                             //мина
 						if(player->dir == DIR_LEFT) player->dir = DIR_RIGHT;
 						else                        player->dir = DIR_LEFT;
@@ -333,27 +337,27 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 				}
 				else
 				{
-					if(player->player->items[ITEM_AMMO_MISSILE] > 0)
-						player->player->brain.weap = WEAP_MISSILE;
+					if(pl->items[ITEM_AMMO_MISSILE] > 0)
+						pl->brain.weap = WEAP_MISSILE;
 					else
-						player->player->brain.weap = WEAP_ARTILLERY;
-					player->player->brain.attack = true;
+						pl->brain.weap = WEAP_ARTILLERY;
+					pl->brain.attack = true;
 				}
 			}
 			else {                                                         //противник за стеной, пытаемся пробиться через стену
-				if((wall & 0x0F)==c_m_w_w0) player->player->brain.attack = false;             //сильная броня, не стреляем
+				if((wall & 0x0F)==c_m_w_w0) pl->brain.attack = false;             //сильная броня, не стреляем
 				else {
 					if((wall & 0x0F)==c_m_w_brick)
 					{ //кирпич
-						player->player->brain.weap = WEAP_ARTILLERY;
-						player->player->brain.attack = true;
+						pl->brain.weap = WEAP_ARTILLERY;
+						pl->brain.attack = true;
 					}
 					else {
 						if((wall & 0x0F)==c_m_w_w1) {                           //слабая броня
-							if(player->player->items[ITEM_AMMO_MINE] > 0)
+							if(pl->items[ITEM_AMMO_MINE] > 0)
 							{
-								player->player->brain.weap = 1+xrand(2);                            //выбираем наугад ракету или мину
-								if(player->player->brain.weap == WEAP_MINE)
+								pl->brain.weap = 1+xrand(2);                            //выбираем наугад ракету или мину
+								if(pl->brain.weap == WEAP_MINE)
 								{ //мина
 									if(player->dir == DIR_LEFT)
 										player->dir = DIR_RIGHT;
@@ -363,11 +367,11 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 							}
 							else
 							{
-								if(player->player->items[ITEM_AMMO_MISSILE] > 0)
-									player->player->brain.weap = WEAP_MISSILE;
+								if(pl->items[ITEM_AMMO_MISSILE] > 0)
+									pl->brain.weap = WEAP_MISSILE;
 								else
-									player->player->brain.weap = WEAP_ARTILLERY;
-								player->player->brain.attack = true;
+									pl->brain.weap = WEAP_ARTILLERY;
+								pl->brain.attack = true;
 							}
 						}
 					}
@@ -376,52 +380,54 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 						(dist-c_p_MDL_box/2 < explodeinfo->radius) &&
 						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
 				)
-					player->player->brain.attack = false;
+					pl->brain.attack = false;
 			}
 		}
 		else
 		{
-			if(player->player->items[ITEM_AMMO_MISSILE] > 0)
+			if(pl->items[ITEM_AMMO_MISSILE] > 0)
 			{
 				map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 				if(
 						(dist-c_p_MDL_box/2<explodeinfo_table[1].radius) &&
 						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
 				)
-					player->player->brain.attack = false;
+					pl->brain.attack = false;
 				else
 				{
-					player->player->brain.weap = WEAP_ARTILLERY;
-					player->player->brain.attack = true;
+					pl->brain.weap = WEAP_ARTILLERY;
+					pl->brain.attack = true;
 				}
 			}
 		}
 	}
-	player->player->weap = player->player->brain.weap;
-	player->player->attack = player->player->brain.attack;
-	if(player->player->brain.weap == WEAP_MISSILE) player->player->brain.target = target; //если выпустил ракету, тогда цель постоянная
-	player->player->brain.attack = false;
+	pl->weap = pl->brain.weap;
+	pl->attack = pl->brain.attack;
+	if(pl->brain.weap == WEAP_MISSILE) pl->brain.target = target; //если выпустил ракету, тогда цель постоянная
+	pl->brain.attack = false;
 }
 /*
  * поиск врага
  */
 static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 {
+	player_t * pl = player->data;
+
 	if(
 			(160<abs(player->pos.x-target->pos.x))||
 			(100<abs(player->pos.y-target->pos.y))
 	)
 	{
-		player->player->attack = false;
+		pl->attack = false;
 		return;
 	};
-	if(player->player->brain.count == 0) {
+	if(pl->brain.count == 0) {
 		player->dir = xrand(4);
-		player->player->move.go = true;
+		pl->move.go = true;
 	}
 	else
 	{
-		if(c_BOT_time+xrand(c_BOT_time)<player->player->brain.count)
+		if(c_BOT_time+xrand(c_BOT_time)<pl->brain.count)
 		{
 			if(abs(player->pos.x-target->pos.x)>abs(player->pos.y-target->pos.y))
 			{
@@ -441,13 +447,13 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 					(abs(player->pos.x-target->pos.x) < c_BOT_dist)&&
 					(abs(player->pos.y-target->pos.y) < c_BOT_dist)
 			)
-				player->player->move.go = false;
+				pl->move.go = false;
 			else
-				player->player->move.go = true;
+				pl->move.go = true;
 		}
 	}
-	player->player->brain.count += dtime;
-	if(c_BOT_time * 2 < player->player->brain.count) player->player->brain.count = 0;
+	pl->brain.count += dtime;
+	if(c_BOT_time * 2 < pl->brain.count) pl->brain.count = 0;
 }
 
 /*
@@ -455,40 +461,27 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
  */
 void think_enemy(struct mobj_s * player)
 {
+	player_t * pl = player->data;
+
 	if(debug_noAI)return;
-	if(player->player->items[ITEM_HEALTH] > 0)
+	if(pl->items[ITEM_HEALTH] > 0)
 	{
 		ctrl_AI_checkdanger(player);
-		if(!player->player->brain.danger)
+		if(!pl->brain.danger)
 		{
-			if(!game.P1)
-			{
-				if(game.P0->player->items[ITEM_HEALTH] <= 0) player->player->attack = false;
-				else
-				{
-					if(!player->player->bull && !player->player->attack) ctrl_AI_findenemy(player, game.P0);
-					ctrl_AI_attack(player, game.P0);
-				};
-			}
+			int client_num = client_num_get();
+
+			int id = xrand(client_num);
+			mobj_t * target = client_get(id)->mobj;
+
+			player_t * enemy_pl = target->data;
+
+			if(enemy_pl->items[ITEM_HEALTH] <= 0) pl->attack = false;
 			else
 			{
-				if(xrand(2) == 0)
-				{
-					if(0 < game.P0->player->items[ITEM_HEALTH])
-					{
-						if( !player->player->bull && !player->player->attack) ctrl_AI_findenemy(player, game.P0);
-						ctrl_AI_attack(player, game.P0);
-					}
-				}
-				else
-				{
-					if(0 < game.P1->player->items[ITEM_HEALTH])
-					{
-						if(!player->player->bull && !player->player->attack) ctrl_AI_findenemy(player, game.P1);
-						ctrl_AI_attack(player,game.P1);
-					}
-				}
-			}
+				if(!pl->bull && !pl->attack) ctrl_AI_findenemy(player, target);
+				ctrl_AI_attack(player, target);
+			};
 		}
 	}
 }
@@ -496,7 +489,7 @@ void think_enemy(struct mobj_s * player)
 /*
  * управление игроком
  */
-void think_human(int Pnum, struct mobj_s * player)
+void think_human(mobj_t * player)
 {
 
 };

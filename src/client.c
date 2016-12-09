@@ -16,7 +16,7 @@ static size_t clients_num = 0;
 
 /**
  * подключение игрока к игре
- * @return clientId
+ * @return id
  * @return -1 ошибка
  */
 int client_connect()
@@ -42,11 +42,17 @@ int client_connect()
 
 void client_disconnect_all()
 {
-	for( ; clients_num-- > 0; )
+	while(clients_num > 0)
 	{
+		clients_num--;
 		client_unspawn(clients_num);
 		Z_free(clients[clients_num]);
 	}
+}
+
+int client_num_get()
+{
+	return clients_num;
 }
 
 client_t * client_get(int id)
@@ -59,17 +65,10 @@ void client_spawn(int id)
 {
 	if(id < 0 || id >= clients_num) return;
 	mobj_t * spawn = player_spawn_get();
-	mobj_t * player = player_create_player(spawn);
-	clients[id]->mobj = player;
 
-	if(id == 0)
-	{
-		game.P0 = clients[id]->mobj;
-	}
-	else if(id == 1)
-	{
-		game.P1 = clients[id]->mobj;
-	}
+	mobj_t * player = mobj_new(MOBJ_PLAYER, spawn->pos.x, spawn->pos.y, spawn->dir, spawn);
+
+	clients[id]->mobj = player;
 }
 
 void client_unspawn(int id)
@@ -78,13 +77,38 @@ void client_unspawn(int id)
 	//mobj_free(clients[id]->mobj);
 
 	clients[id]->mobj = NULL;
+}
 
-	if(id == 0)
+/**
+ * сохранение информации о клиентах между уровнями
+ */
+void client_store_all()
+{
+	int id;
+	for(id = 0; id < clients_num; id++)
 	{
-		game.P0 = NULL;
+		client_t * client = clients[id];
+		if(client->mobj->info == NULL) continue;
+		client->mobj->info->client_store(
+			&(client->storedata),
+			client->mobj->data
+		);
 	}
-	else if(id == 1)
+}
+
+/**
+ * восстановление информации о клиентах
+ */
+void client_restore_all()
+{
+	int id;
+	for(id = 0; id < clients_num; id++)
 	{
-		game.P1 = NULL;
+		client_t * client = clients[id];
+		if(client->mobj->info == NULL) continue;
+		client->mobj->info->client_restore(
+			client->mobj->data,
+			&(client->storedata)
+		);
 	}
 }

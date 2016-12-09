@@ -12,7 +12,10 @@
 #include <game.h>
 #include <_gr2D.h>
 #include <fonts.h>
-#include <player.h>
+
+#include "client.h"
+
+#include "player.h"
 
 #include "mobjs.h"
 #include "items.h"
@@ -36,201 +39,296 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
 };
 
-void * player_mobj_init(const mobj_t * mobj);
+void * player_mobj_init(mobj_t * this, mobj_t * parent);
+void player_mobj_done(mobj_t * this);
+void player_handle(mobj_t * this);
+void player_store(client_storedata_t * storedata, const void * mobj);
+void player_restore(void * data, const client_storedata_t * storedata);
 
-const mobj_register_t playermobjinfo = {
+void * enemy_mobj_init(mobj_t * this, mobj_t * parent);
+void enemy_mobj_done(mobj_t * this);
+void enemy_handle(mobj_t * this);
+
+void * boss_mobj_init(mobj_t * this, mobj_t * parent);
+void boss_mobj_done(mobj_t * this);
+void boss_handle(mobj_t * this);
+
+const mobj_reginfo_t player_reginfo = {
 		.name = "player",
-		.mobjinit = player_mobj_init
+		.mobjinit = player_mobj_init,
+		.mobjdone = player_mobj_done,
+		.handle   = player_handle,
+		.client_store = player_store,
+		.client_restore = player_restore
+
 };
+
+const mobj_reginfo_t enemy_reginfo = {
+		.name = "enemy",
+		.mobjinit = enemy_mobj_init,
+		.mobjdone = enemy_mobj_done,
+		.handle   = enemy_handle,
+		.client_store = NULL,
+		.client_restore = NULL
+};
+
+const mobj_reginfo_t boss_reginfo = {
+		.name = "boss",
+		.mobjinit = boss_mobj_init,
+		.mobjdone = boss_mobj_done,
+		.handle   = boss_handle,
+		.client_store = NULL,
+		.client_restore = NULL
+
+};
+
+static void player_handle_common(mobj_t * player);
 
 void mobj_player_init()
 {
-	mobjinfo_register(&playermobjinfo);
+	mobj_register(&player_reginfo);
+	mobj_register(&enemy_reginfo);
+	mobj_register(&boss_reginfo);
 }
 
-void * player_mobj_init(const mobj_t * mobj)
+void * player_mobj_init(mobj_t * this, mobj_t * spawn)
 {
-	mobj_player_t * player = Z_malloc(sizeof(mobj_player_t));
-	return player;
+	player_t * pl = Z_malloc(sizeof(player_t));
+	pl->Iflag = image_get(IMG_FLAG_RUS);
+	player_spawn_init(this, pl, spawn);
+	return pl;
+}
+
+void player_mobj_done(mobj_t * this)
+{
+	player_t * pl = this->data;
+	sound_play_stop(pl->soundId_move);
+	ctrl_AI_done(&(pl->brain));
+	Z_free(pl);
+}
+
+void player_handle(mobj_t * this)
+{
+	think_human(this);
+	player_handle_common(this);
+}
+
+void player_store(client_storedata_t * storedata, const void * data)
+{
+	storedata->fragstotal = ((player_t *)data)->charact.fragstotal;
+	storedata->frags      = ((player_t *)data)->charact.frags;
+	storedata->level      = ((player_t *)data)->level;
+	storedata->scores     = ((player_t *)data)->items[ITEM_SCORES];
+}
+
+void player_restore(void * data, const client_storedata_t * storedata)
+{
+	((player_t *)data)->charact.fragstotal = storedata->fragstotal;
+	((player_t *)data)->charact.frags      = storedata->frags;
+	((player_t *)data)->level              = storedata->level;
+	((player_t *)data)->items[ITEM_SCORES] = storedata->scores;
+}
+
+void * enemy_mobj_init(mobj_t * this, mobj_t * spawn)
+{
+	player_t * pl = Z_malloc(sizeof(player_t));
+	pl->Iflag = image_get(IMG_FLAG_WHITE);
+	player_spawn_init(this, pl, spawn);
+	ctrl_AI_init(&pl->brain);
+	return pl;
+}
+
+void enemy_mobj_done(mobj_t * this)
+{
+	player_mobj_done(this);
+}
+void enemy_handle(mobj_t * this)
+{
+	//think_enemy(player);
+	player_handle_common(this);
+}
+
+void * boss_mobj_init(mobj_t * this, mobj_t * spawn)
+{
+	player_t * pl = Z_malloc(sizeof(player_t));
+	pl->Iflag = image_get(IMG_FLAG_USA);
+	player_spawn_init(this, pl, spawn);
+	ctrl_AI_init(&pl->brain);
+	return pl;
+}
+void boss_mobj_done(mobj_t * this)
+{
+	player_mobj_done(this);
+}
+void boss_handle(mobj_t * this)
+{
+	//think_enemy(player);
+	player_handle_common(this);
+}
+
+
+
+
+static void _move(int id, direction_t dir, bool go)
+{
+	client_t * cl = client_get(id);
+	if(!cl)return;
+	player_t * pl = cl->mobj->data;
+
+	if(go)
+		cl->mobj->dir = dir;
+	else
+	{
+		if(cl->mobj->dir != dir)
+			return;
+	}
+	pl->move.go = go;
+}
+
+static void _attack(int id, bool attack, weapontype_t weap)
+{
+	client_t * cl = client_get(id);
+	if(!cl)return;
+	player_t * pl = cl->mobj->data;
+
+	if(attack)
+		pl->weap = weap;
+	pl->attack = attack;
 }
 
 
 void player_moveUp_ON()
 {
-	if(!game.P0)return;
-	game.P0->dir = DIR_UP;
-	game.P0->player->move.go = true;
+	_move(0, DIR_UP, true);
 }
 
 void player_moveUp_OFF()
 {
-	if(!game.P0)return;
-	if(game.P0->dir != DIR_UP) return;
-	game.P0->player->move.go = false;
+	_move(0, DIR_UP, false);
 }
 
 void player_moveDown_ON()
 {
-	if(!game.P0)return;
-	game.P0->dir = DIR_DOWN;
-	game.P0->player->move.go = true;
+	_move(0, DIR_DOWN, true);
 }
 
 void player_moveDown_OFF()
 {
-	if(!game.P0)return;
-	if(game.P0->dir != DIR_DOWN) return;
-	game.P0->player->move.go = false;
+	_move(0, DIR_DOWN, false);
 }
 
 void player_moveLeft_ON()
 {
-	if(!game.P0)return;
-	game.P0->dir = DIR_LEFT;
-	game.P0->player->move.go = true;
+	_move(0, DIR_LEFT, true);
 }
 
 void player_moveLeft_OFF()
 {
-	if(!game.P0)return;
-	if(game.P0->dir != DIR_LEFT) return;
-	game.P0->player->move.go = false;
+	_move(0, DIR_LEFT, false);
 }
 
 void player_moveRight_ON()
 {
-	if(!game.P0)return;
-	game.P0->dir = DIR_RIGHT;
-	game.P0->player->move.go = true;
+	_move(0, DIR_RIGHT, true);
 }
 
 void player_moveRight_OFF()
 {
-	if(!game.P0)return;
-	if(game.P0->dir != DIR_RIGHT) return;
-	game.P0->player->move.go = false;
+	_move(0, DIR_RIGHT, false);
 }
 
 void player_attack_weapon1_ON()
 {
-	game.P0->player->weap = WEAP_ARTILLERY;
-	game.P0->player->attack = true;
+	_attack(0, true, WEAP_ARTILLERY);
 }
 void player_attack_weapon1_OFF()
 {
-	game.P0->player->attack = false;
+	_attack(0, false, WEAP_ARTILLERY);
 }
 
 void player_attack_weapon2_ON()
 {
-	game.P0->player->weap = WEAP_MISSILE;
-	game.P0->player->attack = true;
+	_attack(0, true, WEAP_MISSILE);
 }
 void player_attack_weapon2_OFF()
 {
-	game.P0->player->attack = false;
+	_attack(0, false, WEAP_MISSILE);
 }
 
 void player_attack_weapon3_ON()
 {
-	game.P0->player->weap = WEAP_MINE;
-	game.P0->player->attack = true;
+	_attack(0, true, WEAP_MINE);
 }
 void player_attack_weapon3_OFF()
 {
-	game.P0->player->attack = false;
+	_attack(0, false, WEAP_MINE);
 }
 
 void player2_moveUp_ON()
 {
-	if(!game.P1)return;
-	game.P1->dir = DIR_UP;
-	game.P1->player->move.go = true;
+	_move(1, DIR_UP, true);
 }
 
 void player2_moveUp_OFF()
 {
-	if(!game.P1)return;
-	if(game.P1->dir != DIR_UP) return;
-	game.P1->player->move.go = false;
+	_move(1, DIR_UP, false);
 }
 
 void player2_moveDown_ON()
 {
-	if(!game.P1)return;
-	game.P1->dir = DIR_DOWN;
-	game.P1->player->move.go = true;
+	_move(1, DIR_DOWN, true);
 }
 
 void player2_moveDown_OFF()
 {
-	if(!game.P1)return;
-	if(game.P1->dir != DIR_DOWN) return;
-	game.P1->player->move.go = false;
+	_move(1, DIR_DOWN, false);
 }
 
 void player2_moveLeft_ON()
 {
-	if(!game.P1)return;
-	game.P1->dir = DIR_LEFT;
-	game.P1->player->move.go = true;
+	_move(1, DIR_LEFT, true);
 }
 
 void player2_moveLeft_OFF()
 {
-	if(!game.P1)return;
-	if(game.P1->dir != DIR_LEFT) return;
-	game.P1->player->move.go = false;
+	_move(1, DIR_LEFT, false);
 }
 
 void player2_moveRight_ON()
 {
-	if(!game.P1)return;
-	game.P1->dir = DIR_RIGHT;
-	game.P1->player->move.go = true;
+	_move(1, DIR_RIGHT, true);
 }
 
 void player2_moveRight_OFF()
 {
-	if(!game.P1)return;
-	if(game.P1->dir != DIR_RIGHT) return;
-	game.P1->player->move.go = false;
+	_move(1, DIR_RIGHT, false);
 }
 
 void player2_attack_weapon1_ON()
 {
-	if(!game.P1)return;
-	game.P1->player->weap = WEAP_ARTILLERY;
-	game.P1->player->attack = true;
+	_attack(1, true, WEAP_ARTILLERY);
 }
 void player2_attack_weapon1_OFF()
 {
-	if(!game.P1)return;
-	game.P1->player->attack = false;
+	_attack(1, false, WEAP_ARTILLERY);
 }
 
 void player2_attack_weapon2_ON()
 {
-	if(!game.P1)return;
-	game.P1->player->weap = WEAP_MISSILE;
-	game.P1->player->attack = true;
+	_attack(1, true, WEAP_MISSILE);
 }
 void player2_attack_weapon2_OFF()
 {
-	if(!game.P1)return;
-	game.P1->player->attack = false;
+	_attack(1, false, WEAP_MISSILE);
 }
 
 void player2_attack_weapon3_ON()
 {
-	if(!game.P1)return;
-	game.P1->player->weap = WEAP_MINE;
-	game.P1->player->attack = true;
+	_attack(1, true, WEAP_MINE);
 }
 void player2_attack_weapon3_OFF()
 {
-	if(!game.P1)return;
-	game.P1->player->attack = false;
+	_attack(1, false, WEAP_MINE);
 }
 
 /*
@@ -349,13 +447,12 @@ void check_value_int(int * val, int min, int max)
  */
 void player_item_get(mobj_t * player)
 {
-	if(!
-			(
-					(player->player->items[ITEM_HEALTH] > 0) &&
-					((player->player->charact.status==c_p_P0)||(player->player->charact.status==c_p_P1))
-			)
-	)return;
-	// не монстр(монстрюки оружие не подбирают)
+	if(player->type != MOBJ_PLAYER) return;
+
+	player_t * pl = player->data;
+
+	if(pl->items[ITEM_HEALTH] <= 0) return;
+
 	mobj_t * mobj;
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
@@ -372,30 +469,30 @@ void player_item_get(mobj_t * player)
 				(mobj->type == MOBJ_ITEM)
 		)
 		{
-			playerinfo_t *playerinfo = &playerinfo_table[player->player->level];
+			playerinfo_t *playerinfo = &playerinfo_table[pl->level];
 			itemtype_t itemtype = mobj->item.type;
 
 			if(
 					playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
 					playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
-					((player->player->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
+					((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
 			)
 			{
 				item->exist = false;
-				player->player->items[itemtype] += item->amount;
-				check_value_int(&player->player->items[itemtype], 0, playerinfo->items[itemtype]);
+				pl->items[itemtype] += item->amount;
+				check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
 			};
 
 
 			if(itemtype == ITEM_SCORES)
 			{
-				player_class_init(player);
-				if(5 <= player->player->items[ITEM_SCORES] / ITEM_SCOREPERCLASS)
+				player_class_init(player, player->data);
+				if(5 <= pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS)
 				{
-					if(player->player->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
-						player->player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-					if(player->player->items[ITEM_ARMOR] < player->player->items[ITEM_ARMOR])
-						player->player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+					if(pl->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
+						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					if(pl->items[ITEM_ARMOR] < pl->items[ITEM_ARMOR])
+						pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 				}
 			}
 		}
@@ -407,9 +504,7 @@ void player_item_get(mobj_t * player)
  */
 void player_obj_check(mobj_t * player)
 {
-	if(
-			!((player->player->charact.status==c_p_P0)||(player->player->charact.status==c_p_P1))
-	) return;
+	if( player->type != MOBJ_PLAYER ) return;
 
 	mobj_t * mobj;
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
@@ -442,7 +537,9 @@ void player_obj_check(mobj_t * player)
  */
 void player_draw(camera_t * cam, mobj_t * player)
 {
-	if(player->player->items[ITEM_HEALTH] > 0)
+	player_t * pl = player->data;
+
+	if(pl->items[ITEM_HEALTH] > 0)
 	{ //если игрок жив
 		if(
 				(cam->pos.x-cam->sx/2<=player->pos.x+(c_p_MDL_box/2))&&(player->pos.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
@@ -454,14 +551,14 @@ void player_draw(camera_t * cam, mobj_t * player)
 					round(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->img,
 					0,
-					c_p_MDL_box*((player->dir * 4)+round(player->player->Fbase)),
+					c_p_MDL_box*((player->dir * 4)+round(pl->Fbase)),
 					c_p_MDL_box,
 					c_p_MDL_box
 			);
 			gr2D_setimage0(
 					round(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
 					round(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
-					player->player->Iflag
+					pl->Iflag
 			);
 		};
 	};
@@ -488,72 +585,76 @@ static void player_move(mobj_t * player, int dir, vec_t * speed)
 	case DIR_RIGHT: pos->x += dway; break;
 	}
 };
+
 /*
- * управление игроком
+ * обработка игрока
  */
-void player_handle(struct mobj_s * player)
+static void player_handle_common(mobj_t * player)
 {
 	vec2_t Sorig;
 	vec_t L,R,U,D;
 	vec_t speed_s;
 
-	playerinfo_t * playerinfo = &playerinfo_table[player->player->level];
-	if(player->player->items[ITEM_HEALTH] <= 0)
+	player_t * pl = player->data;
+
+	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
+	if(pl->items[ITEM_HEALTH] <= 0)
 	{
-		if(player->player->soundId_move)
+		if(pl->soundId_move)
 		{
-			sound_play_stop(player->player->soundId_move);
-			player->player->soundId_move = 0;
+			sound_play_stop(pl->soundId_move);
+			pl->soundId_move = 0;
 		}
 
 		//если игрок мертв
-		if(player->player->charact.spawned)
+		if(pl->charact.spawned)
 		{
 			explode_new(player->pos.x, player->pos.y, EXPLODE_MISSILE, player);
-			player->player->charact.spawned = false;
-			player->player->items[ITEM_ARMOR] = 0;
-			player->player->items[ITEM_AMMO_MISSILE] = 0;
-			player->player->items[ITEM_AMMO_MINE] = 0;
+			pl->charact.spawned = false;
+			pl->items[ITEM_ARMOR] = 0;
+			pl->items[ITEM_AMMO_MISSILE] = 0;
+			pl->items[ITEM_AMMO_MINE] = 0;
 		};
-		if(player->player->charact.status == c_p_BOSS) game._win_ = true;
+		if(player->type == MOBJ_BOSS)
+			game._win_ = true;
 	}
 	else
 	{
 		//игрок жив
-		if(player->player->bull)
+		if(pl->bull)
 		{
-			player->player->bull->dir = player->dir;
-			player->player->move.go = false;
+			pl->bull->dir = player->dir;
+			pl->move.go = false;
 		};
-		if(player->player->move.go)
+		if(pl->move.go)
 		{
 			//игрок едет
-			player->player->move.speed += PLAYER_ACCEL * dtime;
-			if(player->player->move.speed > playerinfo->speed) player->player->move.speed = playerinfo->speed;
+			pl->move.speed += PLAYER_ACCEL * dtime;
+			if(pl->move.speed > playerinfo->speed) pl->move.speed = playerinfo->speed;
 
-			player->player->Fbase = player->player->Fbase + PLAYER_FPS_RUN * dtimed1000;
-			if(player->player->Fbase < 0 || player->player->Fbase > 3) player->player->Fbase = 0;
-			if(!player->player->soundId_move)
+			pl->Fbase = pl->Fbase + PLAYER_FPS_RUN * dtimed1000;
+			if(pl->Fbase < 0 || pl->Fbase > 3) pl->Fbase = 0;
+			if(!pl->soundId_move)
 			{
-				player->player->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
+				pl->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
 			}
 
 		}
 		else
 		{
 			//игрок останавливается
-			player->player->move.speed -= PLAYER_DECEL * dtime;
+			pl->move.speed -= PLAYER_DECEL * dtime;
 		};
-		if(player->player->move.speed < 0)
+		if(pl->move.speed < 0)
 		{
-			if(player->player->soundId_move)
+			if(pl->soundId_move)
 			{
-				sound_play_stop(player->player->soundId_move);
-				player->player->soundId_move = 0;
+				sound_play_stop(pl->soundId_move);
+				pl->soundId_move = 0;
 			}
-			player->player->move.speed = 0;
+			pl->move.speed = 0;
 		}
-		player_move(player, player->dir, &player->player->move.speed);
+		player_move(player, player->dir, &pl->move.speed);
 
 		speed_s = playerinfo->speed / 4;
 
@@ -585,34 +686,34 @@ void player_handle(struct mobj_s * player)
 		}
 	}
 //стрельба
-	if(!player->player->attack)
+	if(!pl->attack)
 	{
 		//игрок не атакует
-		if(player->player->reloadtime_d>0) player->player->reloadtime_d -= dtime;//учитываем время на перезарядку
+		if(pl->reloadtime_d>0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
 	}
 	else
 	{
 		//игрок атакует
-		if(player->player->items[ITEM_HEALTH] <= 0)
+		if(pl->items[ITEM_HEALTH] <= 0)
 		{
 			if(
 				((game.flags & c_g_f_2PLAYERS) != 0) &&
-				((player->player->charact.status == c_p_P0)||(player->player->charact.status == c_p_P1))
+				(player->type == MOBJ_PLAYER)
 				)
 			{
 				player_respawn(player);
-				player->player->reloadtime_d = c_p_WEAP_reloadtime;
+				pl->reloadtime_d = c_p_WEAP_reloadtime;
 			};
 		}
 		else
 		{
-			if(player->player->reloadtime_d>0) player->player->reloadtime_d -= dtime;//учитываем время на перезарядку
+			if(pl->reloadtime_d > 0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
 			else
 			{
-				if(!player->player->bull)
+				if(!pl->bull)
 				{
 					int item;
-					switch(player->player->weap)
+					switch(pl->weap)
 					{
 					case WEAP_ARTILLERY: item = ITEM_AMMO_ARTILLERY; break;
 					case WEAP_MISSILE  : item = ITEM_AMMO_MISSILE; break;
@@ -623,12 +724,12 @@ void player_handle(struct mobj_s * player)
 					//если не стреляем управляемой ракетой
 					if(
 							(playerinfo->items[item] == ITEM_AMOUNT_INF)||            //если пуль бесконечно много
-							(player->player->items[item] > 0)
+							(pl->items[item] > 0)
 					)
 					{
 						// пули не кончились
-						player->player->reloadtime_d = c_p_WEAP_reloadtime;
-						mobj_bulltype_t bulltype = mobj_weapon_type_to_bull_type(player->player->weap);
+						pl->reloadtime_d = c_p_WEAP_reloadtime;
+						mobj_bulltype_t bulltype = mobj_weapon_type_to_bull_type(pl->weap);
 						mobj_t * bull = bull_new(
 							player->pos.x,
 							player->pos.y,
@@ -636,9 +737,9 @@ void player_handle(struct mobj_s * player)
 							player->dir,
 							player
 							);                                                       //создаем пулю
-						if(bulltype == BULL_MISSILE) player->player->bull = bull;
+						if(bulltype == BULL_MISSILE) pl->bull = bull;
 						//присоединяем изображение пули
-						switch(player->player->weap)
+						switch(pl->weap)
 						{
 						case WEAP_ARTILLERY:
 							sound_play_start(SOUND_WEAPON_ARTILLERY_1, 1);
@@ -653,15 +754,15 @@ void player_handle(struct mobj_s * player)
 						};
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
-								(player->player->charact.status==c_p_P0 || player->player->charact.status == c_p_P1) // игрок не монстр(у монстрюков пули не кончаются)
+								player->type == MOBJ_PLAYER    // игрок не монстр(у монстрюков пули не кончаются)
 						)
-							player->player->items[item]--;
+							pl->items[item]--;
 					}
 				}
 			}
 		}
 	}
-	if(player->player->reloadtime_d < 0) player->player->reloadtime_d = 0;
+	if(pl->reloadtime_d < 0) pl->reloadtime_d = 0;
 	//подбираем предметы
 	player_item_get (player);
 	//проверяем объекты
@@ -671,60 +772,54 @@ void player_handle(struct mobj_s * player)
 /*
  * инициализируем игрока при спавне
  */
-void player_spawn_init(mobj_t * player, const mobj_spawn_t * sp)
+void player_spawn_init(mobj_t * player, player_t * pl, mobj_t * spawn)
 {
+	const mobj_spawn_t * sp = &spawn->spawn;
+
 	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
-		player->player->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
-	player_class_init(player);
-	playerinfo_t * playerinfo = &playerinfo_table[player->player->level];
+		pl->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
+	player_class_init(player, pl);
+	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
 
 	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
-		player->player->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
+		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
 	else
 	{
-		if(player->player->charact.status == c_p_BOSS || player->player->charact.status == c_p_ENEMY)
-			player->player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+		if(player->type != MOBJ_PLAYER)
+			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 		else
 		{
 			if(game.flags & c_g_f_CASE)
-				player->player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 			else
 			{
 				//по уровням
 				if(game.gamemap == mapList) // первая карта
-					player->player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 				else // не первая карта
-					if(!player->player->charact.spawned && player->player->items[ITEM_HEALTH] <= 0)
-						player->player->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					if(!pl->charact.spawned && pl->items[ITEM_HEALTH] <= 0)
+						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 			}
 		}
 	}
 	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
-		player->player->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
+		pl->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
 	else
 	{
-		if(player->player->charact.status == c_p_BOSS || player->player->charact.status == c_p_ENEMY)
-			player->player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+		if(player->type != MOBJ_PLAYER)
+			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 		else
-			if(game.flags & c_g_f_CASE) player->player->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+			if(game.flags & c_g_f_CASE) pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 	};
-	player->player->charact.frags = 0;
-	player->player->charact.spawned = true;
-	player->player->bull            = NULL;
-	player->player->move.speed      = 0;
-	player->player->move.go         = false;
+	pl->charact.frags = 0;
+	pl->charact.spawned = true;
+	pl->bull            = NULL;
+	pl->move.speed      = 0;
+	pl->move.go         = false;
 	player->dir          = DIR_UP;
-	player->player->attack          = false;
-	player->player->reloadtime_d    = 0;
-	player->player->soundId_move    = 0;
-
-	switch(player->player->charact.status)
-	{
-		case c_p_BOSS : player->player->Iflag = image_get(IMG_FLAG_USA);break;
-		case c_p_ENEMY: player->player->Iflag = image_get(IMG_FLAG_WHITE);break;
-		case c_p_P0   : player->player->Iflag = image_get(IMG_FLAG_RUS);break;
-		case c_p_P1   : player->player->Iflag = image_get(IMG_FLAG_RUS);break;
-	}
+	pl->attack          = false;
+	pl->reloadtime_d    = 0;
+	pl->soundId_move    = 0;
 
 };
 
@@ -764,73 +859,13 @@ mobj_t * player_spawn_get()
  */
 int player_respawn(mobj_t * player)
 {
-	if(
-			player->player->charact.status != c_p_P0 &&
-			player->player->charact.status != c_p_P1
-	) return 1;//игрок является монстром, ошибка спавнинга
+	if(player->type != MOBJ_PLAYER) return 1;//игрок является монстром, ошибка спавнинга
 
 	mobj_t * spawn = player_spawn_get();
 
 	player->pos.x = spawn->pos.x;
 	player->pos.y = spawn->pos.y;
-	player_spawn_init(player, &spawn->spawn);
-	return 0;
-}
-
-mobj_t * player_create_player(const mobj_t * spawn)
-{
-	if(spawn->type != MOBJ_SPAWN) return NULL;
-
-	const mobj_spawn_t * sp = &spawn->spawn;
-
-	mobj_t * player = mobj_new(MOBJ_PLAYER, spawn->pos.x, spawn->pos.y, spawn->dir);
-
-	player->player = Z_malloc(sizeof(mobj_player_t));
-
-	int status;
-
-	if(sp->type == SPAWN_ENEMY) status = c_p_ENEMY;
-	if(sp->type == SPAWN_BOSS ) status = c_p_BOSS;
-	if(sp->type == SPAWN_PLAYER) status = c_p_P0;
-
-	player->player->charact.status     = status;
-
-	if(status == c_p_ENEMY || status == c_p_BOSS)
-		ctrl_AI_init(&player->player->brain);
-
-	player_spawn_init(player, sp);
-
-	return player;
-}
-
-/**
- * появление/восстановление игрока на карте
- * @return = 0 - спавнинг монстров прошел успешно
- * @return = 1 - слишком много игроков
- */
-int player_create_enemy(const mobj_t * spawn)
-{
-	if(spawn->type != MOBJ_SPAWN) return -1;
-
-	const mobj_spawn_t * sp = &spawn->spawn;
-
-	if(sp->type != SPAWN_ENEMY && sp->type == SPAWN_BOSS ) return -1;
-
-	mobj_t * player = mobj_new(MOBJ_PLAYER, spawn->pos.x, spawn->pos.y, spawn->dir);
-
-	player->player = Z_malloc(sizeof(mobj_player_t));
-
-	int status;
-
-	if(sp->type == SPAWN_ENEMY) status = c_p_ENEMY;
-	if(sp->type == SPAWN_BOSS ) status = c_p_BOSS;
-	player->player->charact.status     = status;
-
-	ctrl_AI_init(&player->player->brain);
-
-	player_spawn_init(player, sp);
-
-
+	player_spawn_init(player, player->data, spawn);
 	return 0;
 }
 
@@ -839,7 +874,9 @@ int player_create_enemy(const mobj_t * spawn)
  */
 void player_draw_status(camera_t * cam, mobj_t * player)
 {
-	playerinfo_t * playerinfo = &playerinfo_table[player->player->level];
+	player_t * pl = player->data;
+
+	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
 	int ref_y = VIDEO_SCREEN_H - 16 * 2;
 
 	font_color_set3i(COLOR_1);
@@ -849,8 +886,8 @@ void player_draw_status(camera_t * cam, mobj_t * player)
 	gr2D_setimage0(cam->x + 16 * 0     , ref_y, game.i_health);
 	gr2D_setimage0(cam->x + 16 * 6     , ref_y, game.i_armor);
 
-	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", player->player->items[ITEM_HEALTH]);
-	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", player->player->items[ITEM_ARMOR]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", pl->items[ITEM_HEALTH]);
+	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", pl->items[ITEM_ARMOR]);
 	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_HEALTH]);
 	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_ARMOR]);
 
@@ -863,39 +900,39 @@ void player_draw_status(camera_t * cam, mobj_t * player)
 	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get(wtable[2].icon));
 
 	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "@"); // player->items[ITEM_AMMO_ARTILLERY]
-	if(player->player->items[ITEM_AMMO_MISSILE] >= 0)
-		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", player->player->items[ITEM_AMMO_MISSILE]);
-	if(player->player->items[ITEM_AMMO_MINE] >= 0)
-		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", player->player->items[ITEM_AMMO_MINE]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", player->player->items[ITEM_SCORES]);
+	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
+		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", pl->items[ITEM_AMMO_MISSILE]);
+	if(pl->items[ITEM_AMMO_MINE] >= 0)
+		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", pl->items[ITEM_AMMO_MINE]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", pl->items[ITEM_SCORES]);
 
 }
 
 /*
  * инициализация класса танка
  */
-void player_class_init(mobj_t * player)
+void player_class_init(mobj_t * player, player_t * pl)
 {
-	player->player->Fbase = 0;                                                       //№ кадра(база)
-	int level = player->player->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
+	pl->Fbase = 0;                                                       //№ кадра(база)
+	int level = pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
-	if(player->player->charact.status == c_p_BOSS) level = PLAYER_LEVEL_BOSS;
-	player->player->level = level;
+	if(player->type == MOBJ_BOSS) level = PLAYER_LEVEL_BOSS;
+	pl->level = level;
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
 	int i;
 	for(i = 0; i< __ITEM_NUM; i++)
 	{
 		if(playerinfo->items[i] == ITEM_AMOUNT_NA)
-			player->player->items[i] = playerinfo->items[i];
+			pl->items[i] = playerinfo->items[i];
 		else if(playerinfo->items[i] == ITEM_AMOUNT_INF)
-			player->player->items[i] = playerinfo->items[i];
+			pl->items[i] = playerinfo->items[i];
 		else
 		{
-			if(player->player->items[i] < 0) player->player->items[i] = 0;
-			if( player->player->charact.status==c_p_ENEMY || player->player->charact.status==c_p_BOSS )
+			if( pl->items[i] < 0 ) pl->items[i] = 0;
+			if( player->type != MOBJ_PLAYER )
 			{
-				player->player->items[i] = playerinfo->items[i];
+				pl->items[i] = playerinfo->items[i];
 			}
 		}
 	}
@@ -909,13 +946,15 @@ void player_class_init(mobj_t * player)
  */
 void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius)
 {
+	player_t * pl = player->data;
+
 	int damage_full;
 	int armor;
 
 	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
 	explodeinfo_t * explode_info = &explodeinfo_table[explode->explode.type];
 
-	if( player->player->items[ITEM_HEALTH] > 0 && radius <= explode_info->radius )
+	if( pl->items[ITEM_HEALTH] > 0 && radius <= explode_info->radius )
 	{
 		if(self)
 			damage_full = explode_info->selfdamage*(1-radius/explode_info->radius);
@@ -925,32 +964,34 @@ void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius
 		int damage_armor = damage_full*2/3;
 		int damage_health = damage_full - damage_armor;
 
-		armor = player->player->items[ITEM_ARMOR] - damage_armor;
-		player->player->items[ITEM_HEALTH] = player->player->items[ITEM_HEALTH] - damage_health;
+		armor = pl->items[ITEM_ARMOR] - damage_armor;
+		pl->items[ITEM_HEALTH] = pl->items[ITEM_HEALTH] - damage_health;
 		if(armor < 0)
 		{
-			player->player->items[ITEM_HEALTH] = player->player->items[ITEM_HEALTH] + armor;
-			player->player->items[ITEM_ARMOR] = 0;
+			pl->items[ITEM_HEALTH] = pl->items[ITEM_HEALTH] + armor;
+			pl->items[ITEM_ARMOR] = 0;
 		}
 		else
-			player->player->items[ITEM_ARMOR] = armor;
-		if(player->player->items[ITEM_HEALTH] <= 0)
+			pl->items[ITEM_ARMOR] = armor;
+		if(pl->items[ITEM_HEALTH] <= 0)
 		{
+			player_t * pl_owner = explode->explode.owner->data;
 			if(!self)
 			{
+
 				//атакующему добавим очки
-				explode->explode.owner->player->items[ITEM_SCORES] += c_score_pertank;
-				explode->explode.owner->player->charact.fragstotal++;
-				explode->explode.owner->player->charact.frags++;
+				pl_owner->items[ITEM_SCORES] += c_score_pertank;
+				pl_owner->charact.fragstotal++;
+				pl_owner->charact.frags++;
 			}
 			else
 			{
 				//атакующий умер от своей пули
-				explode->explode.owner->player->items[ITEM_SCORES] = 0;
-				explode->explode.owner->player->charact.fragstotal--;
-				explode->explode.owner->player->charact.frags--;
+				pl_owner->items[ITEM_SCORES] = 0;
+				pl_owner->charact.fragstotal--;
+				pl_owner->charact.frags--;
 			}
-			player_class_init(explode->explode.owner);
+			player_class_init(explode->explode.owner, explode->explode.owner->data);
 		}
 	}
 }

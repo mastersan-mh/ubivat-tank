@@ -8,10 +8,11 @@
 #ifndef SRC_THINK_H_
 #define SRC_THINK_H_
 
-#include <types.h>
+#include "types.h"
 #include "mobjs.h"
 #include "weap.h"
 #include "player.h"
+
 //искуственный интеллект
 typedef struct
 {
@@ -27,10 +28,10 @@ typedef struct
 	long count;
 }think_t;
 
-void ctrl_AI_init       (think_t * brain);
-void ctrl_AI_done       (think_t * brain);
+void ctrl_AI_init(think_t * brain);
+void ctrl_AI_done(think_t * brain);
 
-void think_human(int Pnum, mobj_t * player);
+void think_human(mobj_t * player);
 void think_enemy(mobj_t * player);
 
 

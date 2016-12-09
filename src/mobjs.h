@@ -9,10 +9,10 @@
 #define SRC_MOBJS_H_
 
 #include "types.h"
+#include "client.h"
 #include "img.h"
 #include "weap.h"
 #include "items.h"
-//#include "player.h"
 
 typedef enum
 {
@@ -21,6 +21,7 @@ typedef enum
 	MOBJ_MESSAGE,
 	MOBJ_PLAYER,
 	MOBJ_ENEMY,
+	MOBJ_BOSS,
 	MOBJ_BULL,
 	MOBJ_EXPLODE,
 	MOBJ_EXIT,
@@ -131,13 +132,13 @@ typedef struct mobj_s
 	//изображение объекта
 	item_img_t * img;
 
-	struct mobj_register_s * info;
+	const struct mobj_register_s * info;
 	union
 	{
+		void * data;
 		mobj_spawn_t   spawn;
 		mobj_item_t    item;
 		mobj_message_t mesage;
-		struct mobj_player_s * player;
 		mobj_bull_t    bull;
 		mobj_explode_t explode;
 		mobj_exit_t    exit;
@@ -149,20 +150,25 @@ typedef struct mobj_s
 
 typedef void* (*mobjinit_t)(const mobj_t * mobj);
 
+
+
 typedef struct mobj_register_s
 {
 	char * name;
-	void * (*mobjinit)(const mobj_t * mobj);
+	void * (*mobjinit)(mobj_t * this, mobj_t * parent);
+	void (*mobjdone)(mobj_t * this);
 
-	void * (*connect)(const mobj_t * mobj);
-	void * (*client_store)(const mobj_t * mobj);
-	void * (*client_restore)(const mobj_t * mobj);
+	void (*handle)(mobj_t * this);
 
-}mobj_register_t;
+	void * (*connect)(const mobj_t * this);
 
-void mobjinfo_register(const mobj_register_t * info);
-const mobj_register_t * mobjinjfo_get(const char * name);
+	void (*client_store)(client_storedata_t * storedata, const void * data);
+	void (*client_restore)(void * data, const client_storedata_t * storedata);
 
+}mobj_reginfo_t;
+
+void mobj_register(const mobj_reginfo_t * info);
+const mobj_reginfo_t * mobj_reginfo_get(const char * name);
 
 mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type);
 mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type);
@@ -171,7 +177,7 @@ extern void mobjs_handle();
 
 extern void mobjs_draw(camera_t * cam);
 
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir);
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj_t * const parent);
 
 void mobjs_erase_all();
 

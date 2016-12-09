@@ -85,7 +85,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 	static char buf[BUFSIZE];
 	int i;
 	size_t len;
-	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP);
+	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL);
 
 	switch(mapdata_mobj_type)
 	{
@@ -104,7 +104,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
 		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
 		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		player_create_enemy(mobj);
+		mobj_new(MOBJ_ENEMY, data->pos.x, data->pos.y, DIR_UP, mobj);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		mobj->type = MOBJ_SPAWN;
@@ -113,7 +113,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
 		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
 		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		player_create_enemy(mobj);
+		mobj_new(MOBJ_BOSS, data->pos.x, data->pos.y, DIR_UP, mobj);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		mobj->type = MOBJ_ITEM;

@@ -24,17 +24,19 @@ bullinfo_t bullinfo_table[__BULL_NUM] =
 /*
  * проверка на попадание в игрока
  */
-static int checkdamage(mobj_t * player, mobj_t * bull)
+static int checkdamage(mobj_t * mobj, mobj_t * bull)
 {
 	bullinfo_t * bullinfo = &bullinfo_table[bull->bull.type];
 
+	player_t * pl = mobj->data;
+
 	if(
-			bull->bull.owner != player && //попали не в себя
-			0 < player->player->items[ITEM_HEALTH] &&
-			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
-			(bull->pos.x - bullinfo->bodybox / 2 <= player->pos.x + c_p_MDL_box / 2)&&
-			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
-			(bull->pos.y - bullinfo->bodybox / 2 <= player->pos.y + c_p_MDL_box / 2)
+			bull->bull.owner != mobj && //попали не в себя
+			0 < pl->items[ITEM_HEALTH] &&
+			(mobj->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
+			(bull->pos.x - bullinfo->bodybox / 2 <= mobj->pos.x + c_p_MDL_box / 2)&&
+			(mobj->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
+			(bull->pos.y - bullinfo->bodybox / 2 <= mobj->pos.y + c_p_MDL_box / 2)
 	) return true;
 	return false;
 };
@@ -45,7 +47,7 @@ static int checkdamage(mobj_t * player, mobj_t * bull)
 mobj_t * bull_new(vec_t x, vec_t y, mobj_bulltype_t bulltype, direction_t dir, mobj_t * owner)
 {
 
-	mobj_t * mobj = mobj_new(MOBJ_BULL, x, y, dir);
+	mobj_t * mobj = mobj_new(MOBJ_BULL, x, y, dir, owner);
 
 	mobj->bull.owner = owner;
 	mobj->bull.type = bulltype;
@@ -135,7 +137,11 @@ void bull_handle(mobj_t * mobj)
 	flag = 0;
 	while(player && !flag)
 	{                               //проверим на попадание в игрока
-		if(player->type == MOBJ_PLAYER)
+		if(
+				player->type == MOBJ_PLAYER ||
+				player->type == MOBJ_ENEMY ||
+				player->type == MOBJ_BOSS
+		)
 		{
 			flag = checkdamage(player, mobj);
 		}

@@ -37,7 +37,7 @@ mobj_t * explode_new(vec_t x, vec_t y, mobj_explodetype_t explode_type, mobj_t *
 			SOUND_EXPLODE_MISSILE,
 			SOUND_EXPLODE_GRENADE
 	};
-	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y, DIR_UP);
+	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y, DIR_UP, owner);
 
 	mobj->explode.owner = owner;
 	mobj->explode.type  = explode_type;
@@ -102,12 +102,15 @@ void explode_handle(mobj_t * mobj)
 			}
 		}
 		//проверка попаданий в игрока
-		player = map.mobjs;
-		while(player)
+		for(player = map.mobjs; player ; player = player->next)
+
 		{
-			if(player->type != MOBJ_PLAYER)
+			if(
+					player->type != MOBJ_PLAYER &&
+					player->type != MOBJ_ENEMY &&
+					player->type != MOBJ_BOSS
+			)
 			{
-				player = player->next;
 				continue;
 			}
 			sp_x = player->pos.x-explode->pos.x;
@@ -117,25 +120,17 @@ void explode_handle(mobj_t * mobj)
 					(abs(sp_y)<=c_p_MDL_box/2)) r = 0;
 			else
 			{
-				r = sqrt(sp_x*sp_x+sp_y*sp_y)-sqrt(sqrf(c_p_MDL_box/2)+sqrf(c_p_MDL_box/2))/2;
+				r = sqrt(sp_x*sp_x+sp_y*sp_y) - sqrt(sqrf(c_p_MDL_box/2)+sqrf(c_p_MDL_box/2))/2;
 				//if(r <= explodeinfo->bullbox) r = 0;
 			};
 			if(0 < explodeinfo->radius && r <= explodeinfo->radius)
 			{
-				if(
-						(explode->explode.owner == player) ||
-						(
-								(explode->explode.owner == game.P0 || explode->explode.owner == game.P1)&&
-								(player == game.P0 || player == game.P1)
-						)
-				)
-					self = true;          //взрывом задели себя или товарища по команде(не для монстров)
-				else self = false;                                                  //взрывом задели другого игрока
+				//взрывом задели себя или товарища по команде(не для монстров)
+				self = (explode->explode.owner == player) && (player->type == MOBJ_PLAYER);
 				player_getdamage(player, explode, self, r);
-			};
-			player = player->next;
-		};
-	};
+			}
+		}
+	}
 	if(c_explode_Famnt - 1 < explode->explode.frame) explode->explode.frame = c_explode_Famnt - 1;
 
 	explode->explode.frame = explode->explode.frame + c_explode_FPS * dtimed1000;

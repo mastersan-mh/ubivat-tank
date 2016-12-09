@@ -91,14 +91,6 @@ typedef enum {
 //количество кадров взрыва
 #define c_explode_Famnt 8
 //игрок
-//игрок 0
-#define c_p_P0          0
-//игрок 1
-#define c_p_P1          1
-//вражеский танк
-#define c_p_ENEMY       2
-//босс
-#define c_p_BOSS        3
 //body box
 #define c_p_MDL_box     16
 //позиция изображения

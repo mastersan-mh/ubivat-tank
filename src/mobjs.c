@@ -15,33 +15,46 @@
 
 #include "_gr2D.h"
 
+char *mobjnames[__MOBJ_NUM] =
+{
+		"MOBJ_SPAWN"  ,
+		"MOBJ_ITEM"   ,
+		"MOBJ_MESSAGE",
+		"player"      ,
+		"enemy"       ,
+		"boss"        ,
+		"MOBJ_BULL"   ,
+		"MOBJ_EXPLODE",
+		"MOBJ_EXIT"
+};
 
-static const mobj_register_t ** mobj_registers = NULL;
+static const mobj_reginfo_t ** mobj_reginfos = NULL;
 static size_t mobj_register_size = 0;
 static size_t mobj_register_num = 0;
 
-void mobjinfo_register(const mobj_register_t * info)
+void mobj_register(const mobj_reginfo_t * info)
 {
-	const mobj_register_t ** tmp;
+	const mobj_reginfo_t ** tmp;
 
 	if(mobj_register_size < mobj_register_num + 1)
 	{
 		if(mobj_register_size == 0) mobj_register_size = 1;
 		else mobj_register_size *= 2;
-		tmp = Z_realloc(mobj_registers, mobj_register_size);
+		tmp = Z_realloc(mobj_reginfos, mobj_register_size);
 		if(!tmp)game_halt("mobj_register(): failed");
-		mobj_registers = tmp;
+		mobj_reginfos = tmp;
 	}
-	mobj_registers[mobj_register_num] = info;
+	mobj_reginfos[mobj_register_num] = info;
 	mobj_register_num++;
 }
 
-const mobj_register_t * mobjinjfo_get(const char * name)
+const mobj_reginfo_t * mobj_reginfo_get(const char * name)
 {
 	size_t i;
 	for(i = 0; i < mobj_register_num; i++)
 	{
-		if(!strncmp(mobj_registers[mobj_register_num]->name, name, 64))return mobj_registers[mobj_register_num];
+		if(!strncmp(mobj_reginfos[i]->name, name, 64))
+			return mobj_reginfos[i];
 	}
 	return NULL;
 }
@@ -73,9 +86,16 @@ mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type)
 void mobjs_handle()
 {
 	mobj_t * mobj;
-	for(mobj = map.mobjs;mobj;mobj = mobj->next)
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
+
+		if(mobj->info != NULL && mobj->info->handle != NULL)
+		{
+			mobj->info->handle(mobj);
+			continue;
+		}
+
 		switch(mobj->type)
 		{
 		case MOBJ_SPAWN: break;
@@ -83,22 +103,6 @@ void mobjs_handle()
 		case MOBJ_MESSAGE: break;
 		case MOBJ_PLAYER :
 		case MOBJ_ENEMY  :
-
-			switch(mobj->player->charact.status)
-			{
-			case c_p_BOSS:
-			case c_p_ENEMY:
-				think_enemy(mobj);
-				break;
-			case c_p_P0:
-				think_human(0, mobj);
-				break;
-			case c_p_P1:
-				think_human(1, mobj);
-				break;
-			}
-			player_handle(mobj);
-
 			break;
 		case MOBJ_BULL:
 			bull_handle(mobj);
@@ -176,12 +180,10 @@ void mobjs_draw(camera_t * cam)
 	}
 }
 
-
-
 /*
  * добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir)
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj_t * const parent)
 {
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
@@ -193,22 +195,35 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir)
 
 	mobj->next = map.mobjs;
 	map.mobjs = mobj;
+
+	if((int)mobj_type >= 0)
+	{
+		char * mobjname = mobjnames[mobj_type];
+		const mobj_reginfo_t * mobjinfo = mobj_reginfo_get(mobjname);
+		mobj->info = mobjinfo;
+		if(mobj->info)
+		{
+			if(mobj->info->mobjinit)
+				mobj->data = mobj->info->mobjinit(mobj, parent);
+		}
+	}
 	return mobj;
 }
 
 void mobj_free_internal(mobj_t * mobj)
 {
+	if(mobj->info != NULL && mobj->info->mobjdone != NULL)
+	{
+		mobj->info->mobjdone(mobj);
+	}
+
 	switch(mobj->type)
 	{
 	case MOBJ_SPAWN  : break;
 	case MOBJ_ITEM   : break;
 	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
-	case MOBJ_PLAYER :
-	case MOBJ_ENEMY  :
-		sound_play_stop(mobj->player->soundId_move);
-		ctrl_AI_done(&(mobj->player->brain));
-		Z_free(mobj->player);
-		break;
+	case MOBJ_PLAYER : break;
+	case MOBJ_ENEMY  : break;
 	case MOBJ_BULL   : break;
 	case MOBJ_EXPLODE: break;
 	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;

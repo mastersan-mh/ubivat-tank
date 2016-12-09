@@ -37,15 +37,14 @@ typedef struct
 
 typedef struct
 {
-	uint32_t scores;
 	uint32_t fragstotal;
 	uint32_t frags;
-	uint16_t health;
-	uint16_t armor;
+	uint32_t scores;
+	int16_t health;
+	int16_t armor;
 	int16_t ammo1;
 	int16_t ammo2;
 	int16_t ammo3;
-	uint8_t  status;
 } ATTR_PACKED game_savedata_player_t;
 
 typedef uint32_t control_t[__ACTION_NUM];
@@ -69,10 +68,6 @@ typedef struct
 	camera_t P0cam;
 	//камера игрока 1
 	camera_t P1cam;
-	//PTR игрока 0
-	mobj_t * P0;
-	//PTR игрока 1
-	mobj_t * P1;
 	char * msg;
 
 	//флаги состояния игры

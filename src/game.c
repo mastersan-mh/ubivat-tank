@@ -12,12 +12,14 @@
 #include <menu.h>
 #include <map.h>
 #include <weap.h>
+#include "mobjs.h"
 #include <img.h>
 #include <video.h>
 #include "sound.h"
 #include <_gr2D.h>
 #include <fonts.h>
 #include "client.h"
+#include "player.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,9 +108,6 @@ void game_init()
 	check_directory(game_dir_conf);
 	check_directory(game_dir_saves);
 
-
-	game.P0         = NULL;
-	game.P1         = NULL;
 	game.msg        = NULL;
 	game.created    = false;
 	game.ingame     = false;
@@ -335,22 +334,31 @@ int game_gameTick()
 {
 	mobjs_handle();
 
-	if(
-			game._win_ &&                                           //победа
-			(game.P0->player->items[ITEM_HEALTH] > 0) &&                        //оба игрока должны быть живы
-			(!game.P1 || (game.P1 && game.P1->player->items[ITEM_HEALTH] > 0))  //
-	)
+	if( game._win_)
 	{
-		if(game.flags & c_g_f_CASE)
+		int i;
+		bool alive = true;
+		int num = client_num_get();
+		// проверим что все игроки живы
+		for(i = 0; i < num; i++)
 		{
-			//игра по выбору
-			game_abort();
-			return MENU_MAIN;
+			if( ((player_t *)client_get(i)->mobj->data)->items[ITEM_HEALTH] < 0 )
+				alive = false;
 		}
-		else
+		if( alive )
 		{
-			//игра по уровням
-			if(game_nextmap() == true) return MENU_INTERLEVEL;
+			if(game.flags & c_g_f_CASE)
+			{
+				//игра по выбору
+				game_abort();
+				return MENU_MAIN;
+			}
+			else
+			{
+				client_store_all();
+				//игра по уровням
+				if(game_nextmap() == true) return MENU_INTERLEVEL;
+			}
 		}
 	}
 	return MENU_MAIN;
@@ -360,10 +368,12 @@ int game_gameTick()
 static void game_draw_cam(mobj_t * player, camera_t * cam)
 {
 
-	if(player->player->bull)
+	player_t * pl = player->data;
+
+	if(pl->bull)
 	{
-		cam->pos.x = player->player->bull->pos.x;
-		cam->pos.y = player->player->bull->pos.y;
+		cam->pos.x = pl->bull->pos.x;
+		cam->pos.y = pl->bull->pos.y;
 	}
 	else
 	{
@@ -391,12 +401,15 @@ static void game_draw_cam(mobj_t * player, camera_t * cam)
 
 void game_draw()
 {
-
-	game_draw_cam(game.P0, &game.P0cam);
-
-	if(game.P1)
+	int i;
+	int num = client_num_get();
+	for(i = 0; i < num; i++)
 	{
-		game_draw_cam(game.P1, &game.P1cam);
+		camera_t * cam;
+		if(i == 0) cam = &game.P0cam;
+		else cam = &game.P1cam;
+		game_draw_cam(client_get(i)->mobj, cam);
+
 	}
 
 	video_viewport_set(
@@ -575,26 +588,18 @@ void game_record_getsaves()
  */
 static bool game_record_save_player(int fd, mobj_t * player)
 {
-	switch(player->player->charact.status)
-	{
-	case c_p_P0:
-	case c_p_P1:
-		write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
-		break;
-	default:
-		return false;
-	};
+	write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
+	player_t * pl = player->data;
 	game_savedata_player_t savedata =
 	{
-		.scores     = player->player->items[ITEM_SCORES],
-		.fragstotal = player->player->charact.fragstotal,
-		.frags      = player->player->charact.frags,
-		.health     = player->player->items[ITEM_HEALTH],
-		.armor      = player->player->items[ITEM_ARMOR],
-		.ammo1      = player->player->items[ITEM_AMMO_ARTILLERY],
-		.ammo2      = player->player->items[ITEM_AMMO_MISSILE],
-		.ammo3      = player->player->items[ITEM_AMMO_MINE],
-		.status     = player->player->charact.status
+		.fragstotal = pl->charact.fragstotal,
+		.frags      = pl->charact.frags,
+		.scores     = pl->items[ITEM_SCORES],
+		.health     = pl->items[ITEM_HEALTH],
+		.armor      = pl->items[ITEM_ARMOR],
+		.ammo1      = pl->items[ITEM_AMMO_ARTILLERY],
+		.ammo2      = pl->items[ITEM_AMMO_MISSILE],
+		.ammo3      = pl->items[ITEM_AMMO_MINE]
 	};
 	write(fd, &savedata, sizeof(savedata));
 	return true;
@@ -606,21 +611,21 @@ static bool game_record_save_player(int fd, mobj_t * player)
  */
 static bool game_record_load_player(int fd, mobj_t * player)
 {
+	player_t * pl = player->data;
 	mapdata_mobj_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER) return false;
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	player->player->items[ITEM_SCORES] = savedata.scores;
-	player->player->charact.fragstotal = savedata.fragstotal;
-	player->player->charact.frags      = savedata.frags;
-	player->player->items[ITEM_HEALTH] = savedata.health;
-	player->player->items[ITEM_ARMOR]  = savedata.armor;
-	player->player->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
-	player->player->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
-	player->player->items[ITEM_AMMO_MINE]      = savedata.ammo3;
-	player->player->charact.status     = savedata.status;
-	player_class_init(player);
+	pl->charact.fragstotal = savedata.fragstotal;
+	pl->charact.frags      = savedata.frags;
+	pl->items[ITEM_SCORES] = savedata.scores;
+	pl->items[ITEM_HEALTH] = savedata.health;
+	pl->items[ITEM_ARMOR]  = savedata.armor;
+	pl->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
+	pl->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
+	pl->items[ITEM_AMMO_MINE]      = savedata.ammo3;
+	player_class_init(player, player->data);
 	return true;
 };
 /**
@@ -658,8 +663,13 @@ bool game_record_save(int isave)
 		return false;
 	}
 
-	game_record_save_player(fd, game.P0);
-	if(game.P1) game_record_save_player(fd, game.P1);
+	int i;
+	int num = client_num_get();
+	for(i = 0; i < num; i++)
+	{
+		game_record_save_player(fd, client_get(i)->mobj);
+	}
+
 	close(fd);
 	return true;
 };
@@ -718,13 +728,25 @@ int game_record_load(int isave)
 	ret = map_load(rec->mapfilename);
 	if(ret) return 3;
 
-	//создаем игру и спавним всех игроков
+	// создаем игру
 	ret = game_create();
-	//читаем первого игрока
-	game_record_load_player(fd, game.P0);
-	//читаем второго игрока
-	if(rec->flags & c_g_f_2PLAYERS)
-		game_record_load_player(fd, game.P1);
+	// спавним всех игроков
+
+	int player_num;
+	if(rec->flags & c_g_f_2PLAYERS) player_num = 2;
+	else player_num = 1;
+
+	int i;
+	for(i = 0 ; i < player_num; i++)
+	{
+		int id = client_connect();
+		client_spawn(id);
+	}
+
+	for(i = 0; i < player_num; i++)
+	{
+		game_record_load_player(fd, client_get(i)->mobj);
+	}
 	close(fd);
 	return 0;
 }
@@ -821,6 +843,8 @@ bool game_nextmap()
 
 	client_spawn(0);
 	client_spawn(1);
+
+	client_restore_all();
 
 	return true;
 }
