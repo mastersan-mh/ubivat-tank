@@ -175,7 +175,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
  */
 void map_clip_find(
 	vec2_t * orig,
-	float BOX,
+	vec_t bodybox,
 	char mask,
 	bool * Ul,
 	bool * Ur,
@@ -187,14 +187,39 @@ void map_clip_find(
 	bool * Rd
 )
 {
-	float count;
-	float hbox;
+
+	if(
+			orig->x < 0 || MAP_SX * MAP_BLOCKSIZE < orig->x ||
+			orig->y < 0 || MAP_SY * MAP_BLOCKSIZE < orig->y
+	)
+	{
+		*Ul = true; *Ur = true;
+		*Dl = true; *Dr = true;
+		*Lu = true; *Ld = true;
+		*Ru = true; *Rd = true;
+		return;
+	}
+
 	*Ul = false; *Ur = false;
 	*Dl = false; *Dr = false;
 	*Lu = false; *Ld = false;
 	*Ru = false; *Rd = false;
-	hbox = BOX/2;
-	count = 0;
+
+	vec_t hbox = bodybox/2;
+
+	vec_t x_add_hbox = orig->x + hbox;
+	vec_t x_sub_hbox = orig->x - hbox;
+
+	vec_t y_add_hbox = orig->y + hbox;
+	vec_t y_sub_hbox = orig->y - hbox;
+
+	int x_add_hbox_8 = VEC_TRUNC(x_add_hbox/8);
+	int x_sub_hbox_8 = VEC_TRUNC(x_sub_hbox/8);
+
+	int y_add_hbox_8 = VEC_TRUNC((y_add_hbox)/8);
+	int y_sub_hbox_8 = VEC_TRUNC((y_sub_hbox)/8);
+
+	vec_t count = 0;
 	while(
 			(count <= hbox)&&
 			(
@@ -207,30 +232,43 @@ void map_clip_find(
 			)
 	)
 	{
+
+		vec_t x_sub_hbox_add_count = x_sub_hbox + count;
+		vec_t x_add_hbox_sub_count = x_add_hbox - count;
+
+		int x_sub_hbox_add_count_8 = VEC_TRUNC(x_sub_hbox_add_count/8);
+		int x_add_hbox_sub_count_8 = VEC_TRUNC(x_add_hbox_sub_count/8);
+
+		vec_t y_add_hbox_sub_count = y_add_hbox - count;
+		vec_t y_sub_hbox_add_count = y_sub_hbox + count;
+
+		int y_add_hbox_sub_count_8 = VEC_TRUNC((y_add_hbox_sub_count)/8);
+		int y_sub_hbox_add_count_8 = VEC_TRUNC((y_sub_hbox_add_count)/8);
+
 		if(
-				((map.map[(int)trunc((orig->y+hbox      )/8)][(int)trunc((orig->x-hbox+count)/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y+hbox      )/8)][(int)trunc((orig->x-hbox+count)/8)]& mask) != 0)) *Ul = true;
+				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8]& 0xF0) != 0) &&
+				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8]& mask) != 0)) *Ul = true;
 		if(
-				((map.map[(int)trunc((orig->y+hbox      )/8)][(int)trunc((orig->x+hbox-count)/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y+hbox      )/8)][(int)trunc((orig->x+hbox-count)/8)]& mask) != 0)) *Ur = true;
+				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8]& 0xF0) != 0) &&
+				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8]& mask) != 0)) *Ur = true;
 		if(
-				((map.map[(int)trunc((orig->y-hbox      )/8)][(int)trunc((orig->x-hbox+count)/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y-hbox      )/8)][(int)trunc((orig->x-hbox+count)/8)]& mask) != 0)) *Dl = true;
+				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8]& 0xF0) != 0) &&
+				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8]& mask) != 0)) *Dl = true;
 		if(
-				((map.map[(int)trunc((orig->y-hbox      )/8)][(int)trunc((orig->x+hbox-count)/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y-hbox      )/8)][(int)trunc((orig->x+hbox-count)/8)]& mask) != 0)) *Dr = true;
+				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8]& 0xF0) != 0) &&
+				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8]& mask) != 0)) *Dr = true;
 		if(
-				((map.map[(int)trunc((orig->y+hbox-count)/8)][(int)trunc((orig->x-hbox      )/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y+hbox-count)/8)][(int)trunc((orig->x-hbox      )/8)]& mask) != 0)) *Lu = true;
+				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8]& 0xF0) != 0) &&
+				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8]& mask) != 0)) *Lu = true;
 		if(
-				((map.map[(int)trunc((orig->y-hbox+count)/8)][(int)trunc((orig->x-hbox      )/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y-hbox+count)/8)][(int)trunc((orig->x-hbox      )/8)]& mask) != 0)) *Ld = true;
+				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8]& 0xF0) != 0) &&
+				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8]& mask) != 0)) *Ld = true;
 		if(
-				((map.map[(int)trunc((orig->y+hbox-count)/8)][(int)trunc((orig->x+hbox      )/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y+hbox-count)/8)][(int)trunc((orig->x+hbox      )/8)]& mask) != 0)) *Ru = true;
+				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8]& 0xF0) != 0) &&
+				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8]& mask) != 0)) *Ru = true;
 		if(
-				((map.map[(int)trunc((orig->y-hbox+count)/8)][(int)trunc((orig->x+hbox      )/8)]& 0xF0) != 0) &&
-				((map.map[(int)trunc((orig->y-hbox+count)/8)][(int)trunc((orig->x+hbox      )/8)]& mask) != 0)) *Rd = true;
+				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8]& 0xF0) != 0) &&
+				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8]& mask) != 0)) *Rd = true;
 		count++;
 	}
 }
@@ -255,7 +293,7 @@ void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DIST
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)trunc((orig->y+(*dist))/8)][(int)trunc((orig->x+c   )/8)];
+				wall = map.map[(int)VEC_TRUNC((orig->y+(*dist))/8)][(int)VEC_TRUNC((orig->x+c   )/8)];
 				c++;
 			}while (!((+box<=c)||((wall & mask) != 0)));
 		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
@@ -268,8 +306,8 @@ void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DIST
 			c = -box+1;
 			do
 			{
-				mapy = trunc((orig->y-(*dist))/8);
-				mapx = trunc((orig->x+c   )/8);
+				mapy = VEC_TRUNC((orig->y-(*dist))/8);
+				mapx = VEC_TRUNC((orig->x+c   )/8);
 				wall = map.map[mapy][mapx];
 				c++;
 			}while(!((+box<=c)||((wall & mask) != 0)));
@@ -283,7 +321,7 @@ void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DIST
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)trunc((orig->y+c   )/8)][(int)trunc((orig->x-(*dist))/8)];
+				wall = map.map[(int)VEC_TRUNC((orig->y+c   )/8)][(int)VEC_TRUNC((orig->x-(*dist))/8)];
 				c++;
 			}while(!( (+box<=c)||((wall & mask) != 0)));
 		}while(!( (DISTmax<=(*dist))||((wall & mask) != 0)));
@@ -296,7 +334,7 @@ void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DIST
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)trunc((orig->y+c   )/8)][(int)trunc((orig->x+(*dist))/8)];
+				wall = map.map[(int)VEC_TRUNC((orig->y+c   )/8)][(int)VEC_TRUNC((orig->x+(*dist))/8)];
 				c++;
 			}while(!( (+box<=c)||((wall & mask) != 0)));
 		}while(!( (DISTmax*8<=(*dist)) || (wall & mask ) ));
@@ -314,28 +352,28 @@ void map_clip_find_near_wall(vec2_t * orig, int dir, float * dist, char * wall)
 	case 0:
 		do
 		{
-			*wall = map.map[(int)trunc((orig->y+(*dist))/8)][(int)trunc((orig->x     )/8)];
+			*wall = map.map[(int)VEC_TRUNC((orig->y+(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
 			(*dist)++;
 		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 1:
 		do
 		{
-			*wall = map.map[(int)trunc((orig->y-(*dist))/8)][(int)trunc((orig->x     )/8)];
+			*wall = map.map[(int)VEC_TRUNC((orig->y-(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
 			(*dist)++;
 		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 2:
 		do
 		{
-			*wall = map.map[(int)trunc((orig->y     )/8)][(int)trunc((orig->x-(*dist))/8)];
+			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x-(*dist))/8)];
 			(*dist)++;
 		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
 	case 3:
 		do
 		{
-			*wall = map.map[(int)trunc((orig->y     )/8)][(int)trunc((orig->x+(*dist))/8)];
+			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x+(*dist))/8)];
 			(*dist)++;
 		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
 		break;
@@ -532,9 +570,9 @@ void map_draw(camera_t * cam)
 	int x0,x1;
 	int y0,y1;
 
-	x0 = trunc((cam->pos.x-(cam->sx / 2))/8);
+	x0 = VEC_TRUNC((cam->pos.x-(cam->sx / 2))/8);
 	if(x0 < 0) x0 = 0;
-	y0 = trunc((cam->pos.y-(cam->sy / 2))/8);
+	y0 = VEC_TRUNC((cam->pos.y-(cam->sy / 2))/8);
 	if(y0 < 0) y0 = 0;
 	x1 = x0 + (cam->sx / 8) + 1;
 	if(MAP_SX <= x1) x1 = MAP_SX-1;
@@ -556,8 +594,8 @@ void map_draw(camera_t * cam)
 			}
 			if(img)
 			{
-				int pos_x = round(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
-				int pos_y = round(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
+				int pos_x = VEC_ROUND(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
+				int pos_y = VEC_ROUND(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
 				gr2D_setimage0(pos_x, pos_y, img);
 			}
 		}

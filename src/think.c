@@ -51,16 +51,20 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 
 	bool danger = false;
 
-	mobj_t * bull;
+	mobj_t * mobj;
 
-	for(bull = map.mobjs; bull; bull = bull->next)
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
 		if(danger) break;
-		if(bull->type != MOBJ_BULL) continue;
-		if(bull->bull.owner == player) continue;
+		if(
+				mobj->type != MOBJ_BULL_ARTILLERY &&
+				mobj->type != MOBJ_BULL_MISSILE &&
+				mobj->type != MOBJ_BULL_MINE
+		) continue;
+		if(BULL(mobj)->owner == player) continue;
 
-		explodeinfo_t * explodeinfo = &explodeinfo_table[mobj_bull_type_to_explode_type(bull->bull.type)];
-		bullinfo_t * bullinfo = &bullinfo_table[bull->bull.type];
+		explodeinfo_t * explodeinfo = &explodeinfo_table[mobj_bull_type_to_explode_type(BULL(mobj)->type)];
+		bullinfo_t * bullinfo = &bullinfo_table[BULL(mobj)->type];
 
 		//верхняя ближайшая стена
 		map_clip_find_near(&player->pos, 0, DIR_UP, 0xF0, 100, &Udist);
@@ -70,20 +74,20 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 		map_clip_find_near(&player->pos, 0, DIR_LEFT, 0xF0, 160, &Ldist);
 		//правая ближайшая стена
 		map_clip_find_near(&player->pos, 0, DIR_RIGHT, 0xF0, 160, &Rdist);
-		Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (bull->pos.y + explodeinfo->radius);
-		Dd = (bull->pos.y - explodeinfo->radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
-		Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (bull->pos.x + explodeinfo->radius);
-		Ld = (bull->pos.x - explodeinfo->radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
+		Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (mobj->pos.y + explodeinfo->radius);
+		Dd = (mobj->pos.y - explodeinfo->radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
+		Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (mobj->pos.x + explodeinfo->radius);
+		Ld = (mobj->pos.x - explodeinfo->radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
 		if(
-				(player->pos.x-c_p_MDL_box/2 <= bull->pos.x+ explodeinfo->radius)&&
-				(bull->pos.x- explodeinfo->radius <= player->pos.x+c_p_MDL_box/2)&&
-				(abs(player->pos.y-bull->pos.y) < 128)
+				(player->pos.x-c_p_MDL_box/2 <= mobj->pos.x+ explodeinfo->radius)&&
+				(mobj->pos.x- explodeinfo->radius <= player->pos.x+c_p_MDL_box/2)&&
+				(VEC_ABS(player->pos.y-mobj->pos.y) < 128)
 		)
 		{
 			if(
-					(bull->dir == DIR_UP || bullinfo->speed < 0) &&
-					(abs(player->pos.y-bull->pos.y)<Ddist) &&
-					(bull->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
+					(mobj->dir == DIR_UP || bullinfo->speed < 0) &&
+					(VEC_ABS(player->pos.y-mobj->pos.y)<Ddist) &&
+					(mobj->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
 			)
 			{
 				danger = true;
@@ -101,9 +105,9 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 			else
 			{
 				if(
-						(bull->dir == DIR_DOWN ||  bullinfo->speed < 0) &&
-						(abs(player->pos.y-bull->pos.y)<Udist) &&
-						(player->pos.y+c_p_MDL_box/2 < bull->pos.y - explodeinfo->radius)
+						(mobj->dir == DIR_DOWN ||  bullinfo->speed < 0) &&
+						(VEC_ABS(player->pos.y-mobj->pos.y)<Udist) &&
+						(player->pos.y+c_p_MDL_box/2 < mobj->pos.y - explodeinfo->radius)
 				)
 				{
 					danger = true;
@@ -121,15 +125,15 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 		}
 		else {
 			if(
-					(player->pos.y - c_p_MDL_box/2 <= bull->pos.y + explodeinfo->radius) &&
-					(bull->pos.y - explodeinfo->radius <= player->pos.y + c_p_MDL_box/2) &&
-					(abs(player->pos.x - bull->pos.x) < 128)
+					(player->pos.y - c_p_MDL_box/2 <= mobj->pos.y + explodeinfo->radius) &&
+					(mobj->pos.y - explodeinfo->radius <= player->pos.y + c_p_MDL_box/2) &&
+					(VEC_ABS(player->pos.x - mobj->pos.x) < 128)
 			)
 			{
 				if (
-						(bull->dir == DIR_LEFT || bullinfo->speed < 0)&&
-						(abs(player->pos.x-bull->pos.x)<Rdist)&&
-						(player->pos.x+c_p_MDL_box/2 < bull->pos.x- explodeinfo->radius)
+						(mobj->dir == DIR_LEFT || bullinfo->speed < 0)&&
+						(VEC_ABS(player->pos.x-mobj->pos.x)<Rdist)&&
+						(player->pos.x+c_p_MDL_box/2 < mobj->pos.x- explodeinfo->radius)
 				)
 				{
 					danger = true;
@@ -147,9 +151,9 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 				else
 				{
 					if(
-							(bull->dir == DIR_RIGHT || bullinfo->speed < 0) &&
-							(abs(player->pos.x - bull->pos.x)<Ldist) &&
-							(bull->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
+							(mobj->dir == DIR_RIGHT || bullinfo->speed < 0) &&
+							(VEC_ABS(player->pos.x - mobj->pos.x)<Ldist) &&
+							(mobj->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
 					)
 					{
 						danger = true;
@@ -193,8 +197,8 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 	if( pl->bull && pl->brain.target )
 	{
 		if(
-				abs(pl->bull->pos.y - pl->brain.target->pos.y) <
-				abs(pl->bull->pos.x - pl->brain.target->pos.x)
+				VEC_ABS(pl->bull->pos.y - pl->brain.target->pos.y) <
+				VEC_ABS(pl->bull->pos.x - pl->brain.target->pos.x)
 		)
 		{
 			if(pl->bull->pos.x < pl->brain.target->pos.x)
@@ -213,8 +217,8 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 	}
 	if
 	(
-			abs(player->pos.x - target->pos.x) > 160.0 ||
-			abs(player->pos.y - target->pos.y) > 100.0
+			VEC_ABS(player->pos.x - target->pos.x) > 160.0 ||
+			VEC_ABS(player->pos.y - target->pos.y) > 100.0
 	)
 	{
 		pl->attack = false;
@@ -235,7 +239,7 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 		map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 		if(
 				//противник в прямой видимости
-				(abs(player->pos.y - target->pos.y) < dist - c_p_MDL_box/2) ||
+				(VEC_ABS(player->pos.y - target->pos.y) < dist - c_p_MDL_box/2) ||
 				(wall       ) == c_m_w_w0   ||
 				(wall       ) == c_m_w_w1   ||
 				(wall & 0x0F) == c_m_water  ||
@@ -319,7 +323,7 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 			map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 			if(
 					//противник в прямой видимости
-					(abs(player->pos.x - target->pos.x) < dist - c_p_MDL_box/2)||
+					(VEC_ABS(player->pos.x - target->pos.x) < dist - c_p_MDL_box/2)||
 					(wall       ) == c_m_w_w0  ||
 					(wall       ) == c_m_w_w1  ||
 					(wall & 0x0F) == c_m_water ||
@@ -414,8 +418,8 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 	player_t * pl = player->data;
 
 	if(
-			(160<abs(player->pos.x-target->pos.x))||
-			(100<abs(player->pos.y-target->pos.y))
+			(160<VEC_ABS(player->pos.x-target->pos.x))||
+			(100<VEC_ABS(player->pos.y-target->pos.y))
 	)
 	{
 		pl->attack = false;
@@ -429,7 +433,7 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 	{
 		if(c_BOT_time+xrand(c_BOT_time)<pl->brain.count)
 		{
-			if(abs(player->pos.x-target->pos.x)>abs(player->pos.y-target->pos.y))
+			if(VEC_ABS(player->pos.x-target->pos.x)>VEC_ABS(player->pos.y-target->pos.y))
 			{
 				if(player->pos.x<target->pos.x)
 					player->dir = DIR_RIGHT;
@@ -444,8 +448,8 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 					player->dir = DIR_DOWN;
 			}
 			if(
-					(abs(player->pos.x-target->pos.x) < c_BOT_dist)&&
-					(abs(player->pos.y-target->pos.y) < c_BOT_dist)
+					(VEC_ABS(player->pos.x-target->pos.x) < c_BOT_dist)&&
+					(VEC_ABS(player->pos.y-target->pos.y) < c_BOT_dist)
 			)
 				pl->move.go = false;
 			else

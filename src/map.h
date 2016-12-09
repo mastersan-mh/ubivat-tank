@@ -30,7 +30,8 @@
 #define MAP_SX 66
 // размер карты OY
 #define MAP_SY 50
-
+// размер блока карты
+#define MAP_BLOCKSIZE (8)
 
 typedef enum
 {
@@ -143,7 +144,7 @@ void map_init();
 
 void map_clip_find(
 	vec2_t * orig,
-	float BOX,
+	vec_t BOX,
 	char mask,
 	bool * Ul,
 	bool * Ur,

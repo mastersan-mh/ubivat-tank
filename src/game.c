@@ -5,7 +5,7 @@
  */
 
 
-#include <system.h>
+#include "system.h"
 #include <game.h>
 #include <input.h>
 #include <actions.h>
@@ -19,6 +19,9 @@
 #include <_gr2D.h>
 #include <fonts.h>
 #include "client.h"
+
+// entities
+#include "bull.h"
 #include "player.h"
 
 #include <stdlib.h>
@@ -180,6 +183,8 @@ void game_init()
 
 	game_rebind_keys_all();
 
+	mobj_bull_init();
+	mobj_explode_init();
 	mobj_player_init();
 
 }
@@ -919,6 +924,17 @@ void game_halt(const char * error, ...)
 
 void game_console_send(const char *error, ...)
 {
+	static char errmsg[MAX_MESSAGE_SIZE];
+	va_list argptr;
+	va_start(argptr, error);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(errmsg, MAX_MESSAGE_SIZE, error, argptr);
+#else
+	vsprintf(errmsg, error, argptr);
+#endif
+	va_end(argptr);
+
+	fprintf(stdout, "%s\n", errmsg);
 
 }
 

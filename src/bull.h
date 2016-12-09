@@ -8,7 +8,13 @@
 #ifndef SRC_BULL_H_
 #define SRC_BULL_H_
 
-#include "player.h"
+typedef enum
+{
+	BULL_ARTILLERY,
+	BULL_MISSILE,
+	BULL_MINE,
+	__BULL_NUM
+} bulltype_t;
 
 typedef struct
 {
@@ -26,11 +32,26 @@ typedef struct
 	image_index_t icon;
 } bullinfo_t;
 
+/*
+ * пуля
+ */
+typedef struct
+{
+	//игрок, выпустивший пулю
+	struct mobj_s * owner;
+	//тип пули
+	bulltype_t type;
+	//изменение расстояния
+	vec_t delta_s;
+	//время
+	float frame;
+} bull_t;
+
+#define BULL(x) ((bull_t *)(x)->data)
+
 extern bullinfo_t bullinfo_table[__BULL_NUM];
 
-mobj_t * bull_new(vec_t x, vec_t y, mobj_bulltype_t bulltype, direction_t dir, mobj_t * owner);
-
-void bull_handle(mobj_t * mobj);
+void mobj_bull_init();
 
 void bull_draw(camera_t * cam, mobj_t * bull);
 

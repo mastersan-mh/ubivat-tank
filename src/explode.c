@@ -20,10 +20,54 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 		{ 200, 100, 11}
 };
 
-/*
- * обработчик
- */
-mobj_t * explode_new(vec_t x, vec_t y, mobj_explodetype_t explode_type, mobj_t * owner)
+static void * explode_artillery_mobj_init(mobj_t * this, mobj_t * parent);
+static void explode_artillery_mobj_done(mobj_t * this);
+static void explode_artillery_handle(mobj_t * this);
+
+static const mobj_reginfo_t explode_artillery_reginfo = {
+		.name = "explode_artillery",
+		.mobjinit = explode_artillery_mobj_init,
+		.mobjdone = explode_artillery_mobj_done,
+		.handle   = explode_artillery_handle,
+		.client_store = NULL,
+		.client_restore = NULL
+};
+
+static void * explode_missile_mobj_init(mobj_t * this, mobj_t * parent);
+static void explode_missile_mobj_done(mobj_t * this);
+static void explode_missile_handle(mobj_t * this);
+
+static const mobj_reginfo_t explode_missile_reginfo = {
+		.name = "explode_missile",
+		.mobjinit = explode_missile_mobj_init,
+		.mobjdone = explode_missile_mobj_done,
+		.handle   = explode_missile_handle,
+		.client_store = NULL,
+		.client_restore = NULL
+};
+
+static void * explode_mine_mobj_init(mobj_t * this, mobj_t * parent);
+static void explode_mine_mobj_done(mobj_t * this);
+static void explode_mine_handle(mobj_t * this);
+
+static const mobj_reginfo_t explode_mine_reginfo = {
+		.name = "explode_mine",
+		.mobjinit = explode_mine_mobj_init,
+		.mobjdone = explode_mine_mobj_done,
+		.handle   = explode_mine_handle,
+		.client_store = NULL,
+		.client_restore = NULL
+};
+
+void mobj_explode_init()
+{
+	mobj_register(&explode_artillery_reginfo);
+	mobj_register(&explode_missile_reginfo);
+	mobj_register(&explode_mine_reginfo);
+}
+
+
+static void * explode_common_init(mobj_t * this, mobj_t * parent, explodetype_t type)
 {
 	static image_index_t img_list[] =
 	{
@@ -37,46 +81,103 @@ mobj_t * explode_new(vec_t x, vec_t y, mobj_explodetype_t explode_type, mobj_t *
 			SOUND_EXPLODE_MISSILE,
 			SOUND_EXPLODE_GRENADE
 	};
-	mobj_t * mobj = mobj_new(MOBJ_EXPLODE, x, y, DIR_UP, owner);
 
-	mobj->explode.owner = owner;
-	mobj->explode.type  = explode_type;
-	mobj->explode.frame = -1;
-	mobj->img = image_get(img_list[explode_type]);
-	sound_play_start(sound_list[explode_type], 1);
+	explode_t * explode = Z_malloc(sizeof(explode_t));
 
-	return mobj;
+	explode->owner = parent;
+	explode->type  = type;
+	explode->frame = -1;
+	this->img = image_get(img_list[type]);
+	sound_play_start(sound_list[type], 1);
+
+	return explode;
+}
+
+static void explode_common_mobj_done(mobj_t * this)
+{
+	Z_free(this->data);
+}
+
+static void explode_common_handle(mobj_t * this);
+
+void * explode_artillery_mobj_init(mobj_t * this, mobj_t * parent)
+{
+	return explode_common_init(this, parent, EXPLODE_ARTILLERY);
+}
+
+void explode_artillery_mobj_done(mobj_t * this)
+{
+	explode_common_mobj_done(this);
+}
+void explode_artillery_handle(mobj_t * this)
+{
+	explode_common_handle(this);
+}
+
+void * explode_missile_mobj_init(mobj_t * this, mobj_t * parent)
+{
+	return explode_common_init(this, parent, EXPLODE_MISSILE);
+}
+
+void explode_missile_mobj_done(mobj_t * this)
+{
+	explode_common_mobj_done(this);
+}
+void explode_missile_handle(mobj_t * this)
+{
+	explode_common_handle(this);
+}
+
+void * explode_mine_mobj_init(mobj_t * this, mobj_t * parent)
+{
+	return explode_common_init(this, parent, EXPLODE_MINE);
+}
+
+void explode_mine_mobj_done(mobj_t * this)
+{
+	explode_common_mobj_done(this);
+}
+void explode_mine_handle(mobj_t * this)
+{
+	explode_common_handle(this);
 }
 
 
 
 
-void explode_handle(mobj_t * mobj)
+
+void explode_common_handle(mobj_t * this)
 {
-	mobj_t * explode = mobj;
+	explode_t * explode = this->data;
+
 	mobj_t * player;
 	float r,sp_x,sp_y;
 	bool self;
-	int x,y;
+	int ix,iy;
 	char wall;
 	char wall_type;
 
-	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->explode.type];
+	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->type];
 
-	if(explode->explode.frame == -1)
+	if(explode->frame == -1)
 	{
-		explode->explode.frame = 0;
+		explode->frame = 0;
 		//проверка попаданий в стены
-		for(y = -explodeinfo->radius; y<= explodeinfo->radius; y++)
+		for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
 		{
-			for(x = -explodeinfo->radius; x<= explodeinfo->radius; x++)
+			for(ix = -explodeinfo->radius; ix <= explodeinfo->radius; ix++)
 			{
+				vec_t x = VEC_TRUNC((this->pos.x+ix)/8);
+				vec_t y = VEC_TRUNC((this->pos.y+iy)/8);
+
 				if(
-						(0<=trunc((explode->pos.x+x)/8)) && (trunc((explode->pos.x+x)/8)<=MAP_SX) &&
-						(0<=trunc((explode->pos.y+y)/8)) && (trunc((explode->pos.y+y)/8)<=MAP_SY)
+						0 <= x && x <= MAP_SX &&
+						0 <= y && y <= MAP_SY
 				)
 				{
-					wall = map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)];
+					int x8 = x;
+					int y8 = y;
+					wall = map.map[y8][x8];
 					if(wall & c_m_f_clip)
 					{                   //присутствует зажим
 						wall_type = wall & 0x0F;
@@ -88,13 +189,13 @@ void explode_handle(mobj_t * mobj)
 											/* если броня1 */
 											(wall_type == c_m_w_w1) &&
 											(
-													explode->explode.type == EXPLODE_MISSILE ||
-													explode->explode.type == EXPLODE_MINE
+													explode->type == EXPLODE_MISSILE ||
+													explode->type == EXPLODE_MINE
 											)
 									)
 							)
 							{
-								map.map[(int)trunc((explode->pos.y+y)/8)][(int)trunc((explode->pos.x+x)/8)] = 0;
+								map.map[y8][x8] = 0;
 							}
 						}
 					}
@@ -113,29 +214,30 @@ void explode_handle(mobj_t * mobj)
 			{
 				continue;
 			}
-			sp_x = player->pos.x-explode->pos.x;
-			sp_y = player->pos.y-explode->pos.y;
+			sp_x = player->pos.x - this->pos.x;
+			sp_y = player->pos.y - this->pos.y;
 			if(
-					(abs(sp_x)<=c_p_MDL_box/2) &&
-					(abs(sp_y)<=c_p_MDL_box/2)) r = 0;
+					(VEC_ABS(sp_x) <= c_p_MDL_box/2) &&
+					(VEC_ABS(sp_y) <= c_p_MDL_box/2)) r = 0;
 			else
 			{
-				r = sqrt(sp_x*sp_x+sp_y*sp_y) - sqrt(sqrf(c_p_MDL_box/2)+sqrf(c_p_MDL_box/2))/2;
+				r = VEC_SQRT(sp_x * sp_x + sp_y * sp_y) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
 				//if(r <= explodeinfo->bullbox) r = 0;
 			};
-			if(0 < explodeinfo->radius && r <= explodeinfo->radius)
+			if(r <= explodeinfo->radius)
 			{
 				//взрывом задели себя или товарища по команде(не для монстров)
-				self = (explode->explode.owner == player) && (player->type == MOBJ_PLAYER);
-				player_getdamage(player, explode, self, r);
+				self = (explode->owner == player) && (player->type == MOBJ_PLAYER);
+				player_getdamage(player, this, self, r);
 			}
 		}
 	}
-	if(c_explode_Famnt - 1 < explode->explode.frame) explode->explode.frame = c_explode_Famnt - 1;
+	if(c_explode_Famnt - 1 < explode->frame) explode->frame = c_explode_Famnt - 1;
 
-	explode->explode.frame = explode->explode.frame + c_explode_FPS * dtimed1000;
+	explode->frame = explode->frame + c_explode_FPS * dtimed1000;
 
-	if(explode->explode.frame > c_explode_Famnt - 1) explode->erase = true;
+	if(explode->frame > c_explode_Famnt - 1)
+		this->erase = true;
 }
 
 
@@ -151,18 +253,18 @@ void explode_draw(camera_t * cam, mobj_t * explode)
 
 	mdlbox = explode->img->img_sx;
 	if(
-			(cam->pos.x-cam->sx/2<=explode->pos.x+(mdlbox >> 1)) &&
-			(explode->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
-			(cam->pos.y-cam->sy/2<=explode->pos.y+(mdlbox >> 1)) &&
-			(explode->pos.y-(mdlbox >> 1)<=cam->pos.y+cam->sy/2)
+			(cam->pos.x-cam->sx/2 <= explode->pos.x+(mdlbox / 2)) &&
+			(explode->pos.x-(mdlbox / 2) <= cam->pos.x+cam->sx/2) &&
+			(cam->pos.y-cam->sy/2 <= explode->pos.y+(mdlbox / 2)) &&
+			(explode->pos.y-(mdlbox / 2) <= cam->pos.y+cam->sy/2)
 			)
 	{
 		gr2D_setimage1(
-			roundf(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
-			roundf(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
+			VEC_ROUND(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
+			VEC_ROUND(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
 			explode->img,
 			0,
-			mdlbox * trunc(explode->explode.frame),
+			mdlbox * VEC_TRUNC(EXPLODE(explode)->frame),
 			mdlbox,
 			mdlbox
 		);

@@ -53,7 +53,7 @@ void * boss_mobj_init(mobj_t * this, mobj_t * parent);
 void boss_mobj_done(mobj_t * this);
 void boss_handle(mobj_t * this);
 
-const mobj_reginfo_t player_reginfo = {
+static const mobj_reginfo_t player_reginfo = {
 		.name = "player",
 		.mobjinit = player_mobj_init,
 		.mobjdone = player_mobj_done,
@@ -63,7 +63,7 @@ const mobj_reginfo_t player_reginfo = {
 
 };
 
-const mobj_reginfo_t enemy_reginfo = {
+static const mobj_reginfo_t enemy_reginfo = {
 		.name = "enemy",
 		.mobjinit = enemy_mobj_init,
 		.mobjdone = enemy_mobj_done,
@@ -72,7 +72,7 @@ const mobj_reginfo_t enemy_reginfo = {
 		.client_restore = NULL
 };
 
-const mobj_reginfo_t boss_reginfo = {
+static const mobj_reginfo_t boss_reginfo = {
 		.name = "boss",
 		.mobjinit = boss_mobj_init,
 		.mobjdone = boss_mobj_done,
@@ -82,14 +82,14 @@ const mobj_reginfo_t boss_reginfo = {
 
 };
 
-static void player_handle_common(mobj_t * player);
-
 void mobj_player_init()
 {
 	mobj_register(&player_reginfo);
 	mobj_register(&enemy_reginfo);
 	mobj_register(&boss_reginfo);
 }
+
+static void player_handle_common(mobj_t * player);
 
 void * player_mobj_init(mobj_t * this, mobj_t * spawn)
 {
@@ -547,17 +547,17 @@ void player_draw(camera_t * cam, mobj_t * player)
 		)
 		{
 			gr2D_setimage1(
-					round(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+					VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					player->img,
 					0,
-					c_p_MDL_box*((player->dir * 4)+round(pl->Fbase)),
+					c_p_MDL_box*((player->dir * 4)+VEC_ROUND(pl->Fbase)),
 					c_p_MDL_box,
 					c_p_MDL_box
 			);
 			gr2D_setimage0(
-					round(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					round(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+					VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+					VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 					pl->Iflag
 			);
 		};
@@ -609,7 +609,13 @@ static void player_handle_common(mobj_t * player)
 		//если игрок мертв
 		if(pl->charact.spawned)
 		{
-			explode_new(player->pos.x, player->pos.y, EXPLODE_MISSILE, player);
+			mobj_new(
+				MOBJ_EXPLODE_MISSILE,
+				player->pos.x,
+				player->pos.y,
+				player->dir,
+				player
+			);
 			pl->charact.spawned = false;
 			pl->items[ITEM_ARMOR] = 0;
 			pl->items[ITEM_AMMO_MISSILE] = 0;
@@ -729,16 +735,15 @@ static void player_handle_common(mobj_t * player)
 					{
 						// пули не кончились
 						pl->reloadtime_d = c_p_WEAP_reloadtime;
-						mobj_bulltype_t bulltype = mobj_weapon_type_to_bull_type(pl->weap);
-						mobj_t * bull = bull_new(
+						bulltype_t bulltype = mobj_weapon_type_to_bull_type(pl->weap);
+
+						mobj_new(
+							mobl_byulltype_to_mobj(bulltype),
 							player->pos.x,
 							player->pos.y,
-							bulltype,
 							player->dir,
 							player
 							);                                                       //создаем пулю
-						if(bulltype == BULL_MISSILE) pl->bull = bull;
-						//присоединяем изображение пули
 						switch(pl->weap)
 						{
 						case WEAP_ARTILLERY:
@@ -754,7 +759,7 @@ static void player_handle_common(mobj_t * player)
 						};
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
-								player->type == MOBJ_PLAYER    // игрок не монстр(у монстрюков пули не кончаются)
+								player->type == MOBJ_PLAYER    // игрок не монстр(у монстров пули не кончаются)
 						)
 							pl->items[item]--;
 					}
@@ -952,7 +957,8 @@ void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius
 	int armor;
 
 	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
-	explodeinfo_t * explode_info = &explodeinfo_table[explode->explode.type];
+	explode_t * expl = explode->data;
+	explodeinfo_t * explode_info = &explodeinfo_table[expl->type];
 
 	if( pl->items[ITEM_HEALTH] > 0 && radius <= explode_info->radius )
 	{
@@ -975,23 +981,24 @@ void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius
 			pl->items[ITEM_ARMOR] = armor;
 		if(pl->items[ITEM_HEALTH] <= 0)
 		{
-			player_t * pl_owner = explode->explode.owner->data;
+			mobj_t * mobj_player = EXPLODE(explode)->owner;
+			player_t * pl = mobj_player->data;
 			if(!self)
 			{
 
 				//атакующему добавим очки
-				pl_owner->items[ITEM_SCORES] += c_score_pertank;
-				pl_owner->charact.fragstotal++;
-				pl_owner->charact.frags++;
+				pl->items[ITEM_SCORES] += c_score_pertank;
+				pl->charact.fragstotal++;
+				pl->charact.frags++;
 			}
 			else
 			{
 				//атакующий умер от своей пули
-				pl_owner->items[ITEM_SCORES] = 0;
-				pl_owner->charact.fragstotal--;
-				pl_owner->charact.frags--;
+				pl->items[ITEM_SCORES] = 0;
+				pl->charact.fragstotal--;
+				pl->charact.frags--;
 			}
-			player_class_init(explode->explode.owner, explode->explode.owner->data);
+			player_class_init(mobj_player, pl);
 		}
 	}
 }

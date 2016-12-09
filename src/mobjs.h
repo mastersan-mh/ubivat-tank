@@ -11,7 +11,6 @@
 #include "types.h"
 #include "client.h"
 #include "img.h"
-#include "weap.h"
 #include "items.h"
 
 typedef enum
@@ -22,28 +21,15 @@ typedef enum
 	MOBJ_PLAYER,
 	MOBJ_ENEMY,
 	MOBJ_BOSS,
-	MOBJ_BULL,
-	MOBJ_EXPLODE,
+	MOBJ_BULL_ARTILLERY,
+	MOBJ_BULL_MISSILE,
+	MOBJ_BULL_MINE,
+	MOBJ_EXPLODE_ARTILLERY,
+	MOBJ_EXPLODE_MISSILE,
+	MOBJ_EXPLODE_MINE,
 	MOBJ_EXIT,
 	__MOBJ_NUM
 } mobj_type_t;
-
-
-typedef enum
-{
-	BULL_ARTILLERY,
-	BULL_MISSILE,
-	BULL_MINE,
-	__BULL_NUM
-} mobj_bulltype_t;
-
-typedef enum
-{
-	EXPLODE_ARTILLERY,
-	EXPLODE_MISSILE,
-	EXPLODE_MINE,
-	__EXPLODE_NUM
-} mobj_explodetype_t;
 
 typedef enum direction_e
 {
@@ -85,33 +71,6 @@ typedef struct
 	char * message;
 } mobj_message_t;
 
-/*
- * пуля
- */
-typedef struct
-{
-	//игрок, выпустивший пулю
-	struct mobj_s * owner;
-	//тип пули
-	mobj_bulltype_t type;
-	//изменение расстояния
-	vec_t delta_s;
-	//время
-	float frame;
-} mobj_bull_t;
-
-/*
- * взрыв
- */
-typedef struct
-{
-	//игрок, выпустивший пулю
-	mobj_explodetype_t type;
-	struct mobj_s * owner;
-	int state;
-	float frame;
-} mobj_explode_t;
-
 typedef struct
 {
 	//сообщение
@@ -139,8 +98,6 @@ typedef struct mobj_s
 		mobj_spawn_t   spawn;
 		mobj_item_t    item;
 		mobj_message_t mesage;
-		mobj_bull_t    bull;
-		mobj_explode_t explode;
 		mobj_exit_t    exit;
 	};
 
@@ -170,8 +127,6 @@ typedef struct mobj_register_s
 void mobj_register(const mobj_reginfo_t * info);
 const mobj_reginfo_t * mobj_reginfo_get(const char * name);
 
-mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type);
-mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type);
 
 extern void mobjs_handle();
 

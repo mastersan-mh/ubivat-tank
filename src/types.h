@@ -105,6 +105,12 @@ typedef enum {
 typedef float vec_t;
 typedef void (*actionf_t)();
 
+
+#define VEC_ABS(x) fabsf((x))
+#define VEC_SQRT(x) sqrtf((x))
+#define VEC_TRUNC(x) truncf((x))
+#define VEC_ROUND(x) roundf((x))
+
 //координаты
 typedef struct
 {

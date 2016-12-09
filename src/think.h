@@ -11,7 +11,6 @@
 #include "types.h"
 #include "mobjs.h"
 #include "weap.h"
-#include "player.h"
 
 //искуственный интеллект
 typedef struct
@@ -27,6 +26,8 @@ typedef struct
 	//счетчик
 	long count;
 }think_t;
+
+#include "player.h"
 
 void ctrl_AI_init(think_t * brain);
 void ctrl_AI_done(think_t * brain);

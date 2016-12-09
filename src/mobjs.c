@@ -23,8 +23,12 @@ char *mobjnames[__MOBJ_NUM] =
 		"player"      ,
 		"enemy"       ,
 		"boss"        ,
-		"MOBJ_BULL"   ,
-		"MOBJ_EXPLODE",
+		"bull_artillery",
+		"bull_missile",
+		"bull_mine",
+		"explode_artillery",
+		"explode_missile",
+		"explode_mine",
 		"MOBJ_EXIT"
 };
 
@@ -38,9 +42,11 @@ void mobj_register(const mobj_reginfo_t * info)
 
 	if(mobj_register_size < mobj_register_num + 1)
 	{
-		if(mobj_register_size == 0) mobj_register_size = 1;
-		else mobj_register_size *= 2;
-		tmp = Z_realloc(mobj_reginfos, mobj_register_size);
+		if(mobj_register_size == 0)
+			mobj_register_size = 1;
+		else
+			mobj_register_size *= 2;
+		tmp = Z_realloc(mobj_reginfos, sizeof(mobj_reginfo_t*) * mobj_register_size);
 		if(!tmp)game_halt("mobj_register(): failed");
 		mobj_reginfos = tmp;
 	}
@@ -57,30 +63,6 @@ const mobj_reginfo_t * mobj_reginfo_get(const char * name)
 			return mobj_reginfos[i];
 	}
 	return NULL;
-}
-
-mobj_bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type)
-{
-	switch(type)
-	{
-	case WEAP_ARTILLERY: return EXPLODE_ARTILLERY;
-	case WEAP_MISSILE  : return EXPLODE_MISSILE;
-	case WEAP_MINE     : return EXPLODE_MINE;
-	default: ;
-	}
-	return EXPLODE_ARTILLERY;
-}
-
-mobj_explodetype_t mobj_bull_type_to_explode_type(mobj_bulltype_t bull_type)
-{
-	switch(bull_type)
-	{
-	case BULL_ARTILLERY: return EXPLODE_ARTILLERY;
-	case BULL_MISSILE  : return EXPLODE_MISSILE;
-	case BULL_MINE     : return EXPLODE_MINE;
-	default: ;
-	}
-	return EXPLODE_ARTILLERY;
 }
 
 void mobjs_handle()
@@ -101,15 +83,6 @@ void mobjs_handle()
 		case MOBJ_SPAWN: break;
 		case MOBJ_ITEM: break;
 		case MOBJ_MESSAGE: break;
-		case MOBJ_PLAYER :
-		case MOBJ_ENEMY  :
-			break;
-		case MOBJ_BULL:
-			bull_handle(mobj);
-			break;
-		case MOBJ_EXPLODE:
-			explode_handle(mobj);
-			break;
 		case MOBJ_EXIT: break;
 		default: ;
 		}
@@ -127,8 +100,8 @@ void item_draw(camera_t * cam, mobj_t * mobj)
 {
 	if(!mobj->item.exist) return;
 	gr2D_setimage0(
-		round(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
-		round(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
+		VEC_ROUND(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
+		VEC_ROUND(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
 		mobj->img
 	);
 }
@@ -148,7 +121,7 @@ void mobjs_draw(camera_t * cam)
 				mobj->img != NULL &&
 				cam->pos.x - cam->sx / 2 <= mobj->pos.x + (c_i_MDL_box/2) &&
 				mobj->pos.x - (c_i_MDL_box/2) <= cam->pos.x+cam->sx/2 &&
-				cam->pos.y-cam->sy / 2 <= mobj->pos.y + (c_i_MDL_box/2) &&
+				cam->pos.y - cam->sy / 2 <= mobj->pos.y + (c_i_MDL_box/2) &&
 				mobj->pos.y - (c_i_MDL_box/2) <= cam->pos.y + cam->sy/2
 			)
 		{
@@ -166,10 +139,14 @@ void mobjs_draw(camera_t * cam)
 			case MOBJ_ENEMY  :
 				player_draw(cam, mobj);
 				break;
-			case MOBJ_BULL:
+			case MOBJ_BULL_ARTILLERY:
+			case MOBJ_BULL_MISSILE:
+			case MOBJ_BULL_MINE:
 				bull_draw(cam, mobj);
 				break;
-			case MOBJ_EXPLODE:
+			case MOBJ_EXPLODE_ARTILLERY:
+			case MOBJ_EXPLODE_MISSILE:
+			case MOBJ_EXPLODE_MINE:
 				explode_draw(cam, mobj);
 				break;
 			case MOBJ_EXIT:
@@ -185,6 +162,20 @@ void mobjs_draw(camera_t * cam)
  */
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj_t * const parent)
 {
+
+	const mobj_reginfo_t * mobjinfo = NULL;
+	if((int)mobj_type >= 0)
+	{
+		char * mobjname = mobjnames[mobj_type];
+		mobjinfo = mobj_reginfo_get(mobjname);
+		if(!mobjinfo)
+		{
+			game_console_send("Cannot create unknown entity \"%s\".", mobjname);
+			return NULL;
+		}
+
+	}
+
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
 	mobj->erase = false;
@@ -194,27 +185,30 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj
 	mobj->dir   = dir;
 
 	mobj->next = map.mobjs;
-	map.mobjs = mobj;
+	map.mobjs  = mobj;
 
-	if((int)mobj_type >= 0)
+	if(mobjinfo)
 	{
-		char * mobjname = mobjnames[mobj_type];
-		const mobj_reginfo_t * mobjinfo = mobj_reginfo_get(mobjname);
 		mobj->info = mobjinfo;
-		if(mobj->info)
-		{
-			if(mobj->info->mobjinit)
-				mobj->data = mobj->info->mobjinit(mobj, parent);
-		}
+		if(mobj->info->mobjinit)
+			mobj->data = mobj->info->mobjinit(mobj, parent);
 	}
+
 	return mobj;
 }
 
 void mobj_free_internal(mobj_t * mobj)
 {
-	if(mobj->info != NULL && mobj->info->mobjdone != NULL)
+	if(mobj->info != NULL)
 	{
-		mobj->info->mobjdone(mobj);
+		if(mobj->info->mobjdone == NULL)
+		{
+			Z_free(mobj->data);
+		}
+		else
+		{
+			mobj->info->mobjdone(mobj);
+		}
 	}
 
 	switch(mobj->type)
@@ -222,10 +216,6 @@ void mobj_free_internal(mobj_t * mobj)
 	case MOBJ_SPAWN  : break;
 	case MOBJ_ITEM   : break;
 	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
-	case MOBJ_PLAYER : break;
-	case MOBJ_ENEMY  : break;
-	case MOBJ_BULL   : break;
-	case MOBJ_EXPLODE: break;
 	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;
 	default: break;
 	}

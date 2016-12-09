@@ -27,7 +27,7 @@ int client_connect()
 	{
 		if(clients_size == 0) clients_size = 1;
 		else clients_size *= 2;
-		tmp = Z_realloc(clients, clients_size);
+		tmp = Z_realloc(clients, sizeof(client_t*) * clients_size);
 		if(!tmp)game_halt("mobj_register(): failed");
 		clients = tmp;
 	}
