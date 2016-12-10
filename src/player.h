@@ -161,9 +161,6 @@ int player_respawn(mobj_t * player);
 
 void player_checkcode();
 void player_item_get(struct mobj_s * player);
-void player_obj_check(struct mobj_s * player);
-
-void player_draw(camera_t * cam, struct mobj_s * player);
 
 void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn);
 

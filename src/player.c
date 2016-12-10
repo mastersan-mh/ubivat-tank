@@ -456,11 +456,49 @@ static void player_influence_exit(mobj_t * actor, mobj_t * exposed)
 	game._win_ = true;
 }
 
+static void player_influence_item(mobj_t * player, mobj_t * mobj)
+{
+	player_t * pl = player->data;
+
+	itemtype_t itemtype = items_mobjtype_to_itemtype(mobj->type);
+	if((int) itemtype < 0)
+	{
+		game_halt("player_items_get(): invalid itemtype = %d\n", itemtype);
+	}
+	item_t * item = mobj->data;
+	if(!item->exist) return;
+
+	playerinfo_t *playerinfo = &playerinfo_table[pl->level];
+
+	if(
+			playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
+			playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
+			((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
+	)
+	{
+		item->exist = false;
+		pl->items[itemtype] += item->amount;
+		check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
+	};
+
+	if(itemtype == ITEM_SCORES)
+	{
+		player_class_init(player, player->data);
+		if(5 <= pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS)
+		{
+			if(pl->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
+				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+			if(pl->items[ITEM_ARMOR] < pl->items[ITEM_ARMOR])
+				pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+		}
+	}
+}
 
 /*
  * подбирание предметов игроком
  */
-void player_item_get(mobj_t * player)
+//void player_item_get(mobj_t * player)
+static void player_obj_check(mobj_t * player)
 {
 	if(player->type != MOBJ_PLAYER) return;
 
@@ -471,72 +509,39 @@ void player_item_get(mobj_t * player)
 	mobj_t * mobj;
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-
-
 		if(
-				(mobj->pos.x - c_i_MDL_box/2 < player->pos.x + c_p_MDL_box/2 )&&
-				(player->pos.x - c_p_MDL_box/2 <= mobj->pos.x + c_i_MDL_box/2)&&
-				(mobj->pos.y - c_i_MDL_box/2 <= player->pos.y + c_p_MDL_box/2)&&
-				(player->pos.y - c_p_MDL_box/2 < mobj->pos.y + c_i_MDL_box/2 )
+				( mobj->pos.x   - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box / 2 ) &&
+				( player->pos.x - c_p_MDL_box / 2 <= mobj->pos.x   + c_item_MDL_box / 2 ) &&
+				( mobj->pos.y   - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box / 2 ) &&
+				( player->pos.y - c_p_MDL_box / 2 <= mobj->pos.y   + c_item_MDL_box / 2 )
 		)
 		{
 
-			itemtype_t itemtype = items_mobjtype_to_itemtype(mobj->type);
-			if((int) itemtype < 0)
-				continue;
-
-			item_t * item = mobj->data;
-			if(!item->exist)continue;
-
-			playerinfo_t *playerinfo = &playerinfo_table[pl->level];
-
-			if(
-					playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
-					playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
-					((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
-			)
+			switch(mobj->type)
 			{
-				item->exist = false;
-				pl->items[itemtype] += item->amount;
-				check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
-			};
-
-			if(itemtype == ITEM_SCORES)
-			{
-				player_class_init(player, player->data);
-				if(5 <= pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS)
-				{
-					if(pl->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
-						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-					if(pl->items[ITEM_ARMOR] < pl->items[ITEM_ARMOR])
-						pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
-				}
-			}
-		}
-	} //end for
-}
-
-/*
- * проверка объектов на карте
- */
-void player_obj_check(mobj_t * player)
-{
-	if( player->type != MOBJ_PLAYER ) return;
-
-	mobj_t * mobj;
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
-	{
-		if(
-				(mobj->pos.x - c_o_MDL_box/2 <= player->pos.x + c_p_MDL_box / 2)&&
-				(player->pos.x - c_p_MDL_box/2 <= mobj->pos.x + c_o_MDL_box / 2)&&
-				(mobj->pos.y - c_o_MDL_box/2 <= player->pos.y + c_p_MDL_box / 2)&&
-				(player->pos.y - c_p_MDL_box/2 <= mobj->pos.y + c_o_MDL_box / 2)
-		)
-		{
-			switch (mobj->type)
-			{
+			case MOBJ_SPAWN_PLAYER:
+			case MOBJ_SPAWN_ENEMY:
+			case MOBJ_SPAWN_BOSS:
+				break;
+			case MOBJ_ITEM_SCORES:
+			case MOBJ_ITEM_HEALTH:
+			case MOBJ_ITEM_ARMOR:
+			case MOBJ_ITEM_AMMO_MISSILE:
+			case MOBJ_ITEM_AMMO_MINE:
+				player_influence_item(player, mobj);
+				break;
 			case MOBJ_MESSAGE:
 				player_influence_message(player, mobj);
+				break;
+			case MOBJ_PLAYER:
+			case MOBJ_ENEMY:
+			case MOBJ_BOSS:
+			case MOBJ_BULL_ARTILLERY:
+			case MOBJ_BULL_MISSILE:
+			case MOBJ_BULL_MINE:
+			case MOBJ_EXPLODE_ARTILLERY:
+			case MOBJ_EXPLODE_MISSILE:
+			case MOBJ_EXPLODE_MINE:
 				break;
 			case MOBJ_EXIT:
 				player_influence_exit(player, mobj);
@@ -544,39 +549,8 @@ void player_obj_check(mobj_t * player)
 			default: ;
 			}
 		}
-	}
+	} //end for
 }
-/*
- * рисование игрока
- */
-void player_draw(camera_t * cam, mobj_t * player)
-{
-	player_t * pl = player->data;
-
-	if(pl->items[ITEM_HEALTH] > 0)
-	{ //если игрок жив
-		if(
-				(cam->pos.x-cam->sx/2<=player->pos.x+(c_p_MDL_box/2))&&(player->pos.x-(c_p_MDL_box/2)<=cam->pos.x+cam->sx/2)&&
-				(cam->pos.y-cam->sy/2<=player->pos.y+(c_p_MDL_box/2))&&(player->pos.y-(c_p_MDL_box/2)<=cam->pos.y+cam->sy/2)
-		)
-		{
-			gr2D_setimage1(
-					VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
-					player->img,
-					0,
-					c_p_MDL_box*((player->dir * 4)+VEC_ROUND(pl->Fbase)),
-					c_p_MDL_box,
-					c_p_MDL_box
-			);
-			gr2D_setimage0(
-					VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-					VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
-					pl->Iflag
-			);
-		};
-	};
-};
 
 /*
  * передвижение игрока
@@ -752,6 +726,7 @@ static void player_handle_common(mobj_t * player)
 						pl->reloadtime_d = c_p_WEAP_reloadtime;
 						bulltype_t bulltype = mobj_weapon_type_to_bull_type(pl->weap);
 
+						//создаем пулю
 						mobj_new(
 							mobl_byulltype_to_mobj(bulltype),
 							player->pos.x,
@@ -759,7 +734,7 @@ static void player_handle_common(mobj_t * player)
 							player->dir,
 							player,
 							NULL
-							);                                                       //создаем пулю
+							);
 						switch(pl->weap)
 						{
 						case WEAP_ARTILLERY:
@@ -785,8 +760,6 @@ static void player_handle_common(mobj_t * player)
 	}
 	if(pl->reloadtime_d < 0) pl->reloadtime_d = 0;
 	//подбираем предметы
-	player_item_get (player);
-	//проверяем объекты
 	player_obj_check(player);
 }
 

@@ -68,7 +68,7 @@ typedef enum {
 
 //предметы
 //размер предмета
-#define c_i_MDL_box     16
+#define c_item_MDL_box     16
 //позиция изображения
 #define c_i_MDL_pos     (-8)
 //объекты

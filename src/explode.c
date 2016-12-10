@@ -234,21 +234,13 @@ void explode_draw(camera_t * cam, mobj_t * explode)
 	int mdlbox;
 
 	mdlbox = explode->img->img_sx;
-	if(
-			(cam->pos.x-cam->sx/2 <= explode->pos.x+(mdlbox / 2)) &&
-			(explode->pos.x-(mdlbox / 2) <= cam->pos.x+cam->sx/2) &&
-			(cam->pos.y-cam->sy/2 <= explode->pos.y+(mdlbox / 2)) &&
-			(explode->pos.y-(mdlbox / 2) <= cam->pos.y+cam->sy/2)
-			)
-	{
-		gr2D_setimage1(
-			VEC_ROUND(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
-			VEC_ROUND(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
-			explode->img,
-			0,
-			mdlbox * VEC_TRUNC(EXPLODE(explode)->frame),
-			mdlbox,
-			mdlbox
-		);
-	}
+	gr2D_setimage1(
+		VEC_ROUND(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
+		VEC_ROUND(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
+		explode->img,
+		0,
+		mdlbox * VEC_TRUNC(EXPLODE(explode)->frame),
+		mdlbox,
+		mdlbox
+	);
 }

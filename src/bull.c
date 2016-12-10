@@ -270,7 +270,7 @@ void bull_draw(camera_t * cam, mobj_t * bull)
 		VEC_ROUND(cam->y-bull->pos.y+(cam->pos.y+cam->sy/2))-(mdlbox / 2),
 		bull->img,
 		0,
-		mdlbox*(bull->dir * Fmax + trunc( ((bull_t*)bull->data)->frame) ),
+		mdlbox*(bull->dir * Fmax + VEC_TRUNC( ((bull_t*)bull->data)->frame) ),
 		mdlbox,
 		mdlbox
 	);

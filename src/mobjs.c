@@ -7,13 +7,7 @@
 
 #include "game.h"
 #include "mobjs.h"
-#include "explode.h"
-#include "bull.h"
-#include "think.h"
 #include "map.h"
-#include "sound.h"
-
-#include "_gr2D.h"
 
 char *mobjnames[__MOBJ_NUM] =
 {
@@ -88,6 +82,47 @@ const mobj_reginfo_t * mobj_reginfo_get(const char * name)
 	return NULL;
 }
 
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
+{
+
+	const mobj_reginfo_t * mobjinfo = NULL;
+	if((int)mobj_type >= 0)
+	{
+		char * mobjname = mobjnames[mobj_type];
+		mobjinfo = mobj_reginfo_get(mobjname);
+		if(!mobjinfo)
+		{
+			game_console_send("Cannot create unknown entity \"%s\".", mobjname);
+			return NULL;
+		}
+
+	}
+
+	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
+
+	mobj->erase = false;
+	mobj->type = mobj_type;
+	mobj->pos.x = x;
+	mobj->pos.y = y;
+	mobj->dir   = dir;
+
+	mobj->next = map.mobjs;
+	map.mobjs  = mobj;
+
+	if(mobjinfo)
+	{
+		mobj->info = mobjinfo;
+		if(mobjinfo->datasize == 0)
+			mobj->data = NULL;
+		else
+			mobj->data = Z_malloc(mobjinfo->datasize);
+		if(mobjinfo->mobjinit)
+			mobj->info->mobjinit(mobj, mobj->data, parent, args);
+	}
+
+	return mobj;
+}
+
 void mobjs_handle()
 {
 	mobj_t * mobj;
@@ -111,6 +146,62 @@ void mobjs_handle()
 /*
  *
  */
+static void mobj_erase_internal(mobj_t * mobj)
+{
+	if(mobj->info != NULL)
+	{
+		if(mobj->info->mobjdone != NULL)
+			mobj->info->mobjdone(mobj, mobj->data);
+		if(mobj->info->datasize)
+			Z_free(mobj->data);
+	}
+}
+
+void mobjs_erase_all()
+{
+	mobj_t * mobj;
+	while(map.mobjs)
+	{
+		mobj = map.mobjs;
+		map.mobjs = map.mobjs->next;
+		mobj_erase_internal(mobj);
+		Z_free(mobj);
+	}
+}
+
+
+#include "player.h"
+#include "explode.h"
+#include "bull.h"
+#include "items.h"
+#include "_gr2D.h"
+
+/*
+ * рисование игрока
+ */
+void player_draw(camera_t * cam, mobj_t * player)
+{
+	player_t * pl = player->data;
+	if(pl->items[ITEM_HEALTH] > 0)
+	{
+		//если игрок жив
+		gr2D_setimage1(
+			VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+			VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+			player->img,
+			0,
+			c_p_MDL_box*((player->dir * 4)+VEC_ROUND(pl->Fbase)),
+			c_p_MDL_box,
+			c_p_MDL_box
+		);
+		gr2D_setimage0(
+			VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+			VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+			pl->Iflag
+		);
+	}
+}
+
 void item_draw(camera_t * cam, mobj_t * mobj)
 {
 	if(!ENT_ITEM(mobj)->exist) return;
@@ -136,17 +227,22 @@ void exit_draw(camera_t * cam, mobj_t * mobj)
  */
 void mobjs_draw(camera_t * cam)
 {
+	int cam_sx_half = cam->sx / 2;
+	int cam_sy_half = cam->sy / 2;
 	mobj_t * mobj;
 	for(mobj = map.mobjs;mobj;mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
 
+		if(mobj->img == NULL) continue;
+
+		int viewbox_half = mobj->img->img_sx;
+
 		if(
-				mobj->img != NULL &&
-				cam->pos.x - cam->sx / 2 <= mobj->pos.x + (c_i_MDL_box/2) &&
-				mobj->pos.x - (c_i_MDL_box/2) <= cam->pos.x+cam->sx/2 &&
-				cam->pos.y - cam->sy / 2 <= mobj->pos.y + (c_i_MDL_box/2) &&
-				mobj->pos.y - (c_i_MDL_box/2) <= cam->pos.y + cam->sy/2
+				( cam->pos.x  - cam_sx_half <= mobj->pos.x + viewbox_half ) &&
+				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half ) &&
+				( cam->pos.y  - cam_sy_half <= mobj->pos.y + viewbox_half ) &&
+				( mobj->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half )
 			)
 		{
 
@@ -191,73 +287,9 @@ void mobjs_draw(camera_t * cam)
 /*
  * добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
-{
-
-	const mobj_reginfo_t * mobjinfo = NULL;
-	if((int)mobj_type >= 0)
-	{
-		char * mobjname = mobjnames[mobj_type];
-		mobjinfo = mobj_reginfo_get(mobjname);
-		if(!mobjinfo)
-		{
-			game_console_send("Cannot create unknown entity \"%s\".", mobjname);
-			return NULL;
-		}
-
-	}
-
-	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
-
-	mobj->erase = false;
-	mobj->type = mobj_type;
-	mobj->pos.x = x;
-	mobj->pos.y = y;
-	mobj->dir   = dir;
-
-	mobj->next = map.mobjs;
-	map.mobjs  = mobj;
-
-	if(mobjinfo)
-	{
-		mobj->info = mobjinfo;
-		if(mobjinfo->datasize == 0)
-			mobj->data = NULL;
-		else
-			mobj->data = Z_malloc(mobjinfo->datasize);
-		if(mobjinfo->mobjinit)
-			mobj->info->mobjinit(mobj, mobj->data, parent, args);
-	}
-
-	return mobj;
-}
-
-void mobj_free_internal(mobj_t * mobj)
-{
-	if(mobj->info != NULL)
-	{
-		if(mobj->info->mobjdone != NULL)
-			mobj->info->mobjdone(mobj, mobj->data);
-		if(mobj->info->datasize)
-			Z_free(mobj->data);
-	}
-}
-
 /**
  * удаление всех объектов
  */
-void mobjs_erase_all()
-{
-	mobj_t * mobj;
-	while(map.mobjs)
-	{
-		mobj = map.mobjs;
-		map.mobjs = map.mobjs->next;
-		mobj_free_internal(mobj);
-		Z_free(mobj);
-	}
-}
-
 /*
  * удаление взрыва из списка, после удаления
  *        explode указывает на предыдущий эл-т если
