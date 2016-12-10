@@ -17,9 +17,11 @@
 
 char *mobjnames[__MOBJ_NUM] =
 {
-		"MOBJ_SPAWN"  ,
+		"spawn_player",
+		"spawn_enemy" ,
+		"spawn_boss"  ,
 		"MOBJ_ITEM"   ,
-		"MOBJ_MESSAGE",
+		"message"     ,
 		"player"      ,
 		"enemy"       ,
 		"boss"        ,
@@ -29,7 +31,7 @@ char *mobjnames[__MOBJ_NUM] =
 		"explode_artillery",
 		"explode_missile",
 		"explode_mine",
-		"MOBJ_EXIT"
+		"exit"
 };
 
 static const mobj_reginfo_t ** mobj_reginfos = NULL;
@@ -39,6 +41,23 @@ static size_t mobj_register_num = 0;
 void mobj_register(const mobj_reginfo_t * info)
 {
 	const mobj_reginfo_t ** tmp;
+	if(info == NULL)
+	{
+		game_console_send("mobj_register(): Invalid register data is NULL.");
+		return;
+	}
+
+	if(info->name == NULL || strlen(info->name) == 0)
+	{
+		game_console_send("mobj_register(): Invalid register data, name is empty.");
+		return;
+	}
+
+	if(info->datasize != 0 && info->mobjinit == NULL)
+		game_console_send("mobj_register(): Possible, invalid register data in entity \"%s\", .mobjinit == NULL.", info->name);
+
+	if(info->datasize == 0 && info->mobjinit != NULL)
+		game_console_send("mobj_register(): Possible, invalid register data in entity \"%s\", .datasize == 0.", info->name);
 
 	if(mobj_register_size < mobj_register_num + 1)
 	{
@@ -47,7 +66,7 @@ void mobj_register(const mobj_reginfo_t * info)
 		else
 			mobj_register_size *= 2;
 		tmp = Z_realloc(mobj_reginfos, sizeof(mobj_reginfo_t*) * mobj_register_size);
-		if(!tmp)game_halt("mobj_register(): failed");
+		if(!tmp)game_halt("mobj_register(): failed.");
 		mobj_reginfos = tmp;
 	}
 	mobj_reginfos[mobj_register_num] = info;
@@ -78,17 +97,9 @@ void mobjs_handle()
 			continue;
 		}
 
-		switch(mobj->type)
-		{
-		case MOBJ_SPAWN: break;
-		case MOBJ_ITEM: break;
-		case MOBJ_MESSAGE: break;
-		case MOBJ_EXIT: break;
-		default: ;
-		}
 		if(mobj->erase)
 		{
-
+			/* do something */
 		}
 	}
 }
@@ -106,6 +117,15 @@ void item_draw(camera_t * cam, mobj_t * mobj)
 	);
 }
 
+
+void exit_draw(camera_t * cam, mobj_t * mobj)
+{
+	gr2D_setimage0(
+		VEC_ROUND(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
+		VEC_ROUND(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
+		mobj->img
+	);
+}
 
 /*
  * рисование объектов на карте
@@ -128,7 +148,9 @@ void mobjs_draw(camera_t * cam)
 
 			switch(mobj->type)
 			{
-			case MOBJ_SPAWN:
+			case MOBJ_SPAWN_PLAYER:
+			case MOBJ_SPAWN_ENEMY:
+			case MOBJ_SPAWN_BOSS:
 				break;
 			case MOBJ_ITEM:
 				item_draw(cam, mobj);
@@ -150,6 +172,7 @@ void mobjs_draw(camera_t * cam)
 				explode_draw(cam, mobj);
 				break;
 			case MOBJ_EXIT:
+				exit_draw(cam, mobj);
 				break;
 			default: ;
 			}
@@ -160,7 +183,7 @@ void mobjs_draw(camera_t * cam)
 /*
  * добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj_t * const parent)
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
 {
 
 	const mobj_reginfo_t * mobjinfo = NULL;
@@ -190,8 +213,12 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj
 	if(mobjinfo)
 	{
 		mobj->info = mobjinfo;
-		if(mobj->info->mobjinit)
-			mobj->data = mobj->info->mobjinit(mobj, parent);
+		if(mobjinfo->datasize == 0)
+			mobj->data = NULL;
+		else
+			mobj->data = Z_malloc(mobjinfo->datasize);
+		if(mobjinfo->mobjinit)
+			mobj->info->mobjinit(mobj, mobj->data, parent, args);
 	}
 
 	return mobj;
@@ -201,23 +228,10 @@ void mobj_free_internal(mobj_t * mobj)
 {
 	if(mobj->info != NULL)
 	{
-		if(mobj->info->mobjdone == NULL)
-		{
+		if(mobj->info->mobjdone != NULL)
+			mobj->info->mobjdone(mobj, mobj->data);
+		if(mobj->info->datasize)
 			Z_free(mobj->data);
-		}
-		else
-		{
-			mobj->info->mobjdone(mobj);
-		}
-	}
-
-	switch(mobj->type)
-	{
-	case MOBJ_SPAWN  : break;
-	case MOBJ_ITEM   : break;
-	case MOBJ_MESSAGE: Z_free(mobj->mesage.message); break;
-	case MOBJ_EXIT   : Z_free(mobj->exit.message); break;
-	default: break;
 	}
 }
 

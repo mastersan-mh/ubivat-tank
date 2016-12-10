@@ -15,12 +15,16 @@
 
 #include "client.h"
 
+#include "ent_spawn.h"
 #include "player.h"
+#include "ent_message.h"
+#include "ent_exit.h"
 
 #include "mobjs.h"
 #include "items.h"
 #include "bull.h"
 #include "explode.h"
+#include "ent_message.h"
 
 #include "sound.h"
 
@@ -39,22 +43,23 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
 };
 
-void * player_mobj_init(mobj_t * this, mobj_t * parent);
-void player_mobj_done(mobj_t * this);
-void player_handle(mobj_t * this);
-void player_store(client_storedata_t * storedata, const void * mobj);
-void player_restore(void * data, const client_storedata_t * storedata);
+static MOBJ_FUNCTION_INIT(player_mobj_init);
+static MOBJ_FUNCTION_DONE(player_mobj_done);
+static void player_handle(mobj_t * this);
+static void player_store(client_storedata_t * storedata, const void * mobj);
+static void player_restore(void * data, const client_storedata_t * storedata);
 
-void * enemy_mobj_init(mobj_t * this, mobj_t * parent);
-void enemy_mobj_done(mobj_t * this);
-void enemy_handle(mobj_t * this);
+static MOBJ_FUNCTION_INIT(enemy_mobj_init);
+static MOBJ_FUNCTION_DONE(enemy_mobj_done);
+static void enemy_handle(mobj_t * this);
 
-void * boss_mobj_init(mobj_t * this, mobj_t * parent);
-void boss_mobj_done(mobj_t * this);
-void boss_handle(mobj_t * this);
+static MOBJ_FUNCTION_INIT(boss_mobj_init);
+static MOBJ_FUNCTION_DONE(boss_mobj_done);
+static void boss_handle(mobj_t * this);
 
 static const mobj_reginfo_t player_reginfo = {
 		.name = "player",
+		.datasize = sizeof(player_t),
 		.mobjinit = player_mobj_init,
 		.mobjdone = player_mobj_done,
 		.handle   = player_handle,
@@ -65,6 +70,7 @@ static const mobj_reginfo_t player_reginfo = {
 
 static const mobj_reginfo_t enemy_reginfo = {
 		.name = "enemy",
+		.datasize = sizeof(player_t),
 		.mobjinit = enemy_mobj_init,
 		.mobjdone = enemy_mobj_done,
 		.handle   = enemy_handle,
@@ -74,6 +80,7 @@ static const mobj_reginfo_t enemy_reginfo = {
 
 static const mobj_reginfo_t boss_reginfo = {
 		.name = "boss",
+		.datasize = sizeof(player_t),
 		.mobjinit = boss_mobj_init,
 		.mobjdone = boss_mobj_done,
 		.handle   = boss_handle,
@@ -91,20 +98,18 @@ void mobj_player_init()
 
 static void player_handle_common(mobj_t * player);
 
-void * player_mobj_init(mobj_t * this, mobj_t * spawn)
+MOBJ_FUNCTION_INIT(player_mobj_init)
 {
-	player_t * pl = Z_malloc(sizeof(player_t));
+	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_RUS);
-	player_spawn_init(this, pl, spawn);
-	return pl;
+	player_spawn_init(this, pl, parent);// parent = spawn
 }
 
-void player_mobj_done(mobj_t * this)
+MOBJ_FUNCTION_DONE(player_mobj_done)
 {
-	player_t * pl = this->data;
+	player_t * pl = thisdata;
 	sound_play_stop(pl->soundId_move);
 	ctrl_AI_done(&(pl->brain));
-	Z_free(pl);
 }
 
 void player_handle(mobj_t * this)
@@ -129,18 +134,17 @@ void player_restore(void * data, const client_storedata_t * storedata)
 	((player_t *)data)->items[ITEM_SCORES] = storedata->scores;
 }
 
-void * enemy_mobj_init(mobj_t * this, mobj_t * spawn)
+MOBJ_FUNCTION_INIT(enemy_mobj_init)
 {
-	player_t * pl = Z_malloc(sizeof(player_t));
+	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_WHITE);
-	player_spawn_init(this, pl, spawn);
+	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
-	return pl;
 }
 
-void enemy_mobj_done(mobj_t * this)
+MOBJ_FUNCTION_DONE(enemy_mobj_done)
 {
-	player_mobj_done(this);
+	player_mobj_done(this, thisdata);
 }
 void enemy_handle(mobj_t * this)
 {
@@ -148,17 +152,16 @@ void enemy_handle(mobj_t * this)
 	player_handle_common(this);
 }
 
-void * boss_mobj_init(mobj_t * this, mobj_t * spawn)
+MOBJ_FUNCTION_INIT(boss_mobj_init)
 {
-	player_t * pl = Z_malloc(sizeof(player_t));
+	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_USA);
-	player_spawn_init(this, pl, spawn);
+	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
-	return pl;
 }
-void boss_mobj_done(mobj_t * this)
+MOBJ_FUNCTION_DONE(boss_mobj_done)
 {
-	player_mobj_done(this);
+	player_mobj_done(this, thisdata);
 }
 void boss_handle(mobj_t * this)
 {
@@ -442,6 +445,20 @@ void check_value_int(int * val, int min, int max)
 	else if(*val < min) *val = min;
 }
 
+static void player_influence_message(mobj_t * actor, mobj_t * exposed)
+{
+	//отправим сообщение игроку
+	game_message_send(ENT_MESSAGE(exposed)->message);
+}
+
+static void player_influence_exit(mobj_t * actor, mobj_t * exposed)
+{
+	//отправим сообщение игроку
+	game_message_send(ENT_EXIT(exposed)->message);
+	game._win_ = true;
+}
+
+
 /*
  * подбирание предметов игроком
  */
@@ -510,22 +527,19 @@ void player_obj_check(mobj_t * player)
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
 		if(
-				(mobj->pos.x-c_o_MDL_box/2 <= player->pos.x + c_p_MDL_box / 2)&&
-				(player->pos.x-c_p_MDL_box/2 <= mobj->pos.x + c_o_MDL_box / 2)&&
-				(mobj->pos.y-c_o_MDL_box/2 <= player->pos.y + c_p_MDL_box / 2)&&
-				(player->pos.y-c_p_MDL_box/2 <= mobj->pos.y + c_o_MDL_box / 2)
+				(mobj->pos.x - c_o_MDL_box/2 <= player->pos.x + c_p_MDL_box / 2)&&
+				(player->pos.x - c_p_MDL_box/2 <= mobj->pos.x + c_o_MDL_box / 2)&&
+				(mobj->pos.y - c_o_MDL_box/2 <= player->pos.y + c_p_MDL_box / 2)&&
+				(player->pos.y - c_p_MDL_box/2 <= mobj->pos.y + c_o_MDL_box / 2)
 		)
 		{
 			switch (mobj->type)
 			{
 			case MOBJ_MESSAGE:
-				//отправим сообщение игроку
-				game_message_send(mobj->mesage.message);
+				player_influence_message(player, mobj);
 				break;
 			case MOBJ_EXIT:
-				game._win_ = true;
-				//отправим сообщение игроку
-				game_message_send(mobj->exit.message);
+				player_influence_exit(player, mobj);
 				break;
 			default: ;
 			}
@@ -614,7 +628,8 @@ static void player_handle_common(mobj_t * player)
 				player->pos.x,
 				player->pos.y,
 				player->dir,
-				player
+				player,
+				NULL
 			);
 			pl->charact.spawned = false;
 			pl->items[ITEM_ARMOR] = 0;
@@ -742,7 +757,8 @@ static void player_handle_common(mobj_t * player)
 							player->pos.x,
 							player->pos.y,
 							player->dir,
-							player
+							player,
+							NULL
 							);                                                       //создаем пулю
 						switch(pl->weap)
 						{
@@ -777,9 +793,9 @@ static void player_handle_common(mobj_t * player)
 /*
  * инициализируем игрока при спавне
  */
-void player_spawn_init(mobj_t * player, player_t * pl, mobj_t * spawn)
+void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn)
 {
-	const mobj_spawn_t * sp = &spawn->spawn;
+	spawn_t * sp = spawn->data;
 
 	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
 		pl->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
@@ -821,7 +837,6 @@ void player_spawn_init(mobj_t * player, player_t * pl, mobj_t * spawn)
 	pl->bull            = NULL;
 	pl->move.speed      = 0;
 	pl->move.go         = false;
-	player->dir          = DIR_UP;
 	pl->attack          = false;
 	pl->reloadtime_d    = 0;
 	pl->soundId_move    = 0;
@@ -840,14 +855,14 @@ mobj_t * player_spawn_get()
 	mobj_t * mobj;
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		if(mobj->type == MOBJ_SPAWN && mobj->spawn.type == SPAWN_PLAYER) count++;
+		if(mobj->type == MOBJ_SPAWN_PLAYER) count++;
 	};
 	//выбираем случайным образом
 	count = xrand(count);
 
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		if(mobj->type == MOBJ_SPAWN && mobj->spawn.type == SPAWN_PLAYER)
+		if(mobj->type == MOBJ_SPAWN_PLAYER)
 		{
 			if(count == 0) return mobj;
 			count--;

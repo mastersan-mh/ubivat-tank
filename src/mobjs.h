@@ -10,12 +10,25 @@
 
 #include "types.h"
 #include "client.h"
+#include "Z_mem.h"
 #include "img.h"
 #include "items.h"
 
+
+#define MOBJ_FUNCTION_INIT(x) \
+	void (x)(mobj_t * this, void * thisdata, const mobj_t * parent, const void * args)
+
+#define MOBJ_FUNCTION_DONE(x) \
+	void (x)(mobj_t * this, void * thisdata)
+
+#define MOBJ_FUNCTION_DONE_DEFAULT NULL
+#define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
+
 typedef enum
 {
-	MOBJ_SPAWN,
+	MOBJ_SPAWN_PLAYER,
+	MOBJ_SPAWN_ENEMY,
+	MOBJ_SPAWN_BOSS,
 	MOBJ_ITEM,
 	MOBJ_MESSAGE,
 	MOBJ_PLAYER,
@@ -39,19 +52,6 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-/*
- * точка респавнинга
- */
-typedef struct
-{
-	enum
-	{
-		SPAWN_PLAYER,
-		SPAWN_ENEMY,
-		SPAWN_BOSS
-	} type;
-	int items[__ITEM_NUM];
-} mobj_spawn_t;
 
 /*
  * предметы
@@ -64,12 +64,6 @@ typedef struct
 	// флаг присутствия
 	bool exist;
 } mobj_item_t;
-
-typedef struct
-{
-	//сообщение
-	char * message;
-} mobj_message_t;
 
 typedef struct
 {
@@ -95,9 +89,7 @@ typedef struct mobj_s
 	union
 	{
 		void * data;
-		mobj_spawn_t   spawn;
 		mobj_item_t    item;
-		mobj_message_t mesage;
 		mobj_exit_t    exit;
 	};
 
@@ -112,8 +104,9 @@ typedef void* (*mobjinit_t)(const mobj_t * mobj);
 typedef struct mobj_register_s
 {
 	char * name;
-	void * (*mobjinit)(mobj_t * this, mobj_t * parent);
-	void (*mobjdone)(mobj_t * this);
+	size_t datasize;
+	void (*mobjinit)(mobj_t * this, void * thisdata, const mobj_t * parent, const void * args);
+	void (*mobjdone)(mobj_t * this, void * thisdata);
 
 	void (*handle)(mobj_t * this);
 
@@ -132,7 +125,7 @@ extern void mobjs_handle();
 
 extern void mobjs_draw(camera_t * cam);
 
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, mobj_t * const parent);
+mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
 
 void mobjs_erase_all();
 

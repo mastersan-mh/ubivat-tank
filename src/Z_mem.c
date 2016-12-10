@@ -52,11 +52,13 @@ static Z_block_t * Z_block = NULL;
 
 
 #if defined(_ZMEM_DEBUG)
-static int mem_dump_i = 0;
 static int block_id = 0;
 #endif
 
 #if defined(_ZMEM_MEMDUMP)
+
+static int mem_dump_i = 0;
+
 void Z_mem_dump()
 {
 #define BUF_SIZE 256
@@ -137,6 +139,11 @@ void * Z_Z_malloc(size_t __size _ZMEM_ARGS2_DECL)
 {
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	block->ptr = calloc(1, __size);
+
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_malloc(): %ld bytes @ ptr %p at %s: %d\n", (long) __size, block->ptr, __file, __line);
+#endif
+
 	Z_MEM_DUMP();
 	return block->ptr;
 }
@@ -148,6 +155,11 @@ void * Z_Z_calloc(size_t __count, size_t __eltsize _ZMEM_ARGS2_DECL)
 #endif
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	block->ptr = calloc(__count, __eltsize);
+
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_calloc(): %ld bytes @ ptr %p at %s: %d\n", (long) __size, block->ptr, __file, __line);
+#endif
+
 	Z_MEM_DUMP();
 	return block->ptr;
 }
@@ -157,7 +169,7 @@ void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 {
 	if(!__ptr)
 	{
-		return Z_malloc(__size _ZMEM_ARGS2_DECL);
+		return Z_Z_malloc(__size _ZMEM_ARGS2);
 	}
 	Z_block_t * block;
 	Z_block_t * prev = NULL;
@@ -178,6 +190,11 @@ void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 				return NULL;
 			}
 			block->ptr = tmp;
+
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_realloc(): ptr %p -> %ld bytes @ ptr %p at %s: %d\n", __ptr, (long) __size, block->ptr, __file, __line);
+#endif
+
 			return tmp;
 		}
 		prev = block;
@@ -190,7 +207,10 @@ void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL)
 {
 	if(!__ptr)return;
-	Z_block_t * block;
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_free(): %p at %s: %d\n", __ptr, __file, __line);
+#endif
+Z_block_t * block;
 	Z_block_t * prev = NULL;
 	block = Z_block;
 	while(block)
@@ -225,6 +245,11 @@ char * Z_Z_strdup(const char * __str _ZMEM_ARGS2_DECL)
 	Z_block_t * block = _create_block(_ZMEM_ARGS3);
 	char * dup = strdup(__str);
 	block->ptr = dup;
+
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_strdup(): %ld bytes @ ptr %p at %s: %d\n", (long) __size, block->ptr, __file, __line);
+#endif
+
 	Z_MEM_DUMP();
 	return dup;
 }
@@ -234,6 +259,11 @@ char * Z_Z_strndup(const char * __str, size_t __size _ZMEM_ARGS2_DECL)
 	Z_block_t * block = _create_block(_ZMEM_ARGS3STRNDUP);
 	char * dup = strndup(__str, __size);
 	block->ptr = dup;
+
+#if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
+	printf("Z_strndup(): %ld bytes @ ptr %p at %s: %d\n", (long) __size, block->ptr, __file, __line);
+#endif
+
 	Z_MEM_DUMP();
 	return dup;
 }

@@ -21,8 +21,12 @@
 #include "client.h"
 
 // entities
+#include "ent_spawn.h"
 #include "bull.h"
+#include "explode.h"
 #include "player.h"
+#include "ent_message.h"
+#include "ent_exit.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -185,7 +189,12 @@ void game_init()
 
 	mobj_bull_init();
 	mobj_explode_init();
+	mobj_spawn_init();
 	mobj_player_init();
+	mobj_message_init();
+	mobj_exit_init();
+
+
 
 }
 

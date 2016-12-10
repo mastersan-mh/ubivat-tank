@@ -12,6 +12,7 @@
 #include <utf8.h>
 
 #include "explode.h"
+#include "ent_spawn.h"
 
 #include <errno.h>
 #include <sys/types.h>
@@ -84,38 +85,33 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	int i;
-	size_t len;
-	mobj_t * mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL);
-
+	mobj_t * mobj;
+	spawn_t spawn;
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
-		mobj->type = MOBJ_SPAWN;
-		mobj->spawn.type = SPAWN_PLAYER;
-		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
-		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
-		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
-		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[ITEM_SCORES] = data->spawn.scores;
+		spawn.items[ITEM_HEALTH] = data->spawn.health;
+		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		mobj = mobj_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
-		mobj->type = MOBJ_SPAWN;
-		mobj->spawn.type = SPAWN_ENEMY;
-		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
-		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
-		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
-		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj_new(MOBJ_ENEMY, data->pos.x, data->pos.y, DIR_UP, mobj);
+		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[ITEM_SCORES] = data->spawn.scores;
+		spawn.items[ITEM_HEALTH] = data->spawn.health;
+		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		mobj = mobj_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
-		mobj->type = MOBJ_SPAWN;
-		mobj->spawn.type = SPAWN_BOSS;
-		for(i = 0; i < __ITEM_NUM; i++) mobj->spawn.items[i] = ITEM_AMOUNT_NA;
-		mobj->spawn.items[ITEM_SCORES] = data->spawn.scores;
-		mobj->spawn.items[ITEM_HEALTH] = data->spawn.health;
-		mobj->spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj_new(MOBJ_BOSS, data->pos.x, data->pos.y, DIR_UP, mobj);
+		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[ITEM_SCORES] = data->spawn.scores;
+		spawn.items[ITEM_HEALTH] = data->spawn.health;
+		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		mobj = mobj_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
+		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[0]);
 		mobj->item.type = ITEM_HEALTH;
@@ -123,6 +119,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
+		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[1]);
 		mobj->item.type = ITEM_ARMOR;
@@ -130,6 +127,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
+		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[2]);
 		mobj->item.type = ITEM_SCORES;
@@ -137,6 +135,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
+		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[3]);
 		mobj->item.type = ITEM_AMMO_MISSILE;
@@ -144,6 +143,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
+		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
 		mobj->type = MOBJ_ITEM;
 		mobj->img = image_get(itemList[4]);
 		mobj->item.type = ITEM_AMMO_MINE;
@@ -151,16 +151,12 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
-		mobj->type = MOBJ_MESSAGE;
-		mobj->img = image_get(IMG_OBJ_EXIT);
-		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj->exit.message = Z_strndup(buf, len);
+		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
+		mobj = mobj_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
-		mobj->type = MOBJ_MESSAGE;
-		mobj->img = NULL;
-		len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj->mesage.message = Z_strndup(buf, len);
+		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
+		mobj_new(MOBJ_MESSAGE, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	default: ;
 	}
@@ -653,11 +649,6 @@ void map_load_list()
 	FILE *fconf;
 
 	size_t str_size = 256;
-	char * str = Z_calloc(1, str_size);
-	if(!str)
-	{
-		game_halt("Maps list is empty");
-	}
 	char * map = NULL;
 
 	if ((fconf = fopen(BASEDIR FILENAME_MAPSLIST, "r")) == NULL)
@@ -667,6 +658,11 @@ void map_load_list()
 
 	mapList = NULL;
 	bool isString = false;
+	char * str = Z_calloc(1, str_size);
+	if(!str)
+	{
+		game_halt("Maps list is empty");
+	}
 	while(fconf)
 	{
 

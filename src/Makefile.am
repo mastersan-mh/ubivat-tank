@@ -9,6 +9,9 @@ ubivat_tank_CFLAGS = -std=c99 -Wall -D_DEFAULT_SOURCE -I/usr/include/freetype2
 ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
+ent_exit.c \
+ent_message.c \
+ent_spawn.c \
 Z_mem.c \
 system.c \
 video.c \

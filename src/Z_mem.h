@@ -12,6 +12,7 @@
 #include <sys/cdefs.h>
 
 //#define _ZMEM_DEBUG _DEBUG
+//#define _ZMEM_DEBUG_TRACE
 //#define _ZMEM_MEMDUMP
 
 #if !defined(_ZMEM_DEBUG)

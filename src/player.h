@@ -164,13 +164,12 @@ void player_obj_check(struct mobj_s * player);
 
 void player_draw(camera_t * cam, struct mobj_s * player);
 
-void player_spawn_init(mobj_t * player, player_t * pl, mobj_t * spawn);
+void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn);
 
 void player_draw_status(camera_t * cam, struct mobj_s * player);
 
 void player_getdamage(struct mobj_s * player, struct mobj_s * explode, bool self, float radius);
 
-void player_handle(struct mobj_s * player);
 void player_class_init(mobj_t * player, player_t * pl);
 
 

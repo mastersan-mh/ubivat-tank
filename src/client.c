@@ -66,7 +66,14 @@ void client_spawn(int id)
 	if(id < 0 || id >= clients_num) return;
 	mobj_t * spawn = player_spawn_get();
 
-	mobj_t * player = mobj_new(MOBJ_PLAYER, spawn->pos.x, spawn->pos.y, spawn->dir, spawn);
+	mobj_t * player = mobj_new(
+		MOBJ_PLAYER,
+		spawn->pos.x,
+		spawn->pos.y,
+		spawn->dir,
+		spawn,
+		NULL
+	);
 
 	clients[id]->mobj = player;
 }

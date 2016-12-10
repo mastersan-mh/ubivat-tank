@@ -21,40 +21,40 @@ bullinfo_t bullinfo_table[__BULL_NUM] =
 		{200, 100, 100, -80, 8, IMG_BULL_MINE      }
 };
 
-static void * bull_artillery_mobj_init(mobj_t * this, mobj_t * parent);
-static void bull_artillery_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(bull_artillery_mobj_init);
 static void bull_artillery_handle(mobj_t * this);
 
 static const mobj_reginfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
+		.datasize = sizeof(bull_t),
 		.mobjinit = bull_artillery_mobj_init,
-		.mobjdone = bull_artillery_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL
 };
 
-static void * bull_missile_mobj_init(mobj_t * this, mobj_t * parent);
-static void bull_missile_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(bull_missile_mobj_init);
 static void bull_missile_handle(mobj_t * this);
 
 static const mobj_reginfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
+		.datasize = sizeof(bull_t),
 		.mobjinit = bull_missile_mobj_init,
-		.mobjdone = bull_missile_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL
 };
 
-static void * bull_mine_mobj_init(mobj_t * this, mobj_t * parent);
-static void bull_mine_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(bull_mine_mobj_init);
 static void bull_mine_handle(mobj_t * this);
 
 static const mobj_reginfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
+		.datasize = sizeof(bull_t),
 		.mobjinit = bull_mine_mobj_init,
-		.mobjdone = bull_mine_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL
@@ -92,10 +92,10 @@ static int checkdamage(mobj_t * mobj, mobj_t * bull)
 }
 
 
-static void * bull_common_mobj_init(mobj_t * this, mobj_t * parent, bulltype_t bulltype)
+static void bull_common_mobj_init(mobj_t * this, void * thisdata, const mobj_t * parent, bulltype_t bulltype)
 {
-	bull_t * bull = Z_malloc(sizeof(bull_t));
-	bull->owner = parent;
+	bull_t * bull = thisdata;
+	bull->owner = (mobj_t *)parent;
 	bull->type = bulltype;
 	bull->delta_s = 0;
 	bull->frame = 0;
@@ -103,13 +103,6 @@ static void * bull_common_mobj_init(mobj_t * this, mobj_t * parent, bulltype_t b
 	this->img = image_get(bullinfo->icon);
 
 	if(bulltype == BULL_MISSILE) ((player_t *)parent->data)->bull = this;
-
-	return bull;
-}
-
-static void bull_common_mobj_done(mobj_t * this)
-{
-	Z_free(this->data);
 }
 
 /*
@@ -148,7 +141,8 @@ void bull_common_handle(mobj_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner
+			bull->owner,
+			NULL
 		);
 		this->erase = true;
 		return;
@@ -172,7 +166,8 @@ void bull_common_handle(mobj_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner
+			bull->owner,
+			NULL
 		);
 		this->erase = true;
 		return;
@@ -203,7 +198,8 @@ void bull_common_handle(mobj_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner
+			bull->owner,
+			NULL
 		);
 		this->erase = true;
 		return;
@@ -221,14 +217,9 @@ void bull_common_handle(mobj_t * this)
 /**
  * artillery
  */
-void * bull_artillery_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(bull_artillery_mobj_init)
 {
-	return bull_common_mobj_init(this, parent, BULL_ARTILLERY);
-}
-
-void bull_artillery_mobj_done(mobj_t * this)
-{
-	bull_common_mobj_done(this->data);
+	bull_common_mobj_init(this, thisdata, parent, BULL_ARTILLERY);
 }
 
 void bull_artillery_handle(mobj_t * this)
@@ -239,14 +230,9 @@ void bull_artillery_handle(mobj_t * this)
 /**
  * missile
  */
-void * bull_missile_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(bull_missile_mobj_init)
 {
-	return bull_common_mobj_init(this, parent, BULL_MISSILE);
-}
-
-void bull_missile_mobj_done(mobj_t * this)
-{
-	bull_common_mobj_done(this->data);
+	return bull_common_mobj_init(this, thisdata, parent, BULL_MISSILE);
 }
 
 void bull_missile_handle(mobj_t * this)
@@ -257,14 +243,9 @@ void bull_missile_handle(mobj_t * this)
 /**
  * mine
  */
-void * bull_mine_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(bull_mine_mobj_init)
 {
-	return bull_common_mobj_init(this, parent, BULL_MINE);
-}
-
-void bull_mine_mobj_done(mobj_t * this)
-{
-	bull_common_mobj_done(this->data);
+	return bull_common_mobj_init(this, thisdata, parent, BULL_MINE);
 }
 
 void bull_mine_handle(mobj_t * this)

@@ -20,40 +20,40 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 		{ 200, 100, 11}
 };
 
-static void * explode_artillery_mobj_init(mobj_t * this, mobj_t * parent);
-static void explode_artillery_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(explode_artillery_mobj_init);
 static void explode_artillery_handle(mobj_t * this);
 
 static const mobj_reginfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
+		.datasize = sizeof(explode_t),
 		.mobjinit = explode_artillery_mobj_init,
-		.mobjdone = explode_artillery_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = explode_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL
 };
 
-static void * explode_missile_mobj_init(mobj_t * this, mobj_t * parent);
-static void explode_missile_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(explode_missile_mobj_init);
 static void explode_missile_handle(mobj_t * this);
 
 static const mobj_reginfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
+		.datasize = sizeof(explode_t),
 		.mobjinit = explode_missile_mobj_init,
-		.mobjdone = explode_missile_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = explode_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL
 };
 
-static void * explode_mine_mobj_init(mobj_t * this, mobj_t * parent);
-static void explode_mine_mobj_done(mobj_t * this);
+static MOBJ_FUNCTION_INIT(explode_mine_mobj_init);
 static void explode_mine_handle(mobj_t * this);
 
 static const mobj_reginfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
+		.datasize = sizeof(explode_t),
 		.mobjinit = explode_mine_mobj_init,
-		.mobjdone = explode_mine_mobj_done,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = explode_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL
@@ -67,7 +67,7 @@ void mobj_explode_init()
 }
 
 
-static void * explode_common_init(mobj_t * this, mobj_t * parent, explodetype_t type)
+static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t * parent, explodetype_t type)
 {
 	static image_index_t img_list[] =
 	{
@@ -82,61 +82,40 @@ static void * explode_common_init(mobj_t * this, mobj_t * parent, explodetype_t 
 			SOUND_EXPLODE_GRENADE
 	};
 
-	explode_t * explode = Z_malloc(sizeof(explode_t));
-
-	explode->owner = parent;
+	explode->owner = (mobj_t *)parent;
 	explode->type  = type;
 	explode->frame = -1;
 	this->img = image_get(img_list[type]);
 	sound_play_start(sound_list[type], 1);
-
-	return explode;
-}
-
-static void explode_common_mobj_done(mobj_t * this)
-{
-	Z_free(this->data);
 }
 
 static void explode_common_handle(mobj_t * this);
 
-void * explode_artillery_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(explode_artillery_mobj_init)
 {
-	return explode_common_init(this, parent, EXPLODE_ARTILLERY);
+	explode_common_init(this, thisdata, parent, EXPLODE_ARTILLERY);
 }
 
-void explode_artillery_mobj_done(mobj_t * this)
-{
-	explode_common_mobj_done(this);
-}
 void explode_artillery_handle(mobj_t * this)
 {
 	explode_common_handle(this);
 }
 
-void * explode_missile_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(explode_missile_mobj_init)
 {
-	return explode_common_init(this, parent, EXPLODE_MISSILE);
+	explode_common_init(this, thisdata,  parent, EXPLODE_MISSILE);
 }
 
-void explode_missile_mobj_done(mobj_t * this)
-{
-	explode_common_mobj_done(this);
-}
 void explode_missile_handle(mobj_t * this)
 {
 	explode_common_handle(this);
 }
 
-void * explode_mine_mobj_init(mobj_t * this, mobj_t * parent)
+MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
 {
-	return explode_common_init(this, parent, EXPLODE_MINE);
+	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
 }
 
-void explode_mine_mobj_done(mobj_t * this)
-{
-	explode_common_mobj_done(this);
-}
 void explode_mine_handle(mobj_t * this)
 {
 	explode_common_handle(this);
@@ -151,7 +130,8 @@ void explode_common_handle(mobj_t * this)
 	explode_t * explode = this->data;
 
 	mobj_t * player;
-	float r,sp_x,sp_y;
+	vec_t r;
+	vec_t dx, dy;
 	bool self;
 	int ix,iy;
 	char wall;
@@ -214,18 +194,20 @@ void explode_common_handle(mobj_t * this)
 			{
 				continue;
 			}
-			sp_x = player->pos.x - this->pos.x;
-			sp_y = player->pos.y - this->pos.y;
+			dx = player->pos.x - this->pos.x;
+			dy = player->pos.y - this->pos.y;
 			if(
-					(VEC_ABS(sp_x) <= c_p_MDL_box/2) &&
-					(VEC_ABS(sp_y) <= c_p_MDL_box/2)) r = 0;
+					(VEC_ABS(dx) <= c_p_MDL_box/2) &&
+					(VEC_ABS(dy) <= c_p_MDL_box/2)
+			)
+				r = 0;
 			else
 			{
-				r = VEC_SQRT(sp_x * sp_x + sp_y * sp_y) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
-				//if(r <= explodeinfo->bullbox) r = 0;
+				r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
 			};
 			if(r <= explodeinfo->radius)
 			{
+				//r = dx < dy ? dx : dy;
 				//взрывом задели себя или товарища по команде(не для монстров)
 				self = (explode->owner == player) && (player->type == MOBJ_PLAYER);
 				player_getdamage(player, this, self, r);
