@@ -20,7 +20,11 @@ char *mobjnames[__MOBJ_NUM] =
 		"spawn_player",
 		"spawn_enemy" ,
 		"spawn_boss"  ,
-		"MOBJ_ITEM"   ,
+		"item_scores" ,
+		"item_health" ,
+		"item_armor"  ,
+		"item_ammo_missile",
+		"item_ammo_mine",
 		"message"     ,
 		"player"      ,
 		"enemy"       ,
@@ -109,7 +113,7 @@ void mobjs_handle()
  */
 void item_draw(camera_t * cam, mobj_t * mobj)
 {
-	if(!mobj->item.exist) return;
+	if(!ENT_ITEM(mobj)->exist) return;
 	gr2D_setimage0(
 		VEC_ROUND(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
 		VEC_ROUND(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
@@ -152,7 +156,11 @@ void mobjs_draw(camera_t * cam)
 			case MOBJ_SPAWN_ENEMY:
 			case MOBJ_SPAWN_BOSS:
 				break;
-			case MOBJ_ITEM:
+			case MOBJ_ITEM_SCORES:
+			case MOBJ_ITEM_HEALTH:
+			case MOBJ_ITEM_ARMOR :
+			case MOBJ_ITEM_AMMO_MISSILE:
+			case MOBJ_ITEM_AMMO_MINE:
 				item_draw(cam, mobj);
 				break;
 			case MOBJ_MESSAGE:

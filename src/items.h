@@ -8,6 +8,9 @@
 #ifndef SRC_ITEMS_H_
 #define SRC_ITEMS_H_
 
+#include "types.h"
+#include "mobjs.h"
+
 // предмет не используется
 #define ITEM_AMOUNT_NA  (0)
 #define ITEM_AMOUNT_INF (-1)
@@ -26,5 +29,22 @@ typedef enum
 	__ITEM_NUM
 }itemtype_t;
 
+/*
+ * предметы
+ */
+typedef struct
+{
+	itemtype_t type;
+	// количество
+	int amount;
+	// флаг присутствия
+	bool exist;
+} item_t;
+
+#define ENT_ITEM(mobj) ((item_t *) (mobj)->data)
+
+itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype);
+
+void mobj_items_init();
 
 #endif /* SRC_ITEMS_H_ */

@@ -75,17 +75,10 @@ void map_init()
  */
 static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t * data)
 {
-	static image_index_t itemList[] = {
-			IMG_ITEM_HEALTH,
-			IMG_ITEM_ARMOR ,
-			IMG_ITEM_STAR  ,
-			IMG_WEAPON_MISSILE,
-			IMG_WEAPON_MINE
-	};
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	int i;
-	mobj_t * mobj;
+	int value_int;
 	spawn_t spawn;
 	switch(mapdata_mobj_type)
 	{
@@ -94,65 +87,45 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj = mobj_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		mobj_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj = mobj_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		mobj_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj = mobj_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		mobj_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
-		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
-		mobj->type = MOBJ_ITEM;
-		mobj->img = image_get(itemList[0]);
-		mobj->item.type = ITEM_HEALTH;
-		mobj->item.amount = data->item.amount;
-		mobj->item.exist = true;
+		value_int = data->item.amount;
+		mobj_new(MOBJ_ITEM_HEALTH, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
-		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
-		mobj->type = MOBJ_ITEM;
-		mobj->img = image_get(itemList[1]);
-		mobj->item.type = ITEM_ARMOR;
-		mobj->item.amount = data->item.amount;
-		mobj->item.exist = true;
+		value_int = data->item.amount;
+		mobj_new(MOBJ_ITEM_ARMOR, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
-		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
-		mobj->type = MOBJ_ITEM;
-		mobj->img = image_get(itemList[2]);
-		mobj->item.type = ITEM_SCORES;
-		mobj->item.amount = data->item.amount;
-		mobj->item.exist = true;
+		value_int = data->item.amount;
+		mobj_new(MOBJ_ITEM_SCORES, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
-		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
-		mobj->type = MOBJ_ITEM;
-		mobj->img = image_get(itemList[3]);
-		mobj->item.type = ITEM_AMMO_MISSILE;
-		mobj->item.amount = data->item.amount;
-		mobj->item.exist = true;
+		value_int = data->item.amount;
+		mobj_new(MOBJ_ITEM_AMMO_MISSILE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
-		mobj = mobj_new(-1, data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
-		mobj->type = MOBJ_ITEM;
-		mobj->img = image_get(itemList[4]);
-		mobj->item.type = ITEM_AMMO_MINE;
-		mobj->item.amount = data->item.amount;
-		mobj->item.exist = true;
+		value_int = data->item.amount;
+		mobj_new(MOBJ_ITEM_AMMO_MINE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj = mobj_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		mobj_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);

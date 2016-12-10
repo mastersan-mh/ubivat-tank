@@ -65,7 +65,6 @@ static const mobj_reginfo_t player_reginfo = {
 		.handle   = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore
-
 };
 
 static const mobj_reginfo_t enemy_reginfo = {
@@ -86,7 +85,6 @@ static const mobj_reginfo_t boss_reginfo = {
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL
-
 };
 
 void mobj_player_init()
@@ -473,21 +471,24 @@ void player_item_get(mobj_t * player)
 	mobj_t * mobj;
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		if(mobj->type != MOBJ_ITEM) continue;
 
-		mobj_item_t * item = &mobj->item;
-		if(!item->exist)continue;
 
 		if(
 				(mobj->pos.x - c_i_MDL_box/2 < player->pos.x + c_p_MDL_box/2 )&&
 				(player->pos.x - c_p_MDL_box/2 <= mobj->pos.x + c_i_MDL_box/2)&&
 				(mobj->pos.y - c_i_MDL_box/2 <= player->pos.y + c_p_MDL_box/2)&&
-				(player->pos.y - c_p_MDL_box/2 < mobj->pos.y + c_i_MDL_box/2 )&&
-				(mobj->type == MOBJ_ITEM)
+				(player->pos.y - c_p_MDL_box/2 < mobj->pos.y + c_i_MDL_box/2 )
 		)
 		{
+
+			itemtype_t itemtype = items_mobjtype_to_itemtype(mobj->type);
+			if((int) itemtype < 0)
+				continue;
+
+			item_t * item = mobj->data;
+			if(!item->exist)continue;
+
 			playerinfo_t *playerinfo = &playerinfo_table[pl->level];
-			itemtype_t itemtype = mobj->item.type;
 
 			if(
 					playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
@@ -499,7 +500,6 @@ void player_item_get(mobj_t * player)
 				pl->items[itemtype] += item->amount;
 				check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
 			};
-
 
 			if(itemtype == ITEM_SCORES)
 			{

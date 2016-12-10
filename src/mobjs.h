@@ -12,7 +12,6 @@
 #include "client.h"
 #include "Z_mem.h"
 #include "img.h"
-#include "items.h"
 
 
 #define MOBJ_FUNCTION_INIT(x) \
@@ -29,7 +28,11 @@ typedef enum
 	MOBJ_SPAWN_PLAYER,
 	MOBJ_SPAWN_ENEMY,
 	MOBJ_SPAWN_BOSS,
-	MOBJ_ITEM,
+	MOBJ_ITEM_SCORES,
+	MOBJ_ITEM_HEALTH,
+	MOBJ_ITEM_ARMOR,
+	MOBJ_ITEM_AMMO_MISSILE,
+	MOBJ_ITEM_AMMO_MINE,
 	MOBJ_MESSAGE,
 	MOBJ_PLAYER,
 	MOBJ_ENEMY,
@@ -53,23 +56,6 @@ typedef enum direction_e
 } direction_t;
 
 
-/*
- * предметы
- */
-typedef struct
-{
-	itemtype_t type;
-	// количество
-	int amount;
-	// флаг присутствия
-	bool exist;
-} mobj_item_t;
-
-typedef struct
-{
-	//сообщение
-	char * message;
-} mobj_exit_t;
 
 typedef struct mobj_s
 {
@@ -86,13 +72,8 @@ typedef struct mobj_s
 	item_img_t * img;
 
 	const struct mobj_register_s * info;
-	union
-	{
-		void * data;
-		mobj_item_t    item;
-		mobj_exit_t    exit;
-	};
 
+	void * data;
 
 } mobj_t;
 

@@ -10,8 +10,9 @@
 
 #include <weap.h>
 #include <map.h>
-#include <types.h>
+#include "types.h"
 #include "mobjs.h"
+#include "items.h"
 #include "think.h"
 
 /*

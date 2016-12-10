@@ -193,8 +193,7 @@ void game_init()
 	mobj_player_init();
 	mobj_message_init();
 	mobj_exit_init();
-
-
+	mobj_items_init();
 
 }
 

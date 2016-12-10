@@ -13,6 +13,7 @@
  */
 typedef struct
 {
+	//сообщение
 	char * message;
 } ent_exit_t;
 
