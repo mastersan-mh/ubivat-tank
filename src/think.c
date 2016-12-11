@@ -18,20 +18,20 @@
 /*
  * инициализация AI
  */
-void ctrl_AI_init(think_t * brain)
+void ctrl_AI_init(think_t * thiker)
 {
-	brain->danger  = 0;
-	brain->Fdanger = 0;
-	brain->attack  = false;
-	brain->target  = NULL;
-	brain->count   = xrand(c_BOT_time*2);
+	thiker->danger  = 0;
+	thiker->Fdanger = 0;
+	thiker->attack  = false;
+	thiker->target  = NULL;
+	thiker->count   = xrand(c_BOT_time*2);
 };
 /*
  * удаление AI
  */
-void ctrl_AI_done(think_t * brain)
+void ctrl_AI_done(think_t * thinker)
 {
-	brain->target = NULL;
+	thinker->target = NULL;
 };
 /*
  * уворачивание от снарядов

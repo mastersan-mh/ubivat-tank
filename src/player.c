@@ -46,8 +46,9 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 static MOBJ_FUNCTION_INIT(player_mobj_init);
 static MOBJ_FUNCTION_DONE(player_mobj_done);
 static void player_handle(mobj_t * this);
-static void player_store(client_storedata_t * storedata, const void * mobj);
-static void player_restore(void * data, const client_storedata_t * storedata);
+static void * player_store(client_storedata_t * storedata, const void * mobj);
+static void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata);
+
 
 static MOBJ_FUNCTION_INIT(enemy_mobj_init);
 static MOBJ_FUNCTION_DONE(enemy_mobj_done);
@@ -116,20 +117,33 @@ void player_handle(mobj_t * this)
 	player_handle_common(this);
 }
 
-void player_store(client_storedata_t * storedata, const void * data)
+void * player_store(client_storedata_t * storedata, const void * data)
 {
 	storedata->fragstotal = ((player_t *)data)->charact.fragstotal;
 	storedata->frags      = ((player_t *)data)->charact.frags;
 	storedata->level      = ((player_t *)data)->level;
 	storedata->scores     = ((player_t *)data)->items[ITEM_SCORES];
+
+	void * usersoredata = Z_malloc(sizeof(int) * __ITEM_NUM);
+	memcpy(
+		usersoredata,
+		((player_t *)data)->items,
+		sizeof(int) * __ITEM_NUM
+	);
+	return usersoredata;
 }
 
-void player_restore(void * data, const client_storedata_t * storedata)
+void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata)
 {
 	((player_t *)data)->charact.fragstotal = storedata->fragstotal;
 	((player_t *)data)->charact.frags      = storedata->frags;
 	((player_t *)data)->level              = storedata->level;
 	((player_t *)data)->items[ITEM_SCORES] = storedata->scores;
+	memcpy(
+		((player_t *)data)->items,
+		userstoredata,
+		sizeof(int) * __ITEM_NUM
+	);
 }
 
 MOBJ_FUNCTION_INIT(enemy_mobj_init)
@@ -146,7 +160,7 @@ MOBJ_FUNCTION_DONE(enemy_mobj_done)
 }
 void enemy_handle(mobj_t * this)
 {
-	//think_enemy(player);
+	think_enemy(this);
 	player_handle_common(this);
 }
 

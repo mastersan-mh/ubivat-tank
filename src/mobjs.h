@@ -93,8 +93,8 @@ typedef struct mobj_register_s
 
 	void * (*connect)(const mobj_t * this);
 
-	void (*client_store)(client_storedata_t * storedata, const void * data);
-	void (*client_restore)(void * data, const client_storedata_t * storedata);
+	void * (*client_store)(client_storedata_t * storedata, const void * data);
+	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
 }mobj_reginfo_t;
 

@@ -34,6 +34,7 @@ int client_connect()
 
 	client_t * client = Z_malloc(sizeof(client_t));
 	client->mobj = NULL;
+	client->userstoredata = NULL;
 	clients[clients_num] = client;
 	clients_num++;
 
@@ -46,6 +47,7 @@ void client_disconnect_all()
 	{
 		clients_num--;
 		client_unspawn(clients_num);
+		Z_free(clients[clients_num]->userstoredata);
 		Z_free(clients[clients_num]);
 	}
 }
@@ -96,7 +98,7 @@ void client_store_all()
 	{
 		client_t * client = clients[id];
 		if(client->mobj->info == NULL) continue;
-		client->mobj->info->client_store(
+		client->userstoredata = client->mobj->info->client_store(
 			&(client->storedata),
 			client->mobj->data
 		);
@@ -115,7 +117,10 @@ void client_restore_all()
 		if(client->mobj->info == NULL) continue;
 		client->mobj->info->client_restore(
 			client->mobj->data,
-			&(client->storedata)
+			&(client->storedata),
+			client->userstoredata
 		);
+		Z_free(client->userstoredata);
+		client->userstoredata = NULL;
 	}
 }

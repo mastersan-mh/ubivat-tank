@@ -22,8 +22,7 @@ typedef struct
 {
 	struct mobj_s * mobj;
 	client_storedata_t storedata;
-
-	//int items[__ITEM_NUM];
+	void * userstoredata;
 }client_t;
 
 #include "mobjs.h"
