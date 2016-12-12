@@ -27,6 +27,7 @@
 #include "player.h"
 #include "ent_message.h"
 #include "ent_exit.h"
+#include "items.h"
 
 #include <stdlib.h>
 #include <stdio.h>

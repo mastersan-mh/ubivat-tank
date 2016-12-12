@@ -30,7 +30,7 @@ coloredtext_t c_about[] = {
 		{}
 };
 
-bool debug_noAI = false;
+bool debug_noAI = true;
 
 
 /**

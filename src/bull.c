@@ -266,8 +266,8 @@ void bull_draw(camera_t * cam, mobj_t * bull)
 	int Fmax = bull->img->img_sy / (mdlbox * 4);
 
 	gr2D_setimage1(
-		VEC_ROUND(cam->x+bull->pos.x-(cam->pos.x-cam->sx/2))-(mdlbox / 2),
-		VEC_ROUND(cam->y-bull->pos.y+(cam->pos.y+cam->sy/2))-(mdlbox / 2),
+		(cam->x+bull->pos.x-(cam->pos.x-cam->sx/2))-(mdlbox / 2),
+		(cam->y-bull->pos.y+(cam->pos.y+cam->sy/2))-(mdlbox / 2),
 		bull->img,
 		0,
 		mdlbox*(bull->dir * Fmax + VEC_TRUNC( ((bull_t*)bull->data)->frame) ),

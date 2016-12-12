@@ -6,6 +6,113 @@
  */
 
 #include "items.h"
+#include "model.h"
+
+model_t mdl_item_scores =
+{
+		.name = "item_scores",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_ITEM_STAR,
+		.texcoord = texcoord_common
+};
+
+model_t mdl_item_health =
+{
+		.name = "item_health",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_ITEM_HEALTH,
+		.texcoord = texcoord_common
+};
+
+model_t mdl_item_armor =
+{
+		.name = "item_armor",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_ITEM_ARMOR,
+		.texcoord = texcoord_common
+};
+
+model_t mdl_item_ammo_missile =
+{
+		.name = "item_ammo_missile",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_WEAPON_MISSILE,
+		.texcoord = texcoord_common
+};
+
+model_t mdl_item_ammo_mine =
+{
+		.name = "item_ammo_mine",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_WEAPON_MINE,
+		.texcoord = texcoord_common
+};
+
+ent_model_t item_scores_models[] =
+{
+		{
+				.model = &mdl_item_scores,
+				.modelscale = 8.0f,
+				.translation = { 0.0, 0.0 }
+		},
+		{}
+};
+
+ent_model_t item_health_models[] =
+{
+		{
+				.model = &mdl_item_health,
+				.modelscale = 8.0f,
+				.translation = { 0.0, 0.0 }
+		},
+		{}
+};
+
+ent_model_t item_armor_models[] =
+{
+		{
+				.model = &mdl_item_armor,
+				.modelscale = 8.0f,
+				.translation = { 0.0, 0.0 }
+		},
+		{}
+};
+
+ent_model_t item_ammo_missile_models[] =
+{
+		{
+				.model = &mdl_item_ammo_missile,
+				.modelscale = 8.0f,
+				.translation = { 0.0, 0.0 }
+		},
+		{}
+};
+
+ent_model_t item_ammo_mine_models[] =
+{
+		{
+				.model = &mdl_item_ammo_mine,
+				.modelscale = 8.0f,
+				.translation = { 0.0, 0.0 }
+		},
+		{}
+};
+
 
 itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype)
 {
@@ -23,33 +130,28 @@ itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype)
 
 static MOBJ_FUNCTION_INIT(item_mobj_init)
 {
-	static image_index_t item_imageindexes[] = {
-			IMG_ITEM_STAR  ,
-			IMG_ITEM_HEALTH,
-			IMG_ITEM_ARMOR ,
-			IMG_WEAPON_MISSILE,
-			IMG_WEAPON_MINE
-	};
-
 	item_t * item = thisdata;
 
 	itemtype_t itemtype = items_mobjtype_to_itemtype(this->type);
 	item->type = itemtype;
 	item->exist = true;
 	item->amount = *((int*)args);
-
-	this->img = image_get(item_imageindexes[itemtype]);
 }
 
+static void item_handle(mobj_t * this)
+{
+	this->show = ((item_t *)this->data)->exist;
+}
 
 static const mobj_reginfo_t item_scores_reginfo = {
 		.name = "item_scores",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
 		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = item_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.models = item_scores_models
 };
 
 static const mobj_reginfo_t item_health_reginfo = {
@@ -57,9 +159,10 @@ static const mobj_reginfo_t item_health_reginfo = {
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
 		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = item_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.models = item_health_models
 };
 
 static const mobj_reginfo_t item_armor_reginfo = {
@@ -67,9 +170,10 @@ static const mobj_reginfo_t item_armor_reginfo = {
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
 		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = item_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.models = item_armor_models
 };
 
 static const mobj_reginfo_t item_ammo_missile_reginfo = {
@@ -77,9 +181,10 @@ static const mobj_reginfo_t item_ammo_missile_reginfo = {
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
 		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = item_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.models = item_ammo_missile_models
 };
 
 static const mobj_reginfo_t item_ammo_mine_reginfo = {
@@ -87,9 +192,10 @@ static const mobj_reginfo_t item_ammo_mine_reginfo = {
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
 		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = item_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.models = item_ammo_mine_models
 };
 
 void mobj_items_init()

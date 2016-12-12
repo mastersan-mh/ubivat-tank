@@ -99,7 +99,7 @@ void gr2D_setimage1(
 	glBindTexture(GL_TEXTURE_2D, image->texture);
 	glLoadIdentity();
 	glTranslatef(out_x * VIDEO_SCALEX, out_y * VIDEO_SCALEY, 0.0f);
-	glBegin(GL_QUADS);		// Рисуем куб
+	glBegin(GL_QUADS);
 	glColor3f(1.0f, 1.0f, 1.0f);
 
 	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата

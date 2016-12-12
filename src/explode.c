@@ -235,8 +235,8 @@ void explode_draw(camera_t * cam, mobj_t * explode)
 
 	mdlbox = explode->img->img_sx;
 	gr2D_setimage1(
-		VEC_ROUND(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
-		VEC_ROUND(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
+		(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
+		(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
 		explode->img,
 		0,
 		mdlbox * VEC_TRUNC(EXPLODE(explode)->frame),

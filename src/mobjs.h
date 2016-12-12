@@ -11,6 +11,7 @@
 #include "types.h"
 #include "client.h"
 #include "Z_mem.h"
+#include "model.h"
 #include "img.h"
 
 
@@ -68,6 +69,9 @@ typedef struct mobj_s
 	vec2_t pos;
 	/* направление взгляда/движения */
 	direction_t dir;
+	/* объект показывать и обрабатывать */
+	bool show;
+
 	//изображение объекта
 	item_img_t * img;
 
@@ -76,11 +80,6 @@ typedef struct mobj_s
 	void * data;
 
 } mobj_t;
-
-
-typedef void* (*mobjinit_t)(const mobj_t * mobj);
-
-
 
 typedef struct mobj_register_s
 {
@@ -96,6 +95,9 @@ typedef struct mobj_register_s
 	void * (*client_store)(client_storedata_t * storedata, const void * data);
 	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
+	/* массив моделей */
+	ent_model_t * models;
+
 }mobj_reginfo_t;
 
 void mobj_register(const mobj_reginfo_t * info);
@@ -104,7 +106,7 @@ const mobj_reginfo_t * mobj_reginfo_get(const char * name);
 
 extern void mobjs_handle();
 
-extern void mobjs_draw(camera_t * cam);
+extern void mobjs_render(camera_t * cam);
 
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
 

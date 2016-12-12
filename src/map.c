@@ -533,7 +533,6 @@ void map_clear()
  */
 void map_draw(camera_t * cam)
 {
-	mobjs_draw(cam);
 
 	int x, y;
 	int x0,x1;
@@ -544,13 +543,13 @@ void map_draw(camera_t * cam)
 	y0 = VEC_TRUNC((cam->pos.y-(cam->sy / 2))/8);
 	if(y0 < 0) y0 = 0;
 	x1 = x0 + (cam->sx / 8) + 1;
-	if(MAP_SX <= x1) x1 = MAP_SX-1;
+	if(MAP_SX < x1) x1 = MAP_SX;
 	y1 = y0 + (cam->sy / 8) + 1;
-	if(MAP_SY <= y1) y1 = MAP_SY-1;
+	if(MAP_SY < y1) y1 = MAP_SY;
 
-	for(y = y0; y <= y1; y++)
+	for(y = y0; y < y1; y++)
 	{
-		for(x = x0; x <= x1; x++ )
+		for(x = x0; x < x1; x++ )
 		{
 			char map_block = map.map[y][x] & 0x0F;
 			item_img_t * img = NULL;
@@ -563,13 +562,16 @@ void map_draw(camera_t * cam)
 			}
 			if(img)
 			{
-				int pos_x = VEC_ROUND(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
-				int pos_y = VEC_ROUND(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
+				int pos_x = VEC_TRUNC(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
+				int pos_y = VEC_TRUNC(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
 				gr2D_setimage0(pos_x, pos_y, img);
 			}
 		}
 	}
-};
+
+	mobjs_render(cam);
+
+}
 /*
  * добавление карты в список
  */

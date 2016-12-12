@@ -105,6 +105,7 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	mobj->pos.x = x;
 	mobj->pos.y = y;
 	mobj->dir   = dir;
+	mobj->show  = true;
 
 	mobj->next = map.mobjs;
 	map.mobjs  = mobj;
@@ -129,6 +130,7 @@ void mobjs_handle()
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
+		if(!mobj->show) continue;
 
 		if(mobj->info != NULL && mobj->info->handle != NULL)
 		{
@@ -186,8 +188,8 @@ void player_draw(camera_t * cam, mobj_t * player)
 	{
 		//если игрок жив
 		gr2D_setimage1(
-			VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-			VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+			(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+			(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 			player->img,
 			0,
 			c_p_MDL_box*((player->dir * 4)+VEC_ROUND(pl->Fbase)),
@@ -195,29 +197,18 @@ void player_draw(camera_t * cam, mobj_t * player)
 			c_p_MDL_box
 		);
 		gr2D_setimage0(
-			VEC_ROUND(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-			VEC_ROUND(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
+			(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
+			(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
 			pl->Iflag
 		);
 	}
 }
 
-void item_draw(camera_t * cam, mobj_t * mobj)
-{
-	if(!ENT_ITEM(mobj)->exist) return;
-	gr2D_setimage0(
-		VEC_ROUND(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
-		VEC_ROUND(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
-		mobj->img
-	);
-}
-
-
 void exit_draw(camera_t * cam, mobj_t * mobj)
 {
 	gr2D_setimage0(
-		VEC_ROUND(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
-		VEC_ROUND(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
+		(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
+		(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
 		mobj->img
 	);
 }
@@ -225,7 +216,7 @@ void exit_draw(camera_t * cam, mobj_t * mobj)
 /*
  * рисование объектов на карте
  */
-void mobjs_draw(camera_t * cam)
+void mobjs_render(camera_t * cam)
 {
 	int cam_sx_half = cam->sx / 2;
 	int cam_sy_half = cam->sy / 2;
@@ -233,18 +224,24 @@ void mobjs_draw(camera_t * cam)
 	for(mobj = map.mobjs;mobj;mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
+		if(!mobj->show) continue;
 
-		if(mobj->img == NULL) continue;
 
-		int viewbox_half = mobj->img->img_sx;
+
+		//int viewbox_half = mobj->img->img_sx;
+		int viewbox_half = 16;
 
 		if(
 				( cam->pos.x  - cam_sx_half <= mobj->pos.x + viewbox_half ) &&
 				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half ) &&
 				( cam->pos.y  - cam_sy_half <= mobj->pos.y + viewbox_half ) &&
 				( mobj->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half )
-			)
+		)
 		{
+
+			ent_models_render(cam, mobj->pos, mobj->info->models);
+
+			if(mobj->img == NULL) continue;
 
 			switch(mobj->type)
 			{
@@ -257,8 +254,6 @@ void mobjs_draw(camera_t * cam)
 			case MOBJ_ITEM_ARMOR :
 			case MOBJ_ITEM_AMMO_MISSILE:
 			case MOBJ_ITEM_AMMO_MINE:
-				item_draw(cam, mobj);
-				break;
 			case MOBJ_MESSAGE:
 				break;
 			case MOBJ_PLAYER :
