@@ -496,7 +496,10 @@ static void player_influence_item(mobj_t * player, mobj_t * mobj)
 	if(
 			playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
 			playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
-			((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
+			(
+			((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0) ||
+			itemtype == ITEM_SCORES
+			)
 	)
 	{
 		item->exist = false;

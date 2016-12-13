@@ -8,6 +8,7 @@
 #ifndef SRC_MODEL_H_
 #define SRC_MODEL_H_
 
+#include "vec.h"
 #include "types.h"
 #include "img.h"
 
@@ -59,8 +60,6 @@ extern vec2_t model_vertexes_common[VERTEXES_COMMON_NUM];
 extern model_triangle_t model_trianges_common[TRIANGLES_COMMON_NUM];
 extern vec2_t model_texcoord_common[VERTEXES_COMMON_NUM];
 extern modelframe_t model_frames_common[MODEL_FRAMES_COMMON_NUM];
-
-#include "mobjs.h"
 
 void model_render(
 	const camera_t * cam,

@@ -6,6 +6,7 @@
  */
 
 #include "mobjs.h"
+#include "model.h"
 #include "explode.h"
 #include "game.h"
 #include "player.h"
@@ -108,7 +109,11 @@ static void explode_common_modelaction_endframef(mobj_t * this, char * actionnam
 {
 	if(EXPLODE(this)->owner)
 	{
-		ENT_PLAYER(EXPLODE(this)->owner)->bull = NULL;
+
+		if(ENT_PLAYER(EXPLODE(this)->owner)->bull == this)
+		{
+			ENT_PLAYER(EXPLODE(this)->owner)->bull = NULL;
+		}
 	}
 	MOBJ_ERASE(this);
 }

@@ -15,8 +15,9 @@
 #define ATTR_PACKED __attribute__ ((packed))
 
 #include "config.h"
-#include <fonts.h>
-#include <Z_mem.h>
+#include "vec.h"
+#include "fonts.h"
+#include "Z_mem.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -95,21 +96,7 @@ typedef enum {
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 
-typedef float vec_t;
 typedef void (*actionf_t)();
-
-
-#define VEC_ABS(x) fabsf((x))
-#define VEC_SQRT(x) sqrtf((x))
-#define VEC_TRUNC(x) truncf((x))
-#define VEC_ROUND(x) roundf((x))
-
-//координаты
-typedef struct
-{
-	vec_t x;
-	vec_t y;
-}vec2_t;
 
 //камера
 typedef struct

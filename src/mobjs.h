@@ -8,6 +8,7 @@
 #ifndef SRC_MOBJS_H_
 #define SRC_MOBJS_H_
 
+#include "vec.h"
 #include "types.h"
 #include "client.h"
 #include "Z_mem.h"

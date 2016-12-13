@@ -53,7 +53,7 @@ void bull_common_handle(mobj_t * this)
 {
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	mobj_t * player;
-
+	mobj_t * mobj;
 	bull_t * bull = this->data;
 
 	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
@@ -76,7 +76,8 @@ void bull_common_handle(mobj_t * this)
 
 		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
 		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
-		mobj_new(
+		/* следим за взрывом */
+		mobj = mobj_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -84,6 +85,8 @@ void bull_common_handle(mobj_t * this)
 			bull->owner,
 			NULL
 		);
+		if(bull->type == BULL_MISSILE)
+			ENT_PLAYER(bull->owner)->bull = mobj;
 		this->erase = true;
 		return;
 	}
@@ -101,7 +104,8 @@ void bull_common_handle(mobj_t * this)
 		//пуля попала в стену
 		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
 		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
-		mobj_new(
+
+		mobj = mobj_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -109,6 +113,9 @@ void bull_common_handle(mobj_t * this)
 			bull->owner,
 			NULL
 		);
+		if(bull->type == BULL_MISSILE)
+			ENT_PLAYER(bull->owner)->bull = mobj;
+
 		this->erase = true;
 		return;
 	}
@@ -133,7 +140,7 @@ void bull_common_handle(mobj_t * this)
 		//пуля попала в стену
 		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
 		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
-		mobj_new(
+		mobj = mobj_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -141,6 +148,8 @@ void bull_common_handle(mobj_t * this)
 			bull->owner,
 			NULL
 		);
+		if(bull->type == BULL_MISSILE)
+			ENT_PLAYER(bull->owner)->bull = mobj;
 		this->erase = true;
 		return;
 	}
