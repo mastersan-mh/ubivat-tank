@@ -1,14 +1,13 @@
-#include <actions.h>
+#include "actions.h"
 #include "game.h"
-#include <input.h>
+#include "input.h"
+#include "ent_player.h"
 
 
 #include <string.h>
 #include <stdio.h>
-
 #include <SDL2/SDL.h>
 #include <GL/gl.h>
-#include <player.h>
 
 
 action_t actions[__ACTION_NUM] = {

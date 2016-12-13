@@ -8,7 +8,7 @@
 #include "client.h"
 #include "game.h"
 #include "map.h"
-#include "player.h"
+#include "ent_player.h"
 
 static client_t ** clients;
 static size_t clients_size = 0;

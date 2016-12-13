@@ -5,42 +5,36 @@
  * by Master San
  */
 
-#include <video.h>
-#include <img.h>
-#include <map.h>
-#include <weap.h>
-#include <game.h>
-#include <_gr2D.h>
-#include <fonts.h>
-
-#include "client.h"
-
+#include "ent_player.h"
 #include "ent_spawn.h"
-#include "player.h"
 #include "ent_message.h"
 #include "ent_exit.h"
-
-#include "mobjs.h"
-#include "items.h"
-#include "bull.h"
-#include "explode.h"
+#include "ent_items.h"
+#include "ent_bull.h"
+#include "ent_explode.h"
 #include "ent_message.h"
 
+#include "types.h"
+#include "mobjs.h"
+#include "video.h"
+#include "img.h"
+#include "map.h"
+#include "weap.h"
+#include "game.h"
+#include "_gr2D.h"
 #include "sound.h"
-
-#include <string.h>
-#include <think.h>
-#include <types.h>
+#include "client.h"
+#include "think.h"
 
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
-		/*SCORES, HEALTH, ARMOR,                   AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE */
-		{ { ITEM_SCOREPERCLASS * 1,  100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, IMG_TANK0 },
-		{ { ITEM_SCOREPERCLASS * 2,  100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, IMG_TANK1 },
-		{ { ITEM_SCOREPERCLASS * 3,  100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, IMG_TANK2 },
-		{ { ITEM_SCOREPERCLASS * 4,  200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, IMG_TANK3 },
-		{ { ITEM_SCOREPERCLASS * 5,  200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 },
-		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
+		/* SCORES                 , HEALTH, ARMOR,  AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE */
+		{ { ITEM_SCOREPERCLASS * 1,    100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, IMG_TANK0 },
+		{ { ITEM_SCOREPERCLASS * 2,    100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, IMG_TANK1 },
+		{ { ITEM_SCOREPERCLASS * 3,    100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, IMG_TANK2 },
+		{ { ITEM_SCOREPERCLASS * 4,    200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, IMG_TANK3 },
+		{ { ITEM_SCOREPERCLASS * 5,    200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 },
+		{ { ITEM_SCOREPERCLASS * 6,   5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
 };
 
 static MOBJ_FUNCTION_INIT(player_mobj_init);

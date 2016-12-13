@@ -5,11 +5,11 @@
  *      Author: mastersan
  */
 
+#include "game.h"
 #include "mobjs.h"
 #include "model.h"
-#include "explode.h"
-#include "game.h"
-#include "player.h"
+#include "ent_explode.h"
+#include "ent_player.h"
 #include "_gr2D.h"
 #include "sound.h"
 

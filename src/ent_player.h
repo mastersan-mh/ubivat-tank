@@ -1,18 +1,18 @@
 /*
- * plr.h
+ * ent_player.h
  *
  *  Created on: 10 окт. 2016 г.
  *      Author: mastersan
  */
 
-#ifndef SRC_PLAYER_H_
-#define SRC_PLAYER_H_
+#ifndef SRC_ENT_PLAYER_H_
+#define SRC_ENT_PLAYER_H_
 
-#include <weap.h>
-#include <map.h>
+#include "weap.h"
+#include "map.h"
 #include "types.h"
 #include "mobjs.h"
-#include "items.h"
+#include "ent_items.h"
 #include "think.h"
 
 /*
@@ -172,4 +172,4 @@ void player_getdamage(struct mobj_s * player, struct mobj_s * explode, bool self
 void player_class_init(mobj_t * player, player_t * pl);
 
 
-#endif /* SRC_PLAYER_H_ */
+#endif /* SRC_ENT_PLAYER_H_ */

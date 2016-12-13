@@ -12,8 +12,8 @@
 #include "img.h"
 #include "mobjs.h"
 
-#include "bull.h"
-#include "explode.h"
+#include "ent_bull.h"
+#include "ent_explode.h"
 
 typedef enum
 {

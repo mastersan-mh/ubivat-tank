@@ -4,15 +4,16 @@
  * by Master San
  */
 
-#include <video.h>
-#include <game.h>
-#include "img.h"
-#include <_gr2D.h>
-#include <fonts.h>
-#include <utf8.h>
-
-#include "explode.h"
+#include "ent_explode.h"
 #include "ent_spawn.h"
+
+#include "video.h"
+#include "game.h"
+#include "img.h"
+#include "_gr2D.h"
+#include "fonts.h"
+#include "utf8.h"
+
 
 #include <errno.h>
 #include <sys/types.h>

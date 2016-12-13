@@ -3,13 +3,14 @@
  *        управление игроками
  * by Master San
  */
+#include "ent_bull.h"
+#include "ent_explode.h"
+#include "ent_player.h"
+
 #include "types.h"
 #include "game.h"
 #include "weap.h"
-#include "bull.h"
-#include "explode.h"
 #include "map.h"
-#include "player.h"
 #include "client.h"
 
 #include <stdlib.h>

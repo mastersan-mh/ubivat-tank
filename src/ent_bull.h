@@ -1,12 +1,14 @@
 /*
- * bull.h
+ * ent_bull.h
  *
  *  Created on: 30 нояб. 2016 г.
  *      Author: mastersan
  */
 
-#ifndef SRC_BULL_H_
-#define SRC_BULL_H_
+#ifndef SRC_ENT_BULL_H_
+#define SRC_ENT_BULL_H_
+
+#include "types.h"
 
 typedef enum
 {
@@ -49,4 +51,4 @@ extern bullinfo_t bullinfo_table[__BULL_NUM];
 
 void mobj_bull_init();
 
-#endif /* SRC_BULL_H_ */
+#endif /* SRC_ENT_BULL_H_ */

@@ -281,11 +281,8 @@ void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname
 	mobj->modelplayers[imodel].frame = action->startframe;
 }
 
-
-#include "player.h"
-#include "explode.h"
-#include "bull.h"
-#include "items.h"
+/* TODO: remove next 2 lines */
+#include "ent_player.h"
 #include "_gr2D.h"
 
 /*

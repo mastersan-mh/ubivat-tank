@@ -1,12 +1,12 @@
 /*
- * items.h
+ * ent_items.h
  *
  *  Created on: 3 дек. 2016 г.
  *      Author: mastersan
  */
 
-#ifndef SRC_ITEMS_H_
-#define SRC_ITEMS_H_
+#ifndef SRC_ENT_ITEMS_H_
+#define SRC_ENT_ITEMS_H_
 
 #include "types.h"
 #include "mobjs.h"
@@ -47,4 +47,4 @@ itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype);
 
 void mobj_items_init();
 
-#endif /* SRC_ITEMS_H_ */
+#endif /* SRC_ENT_ITEMS_H_ */

@@ -3,6 +3,9 @@
  *        обработка меню
  * by Master San
  */
+
+#include "ent_player.h" /*  TODO: remove this line*/
+
 #include "menu.h"
 #include "img.h"
 #include "_gr2D.h"
@@ -11,7 +14,6 @@
 #include "video.h"
 #include "sound.h"
 #include "mobjs.h"
-#include "player.h"
 #include "client.h"
 
 /* MENU_MAIN */

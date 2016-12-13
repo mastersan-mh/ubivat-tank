@@ -1,12 +1,14 @@
 /*
- * explode.h
+ * ent_explode.h
  *
  *  Created on: 29 нояб. 2016 г.
  *      Author: mastersan
  */
 
-#ifndef SRC_EXPLODE_H_
-#define SRC_EXPLODE_H_
+#ifndef SRC_ENT_EXPLODE_H_
+#define SRC_ENT_EXPLODE_H_
+
+#include "vec.h"
 
 typedef enum
 {
@@ -42,4 +44,4 @@ extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
 void mobj_explode_init();
 
-#endif /* SRC_EXPLODE_H_ */
+#endif /* SRC_ENT_EXPLODE_H_ */

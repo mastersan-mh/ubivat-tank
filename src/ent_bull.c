@@ -9,9 +9,9 @@
 #include "weap.h"
 #include "mobjs.h"
 #include "model.h"
-#include "bull.h"
-#include "explode.h"
-#include "player.h"
+#include "ent_bull.h"
+#include "ent_explode.h"
+#include "ent_player.h"
 #include "sound.h"
 
 #define BULL_FPS 8

@@ -5,8 +5,9 @@
  *      Author: mastersan
  */
 
-#include "items.h"
+#include "mobjs.h"
 #include "model.h"
+#include "ent_items.h"
 
 static model_t mdl_item_scores =
 {

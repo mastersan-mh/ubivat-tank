@@ -4,20 +4,13 @@
  * by Master San
  */
 
-#include <video.h>
-#include <game.h>
 #include "weap.h"
-#include <img.h>
-#include <map.h>
-#include <_gr2D.h>
-#include "sound.h"
+#include "ent_player.h"
 
 
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include <player.h>
-#include <types.h>
 
 //оружия
 weaponinfo_t wtable[__WEAP_NUM] =

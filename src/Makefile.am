@@ -12,7 +12,10 @@ ubivat_tank_SOURCES = \
 ent_exit.c \
 ent_message.c \
 ent_spawn.c \
-items.c \
+ent_bull.c \
+ent_explode.c \
+ent_items.c \
+ent_player.c \
 Z_mem.c \
 system.c \
 video.c \
@@ -30,9 +33,6 @@ main.c \
 map.c \
 mobjs.c \
 model.c \
-bull.c \
-explode.c \
 menu.c \
-player.c \
 client.c \
 weap.c

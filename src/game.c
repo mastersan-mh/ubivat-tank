@@ -22,12 +22,12 @@
 
 // entities
 #include "ent_spawn.h"
-#include "bull.h"
-#include "explode.h"
-#include "player.h"
+#include "ent_bull.h"
+#include "ent_explode.h"
 #include "ent_message.h"
 #include "ent_exit.h"
-#include "items.h"
+#include "ent_items.h"
+#include "ent_player.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,7 +38,6 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
-#include <player.h>
 #include <stdarg.h>
 #include <types.h>
 
