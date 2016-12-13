@@ -8,6 +8,7 @@
 #define SRC_TYPES_H_
 
 #define _DEBUG
+#define _DEBUG_PLAYERMAXLEVEL
 
 #define MAX_MESSAGE_SIZE 2048
 

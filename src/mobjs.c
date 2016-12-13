@@ -400,7 +400,6 @@ void mobjs_render(camera_t * cam)
 			case MOBJ_SPAWN_PLAYER:
 			case MOBJ_SPAWN_ENEMY:
 			case MOBJ_SPAWN_BOSS:
-				break;
 			case MOBJ_ITEM_SCORES:
 			case MOBJ_ITEM_HEALTH:
 			case MOBJ_ITEM_ARMOR :

@@ -8,7 +8,7 @@
 #include "items.h"
 #include "model.h"
 
-model_t mdl_item_scores =
+static model_t mdl_item_scores =
 {
 		.name = "item_scores",
 		.vertexes_num = VERTEXES_COMMON_NUM,
@@ -21,7 +21,7 @@ model_t mdl_item_scores =
 		.frames = model_frames_common
 };
 
-model_t mdl_item_health =
+static model_t mdl_item_health =
 {
 		.name = "item_health",
 		.vertexes_num = VERTEXES_COMMON_NUM,
@@ -33,7 +33,7 @@ model_t mdl_item_health =
 		.frames = model_frames_common
 };
 
-model_t mdl_item_armor =
+static model_t mdl_item_armor =
 {
 		.name = "item_armor",
 		.vertexes_num = VERTEXES_COMMON_NUM,
@@ -45,7 +45,7 @@ model_t mdl_item_armor =
 		.frames = model_frames_common
 };
 
-model_t mdl_item_ammo_missile =
+static model_t mdl_item_ammo_missile =
 {
 		.name = "item_ammo_missile",
 		.vertexes_num = VERTEXES_COMMON_NUM,
@@ -57,7 +57,7 @@ model_t mdl_item_ammo_missile =
 		.frames = model_frames_common
 };
 
-model_t mdl_item_ammo_mine =
+static model_t mdl_item_ammo_mine =
 {
 		.name = "item_ammo_mine",
 		.vertexes_num = VERTEXES_COMMON_NUM,
@@ -69,7 +69,7 @@ model_t mdl_item_ammo_mine =
 		.frames = model_frames_common
 };
 
-entmodel_t item_scores_models[] =
+static entmodel_t item_scores_models[] =
 {
 		{
 				.model = &mdl_item_scores,
@@ -78,7 +78,7 @@ entmodel_t item_scores_models[] =
 		}
 };
 
-entmodel_t item_health_models[] =
+static entmodel_t item_health_models[] =
 {
 		{
 				.model = &mdl_item_health,
@@ -87,7 +87,7 @@ entmodel_t item_health_models[] =
 		}
 };
 
-entmodel_t item_armor_models[] =
+static entmodel_t item_armor_models[] =
 {
 		{
 				.model = &mdl_item_armor,
@@ -96,7 +96,7 @@ entmodel_t item_armor_models[] =
 		}
 };
 
-entmodel_t item_ammo_missile_models[] =
+static entmodel_t item_ammo_missile_models[] =
 {
 		{
 				.model = &mdl_item_ammo_missile,
@@ -105,7 +105,7 @@ entmodel_t item_ammo_missile_models[] =
 		}
 };
 
-entmodel_t item_ammo_mine_models[] =
+static entmodel_t item_ammo_mine_models[] =
 {
 		{
 				.model = &mdl_item_ammo_mine,

@@ -49,6 +49,4 @@ extern bullinfo_t bullinfo_table[__BULL_NUM];
 
 void mobj_bull_init();
 
-void bull_draw(camera_t * cam, mobj_t * bull);
-
 #endif /* SRC_BULL_H_ */

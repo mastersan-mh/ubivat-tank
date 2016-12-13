@@ -102,11 +102,13 @@ MOBJ_FUNCTION_INIT(player_mobj_init)
 	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_RUS);
 
+#if defined(_DEBUG_PLAYERMAXLEVEL)
 	for( int i = 0; i < __ITEM_NUM; i++)
 	{
 		pl->items[i] = 50;
 	}
 	pl->items[ITEM_SCORES] = 9000;
+#endif
 
 	player_spawn_init(this, pl, parent);// parent = spawn
 }
