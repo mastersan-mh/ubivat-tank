@@ -13,7 +13,9 @@
 #include "sound.h"
 
 //скорость проигрывания кадров взрыва
-#define c_explode_FPS   28
+#define EXPLODE_FPS   28
+//количество кадров взрыва
+#define EXPLODE_FRAMES_NUM 8
 
 //оружия
 explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
@@ -35,8 +37,6 @@ static void explode_detonate(mobj_t * this)
 	int ix,iy;
 
 	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->type];
-
-	mobj_model_start_play(this, 0, "explode");
 
 	//проверка попаданий в стены
 	for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
@@ -113,42 +113,20 @@ static void explode_common_modelaction_endframef(mobj_t * this, char * actionnam
 	MOBJ_ERASE(this);
 }
 
-
-/*
-scale = 7
-		7 x 112
-frames = 8
-*/
-
-/*
- * @description константа с координатами текстур
- * model_<prefix>
- * frame      - номер кадра = [0; frames_num)
- * frames_num - количество кадров
- */
-#define _VERTEX4_TEXCOORD_FRAME(prefix, frame, frames_num) \
-vec2_t model_texcoord_ ## prefix [VERTEXES_COMMON_NUM] =   \
-{                                              \
-		{ 0.0f, ( (float)frame        ) / ( (float)frames_num ) }, \
-		{ 0.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
-		{ 1.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
-		{ 1.0f, ( (float)frame        ) / ( (float)frames_num ) }  \
-}
-
-_VERTEX4_TEXCOORD_FRAME(8frame0 , 0, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame1 , 1, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame2 , 2, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame3 , 3, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame4 , 4, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame5 , 5, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame6 , 6, 8);
-_VERTEX4_TEXCOORD_FRAME(8frame7 , 7, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame0 , 0, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame1 , 1, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame2 , 2, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame3 , 3, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame4 , 4, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame5 , 5, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame6 , 6, 8);
+static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame7 , 7, 8);
 
 /*
  * explode_small
  */
 
-modelframe_t model_explode_small_frames[8] =
+static modelframe_t model_explode_small_frames[8] =
 {
 		{ .texcoord = model_texcoord_8frame0 },
 		{ .texcoord = model_texcoord_8frame1 },
@@ -160,20 +138,20 @@ modelframe_t model_explode_small_frames[8] =
 		{ .texcoord = model_texcoord_8frame7 }
 };
 
-model_t mdl_explode_small =
+static const model_t mdl_explode_small =
 {
 		.name = "explode_small",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_EXPLODE_SMALL,
-		.fps = c_explode_FPS,
-		.frames_num = 8,
+		.fps = EXPLODE_FPS,
+		.frames_num = EXPLODE_FRAMES_NUM,
 		.frames = model_explode_small_frames
 };
 
-ent_modelaction_t explode_small_modelactions[] =
+static const ent_modelaction_t explode_small_modelactions[] =
 {
 		{
 				.name = "explode",
@@ -183,7 +161,7 @@ ent_modelaction_t explode_small_modelactions[] =
 		}
 };
 
-ent_model_t explode_small_models[] =
+static entmodel_t explode_small_models[] =
 {
 		{
 				.model = &mdl_explode_small,
@@ -197,7 +175,7 @@ ent_model_t explode_small_models[] =
 /*
  * explode_big
  */
-modelframe_t model_explode_big_frames[8] =
+static modelframe_t model_explode_big_frames[8] =
 {
 		{ .texcoord = model_texcoord_8frame0 },
 		{ .texcoord = model_texcoord_8frame1 },
@@ -209,20 +187,20 @@ modelframe_t model_explode_big_frames[8] =
 		{ .texcoord = model_texcoord_8frame7 }
 };
 
-model_t mdl_explode_big =
+static const model_t mdl_explode_big =
 {
 		.name = "explode_big",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_EXPLODE_BIG,
-		.fps = c_explode_FPS,
-		.frames_num = 8,
+		.fps = EXPLODE_FPS,
+		.frames_num = EXPLODE_FRAMES_NUM,
 		.frames = model_explode_big_frames
 };
 
-ent_modelaction_t explode_big_modelactions[] =
+static const ent_modelaction_t explode_big_modelactions[] =
 {
 		{
 				.name = "explode",
@@ -232,7 +210,7 @@ ent_modelaction_t explode_big_modelactions[] =
 		}
 };
 
-ent_model_t explode_big_models[] =
+static entmodel_t explode_big_models[] =
 {
 		{
 				.model = &mdl_explode_big,
@@ -245,12 +223,6 @@ ent_model_t explode_big_models[] =
 
 static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t * parent, explodetype_t type)
 {
-	static image_index_t img_list[] =
-	{
-			IMG_EXPLODE_SMALL,
-			IMG_EXPLODE_BIG,
-			IMG_EXPLODE_BIG
-	};
 	static sound_index_t sound_list[] =
 	{
 			SOUND_EXPLODE_ARTILLERY,
@@ -260,9 +232,9 @@ static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t
 
 	explode->owner = (mobj_t *)parent;
 	explode->type  = type;
-	if(type != EXPLODE_ARTILLERY)
-		this->img = image_get(img_list[type]);
+
 	sound_play_start(sound_list[type], 1);
+	mobj_model_start_play(this, 0, "explode");
 
 	explode_detonate(this);
 
@@ -291,8 +263,8 @@ static const mobj_reginfo_t explode_artillery_reginfo = {
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = explode_small_models
+		.entmodels_num = 1,
+		.entmodels = explode_small_models
 };
 
 static const mobj_reginfo_t explode_missile_reginfo = {
@@ -303,8 +275,8 @@ static const mobj_reginfo_t explode_missile_reginfo = {
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = explode_big_models
+		.entmodels_num = 1,
+		.entmodels = explode_big_models
 };
 
 static const mobj_reginfo_t explode_mine_reginfo = {
@@ -315,8 +287,8 @@ static const mobj_reginfo_t explode_mine_reginfo = {
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = explode_big_models
+		.entmodels_num = 1,
+		.entmodels = explode_big_models
 };
 
 void mobj_explode_init()

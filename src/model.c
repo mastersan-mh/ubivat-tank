@@ -13,38 +13,38 @@
 #include <stdio.h>
 
 /* вершины, коордитаты и треугольники для модели по-умолчанию */
-vec2_t vertexes_common[VERTEXES_COMMON_NUM] =
+vec2_t model_vertexes_common[VERTEXES_COMMON_NUM] =
 {
-		{-1.0, -1.0},
-		{-1.0,  1.0},
-		{ 1.0,  1.0},
-		{ 1.0, -1.0}
+		{-1.0f, -1.0f },
+		{-1.0f,  1.0f },
+		{ 1.0f,  1.0f },
+		{ 1.0f, -1.0f }
 };
 
-model_triangle_t trianges_common[TRIANGLES_COMMON_NUM] =
+model_triangle_t model_trianges_common[TRIANGLES_COMMON_NUM] =
 {
-		{0, 1, 2},
-		{0, 2, 3}
+		{0, 1, 2 },
+		{0, 2, 3 }
 };
 
-vec2_t texcoord_common[VERTEXES_COMMON_NUM] =
+vec2_t model_texcoord_common[VERTEXES_COMMON_NUM] =
 {
-		{ 0.0, 0.0},
-		{ 0.0, 1.0},
-		{ 1.0, 1.0},
-		{ 1.0, 0.0}
+		{ 0.0f, 0.0f },
+		{ 0.0f, 1.0f },
+		{ 1.0f, 1.0f },
+		{ 1.0f, 0.0f }
 };
 
 modelframe_t model_frames_common[MODEL_FRAMES_COMMON_NUM] =
 {
-		{ .texcoord = texcoord_common }
+		{ .texcoord = model_texcoord_common }
 };
 
 
 void model_render(
-	camera_t * cam,
+	const camera_t * cam,
 	vec2_t pos,
-	model_t * model,
+	const model_t * model,
 	vec_t modelscale,
 	vec2_t translation,
 	float angle, /* degrees*/
@@ -86,6 +86,7 @@ void model_render(
 			//model_triangle_t *triangle =
 			int v = model->triangles[itriangle][ivertex];
 			modelframe_t * frame = &model->frames[iframe];
+
 			glTexCoord2f(
 				frame->texcoord[v].x,
 				frame->texcoord[v].y

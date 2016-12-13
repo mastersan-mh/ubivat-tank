@@ -12,9 +12,9 @@ model_t mdl_item_scores =
 {
 		.name = "item_scores",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_ITEM_STAR,
 		.fps = 0,
 		.frames_num = MODEL_FRAMES_COMMON_NUM,
@@ -25,9 +25,9 @@ model_t mdl_item_health =
 {
 		.name = "item_health",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_ITEM_HEALTH,
 		.frames_num = MODEL_FRAMES_COMMON_NUM,
 		.frames = model_frames_common
@@ -37,9 +37,9 @@ model_t mdl_item_armor =
 {
 		.name = "item_armor",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_ITEM_ARMOR,
 		.frames_num = MODEL_FRAMES_COMMON_NUM,
 		.frames = model_frames_common
@@ -49,9 +49,9 @@ model_t mdl_item_ammo_missile =
 {
 		.name = "item_ammo_missile",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_WEAPON_MISSILE,
 		.frames_num = MODEL_FRAMES_COMMON_NUM,
 		.frames = model_frames_common
@@ -61,15 +61,15 @@ model_t mdl_item_ammo_mine =
 {
 		.name = "item_ammo_mine",
 		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = vertexes_common,
+		.vertexes = model_vertexes_common,
 		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = trianges_common,
+		.triangles = model_trianges_common,
 		.itexture = IMG_WEAPON_MINE,
 		.frames_num = MODEL_FRAMES_COMMON_NUM,
 		.frames = model_frames_common
 };
 
-ent_model_t item_scores_models[] =
+entmodel_t item_scores_models[] =
 {
 		{
 				.model = &mdl_item_scores,
@@ -78,7 +78,7 @@ ent_model_t item_scores_models[] =
 		}
 };
 
-ent_model_t item_health_models[] =
+entmodel_t item_health_models[] =
 {
 		{
 				.model = &mdl_item_health,
@@ -87,7 +87,7 @@ ent_model_t item_health_models[] =
 		}
 };
 
-ent_model_t item_armor_models[] =
+entmodel_t item_armor_models[] =
 {
 		{
 				.model = &mdl_item_armor,
@@ -96,7 +96,7 @@ ent_model_t item_armor_models[] =
 		}
 };
 
-ent_model_t item_ammo_missile_models[] =
+entmodel_t item_ammo_missile_models[] =
 {
 		{
 				.model = &mdl_item_ammo_missile,
@@ -105,7 +105,7 @@ ent_model_t item_ammo_missile_models[] =
 		}
 };
 
-ent_model_t item_ammo_mine_models[] =
+entmodel_t item_ammo_mine_models[] =
 {
 		{
 				.model = &mdl_item_ammo_mine,
@@ -152,8 +152,8 @@ static const mobj_reginfo_t item_scores_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = item_scores_models
+		.entmodels_num = 1,
+		.entmodels = item_scores_models
 };
 
 static const mobj_reginfo_t item_health_reginfo = {
@@ -164,8 +164,8 @@ static const mobj_reginfo_t item_health_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = item_health_models
+		.entmodels_num = 1,
+		.entmodels = item_health_models
 };
 
 static const mobj_reginfo_t item_armor_reginfo = {
@@ -176,8 +176,8 @@ static const mobj_reginfo_t item_armor_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = item_armor_models
+		.entmodels_num = 1,
+		.entmodels = item_armor_models
 };
 
 static const mobj_reginfo_t item_ammo_missile_reginfo = {
@@ -188,8 +188,8 @@ static const mobj_reginfo_t item_ammo_missile_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = item_ammo_missile_models
+		.entmodels_num = 1,
+		.entmodels = item_ammo_missile_models
 };
 
 static const mobj_reginfo_t item_ammo_mine_reginfo = {
@@ -200,8 +200,8 @@ static const mobj_reginfo_t item_ammo_mine_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.models_num = 1,
-		.models = item_ammo_mine_models
+		.entmodels_num = 1,
+		.entmodels = item_ammo_mine_models
 };
 
 void mobj_items_init()

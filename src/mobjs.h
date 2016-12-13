@@ -58,30 +58,32 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
+typedef void (*endframe_f)(struct mobj_s * this, char * actionname);
+
 typedef struct
 {
 	char * name;
 	unsigned int startframe;
 	unsigned int endframe;
-	void (*endframef)(struct mobj_s * this, char * actionname);
+	endframe_f endframef;
 } ent_modelaction_t;
 
 typedef struct
 {
-	model_t * model;
-	vec_t modelscale;
-	vec2_t translation;
+	const model_t * model;
+	const vec_t modelscale;
+	const vec2_t translation;
 	/* количество действий */
-	unsigned int actions_num;
+	const unsigned int actions_num;
 	/* действия */
-	ent_modelaction_t * actions;
-} ent_model_t;
+	const ent_modelaction_t * actions;
+} entmodel_t;
 
 /* структура для проигрывания кардов моделей, связанных с объектом */
 typedef struct
 {
 //	/* воспроизводимое действие */
-	ent_modelaction_t * action;
+	const ent_modelaction_t * action;
 	/* номер кадра */
 	float frame;
 } ent_modelplayer_t;
@@ -126,9 +128,9 @@ typedef struct mobj_register_s
 	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
 	/* размер массива моделей */
-	unsigned int models_num;
+	unsigned int entmodels_num;
 	/* массив моделей, связанных с объектом*/
-	ent_model_t * models;
+	entmodel_t * entmodels;
 
 }mobj_reginfo_t;
 

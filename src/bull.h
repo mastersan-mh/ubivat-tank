@@ -28,8 +28,6 @@ typedef struct
 	vec_t speed;
 	//bodybox
 	vec_t bodybox;
-	//изображение оружия
-	image_index_t icon;
 } bullinfo_t;
 
 /*
@@ -43,8 +41,6 @@ typedef struct
 	bulltype_t type;
 	//изменение расстояния
 	vec_t delta_s;
-	//время
-	float frame;
 } bull_t;
 
 #define BULL(x) ((bull_t *)(x)->data)

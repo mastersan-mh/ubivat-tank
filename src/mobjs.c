@@ -126,8 +126,8 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	{
 		mobj->info = mobjinfo;
 
-		if(mobjinfo->models_num > 0)
-			mobj->modelplayers = Z_malloc(mobjinfo->models_num * sizeof(ent_modelplayer_t));
+		if(mobjinfo->entmodels_num > 0)
+			mobj->modelplayers = Z_malloc(mobjinfo->entmodels_num * sizeof(ent_modelplayer_t));
 
 		if(mobjinfo->datasize == 0)
 			mobj->data = NULL;
@@ -206,30 +206,33 @@ void mobjs_handle()
 		}
 
 		int i;
-		for(i = 0; i < info->models_num; i++)
+		for(i = 0; i < info->entmodels_num; i++)
 		{
 
 			if(
 					mobj->modelplayers[i].action != NULL &&
-					info->models[i].model->frames > 0 &&
-					info->models[i].model->fps > 0
+					info->entmodels[i].model->frames > 0 &&
+					info->entmodels[i].model->fps > 0
 			)
 			{
 
 				bool end = model_nextframe(
 					&mobj->modelplayers[i].frame,
-					info->models[i].model->fps,
+					info->entmodels[i].model->fps,
 					mobj->modelplayers[i].action->startframe,
 					mobj->modelplayers[i].action->endframe
 				);
 				if(end)
 				{
-					if(mobj->modelplayers[i].action->endframef != NULL)
-						mobj->modelplayers[i].action->endframef(
+					const ent_modelaction_t * action = mobj->modelplayers[i].action;
+					if(action != NULL && action->endframef != NULL)
+					{
+						mobj->modelplayers[i].action = NULL;
+						action->endframef(
 							mobj,
-							mobj->modelplayers[i].action->name
+							action->name
 						);
-					mobj->modelplayers[i].action = NULL;
+					}
 				}
 
 			}
@@ -244,11 +247,11 @@ void mobjs_handle()
 	}
 }
 
-static ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * info, unsigned int imodel, char * actionname)
+static const ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * info, unsigned int imodel, char * actionname)
 {
-	if(info->models == NULL)
+	if(info->entmodels == NULL)
 		return NULL;
-	ent_model_t * entmodel = &info->models[imodel];
+	entmodel_t * entmodel = &info->entmodels[imodel];
 	if(entmodel == NULL)
 		return NULL;
 	int i;
@@ -264,7 +267,7 @@ static ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * info, 
 void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname)
 {
 	const mobj_reginfo_t * info = mobj->info;
-	ent_modelaction_t * action = mobj_reginfo_action_get(info, imodel, actionname);
+	const ent_modelaction_t * action = mobj_reginfo_action_get(info, imodel, actionname);
 	if(!action)
 	{
 		game_console_send("Error: Entity \"%s\", imodel %d: Action \"%s\" not found, could not play frames.",
@@ -335,8 +338,8 @@ static void ent_models_render(
 
 	vec2_t pos = mobj->pos;
 	const struct mobj_register_s * info = mobj->info;
-	ent_model_t * ent_models = info->models;
-	size_t models_num = info->models_num;
+	entmodel_t * ent_models = info->entmodels;
+	size_t models_num = info->entmodels_num;
 
 
 	if(!ent_models) return;
@@ -345,17 +348,18 @@ static void ent_models_render(
 
 	for( i = 0; i < models_num; i++ )
 	{
-		ent_model_t * ent_model = &ent_models[i];
+		entmodel_t * ent_model = &ent_models[i];
 		ent_modelplayer_t * modelplayer = &mobj->modelplayers[i];
 
 		int frame = VEC_TRUNC(modelplayer->frame);
+		direction_t dir = mobj->dir;
 		model_render(
 			cam,
 			pos,
 			ent_model->model,
 			ent_model->modelscale,
 			ent_model->translation,
-			angles[DIR_RIGHT],
+			angles[dir],
 			frame
 		);
 	}
@@ -411,7 +415,6 @@ void mobjs_render(camera_t * cam)
 			case MOBJ_BULL_ARTILLERY:
 			case MOBJ_BULL_MISSILE:
 			case MOBJ_BULL_MINE:
-				bull_draw(cam, mobj);
 				break;
 			case MOBJ_EXIT:
 				exit_draw(cam, mobj);

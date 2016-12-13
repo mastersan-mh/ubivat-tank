@@ -82,12 +82,6 @@ typedef enum {
 #define c_score_pertank 5
 //макс. кол-во очков
 #define c_score_max     2000000
-//пуля
-//скорость проигрывания кадров взрыва
-#define c_bull_FPS      8
-//взрыв
-//количество кадров взрыва
-#define c_explode_Famnt 8
 //игрок
 //body box
 #define c_p_MDL_box     16
