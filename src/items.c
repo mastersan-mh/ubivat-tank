@@ -16,7 +16,9 @@ model_t mdl_item_scores =
 		.triangles_num = TRIANGLES_COMMON_NUM,
 		.triangles = trianges_common,
 		.itexture = IMG_ITEM_STAR,
-		.texcoord = texcoord_common
+		.fps = 0,
+		.frames_num = MODEL_FRAMES_COMMON_NUM,
+		.frames = model_frames_common
 };
 
 model_t mdl_item_health =
@@ -27,7 +29,8 @@ model_t mdl_item_health =
 		.triangles_num = TRIANGLES_COMMON_NUM,
 		.triangles = trianges_common,
 		.itexture = IMG_ITEM_HEALTH,
-		.texcoord = texcoord_common
+		.frames_num = MODEL_FRAMES_COMMON_NUM,
+		.frames = model_frames_common
 };
 
 model_t mdl_item_armor =
@@ -38,7 +41,8 @@ model_t mdl_item_armor =
 		.triangles_num = TRIANGLES_COMMON_NUM,
 		.triangles = trianges_common,
 		.itexture = IMG_ITEM_ARMOR,
-		.texcoord = texcoord_common
+		.frames_num = MODEL_FRAMES_COMMON_NUM,
+		.frames = model_frames_common
 };
 
 model_t mdl_item_ammo_missile =
@@ -49,7 +53,8 @@ model_t mdl_item_ammo_missile =
 		.triangles_num = TRIANGLES_COMMON_NUM,
 		.triangles = trianges_common,
 		.itexture = IMG_WEAPON_MISSILE,
-		.texcoord = texcoord_common
+		.frames_num = MODEL_FRAMES_COMMON_NUM,
+		.frames = model_frames_common
 };
 
 model_t mdl_item_ammo_mine =
@@ -60,7 +65,8 @@ model_t mdl_item_ammo_mine =
 		.triangles_num = TRIANGLES_COMMON_NUM,
 		.triangles = trianges_common,
 		.itexture = IMG_WEAPON_MINE,
-		.texcoord = texcoord_common
+		.frames_num = MODEL_FRAMES_COMMON_NUM,
+		.frames = model_frames_common
 };
 
 ent_model_t item_scores_models[] =
@@ -69,8 +75,7 @@ ent_model_t item_scores_models[] =
 				.model = &mdl_item_scores,
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
-		},
-		{}
+		}
 };
 
 ent_model_t item_health_models[] =
@@ -79,8 +84,7 @@ ent_model_t item_health_models[] =
 				.model = &mdl_item_health,
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
-		},
-		{}
+		}
 };
 
 ent_model_t item_armor_models[] =
@@ -89,8 +93,7 @@ ent_model_t item_armor_models[] =
 				.model = &mdl_item_armor,
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
-		},
-		{}
+		}
 };
 
 ent_model_t item_ammo_missile_models[] =
@@ -99,8 +102,7 @@ ent_model_t item_ammo_missile_models[] =
 				.model = &mdl_item_ammo_missile,
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
-		},
-		{}
+		}
 };
 
 ent_model_t item_ammo_mine_models[] =
@@ -109,8 +111,7 @@ ent_model_t item_ammo_mine_models[] =
 				.model = &mdl_item_ammo_mine,
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
-		},
-		{}
+		}
 };
 
 
@@ -151,6 +152,7 @@ static const mobj_reginfo_t item_scores_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		.models_num = 1,
 		.models = item_scores_models
 };
 
@@ -162,6 +164,7 @@ static const mobj_reginfo_t item_health_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		.models_num = 1,
 		.models = item_health_models
 };
 
@@ -173,6 +176,7 @@ static const mobj_reginfo_t item_armor_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		.models_num = 1,
 		.models = item_armor_models
 };
 
@@ -184,6 +188,7 @@ static const mobj_reginfo_t item_ammo_missile_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		.models_num = 1,
 		.models = item_ammo_missile_models
 };
 
@@ -195,6 +200,7 @@ static const mobj_reginfo_t item_ammo_mine_reginfo = {
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		.models_num = 1,
 		.models = item_ammo_mine_models
 };
 

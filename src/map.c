@@ -524,7 +524,7 @@ void map_clear()
 	Z_FREE(map._file);
 	Z_FREE(map.name);
 	Z_FREE(map.brief);
-	mobjs_erase_all();
+	mobjs_erase();
 	map.loaded = false;
 }
 

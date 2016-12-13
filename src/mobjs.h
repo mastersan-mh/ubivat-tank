@@ -24,6 +24,8 @@
 #define MOBJ_FUNCTION_DONE_DEFAULT NULL
 #define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
 
+#define MOBJ_ERASE(mobj) (mobj)->erase = true
+
 typedef enum
 {
 	MOBJ_SPAWN_PLAYER,
@@ -56,7 +58,33 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
+typedef struct
+{
+	char * name;
+	unsigned int startframe;
+	unsigned int endframe;
+	void (*endframef)(struct mobj_s * this, char * actionname);
+} ent_modelaction_t;
 
+typedef struct
+{
+	model_t * model;
+	vec_t modelscale;
+	vec2_t translation;
+	/* количество действий */
+	unsigned int actions_num;
+	/* действия */
+	ent_modelaction_t * actions;
+} ent_model_t;
+
+/* структура для проигрывания кардов моделей, связанных с объектом */
+typedef struct
+{
+//	/* воспроизводимое действие */
+	ent_modelaction_t * action;
+	/* номер кадра */
+	float frame;
+} ent_modelplayer_t;
 
 typedef struct mobj_s
 {
@@ -76,6 +104,8 @@ typedef struct mobj_s
 	item_img_t * img;
 
 	const struct mobj_register_s * info;
+	/* структура для проигрывания кардов моделей, связанных с объектом */
+	ent_modelplayer_t * modelplayers;
 
 	void * data;
 
@@ -95,7 +125,9 @@ typedef struct mobj_register_s
 	void * (*client_store)(client_storedata_t * storedata, const void * data);
 	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
-	/* массив моделей */
+	/* размер массива моделей */
+	unsigned int models_num;
+	/* массив моделей, связанных с объектом*/
 	ent_model_t * models;
 
 }mobj_reginfo_t;
@@ -109,7 +141,8 @@ extern void mobjs_handle();
 extern void mobjs_render(camera_t * cam);
 
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
+void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname);
 
-void mobjs_erase_all();
+void mobjs_erase();
 
 #endif /* SRC_MOBJS_H_ */

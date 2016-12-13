@@ -117,6 +117,7 @@ typedef struct
 	int soundId_move;
 } player_t;
 
+#define ENT_PLAYER(mobj) ((player_t *) mobj->data)
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 

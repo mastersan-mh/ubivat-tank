@@ -35,6 +35,7 @@
 
 #define VIDEO_SCALEX ((float) ((float)VIDEO_MODE_W / (float)VIDEO_SCREEN_W))
 #define VIDEO_SCALEY ((float) ((float)VIDEO_MODE_H / (float)VIDEO_SCREEN_H))
+#define VIDEO_SCALE VIDEO_SCALEX
 
 #define COLOR_ALPHA_OPAQUE 255
 #define COLOR_ALPHA_TRANSPARENT 0

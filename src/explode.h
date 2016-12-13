@@ -34,8 +34,6 @@ typedef struct
 	//игрок, выпустивший пулю
 	explodetype_t type;
 	struct mobj_s * owner;
-	int state;
-	float frame;
 } explode_t;
 
 #define EXPLODE(x) ((explode_t *)(x)->data)
@@ -43,7 +41,5 @@ typedef struct
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
 void mobj_explode_init();
-
-void explode_draw(camera_t * cam, mobj_t * explode);
 
 #endif /* SRC_EXPLODE_H_ */

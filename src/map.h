@@ -12,6 +12,14 @@
 #include <img.h>
 #include "mobjs.h"
 
+//флаг присутствия стены
+#define c_m_f_clip      0x10
+
+/* присутствует зажим */
+#define MAP_WALL_CLIPPED(wall) ((wall) & c_m_f_clip)
+
+#define MAP_WALL_TEXTURE(wall) ((wall) & 0x0F)
+
 //броня0
 #define c_m_w_w0        0x01
 //броня1
@@ -20,8 +28,6 @@
 #define c_m_w_brick     0x04
 //вода
 #define c_m_water       0x08
-//флаг присутствия стены
-#define c_m_f_clip      0x10
 
 #define MAP_NAME_SIZE (17)
 #define MAP_BRIEF_SIZE (129)

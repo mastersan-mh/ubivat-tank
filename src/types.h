@@ -86,8 +86,6 @@ typedef enum {
 //скорость проигрывания кадров взрыва
 #define c_bull_FPS      8
 //взрыв
-//скорость проигрывания кадров взрыва
-#define c_explode_FPS   28
 //количество кадров взрыва
 #define c_explode_Famnt 8
 //игрок

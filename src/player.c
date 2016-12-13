@@ -39,8 +39,8 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 		{ { ITEM_SCOREPERCLASS * 2,  100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, IMG_TANK1 },
 		{ { ITEM_SCOREPERCLASS * 3,  100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, IMG_TANK2 },
 		{ { ITEM_SCOREPERCLASS * 4,  200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, IMG_TANK3 },
-		{ { ITEM_SCOREPERCLASS * 5,  200,   200, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 },
-		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50              }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
+		{ { ITEM_SCOREPERCLASS * 5,  200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 },
+		{ { ITEM_SCOREPERCLASS * 6, 5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
 };
 
 static MOBJ_FUNCTION_INIT(player_mobj_init);
@@ -101,6 +101,13 @@ MOBJ_FUNCTION_INIT(player_mobj_init)
 {
 	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_RUS);
+
+	for( int i = 0; i < __ITEM_NUM; i++)
+	{
+		pl->items[i] = 50;
+	}
+	pl->items[ITEM_SCORES] = 9000;
+
 	player_spawn_init(this, pl, parent);// parent = spawn
 }
 

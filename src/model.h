@@ -13,32 +13,48 @@
 
 typedef int model_triangle_t[3];
 
+/* кадр модели */
+typedef struct
+{
+	/* координаты текстуры */
+	vec2_t * texcoord;
+} modelframe_t;
+
 typedef struct
 {
 	char * name;
-	int vertexes_num;
+	unsigned int vertexes_num;
 	vec2_t * vertexes;
-	int triangles_num;
+	unsigned int triangles_num;
 	model_triangle_t * triangles;
 	image_index_t itexture;
-	vec2_t * texcoord;
+	/* frames per second */
+	unsigned int fps;
+	/* количество кадров текстуры модели*/
+	unsigned int frames_num;
+	modelframe_t * frames;
 } model_t;
-
-typedef struct
-{
-	model_t * model;
-	vec_t modelscale;
-	vec2_t translation;
-} ent_model_t;
-
-void ent_models_render(camera_t * cam, vec2_t pos, ent_model_t * ent_models);
 
 #define VERTEXES_COMMON_NUM (4)
 #define TRIANGLES_COMMON_NUM (2)
+#define MODEL_FRAMES_COMMON_NUM (1)
 
 extern vec2_t vertexes_common[VERTEXES_COMMON_NUM];
-extern vec2_t texcoord_common[VERTEXES_COMMON_NUM];
 extern model_triangle_t trianges_common[TRIANGLES_COMMON_NUM];
+extern vec2_t texcoord_common[VERTEXES_COMMON_NUM];
+extern modelframe_t model_frames_common[MODEL_FRAMES_COMMON_NUM];
+
+#include "mobjs.h"
+
+void model_render(
+	camera_t * cam,
+	vec2_t pos,
+	model_t * model,
+	vec_t modelscale,
+	vec2_t translation,
+	float angle, /* degrees*/
+	unsigned int iframe
+);
 
 
 #endif /* SRC_MODEL_H_ */

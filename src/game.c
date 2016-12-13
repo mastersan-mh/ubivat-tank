@@ -247,6 +247,12 @@ void game_main()
 
 	unsigned long time_prev;
 	unsigned long time_current = system_getTime_realTime_ms();
+	unsigned long time_second = 0; // отсчёт секунды
+	int frames = 0;
+	int fps = 0;
+
+	long int cycletimeeventer = 0;
+
 	while(!quit)
 	{
 		time_prev = time_current;
@@ -258,6 +264,21 @@ void game_main()
 		menu_dtime = dtime;
 		menu_dtimed = dtimed;
 		menu_dtimed1000 = dtimed1000;
+
+		time_second += dtime;
+		frames++;
+		if(time_second >= 1000)
+		{
+			time_second = 0;
+			fps = frames;
+			frames = 0;
+		}
+
+		cycletimeeventer += dtime;
+		if(cycletimeeventer > 20)
+		{
+			cycletimeeventer = 0;
+		}
 
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
 
@@ -320,7 +341,6 @@ void game_main()
 		{
 			int ret = game_gameTick();
 			if(ret >= 0) imenu = ret;
-
 		}
 
 
@@ -334,8 +354,8 @@ void game_main()
 			game_draw();
 		}
 
-
-
+		font_color_set3i(COLOR_15);
+		video_printf(10,10, orient_horiz, "FPS = %d", fps);
 		video_screen_draw_end();
 
 	};
@@ -906,6 +926,22 @@ void game_message_send(const char * mess)
 };
 
 
+void game_console_send(const char *error, ...)
+{
+	static char errmsg[MAX_MESSAGE_SIZE];
+	va_list argptr;
+	va_start(argptr, error);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(errmsg, MAX_MESSAGE_SIZE, error, argptr);
+#else
+	vsprintf(errmsg, error, argptr);
+#endif
+	va_end(argptr);
+
+	fprintf(stdout, "%s\n", errmsg);
+
+}
+
 
 void game_halt(const char * error, ...)
 {
@@ -930,20 +966,3 @@ void game_halt(const char * error, ...)
 	}
 	exit(1);
 }
-
-void game_console_send(const char *error, ...)
-{
-	static char errmsg[MAX_MESSAGE_SIZE];
-	va_list argptr;
-	va_start(argptr, error);
-#ifdef HAVE_VSNPRINTF
-	vsnprintf(errmsg, MAX_MESSAGE_SIZE, error, argptr);
-#else
-	vsprintf(errmsg, error, argptr);
-#endif
-	va_end(argptr);
-
-	fprintf(stdout, "%s\n", errmsg);
-
-}
-

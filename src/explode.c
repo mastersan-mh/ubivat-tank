@@ -12,6 +12,9 @@
 #include "_gr2D.h"
 #include "sound.h"
 
+//скорость проигрывания кадров взрыва
+#define c_explode_FPS   28
+
 //оружия
 explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 {
@@ -20,52 +23,225 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 		{ 200, 100, 11}
 };
 
-static MOBJ_FUNCTION_INIT(explode_artillery_mobj_init);
-static void explode_artillery_handle(mobj_t * this);
 
-static const mobj_reginfo_t explode_artillery_reginfo = {
-		.name = "explode_artillery",
-		.datasize = sizeof(explode_t),
-		.mobjinit = explode_artillery_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = explode_artillery_handle,
-		.client_store = NULL,
-		.client_restore = NULL
-};
-
-static MOBJ_FUNCTION_INIT(explode_missile_mobj_init);
-static void explode_missile_handle(mobj_t * this);
-
-static const mobj_reginfo_t explode_missile_reginfo = {
-		.name = "explode_missile",
-		.datasize = sizeof(explode_t),
-		.mobjinit = explode_missile_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = explode_missile_handle,
-		.client_store = NULL,
-		.client_restore = NULL
-};
-
-static MOBJ_FUNCTION_INIT(explode_mine_mobj_init);
-static void explode_mine_handle(mobj_t * this);
-
-static const mobj_reginfo_t explode_mine_reginfo = {
-		.name = "explode_mine",
-		.datasize = sizeof(explode_t),
-		.mobjinit = explode_mine_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = explode_mine_handle,
-		.client_store = NULL,
-		.client_restore = NULL
-};
-
-void mobj_explode_init()
+static void explode_detonate(mobj_t * this)
 {
-	mobj_register(&explode_artillery_reginfo);
-	mobj_register(&explode_missile_reginfo);
-	mobj_register(&explode_mine_reginfo);
+	explode_t * explode = this->data;
+
+	mobj_t * player;
+	vec_t r;
+	vec_t dx, dy;
+	bool self;
+	int ix,iy;
+
+	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->type];
+
+	mobj_model_start_play(this, 0, "explode");
+
+	//проверка попаданий в стены
+	for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
+	{
+		for(ix = -explodeinfo->radius; ix <= explodeinfo->radius; ix++)
+		{
+			int x8 = VEC_TRUNC((this->pos.x + ix) / 8);
+			int y8 = VEC_TRUNC((this->pos.y + iy) / 8);
+			if(
+					0 <= x8 && x8 < MAP_SX &&
+					0 <= y8 && y8 < MAP_SY
+			)
+			{
+				char wall = map.map[y8][x8];
+
+				if(MAP_WALL_CLIPPED(wall)) /* присутствует зажим */
+				{
+					switch(MAP_WALL_TEXTURE(wall))
+					{
+						case c_m_w_brick:
+							map.map[y8][x8] = 0;
+							break;
+						case c_m_w_w1   :
+							if( explode->type == EXPLODE_MISSILE || explode->type == EXPLODE_MINE )
+								map.map[y8][x8] = 0;
+							break;
+						case c_m_w_w0   :
+						case c_m_water  :
+							break;
+					}
+				}
+			}
+		}
+	}
+	//проверка попаданий в игрока
+	for(player = map.mobjs; player ; player = player->next)
+	{
+		if(
+				player->type != MOBJ_PLAYER &&
+				player->type != MOBJ_ENEMY &&
+				player->type != MOBJ_BOSS
+		)
+		{
+			continue;
+		}
+		dx = player->pos.x - this->pos.x;
+		dy = player->pos.y - this->pos.y;
+		if(
+				(VEC_ABS(dx) <= c_p_MDL_box/2) &&
+				(VEC_ABS(dy) <= c_p_MDL_box/2)
+		)
+			r = 0;
+		else
+		{
+			r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
+		};
+		if(r <= explodeinfo->radius)
+		{
+			//r = dx < dy ? dx : dy;
+			//взрывом задели себя или товарища по команде(не для монстров)
+			self = (explode->owner == player) && (player->type == MOBJ_PLAYER);
+			player_getdamage(player, this, self, r);
+		}
+	}
+
 }
 
+static void explode_common_modelaction_endframef(mobj_t * this, char * actionname)
+{
+	if(EXPLODE(this)->owner)
+	{
+		ENT_PLAYER(EXPLODE(this)->owner)->bull = NULL;
+	}
+	MOBJ_ERASE(this);
+}
+
+
+/*
+scale = 7
+		7 x 112
+frames = 8
+*/
+
+/*
+ * @description константа с координатами текстур
+ * model_<prefix>
+ * frame      - номер кадра = [0; frames_num)
+ * frames_num - количество кадров
+ */
+#define _VERTEX4_TEXCOORD_FRAME(prefix, frame, frames_num) \
+vec2_t model_texcoord_ ## prefix [VERTEXES_COMMON_NUM] =   \
+{                                              \
+		{ 0.0f, ( (float)frame        ) / ( (float)frames_num ) }, \
+		{ 0.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
+		{ 1.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
+		{ 1.0f, ( (float)frame        ) / ( (float)frames_num ) }  \
+}
+
+_VERTEX4_TEXCOORD_FRAME(8frame0 , 0, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame1 , 1, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame2 , 2, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame3 , 3, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame4 , 4, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame5 , 5, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame6 , 6, 8);
+_VERTEX4_TEXCOORD_FRAME(8frame7 , 7, 8);
+
+/*
+ * explode_small
+ */
+
+modelframe_t model_explode_small_frames[8] =
+{
+		{ .texcoord = model_texcoord_8frame0 },
+		{ .texcoord = model_texcoord_8frame1 },
+		{ .texcoord = model_texcoord_8frame2 },
+		{ .texcoord = model_texcoord_8frame3 },
+		{ .texcoord = model_texcoord_8frame4 },
+		{ .texcoord = model_texcoord_8frame5 },
+		{ .texcoord = model_texcoord_8frame6 },
+		{ .texcoord = model_texcoord_8frame7 }
+};
+
+model_t mdl_explode_small =
+{
+		.name = "explode_small",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_EXPLODE_SMALL,
+		.fps = c_explode_FPS,
+		.frames_num = 8,
+		.frames = model_explode_small_frames
+};
+
+ent_modelaction_t explode_small_modelactions[] =
+{
+		{
+				.name = "explode",
+				.startframe = 0,
+				.endframe = 7,
+				.endframef = explode_common_modelaction_endframef
+		}
+};
+
+ent_model_t explode_small_models[] =
+{
+		{
+				.model = &mdl_explode_small,
+				.modelscale = 14.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 1,
+				.actions = explode_small_modelactions
+		}
+};
+
+/*
+ * explode_big
+ */
+modelframe_t model_explode_big_frames[8] =
+{
+		{ .texcoord = model_texcoord_8frame0 },
+		{ .texcoord = model_texcoord_8frame1 },
+		{ .texcoord = model_texcoord_8frame2 },
+		{ .texcoord = model_texcoord_8frame3 },
+		{ .texcoord = model_texcoord_8frame4 },
+		{ .texcoord = model_texcoord_8frame5 },
+		{ .texcoord = model_texcoord_8frame6 },
+		{ .texcoord = model_texcoord_8frame7 }
+};
+
+model_t mdl_explode_big =
+{
+		.name = "explode_big",
+		.vertexes_num = VERTEXES_COMMON_NUM,
+		.vertexes = vertexes_common,
+		.triangles_num = TRIANGLES_COMMON_NUM,
+		.triangles = trianges_common,
+		.itexture = IMG_EXPLODE_BIG,
+		.fps = c_explode_FPS,
+		.frames_num = 8,
+		.frames = model_explode_big_frames
+};
+
+ent_modelaction_t explode_big_modelactions[] =
+{
+		{
+				.name = "explode",
+				.startframe = 0,
+				.endframe = 7,
+				.endframef = explode_common_modelaction_endframef
+		}
+};
+
+ent_model_t explode_big_models[] =
+{
+		{
+				.model = &mdl_explode_big,
+				.modelscale = 22.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 1,
+				.actions = explode_big_modelactions
+		}
+};
 
 static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t * parent, explodetype_t type)
 {
@@ -84,163 +260,68 @@ static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t
 
 	explode->owner = (mobj_t *)parent;
 	explode->type  = type;
-	explode->frame = -1;
-	this->img = image_get(img_list[type]);
+	if(type != EXPLODE_ARTILLERY)
+		this->img = image_get(img_list[type]);
 	sound_play_start(sound_list[type], 1);
+
+	explode_detonate(this);
+
 }
 
-static void explode_common_handle(mobj_t * this);
-
-MOBJ_FUNCTION_INIT(explode_artillery_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_artillery_mobj_init)
 {
 	explode_common_init(this, thisdata, parent, EXPLODE_ARTILLERY);
 }
 
-void explode_artillery_handle(mobj_t * this)
-{
-	explode_common_handle(this);
-}
-
-MOBJ_FUNCTION_INIT(explode_missile_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_missile_mobj_init)
 {
 	explode_common_init(this, thisdata,  parent, EXPLODE_MISSILE);
 }
 
-void explode_missile_handle(mobj_t * this)
-{
-	explode_common_handle(this);
-}
-
-MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
 {
 	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
 }
 
-void explode_mine_handle(mobj_t * this)
+static const mobj_reginfo_t explode_artillery_reginfo = {
+		.name = "explode_artillery",
+		.datasize = sizeof(explode_t),
+		.mobjinit = explode_artillery_mobj_init,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.client_store = NULL,
+		.client_restore = NULL,
+		.models_num = 1,
+		.models = explode_small_models
+};
+
+static const mobj_reginfo_t explode_missile_reginfo = {
+		.name = "explode_missile",
+		.datasize = sizeof(explode_t),
+		.mobjinit = explode_missile_mobj_init,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.client_store = NULL,
+		.client_restore = NULL,
+		.models_num = 1,
+		.models = explode_big_models
+};
+
+static const mobj_reginfo_t explode_mine_reginfo = {
+		.name = "explode_mine",
+		.datasize = sizeof(explode_t),
+		.mobjinit = explode_mine_mobj_init,
+		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.client_store = NULL,
+		.client_restore = NULL,
+		.models_num = 1,
+		.models = explode_big_models
+};
+
+void mobj_explode_init()
 {
-	explode_common_handle(this);
-}
-
-
-
-
-
-void explode_common_handle(mobj_t * this)
-{
-	explode_t * explode = this->data;
-
-	mobj_t * player;
-	vec_t r;
-	vec_t dx, dy;
-	bool self;
-	int ix,iy;
-	char wall;
-	char wall_type;
-
-	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->type];
-
-	if(explode->frame == -1)
-	{
-		explode->frame = 0;
-		//проверка попаданий в стены
-		for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
-		{
-			for(ix = -explodeinfo->radius; ix <= explodeinfo->radius; ix++)
-			{
-				vec_t x = VEC_TRUNC((this->pos.x+ix)/8);
-				vec_t y = VEC_TRUNC((this->pos.y+iy)/8);
-
-				if(
-						0 <= x && x <= MAP_SX &&
-						0 <= y && y <= MAP_SY
-				)
-				{
-					int x8 = x;
-					int y8 = y;
-					wall = map.map[y8][x8];
-					if(wall & c_m_f_clip)
-					{                   //присутствует зажим
-						wall_type = wall & 0x0F;
-						if((wall_type | c_m_w_w0 | c_m_water) != (c_m_w_w0 | c_m_water))
-						{//если не броня0 и не вода
-							if(
-									(wall_type == c_m_w_brick) ||//если кирпич
-									(
-											/* если броня1 */
-											(wall_type == c_m_w_w1) &&
-											(
-													explode->type == EXPLODE_MISSILE ||
-													explode->type == EXPLODE_MINE
-											)
-									)
-							)
-							{
-								map.map[y8][x8] = 0;
-							}
-						}
-					}
-				}
-			}
-		}
-		//проверка попаданий в игрока
-		for(player = map.mobjs; player ; player = player->next)
-
-		{
-			if(
-					player->type != MOBJ_PLAYER &&
-					player->type != MOBJ_ENEMY &&
-					player->type != MOBJ_BOSS
-			)
-			{
-				continue;
-			}
-			dx = player->pos.x - this->pos.x;
-			dy = player->pos.y - this->pos.y;
-			if(
-					(VEC_ABS(dx) <= c_p_MDL_box/2) &&
-					(VEC_ABS(dy) <= c_p_MDL_box/2)
-			)
-				r = 0;
-			else
-			{
-				r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
-			};
-			if(r <= explodeinfo->radius)
-			{
-				//r = dx < dy ? dx : dy;
-				//взрывом задели себя или товарища по команде(не для монстров)
-				self = (explode->owner == player) && (player->type == MOBJ_PLAYER);
-				player_getdamage(player, this, self, r);
-			}
-		}
-	}
-	if(c_explode_Famnt - 1 < explode->frame) explode->frame = c_explode_Famnt - 1;
-
-	explode->frame = explode->frame + c_explode_FPS * dtimed1000;
-
-	if(explode->frame > c_explode_Famnt - 1)
-		this->erase = true;
-}
-
-
-/*
- * добавление взрыва
- */
-/*
- * отрисовка
- */
-void explode_draw(camera_t * cam, mobj_t * explode)
-{
-	int mdlbox;
-
-	mdlbox = explode->img->img_sx;
-	gr2D_setimage1(
-		(cam->x + explode->pos.x - (cam->pos.x - cam->sx / 2)) - (mdlbox / 2),
-		(cam->y - explode->pos.y + (cam->pos.y + cam->sy / 2)) - (mdlbox / 2),
-		explode->img,
-		0,
-		mdlbox * VEC_TRUNC(EXPLODE(explode)->frame),
-		mdlbox,
-		mdlbox
-	);
+	mobj_register(&explode_artillery_reginfo);
+	mobj_register(&explode_missile_reginfo);
+	mobj_register(&explode_mine_reginfo);
 }
