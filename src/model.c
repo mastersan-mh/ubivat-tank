@@ -12,34 +12,67 @@
 
 #include <stdio.h>
 
-/* вершины, коордитаты и треугольники для модели по-умолчанию */
-vec2_t model_vertexes_common[VERTEXES_COMMON_NUM] =
-{
-		{-1.0f, -1.0f },
-		{-1.0f,  1.0f },
-		{ 1.0f,  1.0f },
-		{ 1.0f, -1.0f }
-};
+static const model_t ** models = NULL;
+static size_t models_size = 0;
+static size_t models_num = 0;
 
-model_triangle_t model_trianges_common[TRIANGLES_COMMON_NUM] =
+/**
+ * @description получить зарегестрированную модель
+ */
+const model_t * model_get(const char * name)
 {
-		{0, 1, 2 },
-		{0, 2, 3 }
-};
+	size_t i;
+	for(i = 0; i < models_num; i++)
+	{
+		if(!strncmp(models[i]->name, name, 64))
+			return models[i];
+	}
+	return NULL;
+}
 
-vec2_t model_texcoord_common[VERTEXES_COMMON_NUM] =
+/**
+ * @description регистрация модели
+ */
+void model_register(const model_t * model)
 {
-		{ 0.0f, 0.0f },
-		{ 0.0f, 1.0f },
-		{ 1.0f, 1.0f },
-		{ 1.0f, 0.0f }
-};
+	const model_t ** tmp;
+	if(model == NULL)
+	{
+		game_console_send("Model registration failed: model data is NULL.");
+		return;
+	}
 
-modelframe_t model_frames_common[MODEL_FRAMES_COMMON_NUM] =
-{
-		{ .texcoord = model_texcoord_common }
-};
+	if(model->name == NULL || strlen(model->name) == 0)
+	{
+		game_console_send("Model registration failed: entity name is empty.");
+		return;
+	}
 
+	game_console_send("Model registration: \"%s\".", model->name);
+
+
+	if(model_get(model->name) != NULL)
+	{
+			game_console_send("Model registration failed: duplicate name \"%s\"", model->name);
+			return;
+	}
+
+	if(model->frames_num == 0)
+		game_console_send("Model registration error: model \"%s\": .frames_num == 0.", model->name);
+
+	if(models_size < models_num + 1)
+	{
+		if(models_size == 0)
+			models_size = 1;
+		else
+			models_size *= 2;
+		tmp = Z_realloc(models, sizeof(model_t*) * models_size);
+		if(!tmp)game_halt("Model registration failed: out of memory");
+		models = tmp;
+	}
+	models[models_num] = model;
+	models_num++;
+}
 
 void model_render(
 	const camera_t * cam,

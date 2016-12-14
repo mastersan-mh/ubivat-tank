@@ -12,21 +12,6 @@
 #include "types.h"
 #include "img.h"
 
-/**
- * @description константа с координатами текстур, где кадры в текстуре располагаются вертикально
- * model_<prefix>
- * frame      - номер кадра = [0; frames_num)
- * frames_num - количество кадров
- */
-#define MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(prefix, frame, frames_num) \
-vec2_t model_texcoord_ ## prefix [VERTEXES_COMMON_NUM] =   \
-{                                              \
-		{ 0.0f, ( (float)frame        ) / ( (float)frames_num ) }, \
-		{ 0.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
-		{ 1.0f, ( (float)frame + 1.0f ) / ( (float)frames_num ) }, \
-		{ 1.0f, ( (float)frame        ) / ( (float)frames_num ) }  \
-}
-
 /* треугольник: номера вершин */
 typedef int model_triangle_t[3];
 
@@ -52,14 +37,9 @@ typedef struct
 	modelframe_t * frames;
 } model_t;
 
-#define VERTEXES_COMMON_NUM (4)
-#define TRIANGLES_COMMON_NUM (2)
-#define MODEL_FRAMES_COMMON_NUM (1)
+const model_t * model_get(const char * name);
 
-extern vec2_t model_vertexes_common[VERTEXES_COMMON_NUM];
-extern model_triangle_t model_trianges_common[TRIANGLES_COMMON_NUM];
-extern vec2_t model_texcoord_common[VERTEXES_COMMON_NUM];
-extern modelframe_t model_frames_common[MODEL_FRAMES_COMMON_NUM];
+void model_register(const model_t * model);
 
 void model_render(
 	const camera_t * cam,

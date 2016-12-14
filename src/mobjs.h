@@ -59,7 +59,7 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-typedef void (*endframe_f)(struct mobj_s * this, char * actionname);
+typedef void (*endframe_f)(struct mobj_s * this, unsigned int imodel, char * actionname);
 
 typedef struct
 {
@@ -71,7 +71,8 @@ typedef struct
 
 typedef struct
 {
-	const model_t * model;
+	/* имя модели */
+	char * modelname;
 	const vec_t modelscale;
 	const vec2_t translation;
 	/* количество действий */
@@ -83,6 +84,7 @@ typedef struct
 /* структура для проигрывания кардов моделей, связанных с объектом */
 typedef struct
 {
+	const model_t * model;
 //	/* воспроизводимое действие */
 	const ent_modelaction_t * action;
 	/* номер кадра */
@@ -102,9 +104,6 @@ typedef struct mobj_s
 	direction_t dir;
 	/* объект показывать и обрабатывать */
 	bool show;
-
-	//изображение объекта
-	item_img_t * img;
 
 	const struct mobj_register_s * info;
 	/* структура для проигрывания кардов моделей, связанных с объектом */
@@ -144,8 +143,11 @@ extern void mobjs_handle();
 extern void mobjs_render(camera_t * cam);
 
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
-void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname);
-
 void mobjs_erase();
+
+void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname);
+void mobj_model_play_stop(mobj_t * mobj, unsigned int imodel);
+
+int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname);
 
 #endif /* SRC_MOBJS_H_ */

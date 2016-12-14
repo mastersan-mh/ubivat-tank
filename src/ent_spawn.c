@@ -11,7 +11,6 @@
 
 static void spawn_common_init(mobj_t * this, void * thisdata, const mobj_t * parent, const spawn_t * args)
 {
-	this->img = NULL;
 	int i;
 	for(i = 0; i < __ITEM_NUM; i++) ((spawn_t *)thisdata)->items[i] = args->items[i];
 }

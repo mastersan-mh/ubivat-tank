@@ -13,11 +13,6 @@
 #include "_gr2D.h"
 #include "sound.h"
 
-//скорость проигрывания кадров взрыва
-#define EXPLODE_FPS   28
-//количество кадров взрыва
-#define EXPLODE_FRAMES_NUM 8
-
 //оружия
 explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 {
@@ -105,7 +100,7 @@ static void explode_detonate(mobj_t * this)
 
 }
 
-static void explode_common_modelaction_endframef(mobj_t * this, char * actionname)
+static void explode_common_modelaction_endframef(mobj_t * this, unsigned int imodel, char * actionname)
 {
 	if(EXPLODE(this)->owner)
 	{
@@ -118,43 +113,9 @@ static void explode_common_modelaction_endframef(mobj_t * this, char * actionnam
 	MOBJ_ERASE(this);
 }
 
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame0 , 0, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame1 , 1, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame2 , 2, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame3 , 3, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame4 , 4, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame5 , 5, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame6 , 6, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame7 , 7, 8);
-
 /*
  * explode_small
  */
-
-static modelframe_t model_explode_small_frames[8] =
-{
-		{ .texcoord = model_texcoord_8frame0 },
-		{ .texcoord = model_texcoord_8frame1 },
-		{ .texcoord = model_texcoord_8frame2 },
-		{ .texcoord = model_texcoord_8frame3 },
-		{ .texcoord = model_texcoord_8frame4 },
-		{ .texcoord = model_texcoord_8frame5 },
-		{ .texcoord = model_texcoord_8frame6 },
-		{ .texcoord = model_texcoord_8frame7 }
-};
-
-static const model_t mdl_explode_small =
-{
-		.name = "explode_small",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_EXPLODE_SMALL,
-		.fps = EXPLODE_FPS,
-		.frames_num = EXPLODE_FRAMES_NUM,
-		.frames = model_explode_small_frames
-};
 
 static const ent_modelaction_t explode_small_modelactions[] =
 {
@@ -169,7 +130,7 @@ static const ent_modelaction_t explode_small_modelactions[] =
 static entmodel_t explode_small_models[] =
 {
 		{
-				.model = &mdl_explode_small,
+				.modelname = "explode_small",
 				.modelscale = 14.0f / 2.0f,
 				.translation = { 0.0, 0.0 },
 				.actions_num = 1,
@@ -180,30 +141,6 @@ static entmodel_t explode_small_models[] =
 /*
  * explode_big
  */
-static modelframe_t model_explode_big_frames[8] =
-{
-		{ .texcoord = model_texcoord_8frame0 },
-		{ .texcoord = model_texcoord_8frame1 },
-		{ .texcoord = model_texcoord_8frame2 },
-		{ .texcoord = model_texcoord_8frame3 },
-		{ .texcoord = model_texcoord_8frame4 },
-		{ .texcoord = model_texcoord_8frame5 },
-		{ .texcoord = model_texcoord_8frame6 },
-		{ .texcoord = model_texcoord_8frame7 }
-};
-
-static const model_t mdl_explode_big =
-{
-		.name = "explode_big",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_EXPLODE_BIG,
-		.fps = EXPLODE_FPS,
-		.frames_num = EXPLODE_FRAMES_NUM,
-		.frames = model_explode_big_frames
-};
 
 static const ent_modelaction_t explode_big_modelactions[] =
 {
@@ -218,7 +155,7 @@ static const ent_modelaction_t explode_big_modelactions[] =
 static entmodel_t explode_big_models[] =
 {
 		{
-				.model = &mdl_explode_big,
+				.modelname = "explode_big",
 				.modelscale = 22.0f / 2.0f,
 				.translation = { 0.0, 0.0 },
 				.actions_num = 1,
@@ -239,7 +176,7 @@ static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t
 	explode->type  = type;
 
 	sound_play_start(sound_list[type], 1);
-	mobj_model_start_play(this, 0, "explode");
+	mobj_model_play_start(this, 0, "explode");
 
 	explode_detonate(this);
 

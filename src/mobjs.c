@@ -8,6 +8,7 @@
 #include "game.h"
 #include "mobjs.h"
 #include "map.h"
+#include "model.h"
 
 char *mobjnames[__MOBJ_NUM] =
 {
@@ -36,6 +37,17 @@ static const mobj_reginfo_t ** mobj_reginfos = NULL;
 static size_t mobj_register_size = 0;
 static size_t mobj_register_num = 0;
 
+const mobj_reginfo_t * mobj_reginfo_get(const char * name)
+{
+	size_t i;
+	for(i = 0; i < mobj_register_num; i++)
+	{
+		if(!strncmp(mobj_reginfos[i]->name, name, 64))
+			return mobj_reginfos[i];
+	}
+	return NULL;
+}
+
 void mobj_register(const mobj_reginfo_t * info)
 {
 	const mobj_reginfo_t ** tmp;
@@ -53,21 +65,18 @@ void mobj_register(const mobj_reginfo_t * info)
 
 	game_console_send("Entity registration: \"%s\".", info->name);
 
-	size_t i;
-	for( i = 0; i < mobj_register_num; i++)
+
+	if(mobj_reginfo_get(info->name) != NULL)
 	{
-		if(!strcmp(info->name, mobj_reginfos[i]->name))
-		{
-			game_console_send("Entity registration failed: duplicate entity name \"%s\"", info->name);
-			return;
-		}
+		game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
+		return;
 	}
 
 	if(info->datasize != 0 && info->mobjinit == NULL)
-		game_console_send("Entity registration warning: possible, invalid register data in entity \"%s\", .mobjinit == NULL.", info->name);
+		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .mobjinit == NULL.", info->name);
 
 	if(info->datasize == 0 && info->mobjinit != NULL)
-		game_console_send("Entity registration warning: possible, invalid register data in entity \"%s\", .datasize == 0.", info->name);
+		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 
 	if(mobj_register_size < mobj_register_num + 1)
 	{
@@ -83,20 +92,22 @@ void mobj_register(const mobj_reginfo_t * info)
 	mobj_register_num++;
 }
 
-const mobj_reginfo_t * mobj_reginfo_get(const char * name)
+/**
+ * @description установить модель на entity
+ */
+int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname)
 {
-	size_t i;
-	for(i = 0; i < mobj_register_num; i++)
-	{
-		if(!strncmp(mobj_reginfos[i]->name, name, 64))
-			return mobj_reginfos[i];
-	}
-	return NULL;
+	if(imodel >= mobj->info->entmodels_num) return -1;
+	mobj->modelplayers[imodel].model = model_get(modelname);
+	return 0;
 }
 
+/**
+ * @description добавление объекта
+ */
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
 {
-
+	int i;
 	const mobj_reginfo_t * mobjinfo = NULL;
 	if((int)mobj_type >= 0)
 	{
@@ -127,7 +138,14 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 		mobj->info = mobjinfo;
 
 		if(mobjinfo->entmodels_num > 0)
+		{
 			mobj->modelplayers = Z_malloc(mobjinfo->entmodels_num * sizeof(ent_modelplayer_t));
+
+			for( i = 0; i < mobjinfo->entmodels_num; i++)
+			{
+				mobj_model_set(mobj, i, mobjinfo->entmodels[i].modelname);
+			}
+		}
 
 		if(mobjinfo->datasize == 0)
 			mobj->data = NULL;
@@ -157,6 +175,9 @@ static void mobj_freemem(mobj_t * mobj)
 	Z_free(mobj);
 }
 
+/**
+ * @description удаление всех объектов
+ */
 void mobjs_erase()
 {
 	mobj_t * mobj;
@@ -210,15 +231,16 @@ void mobjs_handle()
 		{
 
 			if(
-					mobj->modelplayers[i].action != NULL &&
-					info->entmodels[i].model->frames > 0 &&
-					info->entmodels[i].model->fps > 0
+					mobj->modelplayers[i].model != NULL &&
+					mobj->modelplayers[i].model->frames > 0 &&
+					mobj->modelplayers[i].model->fps > 0 &&
+					mobj->modelplayers[i].action != NULL
 			)
 			{
 
 				bool end = model_nextframe(
 					&mobj->modelplayers[i].frame,
-					info->entmodels[i].model->fps,
+					mobj->modelplayers[i].model->fps,
 					mobj->modelplayers[i].action->startframe,
 					mobj->modelplayers[i].action->endframe
 				);
@@ -230,6 +252,7 @@ void mobjs_handle()
 						mobj->modelplayers[i].action = NULL;
 						action->endframef(
 							mobj,
+							i,
 							action->name
 						);
 					}
@@ -263,8 +286,10 @@ static const ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * 
 	return NULL;
 }
 
-
-void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname)
+/**
+ * @description начать проигрывание кадров модели
+ */
+void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname)
 {
 	const mobj_reginfo_t * info = mobj->info;
 	const ent_modelaction_t * action = mobj_reginfo_action_get(info, imodel, actionname);
@@ -281,43 +306,13 @@ void mobj_model_start_play(mobj_t * mobj, unsigned int imodel, char * actionname
 	mobj->modelplayers[imodel].frame = action->startframe;
 }
 
-/* TODO: remove next 2 lines */
-#include "ent_player.h"
-#include "_gr2D.h"
-
-/*
- * рисование игрока
+/**
+ * @description начать проигрывание кадров модели
  */
-static void player_draw(camera_t * cam, mobj_t * player)
+void mobj_model_play_stop(mobj_t * mobj, unsigned int imodel)
 {
-	player_t * pl = player->data;
-	if(pl->items[ITEM_HEALTH] > 0)
-	{
-		//если игрок жив
-		gr2D_setimage1(
-			(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-			(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
-			player->img,
-			0,
-			c_p_MDL_box*((player->dir * 4)+VEC_ROUND(pl->Fbase)),
-			c_p_MDL_box,
-			c_p_MDL_box
-		);
-		gr2D_setimage0(
-			(cam->x+player->pos.x-(cam->pos.x-cam->sx/2))+c_p_MDL_pos,
-			(cam->y-player->pos.y+(cam->pos.y+cam->sy/2))+c_p_MDL_pos,
-			pl->Iflag
-		);
-	}
-}
-
-static void exit_draw(camera_t * cam, mobj_t * mobj)
-{
-	gr2D_setimage0(
-		(cam->x + mobj->pos.x - (cam->pos.x - cam->sx / 2)) + c_i_MDL_pos,
-		(cam->y - mobj->pos.y + (cam->pos.y + cam->sy / 2)) + c_i_MDL_pos,
-		mobj->img
-	);
+	const mobj_reginfo_t * info = mobj->info;
+	mobj->modelplayers[imodel].action = NULL;
 }
 
 static void ent_models_render(
@@ -353,7 +348,7 @@ static void ent_models_render(
 		model_render(
 			cam,
 			pos,
-			ent_model->model,
+			modelplayer->model,
 			ent_model->modelscale,
 			ent_model->translation,
 			angles[dir],
@@ -376,8 +371,6 @@ void mobjs_render(camera_t * cam)
 		if(mobj->erase) continue;
 		if(!mobj->show) continue;
 
-
-
 		//int viewbox_half = mobj->img->img_sx;
 		int viewbox_half = 16;
 
@@ -389,44 +382,10 @@ void mobjs_render(camera_t * cam)
 		)
 		{
 			ent_models_render(cam, mobj);
-
-			if(mobj->img == NULL) continue;
-
-			switch(mobj->type)
-			{
-			case MOBJ_SPAWN_PLAYER:
-			case MOBJ_SPAWN_ENEMY:
-			case MOBJ_SPAWN_BOSS:
-			case MOBJ_ITEM_SCORES:
-			case MOBJ_ITEM_HEALTH:
-			case MOBJ_ITEM_ARMOR :
-			case MOBJ_ITEM_AMMO_MISSILE:
-			case MOBJ_ITEM_AMMO_MINE:
-			case MOBJ_MESSAGE:
-				break;
-			case MOBJ_PLAYER :
-			case MOBJ_ENEMY  :
-				player_draw(cam, mobj);
-				break;
-			case MOBJ_BULL_ARTILLERY:
-			case MOBJ_BULL_MISSILE:
-			case MOBJ_BULL_MINE:
-				break;
-			case MOBJ_EXIT:
-				exit_draw(cam, mobj);
-				break;
-			default: ;
-			}
 		}
 	}
 }
 
-/*
- * добавление объекта
- */
-/**
- * удаление всех объектов
- */
 /*
  * удаление взрыва из списка, после удаления
  *        explode указывает на предыдущий эл-т если

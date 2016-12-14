@@ -9,23 +9,10 @@
 #include "mobjs.h"
 #include "model.h"
 
-static const model_t mdl_exit =
-{
-		.name = "exit",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_OBJ_EXIT,
-		.fps = 0,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
 static entmodel_t exit_models[] =
 {
 		{
-				.model = &mdl_exit,
+				.modelname = "exit",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}

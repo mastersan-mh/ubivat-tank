@@ -33,6 +33,7 @@ main.c \
 map.c \
 mobjs.c \
 model.c \
+model_resources.c \
 menu.c \
 client.c \
 weap.c

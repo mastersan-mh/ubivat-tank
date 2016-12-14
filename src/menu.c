@@ -4,8 +4,6 @@
  * by Master San
  */
 
-#include "ent_player.h" /*  TODO: remove this line*/
-
 #include "menu.h"
 #include "img.h"
 #include "_gr2D.h"
@@ -777,6 +775,14 @@ int menu_interlevel(void * ctx)
 
 static void menu_interlevel_draw(const void * ctx)
 {
+	static image_index_t list[] =
+	{
+			IMG_TANK0,
+			IMG_TANK1,
+			IMG_TANK2,
+			IMG_TANK3,
+			IMG_TANK4
+	};
 	gr2D_setimage0(0, 0, game.m_i_interlv);
 	font_color_set3i(COLOR_15);
 	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
@@ -794,8 +800,7 @@ static void menu_interlevel_draw(const void * ctx)
 	for(i = 0; i < num; i++)
 	{
 		client_t * client = client_get(i);
-		playerinfo_t * playerinfo =  &playerinfo_table[client->storedata.level];
-		item_img_t * img = image_get(playerinfo->imageindex);
+		item_img_t * img = image_get(list[client->storedata.level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
 		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, orient_horiz, "%d" , client->storedata.scores);

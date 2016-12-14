@@ -6,19 +6,20 @@
 
 
 #include "system.h"
-#include <game.h>
-#include <input.h>
-#include <actions.h>
-#include <menu.h>
-#include <map.h>
-#include <weap.h>
+#include "game.h"
+#include "input.h"
+#include "actions.h"
+#include "menu.h"
+#include "map.h"
+#include "weap.h"
 #include "mobjs.h"
-#include <img.h>
-#include <video.h>
+#include "img.h"
+#include "video.h"
 #include "sound.h"
-#include <_gr2D.h>
-#include <fonts.h>
+#include "_gr2D.h"
+#include "fonts.h"
 #include "client.h"
+#include "model_resources.h"
 
 // entities
 #include "ent_spawn.h"
@@ -186,6 +187,8 @@ void game_init()
 	input_init();
 
 	game_rebind_keys_all();
+
+	model_resources_register();
 
 	mobj_bull_init();
 	mobj_explode_init();

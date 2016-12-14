@@ -29,12 +29,78 @@
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
 		/* SCORES                 , HEALTH, ARMOR,  AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE */
-		{ { ITEM_SCOREPERCLASS * 1,    100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, IMG_TANK0 },
-		{ { ITEM_SCOREPERCLASS * 2,    100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, IMG_TANK1 },
-		{ { ITEM_SCOREPERCLASS * 3,    100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, IMG_TANK2 },
-		{ { ITEM_SCOREPERCLASS * 4,    200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, IMG_TANK3 },
-		{ { ITEM_SCOREPERCLASS * 5,    200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 },
-		{ { ITEM_SCOREPERCLASS * 6,   5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, IMG_TANK4 }  /* BOSS */
+		{ { ITEM_SCOREPERCLASS * 1,    100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, "tank1"},
+		{ { ITEM_SCOREPERCLASS * 2,    100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, "tank2"},
+		{ { ITEM_SCOREPERCLASS * 3,    100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, "tank3"},
+		{ { ITEM_SCOREPERCLASS * 4,    200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, "tank4"},
+		{ { ITEM_SCOREPERCLASS * 5,    200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"},
+		{ { ITEM_SCOREPERCLASS * 6,   5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank6"}  /* BOSS */
+};
+
+#define tank_common_modelaction_endframef mobj_model_play_start
+
+static const ent_modelaction_t tank_modelactions[] =
+{
+		{
+				.name = "run",
+				.startframe = 0,
+				.endframe = 3,
+				.endframef = tank_common_modelaction_endframef
+		}
+};
+
+static entmodel_t tank_player_models[] =
+{
+		{
+				.modelname = "tank1",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 1,
+				.actions = tank_modelactions
+		},
+		{
+				.modelname = "flag_player",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 0,
+				.actions = NULL
+		}
+};
+
+static entmodel_t tank_enemy_models[] =
+{
+		{
+				.modelname = "tank1",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 1,
+				.actions = tank_modelactions
+		},
+		{
+				.modelname = "flag_enemy",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 0,
+				.actions = NULL
+		}
+};
+
+static entmodel_t tank_boss_models[] =
+{
+		{
+				.modelname = "tank1",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 1,
+				.actions = tank_modelactions
+		},
+		{
+				.modelname = "flag_boss",
+				.modelscale = 16.0f / 2.0f,
+				.translation = { 0.0, 0.0 },
+				.actions_num = 0,
+				.actions = NULL
+		}
 };
 
 static MOBJ_FUNCTION_INIT(player_mobj_init);
@@ -59,7 +125,9 @@ static const mobj_reginfo_t player_reginfo = {
 		.mobjdone = player_mobj_done,
 		.handle   = player_handle,
 		.client_store = player_store,
-		.client_restore = player_restore
+		.client_restore = player_restore,
+		.entmodels_num = 2,
+		.entmodels = tank_player_models
 };
 
 static const mobj_reginfo_t enemy_reginfo = {
@@ -69,7 +137,9 @@ static const mobj_reginfo_t enemy_reginfo = {
 		.mobjdone = enemy_mobj_done,
 		.handle   = enemy_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.entmodels_num = 2,
+		.entmodels = tank_enemy_models
 };
 
 static const mobj_reginfo_t boss_reginfo = {
@@ -79,7 +149,9 @@ static const mobj_reginfo_t boss_reginfo = {
 		.mobjdone = boss_mobj_done,
 		.handle   = boss_handle,
 		.client_store = NULL,
-		.client_restore = NULL
+		.client_restore = NULL,
+		.entmodels_num = 2,
+		.entmodels = tank_boss_models
 };
 
 void mobj_player_init()
@@ -105,6 +177,8 @@ MOBJ_FUNCTION_INIT(player_mobj_init)
 #endif
 
 	player_spawn_init(this, pl, parent);// parent = spawn
+
+	mobj_model_play_start(this, 0, "run");
 }
 
 MOBJ_FUNCTION_DONE(player_mobj_done)
@@ -530,10 +604,10 @@ static void player_obj_check(mobj_t * player)
 	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
 		if(
-				( mobj->pos.x   - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box / 2 ) &&
-				( player->pos.x - c_p_MDL_box / 2 <= mobj->pos.x   + c_item_MDL_box / 2 ) &&
-				( mobj->pos.y   - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box / 2 ) &&
-				( player->pos.y - c_p_MDL_box / 2 <= mobj->pos.y   + c_item_MDL_box / 2 )
+				( mobj->pos.x   - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
+				( player->pos.x - c_p_MDL_box    / 2 <= mobj->pos.x   + c_item_MDL_box / 2 ) &&
+				( mobj->pos.y   - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
+				( player->pos.y - c_p_MDL_box    / 2 <= mobj->pos.y   + c_item_MDL_box / 2 )
 		)
 		{
 
@@ -647,11 +721,15 @@ static void player_handle_common(mobj_t * player)
 			pl->move.speed += PLAYER_ACCEL * dtime;
 			if(pl->move.speed > playerinfo->speed) pl->move.speed = playerinfo->speed;
 
-			pl->Fbase = pl->Fbase + PLAYER_FPS_RUN * dtimed1000;
-			if(pl->Fbase < 0 || pl->Fbase > 3) pl->Fbase = 0;
 			if(!pl->soundId_move)
 			{
 				pl->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
+			}
+
+			bool player_started_go = false;
+			if(player_started_go)
+			{
+				tank_common_modelaction_endframef(player, 0, "run");
 			}
 
 		}
@@ -887,6 +965,15 @@ int player_respawn(mobj_t * player)
  */
 void player_draw_status(camera_t * cam, mobj_t * player)
 {
+	static image_index_t list[] =
+	{
+			IMG_TANK0,
+			IMG_TANK1,
+			IMG_TANK2,
+			IMG_TANK3,
+			IMG_TANK4
+	};
+
 	player_t * pl = player->data;
 
 	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
@@ -906,11 +993,10 @@ void player_draw_status(camera_t * cam, mobj_t * player)
 
 	/* вторая строка */
 	ref_y += 16;
-
-	gr2D_setimage1(cam->x + 16 * 0, ref_y, player->img, 0, 0, c_p_MDL_box,c_p_MDL_box);
-	gr2D_setimage0(cam->x + 16 * 4, ref_y, image_get(wtable[0].icon));
-	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get(wtable[1].icon));
-	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get(wtable[2].icon));
+	gr2D_setimage1(cam->x + 16 * 0, ref_y, image_get( list[pl->level] ), 0, 0, c_p_MDL_box,c_p_MDL_box);
+	gr2D_setimage0(cam->x + 16 * 4, ref_y, image_get( wtable[0].icon ));
+	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get( wtable[1].icon ));
+	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get( wtable[2].icon ));
 
 	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "@"); // player->items[ITEM_AMMO_ARTILLERY]
 	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
@@ -926,7 +1012,6 @@ void player_draw_status(camera_t * cam, mobj_t * player)
  */
 void player_class_init(mobj_t * player, player_t * pl)
 {
-	pl->Fbase = 0;                                                       //№ кадра(база)
 	int level = pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
 	if(player->type == MOBJ_BOSS) level = PLAYER_LEVEL_BOSS;
@@ -950,7 +1035,7 @@ void player_class_init(mobj_t * player, player_t * pl)
 		}
 	}
 
-	player->img = image_get(playerinfo->imageindex);
+	mobj_model_set(player, 0, playerinfo->modelname);
 
 }
 

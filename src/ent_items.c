@@ -9,71 +9,10 @@
 #include "model.h"
 #include "ent_items.h"
 
-static model_t mdl_item_scores =
-{
-		.name = "item_scores",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_ITEM_STAR,
-		.fps = 0,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
-static model_t mdl_item_health =
-{
-		.name = "item_health",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_ITEM_HEALTH,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
-static model_t mdl_item_armor =
-{
-		.name = "item_armor",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_ITEM_ARMOR,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
-static model_t mdl_item_ammo_missile =
-{
-		.name = "item_ammo_missile",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_WEAPON_MISSILE,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
-static model_t mdl_item_ammo_mine =
-{
-		.name = "item_ammo_mine",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_WEAPON_MINE,
-		.frames_num = MODEL_FRAMES_COMMON_NUM,
-		.frames = model_frames_common
-};
-
 static entmodel_t item_scores_models[] =
 {
 		{
-				.model = &mdl_item_scores,
+				.modelname = "item_scores",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}
@@ -82,7 +21,7 @@ static entmodel_t item_scores_models[] =
 static entmodel_t item_health_models[] =
 {
 		{
-				.model = &mdl_item_health,
+				.modelname = "item_health",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}
@@ -91,7 +30,7 @@ static entmodel_t item_health_models[] =
 static entmodel_t item_armor_models[] =
 {
 		{
-				.model = &mdl_item_armor,
+				.modelname = "item_armor",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}
@@ -100,7 +39,7 @@ static entmodel_t item_armor_models[] =
 static entmodel_t item_ammo_missile_models[] =
 {
 		{
-				.model = &mdl_item_ammo_missile,
+				.modelname = "item_ammo_missile",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}
@@ -109,7 +48,7 @@ static entmodel_t item_ammo_missile_models[] =
 static entmodel_t item_ammo_mine_models[] =
 {
 		{
-				.model = &mdl_item_ammo_mine,
+				.modelname = "item_ammo_mine",
 				.modelscale = 8.0f,
 				.translation = { 0.0, 0.0 }
 		}

@@ -11,7 +11,6 @@
 
 static MOBJ_FUNCTION_INIT(message_mobj_init)
 {
-	this->img = NULL;
 	ent_message_t * ent_message = thisdata;
 	ent_message->message = Z_strdup((char *)args);
 }

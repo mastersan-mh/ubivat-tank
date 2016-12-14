@@ -14,11 +14,6 @@
 #include "ent_player.h"
 #include "sound.h"
 
-#define BULL_FPS 8
-
-#define BULL_MISSILE_MODEL_FRAMES (2)
-#define BULL_MINE_MODEL_FRAMES (2)
-
 bullinfo_t bullinfo_table[__BULL_NUM] =
 {
 		{ 15,   7,  -1,  75, 2 },
@@ -155,9 +150,9 @@ void bull_common_handle(mobj_t * this)
 	}
 }
 
-static void bull_common_modelaction_startplay(mobj_t * this, char * actionname)
+static void bull_common_modelaction_startplay(mobj_t * this, unsigned int imodel, char * actionname)
 {
-	mobj_model_start_play(this, 0, actionname);
+	mobj_model_play_start(this, imodel, actionname);
 }
 
 /**
@@ -171,7 +166,7 @@ static void bull_common_mobj_init(mobj_t * this, void * thisdata, const mobj_t *
 	bull->delta_s = 0;
 
 	if(this->type != MOBJ_BULL_ARTILLERY)
-		bull_common_modelaction_startplay(this, "fly");
+		bull_common_modelaction_startplay(this, 0, "fly");
 
 	if(bulltype == BULL_MISSILE) ((player_t *)parent->data)->bull = this;
 }
@@ -180,28 +175,11 @@ static void bull_common_mobj_init(mobj_t * this, void * thisdata, const mobj_t *
  * bull_artillery
  */
 
-modelframe_t model_bull_artillery_frames[8] =
-{
-		{ .texcoord = model_texcoord_common }
-};
-
-model_t mdl_bull_artillery =
-{
-		.name = "bull_artillery",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_BULL_ARTILLERY,
-		.fps = 0,
-		.frames_num = 1,
-		.frames = model_bull_artillery_frames
-};
 
 entmodel_t bull_artillery_models[] =
 {
 		{
-				.model = &mdl_bull_artillery,
+				.modelname = "bull_artillery",
 				.modelscale = 2.0f / 2.0f, /* picturesize = 2 x 2 */
 				.translation = { 0.0, 0.0 },
 				.actions_num = 0,
@@ -209,9 +187,6 @@ entmodel_t bull_artillery_models[] =
 		}
 };
 
-/**
- * artillery
- */
 static MOBJ_FUNCTION_INIT(bull_artillery_mobj_init)
 {
 	bull_common_mobj_init(this, thisdata, parent, BULL_ARTILLERY);
@@ -235,33 +210,8 @@ static const mobj_reginfo_t bull_artillery_reginfo = {
 };
 
 /**
- * missile
+ * bull_missile
  */
-
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame0 , 0, 8);
-static MODEL_COMMON_VERTEX4_TEXCOORD_FRAME(8frame1 , 1, 8);
-
-/*
-В оригинальной текстуре ракеты 8 кадров, по 2 на каждое направление. Мы используем только 2 первых кадра.
-*/
-static modelframe_t model_bull_missile_frames[BULL_MISSILE_MODEL_FRAMES] =
-{
-		{ .texcoord = model_texcoord_8frame0 },
-		{ .texcoord = model_texcoord_8frame1 }
-};
-
-static const model_t mdl_bull_missile =
-{
-		.name = "bull_missile",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_BULL_MISSILE,
-		.fps = BULL_FPS,
-		.frames_num = BULL_MISSILE_MODEL_FRAMES,
-		.frames = model_bull_missile_frames
-};
 
 static const ent_modelaction_t bull_missile_modelactions[] =
 {
@@ -276,7 +226,7 @@ static const ent_modelaction_t bull_missile_modelactions[] =
 static entmodel_t bull_missile_models[] =
 {
 		{
-				.model = &mdl_bull_missile,
+				.modelname = "bull_missile",
 				.modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
 				.translation = { 0.0, 0.0 },
 				.actions_num = 1,
@@ -307,30 +257,9 @@ static const mobj_reginfo_t bull_missile_reginfo = {
 };
 
 /**
- * mine
+ * bull_mine
  */
 
-/*
-В оригинальной текстуре ракеты 8 кадров, по 2 на каждое направление. Мы используем только 2 первых кадра.
-*/
-static modelframe_t model_bull_mine_frames[BULL_MISSILE_MODEL_FRAMES] =
-{
-		{ .texcoord = model_texcoord_8frame0 },
-		{ .texcoord = model_texcoord_8frame1 }
-};
-
-static const model_t mdl_bull_mine =
-{
-		.name = "bull_mine",
-		.vertexes_num = VERTEXES_COMMON_NUM,
-		.vertexes = model_vertexes_common,
-		.triangles_num = TRIANGLES_COMMON_NUM,
-		.triangles = model_trianges_common,
-		.itexture = IMG_BULL_MINE,
-		.fps = BULL_FPS,
-		.frames_num = BULL_MISSILE_MODEL_FRAMES,
-		.frames = model_bull_mine_frames
-};
 
 static const ent_modelaction_t bull_mine_modelactions[] =
 {
@@ -345,7 +274,7 @@ static const ent_modelaction_t bull_mine_modelactions[] =
 static entmodel_t bull_mine_models[] =
 {
 		{
-				.model = &mdl_bull_mine,
+				.modelname = "bull_mine",
 				.modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
 				.translation = { 0.0, 0.0 },
 				.actions_num = 1,

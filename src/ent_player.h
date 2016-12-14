@@ -45,8 +45,6 @@
 //#define PLAYER_ACCEL       12
 /* торможение: м/с^2 */
 #define PLAYER_DECEL       (0.05f * MPS2_TO_PIXPS2)
-//скорость проигрывания кадров: бег
-#define PLAYER_FPS_RUN      20
 
 
 enum
@@ -64,7 +62,7 @@ typedef struct
 {
 	int items[__ITEM_NUM];
 	vec_t speed;
-	image_index_t imageindex;
+	char * modelname;
 } playerinfo_t;
 
 /*
@@ -110,8 +108,6 @@ typedef struct
 
 	//флаг
 	item_img_t * Iflag;
-	//№ кадра(база)
-	float Fbase;
 	// мозг
 	think_t brain;
 	int soundId_move;
