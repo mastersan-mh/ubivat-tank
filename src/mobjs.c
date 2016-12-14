@@ -147,7 +147,8 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	mobj->pos.x = x;
 	mobj->pos.y = y;
 	mobj->dir   = dir;
-	mobj->show  = true;
+	mobj->allow_handle  = true;
+	mobj->allow_draw = true;
 
 	mobj->info = mobjinfo;
 
@@ -209,7 +210,6 @@ void mobjs_erase()
 	}
 }
 
-
 /*
  * @return end-of-frames?
  */
@@ -256,7 +256,7 @@ void mobjs_handle()
 			continue;
 		}
 
-		if(!mobj->show)
+		if(!mobj->allow_handle)
 		{
 			mobj = mobj->next;
 			continue;
@@ -469,12 +469,14 @@ void mobjs_render(camera_t * cam)
 	for(mobj = mobjs; mobj; mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
-		if(!mobj->show) continue;
+		if(!mobj->allow_handle) continue;
 
 		//int viewbox_half = mobj->img->img_sx;
 		int viewbox_half = 16;
 
+
 		if(
+				mobj->allow_draw &&
 				( cam->pos.x  - cam_sx_half <= mobj->pos.x + viewbox_half ) &&
 				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half ) &&
 				( cam->pos.y  - cam_sy_half <= mobj->pos.y + viewbox_half ) &&

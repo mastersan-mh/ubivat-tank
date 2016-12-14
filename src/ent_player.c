@@ -178,7 +178,6 @@ MOBJ_FUNCTION_INIT(player_mobj_init)
 
 	player_spawn_init(this, pl, parent);// parent = spawn
 
-	mobj_model_play_start(this, 0, "run");
 }
 
 MOBJ_FUNCTION_DONE(player_mobj_done)
@@ -718,6 +717,7 @@ static void player_handle_common(mobj_t * player)
 		case STATE_RUN_END  : mobj_model_play_pause(player, 0); break;
 		case STATE_RUN: break;
 		case STATE_DEAD:
+
 			if(pl->soundId_move)
 			{
 				sound_play_stop(pl->soundId_move);
@@ -744,6 +744,8 @@ static void player_handle_common(mobj_t * player)
 				game._win_ = true;
 			break;
 	}
+
+	MOBJ_ALLOW_DRAW_SET(player, pl->charact.spawned);
 
 	if(pl->items[ITEM_HEALTH] > 0)
 	{

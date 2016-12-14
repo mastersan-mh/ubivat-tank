@@ -82,7 +82,7 @@ void bull_common_handle(mobj_t * this)
 		);
 		if(bull->type == BULL_MISSILE)
 			ENT_PLAYER(bull->owner)->bull = mobj;
-		this->erase = true;
+		MOBJ_ERASE(this);
 		return;
 	}
 
@@ -111,7 +111,7 @@ void bull_common_handle(mobj_t * this)
 		if(bull->type == BULL_MISSILE)
 			ENT_PLAYER(bull->owner)->bull = mobj;
 
-		this->erase = true;
+		MOBJ_ERASE(this);
 		return;
 	}
 
@@ -145,7 +145,7 @@ void bull_common_handle(mobj_t * this)
 		);
 		if(bull->type == BULL_MISSILE)
 			ENT_PLAYER(bull->owner)->bull = mobj;
-		this->erase = true;
+		MOBJ_ERASE(this);
 		return;
 	}
 }

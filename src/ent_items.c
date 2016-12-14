@@ -81,7 +81,7 @@ static MOBJ_FUNCTION_INIT(item_mobj_init)
 
 static void item_handle(mobj_t * this)
 {
-	this->show = ((item_t *)this->data)->exist;
+	MOBJ_ALLOW_HANDLE_SET(this, ((item_t *)this->data)->exist);
 }
 
 static const mobj_reginfo_t item_scores_reginfo = {

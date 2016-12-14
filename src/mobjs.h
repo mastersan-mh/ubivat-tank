@@ -25,7 +25,14 @@
 #define MOBJ_FUNCTION_DONE_DEFAULT NULL
 #define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
 
-#define MOBJ_ERASE(mobj) (mobj)->erase = true
+
+#define MOBJ_ERASE(ent) (ent)->erase = true
+
+#define MOBJ_ALLOW_HANDLE_SET(ent, bool_value) \
+		(ent)->allow_handle = (bool_value)
+
+#define MOBJ_ALLOW_DRAW_SET(ent, bool_value) \
+		(ent)->allow_draw = (bool_value)
 
 typedef enum
 {
@@ -104,7 +111,9 @@ typedef struct mobj_s
 	/* направление взгляда/движения */
 	direction_t dir;
 	/* объект показывать и обрабатывать */
-	bool show;
+	bool allow_handle;
+	/* объеккт разрешено показывать */
+	bool allow_draw;
 
 	const struct mobj_register_s * info;
 	/* структура для проигрывания кардов моделей, связанных с объектом */
