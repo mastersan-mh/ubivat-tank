@@ -54,7 +54,7 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 
 	mobj_t * mobj;
 
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
 	{
 		if(danger) break;
 		if(

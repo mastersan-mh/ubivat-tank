@@ -116,7 +116,7 @@ void bull_common_handle(mobj_t * this)
 	}
 
 	//пуля не попала в стену
-	player = map.mobjs;
+	player = entity_getnext(NULL, NULL);
 	bool flag = false;
 	while(player && !flag)
 	{                               //проверим на попадание в игрока

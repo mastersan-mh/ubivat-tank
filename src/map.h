@@ -133,8 +133,6 @@ typedef struct
 	char * name;
 	// краткое описание
 	char * brief;
-	// объекты карты
-	struct mobj_s * mobjs;
 	// 66 X 50 = 3300 матрица карты
 	char map[MAP_SY][MAP_SX];
 } map_t;

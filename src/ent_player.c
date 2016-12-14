@@ -601,7 +601,7 @@ static void player_obj_check(mobj_t * player)
 	if(pl->items[ITEM_HEALTH] <= 0) return;
 
 	mobj_t * mobj;
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
 	{
 		if(
 				( mobj->pos.x   - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
@@ -666,13 +666,22 @@ static void player_move(mobj_t * player, int dir, vec_t * speed)
 	case DIR_LEFT : pos->x -= dway; break;
 	case DIR_RIGHT: pos->x += dway; break;
 	}
-};
+}
 
 /*
  * обработка игрока
  */
 static void player_handle_common(mobj_t * player)
 {
+	enum
+	{
+		STATE_IDLE,
+		STATE_RUN_BEGIN,
+		STATE_RUN_END,
+		STATE_RUN,
+		STATE_DEAD
+	};
+	int state = STATE_IDLE;
 	vec2_t Sorig;
 	vec_t L,R,U,D;
 	vec_t speed_s;
@@ -680,34 +689,63 @@ static void player_handle_common(mobj_t * player)
 	player_t * pl = player->data;
 
 	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
+
 	if(pl->items[ITEM_HEALTH] <= 0)
 	{
-		if(pl->soundId_move)
-		{
-			sound_play_stop(pl->soundId_move);
-			pl->soundId_move = 0;
-		}
-
-		//если игрок мертв
-		if(pl->charact.spawned)
-		{
-			mobj_new(
-				MOBJ_EXPLODE_MISSILE,
-				player->pos.x,
-				player->pos.y,
-				player->dir,
-				player,
-				NULL
-			);
-			pl->charact.spawned = false;
-			pl->items[ITEM_ARMOR] = 0;
-			pl->items[ITEM_AMMO_MISSILE] = 0;
-			pl->items[ITEM_AMMO_MINE] = 0;
-		};
-		if(player->type == MOBJ_BOSS)
-			game._win_ = true;
+		state = STATE_DEAD;
 	}
 	else
+	{
+		if(pl->move.go)
+		{
+			if(!pl->move.prev_go)
+				state = STATE_RUN_BEGIN;
+			else
+				state = STATE_RUN;
+		}
+		else
+		{
+			if(pl->move.prev_go)
+				state = STATE_RUN_END;
+		}
+		pl->move.prev_go = pl->move.go;
+	}
+
+	switch(state)
+	{
+		case STATE_IDLE: break;
+		case STATE_RUN_BEGIN: mobj_model_play_start(player, 0, "run"); break;
+		case STATE_RUN_END  : mobj_model_play_pause(player, 0); break;
+		case STATE_RUN: break;
+		case STATE_DEAD:
+			if(pl->soundId_move)
+			{
+				sound_play_stop(pl->soundId_move);
+				pl->soundId_move = 0;
+			}
+
+			//если игрок мертв
+			if(pl->charact.spawned)
+			{
+				mobj_new(
+					MOBJ_EXPLODE_MISSILE,
+					player->pos.x,
+					player->pos.y,
+					player->dir,
+					player,
+					NULL
+				);
+				pl->charact.spawned = false;
+				pl->items[ITEM_ARMOR] = 0;
+				pl->items[ITEM_AMMO_MISSILE] = 0;
+				pl->items[ITEM_AMMO_MINE] = 0;
+			};
+			if(player->type == MOBJ_BOSS)
+				game._win_ = true;
+			break;
+	}
+
+	if(pl->items[ITEM_HEALTH] > 0)
 	{
 		//игрок жив
 		if(pl->bull)
@@ -724,12 +762,6 @@ static void player_handle_common(mobj_t * player)
 			if(!pl->soundId_move)
 			{
 				pl->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
-			}
-
-			bool player_started_go = false;
-			if(player_started_go)
-			{
-				tank_common_modelaction_endframef(player, 0, "run");
 			}
 
 		}
@@ -924,14 +956,14 @@ mobj_t * player_spawn_get()
 	int count = 0;
 	//считаем количество спавн-поинтов
 	mobj_t * mobj;
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
 	{
 		if(mobj->type == MOBJ_SPAWN_PLAYER) count++;
 	};
 	//выбираем случайным образом
 	count = xrand(count);
 
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
 	{
 		if(mobj->type == MOBJ_SPAWN_PLAYER)
 		{

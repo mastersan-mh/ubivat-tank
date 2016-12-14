@@ -93,8 +93,9 @@ typedef struct
 
 typedef struct mobj_s
 {
+	struct mobj_s * prev;
 	struct mobj_s * next;
-	// удалить объект
+	/* удалить объект */
 	bool erase;
 	//класс
 	mobj_type_t type;
@@ -134,20 +135,22 @@ typedef struct mobj_register_s
 
 }mobj_reginfo_t;
 
-void mobj_register(const mobj_reginfo_t * info);
-const mobj_reginfo_t * mobj_reginfo_get(const char * name);
+extern void mobj_register(const mobj_reginfo_t * info);
+extern const mobj_reginfo_t * mobj_reginfo_get(const char * name);
 
+extern mobj_t * entity_getnext(mobj_t * mobj, const char * enttype);
 
 extern void mobjs_handle();
 
 extern void mobjs_render(camera_t * cam);
 
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
-void mobjs_erase();
+extern mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
+extern void mobjs_erase();
 
-void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname);
-void mobj_model_play_stop(mobj_t * mobj, unsigned int imodel);
+extern void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname);
+extern void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel);
+void mobj_model_play_pause_all(mobj_t * mobj);
 
-int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname);
+extern int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname);
 
 #endif /* SRC_MOBJS_H_ */

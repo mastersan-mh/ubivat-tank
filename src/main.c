@@ -17,4 +17,3 @@ int main()
 	game_done();
 	return 0;
 }
-

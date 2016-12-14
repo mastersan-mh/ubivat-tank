@@ -73,6 +73,7 @@ typedef struct
 	//скорость движения игрока
 	vec_t speed;
 	//игрок движется
+	bool prev_go;
 	bool go;
 	//направление движения
 } move_t;

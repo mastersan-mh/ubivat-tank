@@ -68,7 +68,7 @@ static void explode_detonate(mobj_t * this)
 		}
 	}
 	//проверка попаданий в игрока
-	for(player = map.mobjs; player ; player = player->next)
+	for(player = entity_getnext(NULL, NULL); player ; player = player->next)
 	{
 		if(
 				player->type != MOBJ_PLAYER &&

@@ -7,8 +7,16 @@
 
 #include "game.h"
 #include "mobjs.h"
-#include "map.h"
 #include "model.h"
+
+#define LIST2_PUSH(enttop, ent) \
+		do                      \
+		{                       \
+			(ent)->prev = NULL;     \
+			(ent)->next = (enttop); \
+			if( (enttop) != NULL ) (enttop)->prev = (ent); \
+			(enttop) = (ent);       \
+		}while(0)
 
 char *mobjnames[__MOBJ_NUM] =
 {
@@ -32,6 +40,12 @@ char *mobjnames[__MOBJ_NUM] =
 		"explode_mine",
 		"exit"
 };
+
+/* действительные entities */
+mobj_t * mobjs = NULL;
+
+/* удалённые entities */
+mobj_t * mobjs_erased = NULL;
 
 static const mobj_reginfo_t ** mobj_reginfos = NULL;
 static size_t mobj_register_size = 0;
@@ -99,6 +113,7 @@ int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname)
 {
 	if(imodel >= mobj->info->entmodels_num) return -1;
 	mobj->modelplayers[imodel].model = model_get(modelname);
+	mobj->modelplayers[imodel].frame = 0;
 	return 0;
 }
 
@@ -109,17 +124,21 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 {
 	int i;
 	const mobj_reginfo_t * mobjinfo = NULL;
-	if((int)mobj_type >= 0)
-	{
-		char * mobjname = mobjnames[mobj_type];
-		mobjinfo = mobj_reginfo_get(mobjname);
-		if(!mobjinfo)
-		{
-			game_console_send("Cannot create unknown entity \"%s\".", mobjname);
-			return NULL;
-		}
 
+	if((int)mobj_type < 0)
+	{
+		game_console_send("Error: Cannot create unknown entity with mobj_type \"%d\".", mobj_type);
+		return NULL;
 	}
+
+	char * mobjname = mobjnames[mobj_type];
+	mobjinfo = mobj_reginfo_get(mobjname);
+	if(!mobjinfo)
+	{
+		game_console_send("Error: Cannot create unknown entity \"%s\".", mobjname);
+		return NULL;
+	}
+
 
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
 
@@ -130,31 +149,26 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	mobj->dir   = dir;
 	mobj->show  = true;
 
-	mobj->next = map.mobjs;
-	map.mobjs  = mobj;
+	mobj->info = mobjinfo;
 
-	if(mobjinfo)
+	LIST2_PUSH(mobjs, mobj);
+
+	if(mobjinfo->entmodels_num > 0)
 	{
-		mobj->info = mobjinfo;
+		mobj->modelplayers = Z_malloc(mobjinfo->entmodels_num * sizeof(ent_modelplayer_t));
 
-		if(mobjinfo->entmodels_num > 0)
+		for( i = 0; i < mobjinfo->entmodels_num; i++)
 		{
-			mobj->modelplayers = Z_malloc(mobjinfo->entmodels_num * sizeof(ent_modelplayer_t));
-
-			for( i = 0; i < mobjinfo->entmodels_num; i++)
-			{
-				mobj_model_set(mobj, i, mobjinfo->entmodels[i].modelname);
-			}
+			mobj_model_set(mobj, i, mobjinfo->entmodels[i].modelname);
 		}
-
-		if(mobjinfo->datasize == 0)
-			mobj->data = NULL;
-		else
-			mobj->data = Z_malloc(mobjinfo->datasize);
-		if(mobjinfo->mobjinit)
-			mobj->info->mobjinit(mobj, mobj->data, parent, args);
-
 	}
+
+	if(mobjinfo->datasize == 0)
+		mobj->data = NULL;
+	else
+		mobj->data = Z_malloc(mobjinfo->datasize);
+	if(mobjinfo->mobjinit)
+		mobj->info->mobjinit(mobj, mobj->data, parent, args);
 
 	return mobj;
 }
@@ -181,10 +195,16 @@ static void mobj_freemem(mobj_t * mobj)
 void mobjs_erase()
 {
 	mobj_t * mobj;
-	while(map.mobjs)
+	while(mobjs)
 	{
-		mobj = map.mobjs;
-		map.mobjs = map.mobjs->next;
+		mobj = mobjs;
+		mobjs = mobjs->next;
+		mobj_freemem(mobj);
+	}
+	while(mobjs_erased)
+	{
+		mobj = mobjs_erased;
+		mobjs_erased = mobjs_erased->next;
 		mobj_freemem(mobj);
 	}
 }
@@ -212,11 +232,35 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 
 void mobjs_handle()
 {
+	int i;
 	mobj_t * mobj;
-	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	for(mobj = mobjs; mobj; )
 	{
-		if(mobj->erase) continue;
-		if(!mobj->show) continue;
+
+		if(mobj->erase)
+		{
+
+			if(mobjs == mobj)
+				mobjs = mobjs->next;
+
+			mobj_t * erased = mobj;
+			mobj = mobj->next;
+			if(erased->prev)
+				erased->prev->next = erased->next;
+			if(erased->next)
+				erased->next->prev = erased->prev;
+
+			mobj_model_play_pause_all(erased);
+
+			LIST2_PUSH(mobjs_erased, erased);
+			continue;
+		}
+
+		if(!mobj->show)
+		{
+			mobj = mobj->next;
+			continue;
+		}
 
 		const mobj_reginfo_t * info = mobj->info;
 		if(!info) continue;
@@ -226,7 +270,12 @@ void mobjs_handle()
 			info->handle(mobj);
 		}
 
-		int i;
+		if(mobj->erase)
+		{
+			mobj = mobj->next;
+			continue;
+		}
+
 		for(i = 0; i < info->entmodels_num; i++)
 		{
 
@@ -261,11 +310,7 @@ void mobjs_handle()
 			}
 
 		}
-
-		if(mobj->erase)
-		{
-			/* do something */
-		}
+		mobj = mobj->next;
 
 	}
 }
@@ -287,11 +332,19 @@ static const ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * 
 }
 
 /**
- * @description начать проигрывание кадров модели
+ * @description начать/возобновить проигрывание кадров модели
  */
 void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname)
 {
 	const mobj_reginfo_t * info = mobj->info;
+	if(imodel >= info->entmodels_num)
+	{
+		game_console_send("Error: Entity \"%s\": imodel %d not found, could not play frames.",
+			info->name,
+			imodel
+		);
+		return;
+	}
 	const ent_modelaction_t * action = mobj_reginfo_action_get(info, imodel, actionname);
 	if(!action)
 	{
@@ -299,20 +352,67 @@ void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname
 			info->name,
 			imodel,
 			actionname
-			);
+		);
 		return;
 	}
-	mobj->modelplayers[imodel].action = action;
-	mobj->modelplayers[imodel].frame = action->startframe;
+
+	ent_modelplayer_t * modelplayer = &mobj->modelplayers[imodel];
+	if(modelplayer->action == NULL)
+	{
+		/* если действия нет или закончилось, начнём действие заново */
+		modelplayer->action = action;
+		modelplayer->frame = action->startframe;
+	}
+	else
+	{
+		modelplayer->action = action;
+		float frame = modelplayer->frame;
+		if( frame < action->startframe || action->endframe + 1 <= frame )
+			modelplayer->frame = action->startframe;
+	}
+
 }
 
 /**
- * @description начать проигрывание кадров модели
+ * @description приостановить проигрывание кадров модели
  */
-void mobj_model_play_stop(mobj_t * mobj, unsigned int imodel)
+void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel)
 {
 	const mobj_reginfo_t * info = mobj->info;
+	if(imodel >= info->entmodels_num)
+	{
+		game_console_send("Error: Entity \"%s\": imodel %d not found, could not pause frames.",
+			info->name,
+			imodel
+		);
+		return;
+	}
 	mobj->modelplayers[imodel].action = NULL;
+}
+
+void mobj_model_play_pause_all(mobj_t * mobj)
+{
+	const mobj_reginfo_t * info = mobj->info;
+	int imodel;
+	for(imodel = 0; imodel < info->entmodels_num; imodel++ )
+	{
+		mobj->modelplayers[imodel].action = NULL;
+	}
+}
+
+
+/**
+ * получить следующий entity, соответствующий enttype
+ */
+mobj_t * entity_getnext(mobj_t * mobj, const char * enttype)
+{
+	if(mobj == NULL)
+	{
+		if(enttype == NULL)
+			return mobjs;
+	}
+	/* TODO */
+	return NULL;
 }
 
 static void ent_models_render(
@@ -366,7 +466,7 @@ void mobjs_render(camera_t * cam)
 	int cam_sx_half = cam->sx / 2;
 	int cam_sy_half = cam->sy / 2;
 	mobj_t * mobj;
-	for(mobj = map.mobjs;mobj;mobj = mobj->next)
+	for(mobj = mobjs; mobj; mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
 		if(!mobj->show) continue;
@@ -399,7 +499,7 @@ void explode_remove(mobj_t ** mobj)
 	if (explList && *explode != NULL)
 	{
 		p = explList;
-		if(explList== *explode) {                                    //если HEAD и explode совпадают
+		if(explList== *explode) { //если HEAD и explode совпадают
 			explList = p->next;
 			*explode          = explList;
 			Z_free(p);
@@ -408,11 +508,11 @@ void explode_remove(mobj_t ** mobj)
 		else
 		{
 			if(p->next)
-			{                                         //если в списке не один эл-т
-				while(p && p->next != *explode) p = p->next;                     //находим ссылку на нужный эл-т
+			{ // если в списке не один эл-т
+				while(p && p->next != *explode) p = p->next; // находим ссылку на нужный эл-т
 				p->next = (*explode)->next;
-				Z_free(*explode);                                                    //удаляем его
-				*explode = p;                                                          //bull указ. на пред. эл-т
+				Z_free(*explode); // удаляем его
+				*explode = p;     // bull указ. на пред. эл-т
 			}
 		}
 	}

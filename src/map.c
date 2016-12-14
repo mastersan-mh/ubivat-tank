@@ -4,7 +4,6 @@
  * by Master San
  */
 
-#include "ent_explode.h"
 #include "ent_spawn.h"
 
 #include "video.h"
@@ -67,7 +66,7 @@ void map_clear();
 
 void map_init()
 {
-	map.mobjs = NULL;
+	/* empty */
 }
 
 
