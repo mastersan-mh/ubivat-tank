@@ -197,7 +197,7 @@ static void bull_artillery_handle(mobj_t * this)
 	bull_common_handle(this);
 }
 
-static const mobj_reginfo_t bull_artillery_reginfo = {
+static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = sizeof(bull_t),
 		.mobjinit = bull_artillery_mobj_init,
@@ -244,7 +244,7 @@ static void bull_missile_handle(mobj_t * this)
 	bull_common_handle(this);
 }
 
-static const mobj_reginfo_t bull_missile_reginfo = {
+static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = sizeof(bull_t),
 		.mobjinit = bull_missile_mobj_init,
@@ -292,7 +292,7 @@ static void bull_mine_handle(mobj_t * this)
 	bull_common_handle(this);
 }
 
-static const mobj_reginfo_t bull_mine_reginfo = {
+static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = sizeof(bull_t),
 		.mobjinit = bull_mine_mobj_init,
@@ -309,7 +309,7 @@ static const mobj_reginfo_t bull_mine_reginfo = {
  */
 void mobj_bull_init()
 {
-	mobj_register(&bull_artillery_reginfo);
-	mobj_register(&bull_missile_reginfo);
-	mobj_register(&bull_mine_reginfo);
+	mobjinfo_register(&bull_artillery_reginfo);
+	mobjinfo_register(&bull_missile_reginfo);
+	mobjinfo_register(&bull_mine_reginfo);
 }

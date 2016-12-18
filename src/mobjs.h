@@ -115,7 +115,7 @@ typedef struct mobj_s
 	/* объеккт разрешено показывать */
 	bool allow_draw;
 
-	const struct mobj_register_s * info;
+	const struct entityinfo_s * info;
 	/* структура для проигрывания кардов моделей, связанных с объектом */
 	ent_modelplayer_t * modelplayers;
 
@@ -123,7 +123,7 @@ typedef struct mobj_s
 
 } mobj_t;
 
-typedef struct mobj_register_s
+typedef struct entityinfo_s
 {
 	char * name;
 	size_t datasize;
@@ -142,10 +142,10 @@ typedef struct mobj_register_s
 	/* массив моделей, связанных с объектом*/
 	entmodel_t * entmodels;
 
-}mobj_reginfo_t;
+}entityinfo_t;
 
-extern void mobj_register(const mobj_reginfo_t * info);
-extern const mobj_reginfo_t * mobj_reginfo_get(const char * name);
+extern void mobjinfo_register(const entityinfo_t * info);
+extern const entityinfo_t * mobj_info_get(const char * name);
 
 extern mobj_t * entity_getnext(mobj_t * mobj, const char * enttype);
 
@@ -158,7 +158,7 @@ extern void mobjs_erase();
 
 extern void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname);
 extern void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel);
-void mobj_model_play_pause_all(mobj_t * mobj);
+extern void mobj_model_play_pause_all(mobj_t * mobj);
 
 extern int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname);
 

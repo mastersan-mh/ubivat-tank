@@ -29,7 +29,7 @@ static void exit_mobj_done(mobj_t * this, void * thisdata)
 	Z_free( ((ent_exit_t *)thisdata)->message );
 }
 
-static const mobj_reginfo_t exit_reginfo = {
+static const entityinfo_t exit_reginfo = {
 		.name = "exit",
 		.datasize = sizeof(ent_exit_t),
 		.mobjinit = exit_mobj_init,
@@ -43,7 +43,7 @@ static const mobj_reginfo_t exit_reginfo = {
 
 void mobj_exit_init()
 {
-	mobj_register(&exit_reginfo);
+	mobjinfo_register(&exit_reginfo);
 }
 
 

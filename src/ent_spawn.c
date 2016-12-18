@@ -32,7 +32,7 @@ static MOBJ_FUNCTION_INIT(spawn_boss_mobj_init)
 	mobj_new(MOBJ_BOSS, this->pos.x, this->pos.y, this->dir, this, NULL);
 }
 
-static const mobj_reginfo_t spawn_player_reginfo = {
+static const entityinfo_t spawn_player_reginfo = {
 		.name = "spawn_player",
 		.datasize = sizeof(spawn_t),
 		.mobjinit = spawn_player_mobj_init,
@@ -42,7 +42,7 @@ static const mobj_reginfo_t spawn_player_reginfo = {
 		.client_restore = NULL
 };
 
-static const mobj_reginfo_t spawn_enemy_reginfo = {
+static const entityinfo_t spawn_enemy_reginfo = {
 		.name = "spawn_enemy",
 		.datasize = sizeof(spawn_t),
 		.mobjinit = spawn_enemy_mobj_init,
@@ -52,7 +52,7 @@ static const mobj_reginfo_t spawn_enemy_reginfo = {
 		.client_restore = NULL
 };
 
-static const mobj_reginfo_t spawn_boss_reginfo = {
+static const entityinfo_t spawn_boss_reginfo = {
 		.name = "spawn_boss",
 		.datasize = sizeof(spawn_t),
 		.mobjinit = spawn_boss_mobj_init,
@@ -64,7 +64,7 @@ static const mobj_reginfo_t spawn_boss_reginfo = {
 
 void mobj_spawn_init()
 {
-	mobj_register(&spawn_player_reginfo);
-	mobj_register(&spawn_enemy_reginfo);
-	mobj_register(&spawn_boss_reginfo);
+	mobjinfo_register(&spawn_player_reginfo);
+	mobjinfo_register(&spawn_enemy_reginfo);
+	mobjinfo_register(&spawn_boss_reginfo);
 }

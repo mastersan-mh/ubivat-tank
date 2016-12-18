@@ -197,7 +197,7 @@ static MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
 	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
 }
 
-static const mobj_reginfo_t explode_artillery_reginfo = {
+static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
 		.datasize = sizeof(explode_t),
 		.mobjinit = explode_artillery_mobj_init,
@@ -209,7 +209,7 @@ static const mobj_reginfo_t explode_artillery_reginfo = {
 		.entmodels = explode_small_models
 };
 
-static const mobj_reginfo_t explode_missile_reginfo = {
+static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
 		.datasize = sizeof(explode_t),
 		.mobjinit = explode_missile_mobj_init,
@@ -221,7 +221,7 @@ static const mobj_reginfo_t explode_missile_reginfo = {
 		.entmodels = explode_big_models
 };
 
-static const mobj_reginfo_t explode_mine_reginfo = {
+static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
 		.datasize = sizeof(explode_t),
 		.mobjinit = explode_mine_mobj_init,
@@ -235,7 +235,7 @@ static const mobj_reginfo_t explode_mine_reginfo = {
 
 void mobj_explode_init()
 {
-	mobj_register(&explode_artillery_reginfo);
-	mobj_register(&explode_missile_reginfo);
-	mobj_register(&explode_mine_reginfo);
+	mobjinfo_register(&explode_artillery_reginfo);
+	mobjinfo_register(&explode_missile_reginfo);
+	mobjinfo_register(&explode_mine_reginfo);
 }

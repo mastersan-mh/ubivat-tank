@@ -20,7 +20,7 @@ static void message_mobj_done(mobj_t * this, void * thisdata)
 	Z_free( ((ent_message_t *) thisdata)->message );
 }
 
-static const mobj_reginfo_t message_reginfo = {
+static const entityinfo_t message_reginfo = {
 		.name = "message",
 		.datasize = sizeof(ent_message_t),
 		.mobjinit = message_mobj_init,
@@ -32,5 +32,5 @@ static const mobj_reginfo_t message_reginfo = {
 
 void mobj_message_init()
 {
-	mobj_register(&message_reginfo);
+	mobjinfo_register(&message_reginfo);
 }

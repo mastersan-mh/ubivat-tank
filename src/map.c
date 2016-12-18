@@ -551,9 +551,8 @@ void map_draw(camera_t * cam)
 	{
 		for(x = x0; x < x1; x++ )
 		{
-			char map_block = map.map[y][x] & 0x0F;
 			item_img_t * img = NULL;
-			switch(map_block)
+			switch(MAP_WALL_TEXTURE(map.map[y][x]))
 			{
 				case c_m_w_w0   : img = image_get(IMG_WALL_W0); break;
 				case c_m_w_w1   : img = image_get(IMG_WALL_W1); break;

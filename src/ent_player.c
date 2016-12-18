@@ -118,7 +118,7 @@ static MOBJ_FUNCTION_INIT(boss_mobj_init);
 static MOBJ_FUNCTION_DONE(boss_mobj_done);
 static void boss_handle(mobj_t * this);
 
-static const mobj_reginfo_t player_reginfo = {
+static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
 		.mobjinit = player_mobj_init,
@@ -130,7 +130,7 @@ static const mobj_reginfo_t player_reginfo = {
 		.entmodels = tank_player_models
 };
 
-static const mobj_reginfo_t enemy_reginfo = {
+static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
 		.mobjinit = enemy_mobj_init,
@@ -142,7 +142,7 @@ static const mobj_reginfo_t enemy_reginfo = {
 		.entmodels = tank_enemy_models
 };
 
-static const mobj_reginfo_t boss_reginfo = {
+static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
 		.mobjinit = boss_mobj_init,
@@ -156,9 +156,9 @@ static const mobj_reginfo_t boss_reginfo = {
 
 void mobj_player_init()
 {
-	mobj_register(&player_reginfo);
-	mobj_register(&enemy_reginfo);
-	mobj_register(&boss_reginfo);
+	mobjinfo_register(&player_reginfo);
+	mobjinfo_register(&enemy_reginfo);
+	mobjinfo_register(&boss_reginfo);
 }
 
 static void player_handle_common(mobj_t * player);

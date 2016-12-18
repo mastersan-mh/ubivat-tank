@@ -41,30 +41,47 @@ char *mobjnames[__MOBJ_NUM] =
 		"exit"
 };
 
+/*
+ список объектов одного типа, у которых
+ .erased == false и allow_handle == true
+*/
+typedef struct entlink_s
+{
+	struct entlink_s * prev;
+	struct entlink_s * next;
+	mobj_t * ent;
+} entlink_t;
+
+typedef struct
+{
+	const entityinfo_t * info;
+	entlink_t * entlinks;
+}entityinfo_reg_t;
+
 /* действительные entities */
 mobj_t * mobjs = NULL;
 
 /* удалённые entities */
 mobj_t * mobjs_erased = NULL;
 
-static const mobj_reginfo_t ** mobj_reginfos = NULL;
-static size_t mobj_register_size = 0;
-static size_t mobj_register_num = 0;
+static entityinfo_reg_t * entityinfo_regs = NULL;
+static size_t entityinfo_regs_size = 0;
+static size_t entityinfo_regs_num = 0;
 
-const mobj_reginfo_t * mobj_reginfo_get(const char * name)
+entityinfo_reg_t * entityinfo_reg_get(const char * name)
 {
 	size_t i;
-	for(i = 0; i < mobj_register_num; i++)
+	for(i = 0; i < entityinfo_regs_num; i++)
 	{
-		if(!strncmp(mobj_reginfos[i]->name, name, 64))
-			return mobj_reginfos[i];
+		if(!strncmp(entityinfo_regs[i].info->name, name, 64))
+			return &entityinfo_regs[i];
 	}
 	return NULL;
 }
 
-void mobj_register(const mobj_reginfo_t * info)
+void mobjinfo_register(const entityinfo_t * info)
 {
-	const mobj_reginfo_t ** tmp;
+	entityinfo_reg_t * tmp;
 	if(info == NULL)
 	{
 		game_console_send("Entity registration failed: Register data is NULL.");
@@ -80,7 +97,7 @@ void mobj_register(const mobj_reginfo_t * info)
 	game_console_send("Entity registration: \"%s\".", info->name);
 
 
-	if(mobj_reginfo_get(info->name) != NULL)
+	if(entityinfo_reg_get(info->name) != NULL)
 	{
 		game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
 		return;
@@ -92,18 +109,19 @@ void mobj_register(const mobj_reginfo_t * info)
 	if(info->datasize == 0 && info->mobjinit != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 
-	if(mobj_register_size < mobj_register_num + 1)
+	if(entityinfo_regs_size < entityinfo_regs_num + 1)
 	{
-		if(mobj_register_size == 0)
-			mobj_register_size = 1;
+		if(entityinfo_regs_size == 0)
+			entityinfo_regs_size = 1;
 		else
-			mobj_register_size *= 2;
-		tmp = Z_realloc(mobj_reginfos, sizeof(mobj_reginfo_t*) * mobj_register_size);
+			entityinfo_regs_size *= 2;
+		tmp = Z_realloc(entityinfo_regs, sizeof(entityinfo_reg_t) * entityinfo_regs_size);
 		if(!tmp)game_halt("Entity registration failed: out of memory");
-		mobj_reginfos = tmp;
+		entityinfo_regs = tmp;
 	}
-	mobj_reginfos[mobj_register_num] = info;
-	mobj_register_num++;
+	entityinfo_regs[entityinfo_regs_num].info = info;
+	entityinfo_regs[entityinfo_regs_num].entlinks = NULL;
+	entityinfo_regs_num++;
 }
 
 /**
@@ -123,7 +141,7 @@ int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname)
 mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
 {
 	int i;
-	const mobj_reginfo_t * mobjinfo = NULL;
+	entityinfo_reg_t * entityinfo_reg = NULL;
 
 	if((int)mobj_type < 0)
 	{
@@ -132,8 +150,8 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	}
 
 	char * mobjname = mobjnames[mobj_type];
-	mobjinfo = mobj_reginfo_get(mobjname);
-	if(!mobjinfo)
+	entityinfo_reg = entityinfo_reg_get(mobjname);
+	if(!entityinfo_reg)
 	{
 		game_console_send("Error: Cannot create unknown entity \"%s\".", mobjname);
 		return NULL;
@@ -141,6 +159,8 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 
 
 	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
+
+	entlink_t * entlink = Z_malloc(sizeof(entlink_t));
 
 	mobj->erase = false;
 	mobj->type = mobj_type;
@@ -150,25 +170,29 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 	mobj->allow_handle  = true;
 	mobj->allow_draw = true;
 
-	mobj->info = mobjinfo;
+	const entityinfo_t * entityinfo = entityinfo_reg->info;
+	mobj->info = entityinfo;
+
+	entlink->ent = mobj;
 
 	LIST2_PUSH(mobjs, mobj);
+	LIST2_PUSH(entityinfo_reg->entlinks, entlink);
 
-	if(mobjinfo->entmodels_num > 0)
+	if(entityinfo->entmodels_num > 0)
 	{
-		mobj->modelplayers = Z_malloc(mobjinfo->entmodels_num * sizeof(ent_modelplayer_t));
+		mobj->modelplayers = Z_malloc(entityinfo->entmodels_num * sizeof(ent_modelplayer_t));
 
-		for( i = 0; i < mobjinfo->entmodels_num; i++)
+		for( i = 0; i < entityinfo->entmodels_num; i++)
 		{
-			mobj_model_set(mobj, i, mobjinfo->entmodels[i].modelname);
+			mobj_model_set(mobj, i, entityinfo->entmodels[i].modelname);
 		}
 	}
 
-	if(mobjinfo->datasize == 0)
+	if(entityinfo->datasize == 0)
 		mobj->data = NULL;
 	else
-		mobj->data = Z_malloc(mobjinfo->datasize);
-	if(mobjinfo->mobjinit)
+		mobj->data = Z_malloc(entityinfo->datasize);
+	if(entityinfo->mobjinit)
 		mobj->info->mobjinit(mobj, mobj->data, parent, args);
 
 	return mobj;
@@ -262,7 +286,7 @@ void mobjs_handle()
 			continue;
 		}
 
-		const mobj_reginfo_t * info = mobj->info;
+		const entityinfo_t * info = mobj->info;
 		if(!info) continue;
 
 		if(info->handle != NULL)
@@ -315,7 +339,7 @@ void mobjs_handle()
 	}
 }
 
-static const ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * info, unsigned int imodel, char * actionname)
+static const ent_modelaction_t * mobj_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname)
 {
 	if(info->entmodels == NULL)
 		return NULL;
@@ -336,7 +360,7 @@ static const ent_modelaction_t * mobj_reginfo_action_get(const mobj_reginfo_t * 
  */
 void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname)
 {
-	const mobj_reginfo_t * info = mobj->info;
+	const entityinfo_t * info = mobj->info;
 	if(imodel >= info->entmodels_num)
 	{
 		game_console_send("Error: Entity \"%s\": imodel %d not found, could not play frames.",
@@ -378,7 +402,7 @@ void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname
  */
 void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel)
 {
-	const mobj_reginfo_t * info = mobj->info;
+	const entityinfo_t * info = mobj->info;
 	if(imodel >= info->entmodels_num)
 	{
 		game_console_send("Error: Entity \"%s\": imodel %d not found, could not pause frames.",
@@ -392,7 +416,7 @@ void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel)
 
 void mobj_model_play_pause_all(mobj_t * mobj)
 {
-	const mobj_reginfo_t * info = mobj->info;
+	const entityinfo_t * info = mobj->info;
 	int imodel;
 	for(imodel = 0; imodel < info->entmodels_num; imodel++ )
 	{
@@ -429,7 +453,7 @@ static void ent_models_render(
 	};
 
 	vec2_t pos = mobj->pos;
-	const struct mobj_register_s * info = mobj->info;
+	const struct entityinfo_s * info = mobj->info;
 	entmodel_t * ent_models = info->entmodels;
 	size_t models_num = info->entmodels_num;
 
@@ -466,6 +490,7 @@ void mobjs_render(camera_t * cam)
 	int cam_sx_half = cam->sx / 2;
 	int cam_sy_half = cam->sy / 2;
 	mobj_t * mobj;
+	int ent_rendered = 0;
 	for(mobj = mobjs; mobj; mobj = mobj->next)
 	{
 		if(mobj->erase) continue;
@@ -484,8 +509,10 @@ void mobjs_render(camera_t * cam)
 		)
 		{
 			ent_models_render(cam, mobj);
+			ent_rendered++;
 		}
 	}
+	game_console_send("ent_rendered = %d\n", ent_rendered);
 }
 
 /*

@@ -84,7 +84,7 @@ static void item_handle(mobj_t * this)
 	MOBJ_ALLOW_HANDLE_SET(this, ((item_t *)this->data)->exist);
 }
 
-static const mobj_reginfo_t item_scores_reginfo = {
+static const entityinfo_t item_scores_reginfo = {
 		.name = "item_scores",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
@@ -96,7 +96,7 @@ static const mobj_reginfo_t item_scores_reginfo = {
 		.entmodels = item_scores_models
 };
 
-static const mobj_reginfo_t item_health_reginfo = {
+static const entityinfo_t item_health_reginfo = {
 		.name = "item_health",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
@@ -108,7 +108,7 @@ static const mobj_reginfo_t item_health_reginfo = {
 		.entmodels = item_health_models
 };
 
-static const mobj_reginfo_t item_armor_reginfo = {
+static const entityinfo_t item_armor_reginfo = {
 		.name = "item_armor",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
@@ -120,7 +120,7 @@ static const mobj_reginfo_t item_armor_reginfo = {
 		.entmodels = item_armor_models
 };
 
-static const mobj_reginfo_t item_ammo_missile_reginfo = {
+static const entityinfo_t item_ammo_missile_reginfo = {
 		.name = "item_ammo_missile",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
@@ -132,7 +132,7 @@ static const mobj_reginfo_t item_ammo_missile_reginfo = {
 		.entmodels = item_ammo_missile_models
 };
 
-static const mobj_reginfo_t item_ammo_mine_reginfo = {
+static const entityinfo_t item_ammo_mine_reginfo = {
 		.name = "item_ammo_mine",
 		.datasize = sizeof(item_t),
 		.mobjinit = item_mobj_init,
@@ -146,9 +146,9 @@ static const mobj_reginfo_t item_ammo_mine_reginfo = {
 
 void mobj_items_init()
 {
-	mobj_register(&item_scores_reginfo);
-	mobj_register(&item_health_reginfo);
-	mobj_register(&item_armor_reginfo);
-	mobj_register(&item_ammo_missile_reginfo);
-	mobj_register(&item_ammo_mine_reginfo);
+	mobjinfo_register(&item_scores_reginfo);
+	mobjinfo_register(&item_health_reginfo);
+	mobjinfo_register(&item_armor_reginfo);
+	mobjinfo_register(&item_ammo_missile_reginfo);
+	mobjinfo_register(&item_ammo_mine_reginfo);
 }
