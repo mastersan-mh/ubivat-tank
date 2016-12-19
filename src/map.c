@@ -9,7 +9,6 @@
 #include "video.h"
 #include "game.h"
 #include "img.h"
-#include "_gr2D.h"
 #include "fonts.h"
 #include "utf8.h"
 
@@ -529,6 +528,54 @@ void map_clear()
 }
 
 /*
+ * вывод байтового образа bytemap размерами full_x,full_y, в позицию
+ * out_x,out_y на экран с позиции get_x,get_y, размером sx,sy
+ */
+static void map_wall_render(
+	camera_t * cam,
+	float pos_x,
+	float pos_y,
+	item_img_t * image
+)
+{
+
+	float translation_x = 0.0f;
+	float translation_y = 0.0f;
+	float modelscale = 1.0f;
+
+	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos_x - cam->pos.x) + translation_x ) * VIDEO_SCALE;
+	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos_y - cam->pos.y) + translation_y ) * VIDEO_SCALE;
+
+	vec_t modelscale_x = modelscale * VIDEO_SCALE;
+	vec_t modelscale_y = modelscale * VIDEO_SCALE;
+
+	GLfloat mdl_sx = image->img_sx * modelscale_x;
+	GLfloat mdl_sy = image->img_sy * modelscale_y;
+
+	GLfloat texture_x1 = image->img_sx/image->texture_sx;
+	GLfloat texture_y1 = image->img_sy/image->texture_sy;
+/*
+	int sfactor = list[game_video_sfactor];
+	int dfactor = list[game_video_dfactor];
+	glBlendFunc(sfactor, dfactor);
+*/
+
+	glBlendFunc(image->sfactor, image->dfactor);
+
+	glBindTexture(GL_TEXTURE_2D, image->texture);
+	glLoadIdentity();
+	glTranslatef(tr_x, tr_y , 0.0f);
+	glBegin(GL_QUADS);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(texture_x1, texture_y1); glVertex2f(mdl_sx, mdl_sy); // Верхний правый угол квадрата
+	glTexCoord2f(texture_x1, 0.0f      ); glVertex2f(mdl_sx, 0.0f  ); // Нижний правый
+	glTexCoord2f(0.0f      , 0.0f      ); glVertex2f(0.0f  , 0.0f  ); // Нижний левый
+	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
+	glEnd();
+}
+
+
+/*
  * рисование объектов на карте
  */
 void map_draw(camera_t * cam)
@@ -561,9 +608,9 @@ void map_draw(camera_t * cam)
 			}
 			if(img)
 			{
-				int pos_x = VEC_TRUNC(cam->x + (x  ) * 8 - (cam->pos.x - cam->sx / 2));
-				int pos_y = VEC_TRUNC(cam->y - (y+1) * 8 + (cam->pos.y + cam->sy / 2));
-				gr2D_setimage0(pos_x, pos_y, img);
+				float pos_x = (x  ) * 8;
+				float pos_y = (y+1) * 8;
+				map_wall_render(cam, pos_x, pos_y, img);
 			}
 		}
 	}

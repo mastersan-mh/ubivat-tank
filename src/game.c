@@ -798,10 +798,10 @@ int game_create()
 {
 	game.gamemap = mapList;
 
-	int cam_sx = VIDEO_SCREEN_W;
-	int cam_sy = VIDEO_SCREEN_H;
+	float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
+	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
-	int statusbar_h = 32;
+	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{

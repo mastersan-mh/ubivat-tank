@@ -428,17 +428,25 @@ void video_delay()
 
 
 void video_viewport_set(
-	int x,
-	int y,
-	int sx,
-	int sy
+	float x,
+	float y,
+	float sx,
+	float sy
 )
 {
 
 	//GL_CHECK(glScissor(x * VIDEO_SCALEX, y * VIDEO_SCALEY, sx * VIDEO_SCALEX, sy * VIDEO_SCALEY));
 
+	/* 640 x 480 */
+
 	int _y = y + (VIDEO_SCREEN_H - sy);
-	GL_CHECK(glScissor(x * VIDEO_SCALEX, _y * VIDEO_SCALEY, sx * VIDEO_SCALEX, sy * VIDEO_SCALEY));
+
+	x  = x  * (float)VIDEO_SCALEX;
+	y  = _y * (float)VIDEO_SCALEY;
+	sx = sx * (float)VIDEO_SCALEX;
+	sy = sy * (float)VIDEO_SCALEY;
+
+	GL_CHECK(glScissor(x, y, sx, sy));
 
 /*
 	void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);

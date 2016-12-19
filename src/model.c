@@ -93,8 +93,8 @@ void model_render(
 
 	item_img_t * texture = image_get(model->itexture);
 
-	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos.x - cam->pos.x) + translation.x ) * VIDEO_SCALEX;
-	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos.y - cam->pos.y) + translation.y ) * VIDEO_SCALEY;
+	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos.x - cam->pos.x) + translation.x ) * VIDEO_SCALE;
+	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos.y - cam->pos.y) + translation.y ) * VIDEO_SCALE;
 
 	vec_t modelscale_x = modelscale * VIDEO_SCALE;
 	vec_t modelscale_y = modelscale * VIDEO_SCALE;

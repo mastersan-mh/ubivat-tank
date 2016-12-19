@@ -104,11 +104,11 @@ typedef struct
 	//координаты
 	vec2_t pos;
 	//позиция на экране
-	int x;
-	int y;
+	float x;
+	float y;
 	//ширина и высота
-	int sx;
-	int sy;
+	float sx;
+	float sy;
 }camera_t;
 
 #define ARRAYSIZE( x ) (sizeof((x))/sizeof(*(x)));

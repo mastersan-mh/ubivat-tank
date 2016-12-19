@@ -502,17 +502,17 @@ void mobjs_render(camera_t * cam)
 
 		if(
 				mobj->allow_draw &&
-				( cam->pos.x  - cam_sx_half <= mobj->pos.x + viewbox_half ) &&
-				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half ) &&
-				( cam->pos.y  - cam_sy_half <= mobj->pos.y + viewbox_half ) &&
-				( mobj->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half )
+				( cam->pos.x  - cam_sx_half  <= mobj->pos.x + viewbox_half ) &&
+				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
+				( cam->pos.y  - cam_sy_half  <= mobj->pos.y + viewbox_half ) &&
+				( mobj->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
 		)
 		{
 			ent_models_render(cam, mobj);
 			ent_rendered++;
 		}
 	}
-	game_console_send("ent_rendered = %d\n", ent_rendered);
+	//game_console_send("ent_rendered = %d\n", ent_rendered);
 }
 
 /*

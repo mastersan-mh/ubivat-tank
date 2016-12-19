@@ -53,10 +53,10 @@ void video_screen_draw_end();
 void video_delay();
 
 void video_viewport_set(
-	int x,
-	int y,
-	int sx,
-	int sy
+	float x,
+	float y,
+	float sx,
+	float sy
 );
 
 void video_draw();
