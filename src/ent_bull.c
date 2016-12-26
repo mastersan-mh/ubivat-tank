@@ -24,19 +24,19 @@ bullinfo_t bullinfo_table[__BULL_NUM] =
 /*
  * проверка на попадание в игрока
  */
-static int checkdamage(entity_t * entity, entity_t * bull)
+static int checkdamage(entity_t * player, entity_t * bull)
 {
 	bullinfo_t * bullinfo = &bullinfo_table[((bull_t*)bull->data)->type];
 
-	player_t * pl = entity->data;
+	player_t * pl = player->data;
 
 	if(
-			((bull_t*)bull->data)->owner != entity && //попали не в себя
+			bull->parent != player && //попали не в себя
 			0 < pl->items[ITEM_HEALTH] &&
-			(entity->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
-			(bull->pos.x - bullinfo->bodybox / 2 <= entity->pos.x + c_p_MDL_box / 2)&&
-			(entity->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
-			(bull->pos.y - bullinfo->bodybox / 2 <= entity->pos.y + c_p_MDL_box / 2)
+			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
+			(bull->pos.x - bullinfo->bodybox / 2 <= player->pos.x + c_p_MDL_box / 2)&&
+			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
+			(bull->pos.y - bullinfo->bodybox / 2 <= player->pos.y + c_p_MDL_box / 2)
 	) return true;
 	return false;
 }
@@ -75,12 +75,12 @@ void bull_common_handle(entity_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner,
+			this->parent,
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = entity;
-		MOBJ_ERASE(this);
+			ENT_PLAYER(this->parent)->bull = entity;
+		ENTITY_ERASE(this);
 		return;
 	}
 
@@ -101,13 +101,13 @@ void bull_common_handle(entity_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner,
+			this->parent,
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = entity;
+			ENT_PLAYER(this->parent)->bull = entity;
 
-		MOBJ_ERASE(this);
+		ENTITY_ERASE(this);
 		return;
 	}
 
@@ -139,12 +139,12 @@ void bull_common_handle(entity_t * this)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			bull->owner,
+			this->parent,
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = entity;
-		MOBJ_ERASE(this);
+			ENT_PLAYER(this->parent)->bull = entity;
+		ENTITY_ERASE(this);
 		return;
 	}
 }
@@ -160,7 +160,6 @@ static void bull_common_modelaction_startplay(entity_t * this, unsigned int imod
 static void bull_common_init(entity_t * this, void * thisdata, const entity_t * parent, bulltype_t bulltype)
 {
 	bull_t * bull = thisdata;
-	bull->owner = (entity_t *)parent;
 	bull->type = bulltype;
 	bull->delta_s = 0;
 
@@ -185,7 +184,7 @@ entmodel_t bull_artillery_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_artillery_entity_init)
+static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
 {
 	bull_common_init(this, thisdata, parent, BULL_ARTILLERY);
 }
@@ -199,7 +198,7 @@ static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = sizeof(bull_t),
 		.init = bull_artillery_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -232,7 +231,7 @@ static entmodel_t bull_missile_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_missile_entity_init)
+static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 {
 	bull_common_init(this, thisdata, parent, BULL_MISSILE);
 }
@@ -246,7 +245,7 @@ static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = sizeof(bull_t),
 		.init = bull_missile_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -280,7 +279,7 @@ static entmodel_t bull_mine_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_mine_entity_init)
+static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 {
 	bull_common_init(this, thisdata, parent, BULL_MINE);
 }
@@ -294,7 +293,7 @@ static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = sizeof(bull_t),
 		.init = bull_mine_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,

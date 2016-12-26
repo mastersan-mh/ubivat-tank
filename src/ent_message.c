@@ -9,7 +9,7 @@
 #include "game.h"
 #include "ent_message.h"
 
-static MOBJ_FUNCTION_INIT(message_init)
+static ENTITY_FUNCTION_INIT(message_init)
 {
 	((ent_message_t *)thisdata)->message = Z_strdup((char *)args);
 }
@@ -24,7 +24,7 @@ static const entityinfo_t message_reginfo = {
 		.datasize = sizeof(ent_message_t),
 		.init = message_init,
 		.done = message_done,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL
 };

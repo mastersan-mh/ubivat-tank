@@ -67,11 +67,13 @@ static void ctrl_AI_checkdanger(entity_t * player)
 
 		for(; ent; ent = ent->next)
 		{
-			if(danger) break;
-			if(BULL(ent)->owner == player) continue;
+			if(danger)
+				break;
+			if(ent->parent == player)
+				continue;
 
-			explodeinfo_t * explodeinfo = &explodeinfo_table[entity_bull_type_to_explode_type(BULL(ent)->type)];
-			bullinfo_t * bullinfo = &bullinfo_table[BULL(ent)->type];
+			explodeinfo_t * explodeinfo = &explodeinfo_table[entity_bull_type_to_explode_type(ENT_BULL(ent)->type)];
+			bullinfo_t * bullinfo = &bullinfo_table[ENT_BULL(ent)->type];
 
 			//верхняя ближайшая стена
 			map_clip_find_near(&player->pos, 0, DIR_UP, 0xF0, 100, &Udist);

@@ -103,19 +103,19 @@ static entmodel_t tank_boss_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(player_init);
-static MOBJ_FUNCTION_DONE(player_done);
+static ENTITY_FUNCTION_INIT(player_init);
+static ENTITY_FUNCTION_DONE(player_done);
 static void player_handle(entity_t * this);
 static void * player_store(client_storedata_t * storedata, const void * mobj);
 static void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
 
-static MOBJ_FUNCTION_INIT(enemy_init);
-static MOBJ_FUNCTION_DONE(enemy_done);
+static ENTITY_FUNCTION_INIT(enemy_init);
+static ENTITY_FUNCTION_DONE(enemy_done);
 static void enemy_handle(entity_t * this);
 
-static MOBJ_FUNCTION_INIT(boss_init);
-static MOBJ_FUNCTION_DONE(boss_done);
+static ENTITY_FUNCTION_INIT(boss_init);
+static ENTITY_FUNCTION_DONE(boss_done);
 static void boss_handle(entity_t * this);
 
 static const entityinfo_t player_reginfo = {
@@ -163,7 +163,7 @@ void entity_player_init()
 
 static void player_handle_common(entity_t * player);
 
-MOBJ_FUNCTION_INIT(player_init)
+ENTITY_FUNCTION_INIT(player_init)
 {
 	player_t * pl = thisdata;
 
@@ -179,7 +179,7 @@ MOBJ_FUNCTION_INIT(player_init)
 
 }
 
-MOBJ_FUNCTION_DONE(player_done)
+ENTITY_FUNCTION_DONE(player_done)
 {
 	player_t * pl = thisdata;
 	sound_play_stop(pl->soundId_move);
@@ -221,14 +221,14 @@ void player_restore(void * data, const client_storedata_t * storedata, const voi
 	);
 }
 
-MOBJ_FUNCTION_INIT(enemy_init)
+ENTITY_FUNCTION_INIT(enemy_init)
 {
 	player_t * pl = thisdata;
 	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
 }
 
-MOBJ_FUNCTION_DONE(enemy_done)
+ENTITY_FUNCTION_DONE(enemy_done)
 {
 	player_done(this, thisdata);
 }
@@ -238,13 +238,13 @@ void enemy_handle(entity_t * this)
 	player_handle_common(this);
 }
 
-MOBJ_FUNCTION_INIT(boss_init)
+ENTITY_FUNCTION_INIT(boss_init)
 {
 	player_t * pl = thisdata;
 	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
 }
-MOBJ_FUNCTION_DONE(boss_done)
+ENTITY_FUNCTION_DONE(boss_done)
 {
 	player_done(this, thisdata);
 }
@@ -749,7 +749,7 @@ static void player_handle_common(entity_t * player)
 			break;
 	}
 
-	MOBJ_ALLOW_DRAW_SET(player, pl->charact.spawned);
+	ENTITY_ALLOW_DRAW_SET(player, pl->charact.spawned);
 
 	if(pl->items[ITEM_HEALTH] > 0)
 	{
@@ -1118,8 +1118,8 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 			pl->items[ITEM_ARMOR] = armor;
 		if(pl->items[ITEM_HEALTH] <= 0)
 		{
-			entity_t * mobj_player = EXPLODE(explode)->owner;
-			player_t * pl = mobj_player->data;
+			entity_t * eplayer = explode->parent;
+			player_t * pl = eplayer->data;
 			if(!self)
 			{
 
@@ -1135,7 +1135,7 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 				pl->charact.fragstotal--;
 				pl->charact.frags--;
 			}
-			player_class_init(mobj_player, pl);
+			player_class_init(eplayer, pl);
 		}
 	}
 }

@@ -37,15 +37,13 @@ typedef struct
  */
 typedef struct
 {
-	//игрок, выпустивший пулю
-	struct entlink_s * owner;
 	//тип пули
 	bulltype_t type;
 	//изменение расстояния
 	vec_t delta_s;
 } bull_t;
 
-#define BULL(x) ((bull_t *)(x)->data)
+#define ENT_BULL(x) ((bull_t *)(x)->data)
 
 extern bullinfo_t bullinfo_table[__BULL_NUM];
 

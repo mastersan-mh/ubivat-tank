@@ -34,11 +34,9 @@ typedef struct
 typedef struct
 {
 	explodetype_t type;
-	//игрок, выпустивший пулю
-	struct entlink_s * owner;
 } explode_t;
 
-#define EXPLODE(x) ((explode_t *)(x)->data)
+#define ENT_EXPLODE(x) ((explode_t *)(x)->data)
 
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 

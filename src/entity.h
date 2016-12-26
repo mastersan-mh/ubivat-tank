@@ -21,26 +21,26 @@
 #define FOR_ENTITIES(entity_name, entity) \
 	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
 
-#define MOBJ_FUNCTION_INIT(x) \
+#define ENTITY_FUNCTION_INIT(x) \
 	void x (entity_t * this, void * thisdata, const entity_t * parent, const void * args)
 
-#define MOBJ_FUNCTION_DONE(x) \
+#define ENTITY_FUNCTION_DONE(x) \
 	void x (entity_t * this, void * thisdata)
 
 #define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
 	entity_t * x (const entity_t * this)
 
 
-#define MOBJ_FUNCTION_DONE_DEFAULT NULL
-#define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
+#define ENTITY_FUNCTION_DONE_DEFAULT NULL
+#define ENTITY_FUNCTION_HANDLE_DEFAULT NULL
 
 
-#define MOBJ_ERASE(ent) (ent)->erase = true
+#define ENTITY_ERASE(ent) (ent)->erase = true
 
-#define MOBJ_ALLOW_HANDLE_SET(ent, bool_value) \
+#define ENTITY_ALLOW_HANDLE_SET(ent, bool_value) \
 		(ent)->allow_handle = (bool_value)
 
-#define MOBJ_ALLOW_DRAW_SET(ent, bool_value) \
+#define ENTITY_ALLOW_DRAW_SET(ent, bool_value) \
 		(ent)->allow_draw = (bool_value)
 
 typedef enum direction_e

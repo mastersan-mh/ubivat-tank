@@ -75,7 +75,7 @@ itemtype_t items_enttype_to_itemtype(const char * entname)
 	return -1;
 }
 
-static MOBJ_FUNCTION_INIT(item_init)
+static ENTITY_FUNCTION_INIT(item_init)
 {
 	item_t * item = thisdata;
 
@@ -87,14 +87,14 @@ static MOBJ_FUNCTION_INIT(item_init)
 
 static void item_handle(entity_t * this)
 {
-	MOBJ_ALLOW_HANDLE_SET(this, ((item_t *)this->data)->exist);
+	ENTITY_ALLOW_HANDLE_SET(this, ((item_t *)this->data)->exist);
 }
 
 static const entityinfo_t item_scores_reginfo = {
 		.name = "item_scores",
 		.datasize = sizeof(item_t),
 		.init = item_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -106,7 +106,7 @@ static const entityinfo_t item_health_reginfo = {
 		.name = "item_health",
 		.datasize = sizeof(item_t),
 		.init = item_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -118,7 +118,7 @@ static const entityinfo_t item_armor_reginfo = {
 		.name = "item_armor",
 		.datasize = sizeof(item_t),
 		.init = item_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -130,7 +130,7 @@ static const entityinfo_t item_ammo_missile_reginfo = {
 		.name = "item_ammo_missile",
 		.datasize = sizeof(item_t),
 		.init = item_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -142,7 +142,7 @@ static const entityinfo_t item_ammo_mine_reginfo = {
 		.name = "item_ammo_mine",
 		.datasize = sizeof(item_t),
 		.init = item_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,

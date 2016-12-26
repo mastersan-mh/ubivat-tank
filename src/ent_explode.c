@@ -98,7 +98,7 @@ static void explode_detonate(entity_t * this)
 				{
 					//r = dx < dy ? dx : dy;
 					//взрывом задели себя или товарища по команде(не для монстров)
-					self = ( explode->owner == player ) && ( strcmp(player->info->name, "player") == 0 );
+					self = ( this->parent == player ) && ( strcmp(player->info->name, "player") == 0 );
 					player_getdamage(player, this, self, r);
 				}
 			player = player->next;
@@ -112,15 +112,15 @@ static void explode_detonate(entity_t * this)
 
 static void explode_common_modelaction_endframef(entity_t * this, unsigned int imodel, char * actionname)
 {
-	if(EXPLODE(this)->owner)
+	if(this->parent)
 	{
 
-		if(ENT_PLAYER(EXPLODE(this)->owner)->bull == this)
+		if(ENT_PLAYER(this->parent)->bull == this)
 		{
-			ENT_PLAYER(EXPLODE(this)->owner)->bull = NULL;
+			ENT_PLAYER(this->parent)->bull = NULL;
 		}
 	}
-	MOBJ_ERASE(this);
+	ENTITY_ERASE(this);
 }
 
 /*
@@ -182,7 +182,6 @@ static void explode_common_init(entity_t * this, explode_t * explode, const enti
 			SOUND_EXPLODE_GRENADE
 	};
 
-	explode->owner = (entity_t *)parent;
 	explode->type  = type;
 
 	sound_play_start(sound_list[type], 1);
@@ -192,17 +191,17 @@ static void explode_common_init(entity_t * this, explode_t * explode, const enti
 
 }
 
-static MOBJ_FUNCTION_INIT(explode_artillery_entity_init)
+static ENTITY_FUNCTION_INIT(explode_artillery_entity_init)
 {
 	explode_common_init(this, thisdata, parent, EXPLODE_ARTILLERY);
 }
 
-static MOBJ_FUNCTION_INIT(explode_missile_entity_init)
+static ENTITY_FUNCTION_INIT(explode_missile_entity_init)
 {
 	explode_common_init(this, thisdata,  parent, EXPLODE_MISSILE);
 }
 
-static MOBJ_FUNCTION_INIT(explode_mine_entity_init)
+static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
 {
 	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
 }
@@ -211,8 +210,8 @@ static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
 		.datasize = sizeof(explode_t),
 		.init = explode_artillery_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,
@@ -223,8 +222,8 @@ static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
 		.datasize = sizeof(explode_t),
 		.init = explode_missile_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,
@@ -235,8 +234,8 @@ static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
 		.datasize = sizeof(explode_t),
 		.init = explode_mine_entity_init,
-		.done = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,

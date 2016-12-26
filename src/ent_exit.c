@@ -18,7 +18,7 @@ static entmodel_t exit_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(exit_entity_init)
+static ENTITY_FUNCTION_INIT(exit_entity_init)
 {
 	ent_exit_t * ent_exit = thisdata;
 	ent_exit->message = Z_strdup((char *)args);
@@ -34,7 +34,7 @@ static const entityinfo_t exit_reginfo = {
 		.datasize = sizeof(ent_exit_t),
 		.init = exit_entity_init,
 		.done = exit_entity_done,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,
