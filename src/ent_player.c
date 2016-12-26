@@ -907,6 +907,8 @@ static void player_handle_common(entity_t * player)
  */
 void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 {
+	if(!spawn)
+		game_halt("Error: Player spawn is NULL, can not create player.");
 	spawn_t * sp = spawn->data;
 
 	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
@@ -971,9 +973,11 @@ entity_t * player_spawn_get()
 	{
 		count++;
 	};
-	//выбираем случайным образом
+	if(count == 0)
+		return NULL;
 	count = xrand(count);
 
+	//выбираем случайным образом
 	for(ent = entity_getfirst("spawn_player"); ent; ent = ent->next)
 	{
 		if(count == 0) return ent;

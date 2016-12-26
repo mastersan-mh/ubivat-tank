@@ -35,7 +35,7 @@ int client_num_get();
 
 client_t * client_get(int id);
 
-void client_spawn(int id);
+int client_spawn(int id);
 
 void client_unspawn(int id);
 

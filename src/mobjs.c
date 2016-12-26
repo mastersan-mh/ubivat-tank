@@ -233,10 +233,10 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 
 void entities_handle()
 {
-	size_t i;
-	for(i = 0; i < entityinfo_regs_num; i++)
+	size_t ientreg;
+	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
 	{
-		entityinfo_reg_t * entreg = &entityinfo_regs[i];
+		entityinfo_reg_t * entreg = &entityinfo_regs[ientreg];
 
 		entity_t * entlink = entreg->entlinks;
 		while(entlink)
@@ -280,33 +280,33 @@ void entities_handle()
 				entlink = entlink->next;
 				continue;
 			}
-
-			for(i = 0; i < info->entmodels_num; i++)
+			int ientmodel;
+			for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
 			{
 
 				if(
-						entlink->modelplayers[i].model != NULL &&
-						entlink->modelplayers[i].model->frames > 0 &&
-						entlink->modelplayers[i].model->fps > 0 &&
-						entlink->modelplayers[i].action != NULL
+						entlink->modelplayers[ientmodel].model != NULL &&
+						entlink->modelplayers[ientmodel].model->frames > 0 &&
+						entlink->modelplayers[ientmodel].model->fps > 0 &&
+						entlink->modelplayers[ientmodel].action != NULL
 				)
 				{
 
 					bool end = model_nextframe(
-						&entlink->modelplayers[i].frame,
-						entlink->modelplayers[i].model->fps,
-						entlink->modelplayers[i].action->startframe,
-						entlink->modelplayers[i].action->endframe
+						&entlink->modelplayers[ientmodel].frame,
+						entlink->modelplayers[ientmodel].model->fps,
+						entlink->modelplayers[ientmodel].action->startframe,
+						entlink->modelplayers[ientmodel].action->endframe
 					);
 					if(end)
 					{
-						const ent_modelaction_t * action = entlink->modelplayers[i].action;
+						const ent_modelaction_t * action = entlink->modelplayers[ientmodel].action;
 						if(action != NULL && action->endframef != NULL)
 						{
-							entlink->modelplayers[i].action = NULL;
+							entlink->modelplayers[ientmodel].action = NULL;
 							action->endframef(
 								entlink,
-								i,
+								ientmodel,
 								action->name
 							);
 						}

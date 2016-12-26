@@ -86,21 +86,21 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("boss", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		value_int = data->item.amount;

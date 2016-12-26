@@ -64,6 +64,8 @@ void randomize()
 
 int xrand(int hi)
 {
+	if(hi == 0)
+		game_halt("Error: xrand: hi == 0.");
 	return random() % hi;
 }
 

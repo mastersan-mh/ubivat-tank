@@ -11,8 +11,7 @@
 
 static MOBJ_FUNCTION_INIT(message_init)
 {
-	ent_message_t * ent_message = thisdata;
-	ent_message->message = Z_strdup((char *)args);
+	((ent_message_t *)thisdata)->message = Z_strdup((char *)args);
 }
 
 static void message_done(entity_t * this, void * thisdata)

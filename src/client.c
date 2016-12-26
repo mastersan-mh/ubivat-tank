@@ -63,10 +63,20 @@ client_t * client_get(int id)
 	return clients[id];
 }
 
-void client_spawn(int id)
+int client_spawn(int id)
 {
-	if(id < 0 || id >= clients_num) return;
+	if(id < 0 || id >= clients_num)
+	{
+		game_console_send("Error: Could not spawn client: unknown client id %d.", id);
+		return -1;
+	}
 	entity_t * spawn = player_spawn_get();
+
+	if(spawn == NULL)
+	{
+		game_console_send("Error: Could not spawn client: spawn point not found.");
+		return -1;
+	}
 
 	entity_t * player = entity_new(
 		"player",
@@ -78,6 +88,7 @@ void client_spawn(int id)
 	);
 
 	clients[id]->entity = player;
+	return 0;
 }
 
 void client_unspawn(int id)
