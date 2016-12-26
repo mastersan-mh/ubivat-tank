@@ -18,13 +18,13 @@ static entmodel_t exit_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(exit_mobj_init)
+static MOBJ_FUNCTION_INIT(exit_entity_init)
 {
 	ent_exit_t * ent_exit = thisdata;
 	ent_exit->message = Z_strdup((char *)args);
 }
 
-static void exit_mobj_done(mobj_t * this, void * thisdata)
+static void exit_entity_done(entity_t * this, void * thisdata)
 {
 	Z_free( ((ent_exit_t *)thisdata)->message );
 }
@@ -32,8 +32,8 @@ static void exit_mobj_done(mobj_t * this, void * thisdata)
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
 		.datasize = sizeof(ent_exit_t),
-		.mobjinit = exit_mobj_init,
-		.mobjdone = exit_mobj_done,
+		.entityinit = exit_entity_init,
+		.entitydone = exit_entity_done,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -41,9 +41,9 @@ static const entityinfo_t exit_reginfo = {
 		.entmodels = exit_models
 };
 
-void mobj_exit_init()
+void entity_exit_init()
 {
-	mobjinfo_register(&exit_reginfo);
+	entity_register(&exit_reginfo);
 }
 
 

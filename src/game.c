@@ -190,13 +190,13 @@ void game_init()
 
 	model_resources_register();
 
-	mobj_bull_init();
-	mobj_explode_init();
-	mobj_spawn_init();
-	mobj_player_init();
-	mobj_message_init();
-	mobj_exit_init();
-	mobj_items_init();
+	entity_bull_init();
+	entity_explode_init();
+	entity_spawn_init();
+	entity_player_init();
+	entity_message_init();
+	entity_exit_init();
+	entity_items_init();
 
 }
 
@@ -368,7 +368,7 @@ void game_main()
  */
 int game_gameTick()
 {
-	mobjs_handle();
+	entities_handle();
 
 	if( game._win_)
 	{
@@ -378,7 +378,7 @@ int game_gameTick()
 		// проверим что все игроки живы
 		for(i = 0; i < num; i++)
 		{
-			if( ((player_t *)client_get(i)->mobj->data)->items[ITEM_HEALTH] < 0 )
+			if( ((player_t *)client_get(i)->entity->data)->items[ITEM_HEALTH] < 0 )
 				alive = false;
 		}
 		if( alive )
@@ -401,7 +401,7 @@ int game_gameTick()
 }
 
 
-static void game_draw_cam(mobj_t * player, camera_t * cam)
+static void game_draw_cam(entity_t * player, camera_t * cam)
 {
 
 	player_t * pl = player->data;
@@ -444,7 +444,7 @@ void game_draw()
 		camera_t * cam;
 		if(i == 0) cam = &game.P0cam;
 		else cam = &game.P1cam;
-		game_draw_cam(client_get(i)->mobj, cam);
+		game_draw_cam(client_get(i)->entity, cam);
 
 	}
 
@@ -622,7 +622,7 @@ void game_record_getsaves()
  * запись игрока
  * @return = true | false
  */
-static bool game_record_save_player(int fd, mobj_t * player)
+static bool game_record_save_player(int fd, entity_t * player)
 {
 	write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
 	player_t * pl = player->data;
@@ -645,10 +645,10 @@ static bool game_record_save_player(int fd, mobj_t * player)
  * чтение игрока
  * @return true | false
  */
-static bool game_record_load_player(int fd, mobj_t * player)
+static bool game_record_load_player(int fd, entity_t * player)
 {
 	player_t * pl = player->data;
-	mapdata_mobj_type_t mapdata_mobj_type = map_file_class_get(fd);
+	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER) return false;
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
@@ -703,7 +703,7 @@ bool game_record_save(int isave)
 	int num = client_num_get();
 	for(i = 0; i < num; i++)
 	{
-		game_record_save_player(fd, client_get(i)->mobj);
+		game_record_save_player(fd, client_get(i)->entity);
 	}
 
 	close(fd);
@@ -781,7 +781,7 @@ int game_record_load(int isave)
 
 	for(i = 0; i < player_num; i++)
 	{
-		game_record_load_player(fd, client_get(i)->mobj);
+		game_record_load_player(fd, client_get(i)->entity);
 	}
 	close(fd);
 	return 0;

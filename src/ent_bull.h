@@ -38,7 +38,7 @@ typedef struct
 typedef struct
 {
 	//игрок, выпустивший пулю
-	struct mobj_s * owner;
+	struct entlink_s * owner;
 	//тип пули
 	bulltype_t type;
 	//изменение расстояния
@@ -49,6 +49,6 @@ typedef struct
 
 extern bullinfo_t bullinfo_table[__BULL_NUM];
 
-void mobj_bull_init();
+void entity_bull_init();
 
 #endif /* SRC_ENT_BULL_H_ */

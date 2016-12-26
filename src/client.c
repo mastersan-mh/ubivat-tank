@@ -33,7 +33,7 @@ int client_connect()
 	}
 
 	client_t * client = Z_malloc(sizeof(client_t));
-	client->mobj = NULL;
+	client->entity = NULL;
 	client->userstoredata = NULL;
 	clients[clients_num] = client;
 	clients_num++;
@@ -66,9 +66,9 @@ client_t * client_get(int id)
 void client_spawn(int id)
 {
 	if(id < 0 || id >= clients_num) return;
-	mobj_t * spawn = player_spawn_get();
+	entity_t * spawn = player_spawn_get();
 
-	mobj_t * player = mobj_new(
+	entity_t * player = entity_new(
 		MOBJ_PLAYER,
 		spawn->pos.x,
 		spawn->pos.y,
@@ -77,7 +77,7 @@ void client_spawn(int id)
 		NULL
 	);
 
-	clients[id]->mobj = player;
+	clients[id]->entity = player;
 }
 
 void client_unspawn(int id)
@@ -85,7 +85,7 @@ void client_unspawn(int id)
 	if(id < 0 || id >= clients_num) return;
 	//mobj_free(clients[id]->mobj);
 
-	clients[id]->mobj = NULL;
+	clients[id]->entity = NULL;
 }
 
 /**
@@ -97,10 +97,10 @@ void client_store_all()
 	for(id = 0; id < clients_num; id++)
 	{
 		client_t * client = clients[id];
-		if(client->mobj->info == NULL) continue;
-		client->userstoredata = client->mobj->info->client_store(
+		if(client->entity->info == NULL) continue;
+		client->userstoredata = client->entity->info->client_store(
 			&(client->storedata),
-			client->mobj->data
+			client->entity->data
 		);
 	}
 }
@@ -114,9 +114,9 @@ void client_restore_all()
 	for(id = 0; id < clients_num; id++)
 	{
 		client_t * client = clients[id];
-		if(client->mobj->info == NULL) continue;
-		client->mobj->info->client_restore(
-			client->mobj->data,
+		if(client->entity->info == NULL) continue;
+		client->entity->info->client_restore(
+			client->entity->data,
 			&(client->storedata),
 			client->userstoredata
 		);

@@ -24,19 +24,19 @@ bullinfo_t bullinfo_table[__BULL_NUM] =
 /*
  * проверка на попадание в игрока
  */
-static int checkdamage(mobj_t * mobj, mobj_t * bull)
+static int checkdamage(entity_t * entity, entity_t * bull)
 {
 	bullinfo_t * bullinfo = &bullinfo_table[((bull_t*)bull->data)->type];
 
-	player_t * pl = mobj->data;
+	player_t * pl = entity->data;
 
 	if(
-			((bull_t*)bull->data)->owner != mobj && //попали не в себя
+			((bull_t*)bull->data)->owner != entity && //попали не в себя
 			0 < pl->items[ITEM_HEALTH] &&
-			(mobj->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
-			(bull->pos.x - bullinfo->bodybox / 2 <= mobj->pos.x + c_p_MDL_box / 2)&&
-			(mobj->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
-			(bull->pos.y - bullinfo->bodybox / 2 <= mobj->pos.y + c_p_MDL_box / 2)
+			(entity->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
+			(bull->pos.x - bullinfo->bodybox / 2 <= entity->pos.x + c_p_MDL_box / 2)&&
+			(entity->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
+			(bull->pos.y - bullinfo->bodybox / 2 <= entity->pos.y + c_p_MDL_box / 2)
 	) return true;
 	return false;
 }
@@ -44,11 +44,10 @@ static int checkdamage(mobj_t * mobj, mobj_t * bull)
 /*
  * поведение пули
  */
-void bull_common_handle(mobj_t * this)
+void bull_common_handle(entity_t * this)
 {
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
-	mobj_t * player;
-	mobj_t * mobj;
+	entity_t * entity;
 	bull_t * bull = this->data;
 
 	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
@@ -69,10 +68,10 @@ void bull_common_handle(mobj_t * this)
 	)
 	{//предельное расстояние пройдено
 
-		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
+		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
+		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
 		/* следим за взрывом */
-		mobj = mobj_new(
+		entity = entity_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -81,7 +80,7 @@ void bull_common_handle(mobj_t * this)
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = mobj;
+			ENT_PLAYER(bull->owner)->bull = entity;
 		MOBJ_ERASE(this);
 		return;
 	}
@@ -97,10 +96,10 @@ void bull_common_handle(mobj_t * this)
 	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
 	{
 		//пуля попала в стену
-		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
+		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
+		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
 
-		mobj = mobj_new(
+		entity = entity_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -109,33 +108,37 @@ void bull_common_handle(mobj_t * this)
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = mobj;
+			ENT_PLAYER(bull->owner)->bull = entity;
 
 		MOBJ_ERASE(this);
 		return;
 	}
 
-	//пуля не попала в стену
-	player = entity_getnext(NULL, NULL);
 	bool flag = false;
-	while(player && !flag)
-	{                               //проверим на попадание в игрока
-		if(
-				player->type == MOBJ_PLAYER ||
-				player->type == MOBJ_ENEMY ||
-				player->type == MOBJ_BOSS
-		)
+	int i;
+	for(i = 0; i < 3; i++)
+	{
+	//пуля не попала в стену
+		entity_t * player;
+		switch(i)
 		{
-			flag = checkdamage(player, this);
+		case 0: player = entity_getfirst("player"); break;
+		case 1: player = entity_getfirst("enemy"); break;
+		case 2: player = entity_getfirst("boss"); break;
 		}
-		player = player->next;
-	};
+		while(player && !flag)
+		{                               //проверим на попадание в игрока
+			flag = checkdamage(player, this);
+			player = player->next;
+		};
+	}
+
 	if(flag)
-	{                                              //попадание в игрока
-		//пуля попала в стену
-		explodetype_t explodetype = mobj_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = mobj_explodetype_to_mobjtype(explodetype);
-		mobj = mobj_new(
+	{
+		//попадание в игрока
+		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
+		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
+		entity = entity_new(
 			mobj_type,
 			this->pos.x,
 			this->pos.y,
@@ -144,24 +147,24 @@ void bull_common_handle(mobj_t * this)
 			NULL
 		);
 		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(bull->owner)->bull = mobj;
+			ENT_PLAYER(bull->owner)->bull = entity;
 		MOBJ_ERASE(this);
 		return;
 	}
 }
 
-static void bull_common_modelaction_startplay(mobj_t * this, unsigned int imodel, char * actionname)
+static void bull_common_modelaction_startplay(entity_t * this, unsigned int imodel, char * actionname)
 {
-	mobj_model_play_start(this, imodel, actionname);
+	entity_model_play_start(this, imodel, actionname);
 }
 
 /**
  * @description содание пули
  */
-static void bull_common_mobj_init(mobj_t * this, void * thisdata, const mobj_t * parent, bulltype_t bulltype)
+static void bull_common_entity_init(entity_t * this, void * thisdata, const entity_t * parent, bulltype_t bulltype)
 {
 	bull_t * bull = thisdata;
-	bull->owner = (mobj_t *)parent;
+	bull->owner = (entity_t *)parent;
 	bull->type = bulltype;
 	bull->delta_s = 0;
 
@@ -187,12 +190,12 @@ entmodel_t bull_artillery_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_artillery_mobj_init)
+static MOBJ_FUNCTION_INIT(bull_artillery_entity_init)
 {
-	bull_common_mobj_init(this, thisdata, parent, BULL_ARTILLERY);
+	bull_common_entity_init(this, thisdata, parent, BULL_ARTILLERY);
 }
 
-static void bull_artillery_handle(mobj_t * this)
+static void bull_artillery_handle(entity_t * this)
 {
 	bull_common_handle(this);
 }
@@ -200,8 +203,8 @@ static void bull_artillery_handle(mobj_t * this)
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = sizeof(bull_t),
-		.mobjinit = bull_artillery_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = bull_artillery_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -234,12 +237,12 @@ static entmodel_t bull_missile_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_missile_mobj_init)
+static MOBJ_FUNCTION_INIT(bull_missile_entity_init)
 {
-	return bull_common_mobj_init(this, thisdata, parent, BULL_MISSILE);
+	return bull_common_entity_init(this, thisdata, parent, BULL_MISSILE);
 }
 
-static void bull_missile_handle(mobj_t * this)
+static void bull_missile_handle(entity_t * this)
 {
 	bull_common_handle(this);
 }
@@ -247,8 +250,8 @@ static void bull_missile_handle(mobj_t * this)
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = sizeof(bull_t),
-		.mobjinit = bull_missile_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = bull_missile_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -282,12 +285,12 @@ static entmodel_t bull_mine_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(bull_mine_mobj_init)
+static MOBJ_FUNCTION_INIT(bull_mine_entity_init)
 {
-	return bull_common_mobj_init(this, thisdata, parent, BULL_MINE);
+	return bull_common_entity_init(this, thisdata, parent, BULL_MINE);
 }
 
-static void bull_mine_handle(mobj_t * this)
+static void bull_mine_handle(entity_t * this)
 {
 	bull_common_handle(this);
 }
@@ -295,8 +298,8 @@ static void bull_mine_handle(mobj_t * this)
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = sizeof(bull_t),
-		.mobjinit = bull_mine_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = bull_mine_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -307,9 +310,9 @@ static const entityinfo_t bull_mine_reginfo = {
 /**
  * регистрация
  */
-void mobj_bull_init()
+void entity_bull_init()
 {
-	mobjinfo_register(&bull_artillery_reginfo);
-	mobjinfo_register(&bull_missile_reginfo);
-	mobjinfo_register(&bull_mine_reginfo);
+	entity_register(&bull_artillery_reginfo);
+	entity_register(&bull_missile_reginfo);
+	entity_register(&bull_mine_reginfo);
 }

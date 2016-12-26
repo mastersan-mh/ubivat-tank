@@ -21,7 +21,7 @@ weaponinfo_t wtable[__WEAP_NUM] =
 };
 
 
-bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type)
+bulltype_t entity_weapon_type_to_bull_type(weapontype_t type)
 {
 	switch(type)
 	{
@@ -33,7 +33,7 @@ bulltype_t mobj_weapon_type_to_bull_type(weapontype_t type)
 	return EXPLODE_ARTILLERY;
 }
 
-explodetype_t mobj_bull_type_to_explode_type(bulltype_t bulltype)
+explodetype_t entity_bull_type_to_explode_type(bulltype_t bulltype)
 {
 	switch(bulltype)
 	{
@@ -45,7 +45,7 @@ explodetype_t mobj_bull_type_to_explode_type(bulltype_t bulltype)
 	return EXPLODE_ARTILLERY;
 }
 
-mobj_type_t mobl_byulltype_to_mobj(bulltype_t bulltype)
+mobj_type_t entity_byulltype_to_mobj(bulltype_t bulltype)
 {
 	switch(bulltype)
 	{
@@ -57,7 +57,7 @@ mobj_type_t mobl_byulltype_to_mobj(bulltype_t bulltype)
 	return __MOBJ_NUM;
 }
 
-mobj_type_t mobj_explodetype_to_mobjtype(explodetype_t type)
+mobj_type_t entity_explodetype_to_mobjtype(explodetype_t type)
 {
 	switch(type)
 	{

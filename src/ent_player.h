@@ -99,7 +99,7 @@ typedef struct
 	//характеристика
 	stat_t charact;
 	//для управляемой ракеты
-	struct mobj_s * bull;
+	struct entlink_s * bull;
 	//передвижения
 	move_t move;
 	bool attack;
@@ -114,13 +114,12 @@ typedef struct
 	int soundId_move;
 } player_t;
 
-#define ENT_PLAYER(mobj) ((player_t *) (mobj)->data)
+#define ENT_PLAYER(entity) ((player_t *) (entity)->data)
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
 
-
-void mobj_player_init();
+void entity_player_init();
 
 
 void player_moveUp_ON();
@@ -154,19 +153,19 @@ void player2_attack_weapon3_ON();
 void player2_attack_weapon3_OFF();
 
 
-mobj_t * player_spawn_get();
-int player_respawn(mobj_t * player);
+entity_t * player_spawn_get();
+int player_respawn(entity_t * player);
 
 void player_checkcode();
-void player_item_get(struct mobj_s * player);
+void player_item_get(struct entlink_s * player);
 
-void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn);
+void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
 
-void player_draw_status(camera_t * cam, struct mobj_s * player);
+void player_draw_status(camera_t * cam, struct entlink_s * player);
 
-void player_getdamage(struct mobj_s * player, struct mobj_s * explode, bool self, float radius);
+void player_getdamage(struct entlink_s * player, struct entlink_s * explode, bool self, float radius);
 
-void player_class_init(mobj_t * player, player_t * pl);
+void player_class_init(entity_t * player, player_t * pl);
 
 
 #endif /* SRC_ENT_PLAYER_H_ */

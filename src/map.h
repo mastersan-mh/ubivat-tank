@@ -53,7 +53,7 @@ typedef enum
 	MAPDATA_MOBJ_OBJ_EXIT    ,
 	MAPDATA_MOBJ_OBJ_MESS    ,
 	__MAPDATA_MOBJ_NUM
-} mapdata_mobj_type_t;
+} mapdata_entity_type_t;
 
 
 extern char * map_class_names[__MAPDATA_MOBJ_NUM];
@@ -110,7 +110,7 @@ typedef union
 	map_data_spawn_t spawn;
 	map_data_item_t item;
 	map_data_obj_t obj;
-} ATTR_PACKED map_data_mobj_t;
+} ATTR_PACKED map_data_entity_t;
 
 typedef struct maplist_s
 {
@@ -162,9 +162,8 @@ void map_clip_find(
 
 void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist);
 void map_clip_find_near_wall(vec2_t * orig, int dir, vec_t * dist, char * wall);
-bool map_mobj_is_item(mobj_t * mobj);
 
-extern mapdata_mobj_type_t map_file_class_get(int fd);
+extern mapdata_entity_type_t map_file_class_get(int fd);
 int map_load(const char * mapname);
 void map_clear();
 void map_draw(camera_t * cam);

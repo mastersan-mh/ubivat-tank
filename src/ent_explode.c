@@ -22,11 +22,10 @@ explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
 };
 
 
-static void explode_detonate(mobj_t * this)
+static void explode_detonate(entity_t * this)
 {
 	explode_t * explode = this->data;
 
-	mobj_t * player;
 	vec_t r;
 	vec_t dx, dy;
 	bool self;
@@ -68,39 +67,50 @@ static void explode_detonate(mobj_t * this)
 		}
 	}
 	//проверка попаданий в игрока
-	for(player = entity_getnext(NULL, NULL); player ; player = player->next)
+
+	static char *list[] =
 	{
-		if(
-				player->type != MOBJ_PLAYER &&
-				player->type != MOBJ_ENEMY &&
-				player->type != MOBJ_BOSS
-		)
+		"player",
+		"enemy",
+		"boss"
+	};
+
+	int i;
+	for(i = 0; i < 3; i++)
+	{
+	//пуля не попала в стену
+		entity_t * player;
+		player = entity_getfirst(list[i]);
+		while(player)
 		{
-			continue;
+				dx = player->pos.x - this->pos.x;
+				dy = player->pos.y - this->pos.y;
+				if(
+						(VEC_ABS(dx) <= c_p_MDL_box/2) &&
+						(VEC_ABS(dy) <= c_p_MDL_box/2)
+				)
+					r = 0;
+				else
+				{
+					r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
+				};
+				if(r <= explodeinfo->radius)
+				{
+					//r = dx < dy ? dx : dy;
+					//взрывом задели себя или товарища по команде(не для монстров)
+					self = ( explode->owner == player ) && ( strcmp(player->info->name, "player") == 0 );
+					player_getdamage(player, this, self, r);
+				}
+			player = player->next;
 		}
-		dx = player->pos.x - this->pos.x;
-		dy = player->pos.y - this->pos.y;
-		if(
-				(VEC_ABS(dx) <= c_p_MDL_box/2) &&
-				(VEC_ABS(dy) <= c_p_MDL_box/2)
-		)
-			r = 0;
-		else
-		{
-			r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
-		};
-		if(r <= explodeinfo->radius)
-		{
-			//r = dx < dy ? dx : dy;
-			//взрывом задели себя или товарища по команде(не для монстров)
-			self = (explode->owner == player) && (player->type == MOBJ_PLAYER);
-			player_getdamage(player, this, self, r);
-		}
+
 	}
+
+
 
 }
 
-static void explode_common_modelaction_endframef(mobj_t * this, unsigned int imodel, char * actionname)
+static void explode_common_modelaction_endframef(entity_t * this, unsigned int imodel, char * actionname)
 {
 	if(EXPLODE(this)->owner)
 	{
@@ -163,7 +173,7 @@ static entmodel_t explode_big_models[] =
 		}
 };
 
-static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t * parent, explodetype_t type)
+static void explode_common_init(entity_t * this, explode_t * explode, const entity_t * parent, explodetype_t type)
 {
 	static sound_index_t sound_list[] =
 	{
@@ -172,27 +182,27 @@ static void explode_common_init(mobj_t * this, explode_t * explode, const mobj_t
 			SOUND_EXPLODE_GRENADE
 	};
 
-	explode->owner = (mobj_t *)parent;
+	explode->owner = (entity_t *)parent;
 	explode->type  = type;
 
 	sound_play_start(sound_list[type], 1);
-	mobj_model_play_start(this, 0, "explode");
+	entity_model_play_start(this, 0, "explode");
 
 	explode_detonate(this);
 
 }
 
-static MOBJ_FUNCTION_INIT(explode_artillery_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_artillery_entity_init)
 {
 	explode_common_init(this, thisdata, parent, EXPLODE_ARTILLERY);
 }
 
-static MOBJ_FUNCTION_INIT(explode_missile_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_missile_entity_init)
 {
 	explode_common_init(this, thisdata,  parent, EXPLODE_MISSILE);
 }
 
-static MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
+static MOBJ_FUNCTION_INIT(explode_mine_entity_init)
 {
 	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
 }
@@ -200,8 +210,8 @@ static MOBJ_FUNCTION_INIT(explode_mine_mobj_init)
 static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
 		.datasize = sizeof(explode_t),
-		.mobjinit = explode_artillery_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = explode_artillery_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -212,8 +222,8 @@ static const entityinfo_t explode_artillery_reginfo = {
 static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
 		.datasize = sizeof(explode_t),
-		.mobjinit = explode_missile_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = explode_missile_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -224,8 +234,8 @@ static const entityinfo_t explode_missile_reginfo = {
 static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
 		.datasize = sizeof(explode_t),
-		.mobjinit = explode_mine_mobj_init,
-		.mobjdone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.entityinit = explode_mine_entity_init,
+		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -233,9 +243,9 @@ static const entityinfo_t explode_mine_reginfo = {
 		.entmodels = explode_big_models
 };
 
-void mobj_explode_init()
+void entity_explode_init()
 {
-	mobjinfo_register(&explode_artillery_reginfo);
-	mobjinfo_register(&explode_missile_reginfo);
-	mobjinfo_register(&explode_mine_reginfo);
+	entity_register(&explode_artillery_reginfo);
+	entity_register(&explode_missile_reginfo);
+	entity_register(&explode_mine_reginfo);
 }

@@ -72,7 +72,7 @@ void map_init()
 /*
  * добавление объекта
  */
-static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t * data)
+static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entity_t * data)
 {
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
@@ -86,49 +86,49 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		mobj_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		value_int = data->item.amount;
-		mobj_new(MOBJ_ITEM_HEALTH, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new(MOBJ_ITEM_HEALTH, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
 		value_int = data->item.amount;
-		mobj_new(MOBJ_ITEM_ARMOR, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new(MOBJ_ITEM_ARMOR, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
 		value_int = data->item.amount;
-		mobj_new(MOBJ_ITEM_SCORES, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new(MOBJ_ITEM_SCORES, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
 		value_int = data->item.amount;
-		mobj_new(MOBJ_ITEM_AMMO_MISSILE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new(MOBJ_ITEM_AMMO_MISSILE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
 		value_int = data->item.amount;
-		mobj_new(MOBJ_ITEM_AMMO_MINE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new(MOBJ_ITEM_AMMO_MINE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		entity_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		mobj_new(MOBJ_MESSAGE, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		entity_new(MOBJ_MESSAGE, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	default: ;
 	}
@@ -348,7 +348,7 @@ void map_clip_find_near_wall(vec2_t * orig, int dir, float * dist, char * wall)
 	}
 }
 
-static mapdata_mobj_type_t mobj_type_name_to_value(const char * class)
+static mapdata_entity_type_t mobj_type_name_to_value(const char * class)
 {
 	int mapdata_mobj_type;
 	for(mapdata_mobj_type = 0; mapdata_mobj_type < __MAPDATA_MOBJ_NUM; mapdata_mobj_type++)
@@ -363,7 +363,7 @@ static mapdata_mobj_type_t mobj_type_name_to_value(const char * class)
 /*
  * чтение класса предмета
  */
-mapdata_mobj_type_t map_file_class_get(int fd)
+mapdata_entity_type_t map_file_class_get(int fd)
 {
 	char class[256];
 	char ch;
@@ -383,7 +383,7 @@ mapdata_mobj_type_t map_file_class_get(int fd)
 /**
  * чтение класса предмета
  */
-static int map_load_mobj(int fd, mapdata_mobj_type_t * mapdata_mobj_type, map_data_mobj_t * data)
+static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_data_entity_t * data)
 {
 	static size_t datasize[__MAPDATA_MOBJ_NUM] =
 	{
@@ -489,8 +489,8 @@ int map_load(const char * mapname)
 	int i = 0;
 	for(;;)
 	{
-		mapdata_mobj_type_t mapdata_mobj_type;
-		map_data_mobj_t data;
+		mapdata_entity_type_t mapdata_mobj_type;
+		map_data_entity_t data;
 		int ret = map_load_mobj(fd, &mapdata_mobj_type, &data);
 		if(ret) break;
 		if(mapdata_mobj_type == MAPDATA_MOBJ_SPAWN_PLAYER) player_spawn_exist = true;
@@ -523,7 +523,7 @@ void map_clear()
 	Z_FREE(map._file);
 	Z_FREE(map.name);
 	Z_FREE(map.brief);
-	mobjs_erase();
+	entities_erase();
 	map.loaded = false;
 }
 
@@ -615,7 +615,7 @@ void map_draw(camera_t * cam)
 		}
 	}
 
-	mobjs_render(cam);
+	entities_render(cam);
 
 }
 /*

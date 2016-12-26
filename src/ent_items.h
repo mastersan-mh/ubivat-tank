@@ -41,10 +41,10 @@ typedef struct
 	bool exist;
 } item_t;
 
-#define ENT_ITEM(mobj) ((item_t *) (mobj)->data)
+#define ENT_ITEM(entity) ((item_t *) (entity)->data)
 
 itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype);
 
-void mobj_items_init();
+void entity_items_init();
 
 #endif /* SRC_ENT_ITEMS_H_ */

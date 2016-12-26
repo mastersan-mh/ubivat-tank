@@ -20,7 +20,7 @@ typedef struct client_storedata_s
 
 typedef struct
 {
-	struct mobj_s * mobj;
+	struct entlink_s * entity;
 	client_storedata_t storedata;
 	void * userstoredata;
 }client_t;

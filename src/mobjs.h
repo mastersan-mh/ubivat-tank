@@ -17,10 +17,10 @@
 
 
 #define MOBJ_FUNCTION_INIT(x) \
-	void (x)(mobj_t * this, void * thisdata, const mobj_t * parent, const void * args)
+	void (x)(entity_t * this, void * thisdata, const entity_t * parent, const void * args)
 
 #define MOBJ_FUNCTION_DONE(x) \
-	void (x)(mobj_t * this, void * thisdata)
+	void (x)(entity_t * this, void * thisdata)
 
 #define MOBJ_FUNCTION_DONE_DEFAULT NULL
 #define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
@@ -66,7 +66,7 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-typedef void (*endframe_f)(struct mobj_s * this, unsigned int imodel, char * actionname);
+typedef void (*endframe_f)(struct entlink_s * this, unsigned int imodel, char * actionname);
 
 typedef struct
 {
@@ -98,10 +98,14 @@ typedef struct
 	float frame;
 } ent_modelplayer_t;
 
-typedef struct mobj_s
+/*
+ * список объектов одного типа, у которых
+ * .erased == false и allow_handle == true
+ */
+typedef struct entlink_s
 {
-	struct mobj_s * prev;
-	struct mobj_s * next;
+	struct entlink_s * prev;
+	struct entlink_s * next;
 	/* удалить объект */
 	bool erase;
 	//класс
@@ -120,19 +124,18 @@ typedef struct mobj_s
 	ent_modelplayer_t * modelplayers;
 
 	void * data;
-
-} mobj_t;
+} entity_t;
 
 typedef struct entityinfo_s
 {
 	char * name;
 	size_t datasize;
-	void (*mobjinit)(mobj_t * this, void * thisdata, const mobj_t * parent, const void * args);
-	void (*mobjdone)(mobj_t * this, void * thisdata);
+	void (*entityinit)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
+	void (*entitydone)(entity_t * this, void * thisdata);
 
-	void (*handle)(mobj_t * this);
+	void (*handle)(entity_t * this);
 
-	void * (*connect)(const mobj_t * this);
+	void * (*connect)(const entity_t * this);
 
 	void * (*client_store)(client_storedata_t * storedata, const void * data);
 	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
@@ -144,22 +147,21 @@ typedef struct entityinfo_s
 
 }entityinfo_t;
 
-extern void mobjinfo_register(const entityinfo_t * info);
-extern const entityinfo_t * mobj_info_get(const char * name);
+extern void entity_register(const entityinfo_t * info);
 
-extern mobj_t * entity_getnext(mobj_t * mobj, const char * enttype);
+extern entity_t * entity_getfirst(const char * name);
 
-extern void mobjs_handle();
+extern void entities_handle();
 
-extern void mobjs_render(camera_t * cam);
+extern void entities_render(camera_t * cam);
 
-extern mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args);
-extern void mobjs_erase();
+extern entity_t * entity_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
+extern void entities_erase();
 
-extern void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname);
-extern void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel);
-extern void mobj_model_play_pause_all(mobj_t * mobj);
+extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
+extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);
+extern void entity_model_play_pause_all(entity_t * entity);
 
-extern int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname);
+extern int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname);
 
 #endif /* SRC_MOBJS_H_ */

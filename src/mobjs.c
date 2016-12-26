@@ -41,34 +41,21 @@ char *mobjnames[__MOBJ_NUM] =
 		"exit"
 };
 
-/*
- список объектов одного типа, у которых
- .erased == false и allow_handle == true
-*/
-typedef struct entlink_s
-{
-	struct entlink_s * prev;
-	struct entlink_s * next;
-	mobj_t * ent;
-} entlink_t;
-
 typedef struct
 {
 	const entityinfo_t * info;
-	entlink_t * entlinks;
+	/* существующие объекты */
+	entity_t * entlinks;
+	/* удалённые объекты */
+	entity_t * entlinks_erased;
 }entityinfo_reg_t;
 
-/* действительные entities */
-mobj_t * mobjs = NULL;
-
-/* удалённые entities */
-mobj_t * mobjs_erased = NULL;
-
+/* зарегестрированные объекты */
 static entityinfo_reg_t * entityinfo_regs = NULL;
 static size_t entityinfo_regs_size = 0;
 static size_t entityinfo_regs_num = 0;
 
-entityinfo_reg_t * entityinfo_reg_get(const char * name)
+entityinfo_reg_t * entityinfo_get(const char * name)
 {
 	size_t i;
 	for(i = 0; i < entityinfo_regs_num; i++)
@@ -79,7 +66,7 @@ entityinfo_reg_t * entityinfo_reg_get(const char * name)
 	return NULL;
 }
 
-void mobjinfo_register(const entityinfo_t * info)
+void entity_register(const entityinfo_t * info)
 {
 	entityinfo_reg_t * tmp;
 	if(info == NULL)
@@ -97,16 +84,16 @@ void mobjinfo_register(const entityinfo_t * info)
 	game_console_send("Entity registration: \"%s\".", info->name);
 
 
-	if(entityinfo_reg_get(info->name) != NULL)
+	if(entityinfo_get(info->name) != NULL)
 	{
 		game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
 		return;
 	}
 
-	if(info->datasize != 0 && info->mobjinit == NULL)
-		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .mobjinit == NULL.", info->name);
+	if(info->datasize != 0 && info->entityinit == NULL)
+		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .entityinit == NULL.", info->name);
 
-	if(info->datasize == 0 && info->mobjinit != NULL)
+	if(info->datasize == 0 && info->entityinit != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 
 	if(entityinfo_regs_size < entityinfo_regs_num + 1)
@@ -127,18 +114,18 @@ void mobjinfo_register(const entityinfo_t * info)
 /**
  * @description установить модель на entity
  */
-int mobj_model_set(mobj_t * mobj, unsigned int imodel, char * modelname)
+int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
 {
-	if(imodel >= mobj->info->entmodels_num) return -1;
-	mobj->modelplayers[imodel].model = model_get(modelname);
-	mobj->modelplayers[imodel].frame = 0;
+	if(imodel >= entity->info->entmodels_num) return -1;
+	entity->modelplayers[imodel].model = model_get(modelname);
+	entity->modelplayers[imodel].frame = 0;
 	return 0;
 }
 
 /**
  * @description добавление объекта
  */
-mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const mobj_t * parent, const void * args)
+entity_t * entity_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
 {
 	int i;
 	entityinfo_reg_t * entityinfo_reg = NULL;
@@ -149,88 +136,91 @@ mobj_t * mobj_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, cons
 		return NULL;
 	}
 
-	char * mobjname = mobjnames[mobj_type];
-	entityinfo_reg = entityinfo_reg_get(mobjname);
+	char * entityname = mobjnames[mobj_type];
+	entityinfo_reg = entityinfo_get(entityname);
 	if(!entityinfo_reg)
 	{
-		game_console_send("Error: Cannot create unknown entity \"%s\".", mobjname);
+		game_console_send("Error: Cannot create unknown entity \"%s\".", entityname);
 		return NULL;
 	}
 
 
-	mobj_t * mobj = Z_malloc(sizeof(mobj_t));
+	entity_t * entity = Z_malloc(sizeof(entity_t));
 
-	entlink_t * entlink = Z_malloc(sizeof(entlink_t));
-
-	mobj->erase = false;
-	mobj->type = mobj_type;
-	mobj->pos.x = x;
-	mobj->pos.y = y;
-	mobj->dir   = dir;
-	mobj->allow_handle  = true;
-	mobj->allow_draw = true;
+	entity->erase = false;
+	entity->type = mobj_type;
+	entity->pos.x = x;
+	entity->pos.y = y;
+	entity->dir   = dir;
+	entity->allow_handle  = true;
+	entity->allow_draw = true;
 
 	const entityinfo_t * entityinfo = entityinfo_reg->info;
-	mobj->info = entityinfo;
+	entity->info = entityinfo;
 
-	entlink->ent = mobj;
-
-	LIST2_PUSH(mobjs, mobj);
-	LIST2_PUSH(entityinfo_reg->entlinks, entlink);
+	LIST2_PUSH(entityinfo_reg->entlinks, entity);
 
 	if(entityinfo->entmodels_num > 0)
 	{
-		mobj->modelplayers = Z_malloc(entityinfo->entmodels_num * sizeof(ent_modelplayer_t));
+		entity->modelplayers = Z_malloc(entityinfo->entmodels_num * sizeof(ent_modelplayer_t));
 
 		for( i = 0; i < entityinfo->entmodels_num; i++)
 		{
-			mobj_model_set(mobj, i, entityinfo->entmodels[i].modelname);
+			entity_model_set(entity, i, entityinfo->entmodels[i].modelname);
 		}
 	}
 
 	if(entityinfo->datasize == 0)
-		mobj->data = NULL;
+		entity->data = NULL;
 	else
-		mobj->data = Z_malloc(entityinfo->datasize);
-	if(entityinfo->mobjinit)
-		mobj->info->mobjinit(mobj, mobj->data, parent, args);
+		entity->data = Z_malloc(entityinfo->datasize);
+	if(entityinfo->entityinit)
+		entity->info->entityinit(entity, entity->data, parent, args);
 
-	return mobj;
+	return entity;
 }
 
 /*
  *
  */
-static void mobj_freemem(mobj_t * mobj)
+static void entity_freemem(entity_t * entity)
 {
-	if(mobj->info != NULL)
+	if(entity->info != NULL)
 	{
-		if(mobj->info->mobjdone != NULL)
-			mobj->info->mobjdone(mobj, mobj->data);
-		if(mobj->info->datasize)
-			Z_free(mobj->data);
+		if(entity->info->entitydone != NULL)
+			entity->info->entitydone(entity, entity->data);
+		if(entity->info->datasize)
+			Z_free(entity->data);
 	}
-	Z_free(mobj->modelplayers);
-	Z_free(mobj);
+	Z_free(entity->modelplayers);
+	Z_free(entity);
 }
 
 /**
  * @description удаление всех объектов
  */
-void mobjs_erase()
+void entities_erase()
 {
-	mobj_t * mobj;
-	while(mobjs)
+	size_t i;
+	for(i = 0; i < entityinfo_regs_num; i++)
 	{
-		mobj = mobjs;
-		mobjs = mobjs->next;
-		mobj_freemem(mobj);
-	}
-	while(mobjs_erased)
-	{
-		mobj = mobjs_erased;
-		mobjs_erased = mobjs_erased->next;
-		mobj_freemem(mobj);
+		entityinfo_reg_t * entreg = &entityinfo_regs[i];
+
+		entity_t * entlink;
+
+		while(entreg->entlinks)
+		{
+			entlink = entreg->entlinks;
+			entreg->entlinks = entreg->entlinks->next;
+			entity_freemem(entlink);
+		}
+		while(entreg->entlinks_erased)
+		{
+			entlink = entreg->entlinks_erased;
+			entreg->entlinks_erased = entreg->entlinks_erased->next;
+			entity_freemem(entlink);
+		}
+
 	}
 }
 
@@ -254,92 +244,97 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 	return false;
 }
 
-void mobjs_handle()
+void entities_handle()
 {
-	int i;
-	mobj_t * mobj;
-	for(mobj = mobjs; mobj; )
+	size_t i;
+	for(i = 0; i < entityinfo_regs_num; i++)
 	{
+		entityinfo_reg_t * entreg = &entityinfo_regs[i];
 
-		if(mobj->erase)
+		entity_t * entlink = entreg->entlinks;
+		while(entlink)
 		{
 
-			if(mobjs == mobj)
-				mobjs = mobjs->next;
-
-			mobj_t * erased = mobj;
-			mobj = mobj->next;
-			if(erased->prev)
-				erased->prev->next = erased->next;
-			if(erased->next)
-				erased->next->prev = erased->prev;
-
-			mobj_model_play_pause_all(erased);
-
-			LIST2_PUSH(mobjs_erased, erased);
-			continue;
-		}
-
-		if(!mobj->allow_handle)
-		{
-			mobj = mobj->next;
-			continue;
-		}
-
-		const entityinfo_t * info = mobj->info;
-		if(!info) continue;
-
-		if(info->handle != NULL)
-		{
-			info->handle(mobj);
-		}
-
-		if(mobj->erase)
-		{
-			mobj = mobj->next;
-			continue;
-		}
-
-		for(i = 0; i < info->entmodels_num; i++)
-		{
-
-			if(
-					mobj->modelplayers[i].model != NULL &&
-					mobj->modelplayers[i].model->frames > 0 &&
-					mobj->modelplayers[i].model->fps > 0 &&
-					mobj->modelplayers[i].action != NULL
-			)
+			if(entlink->erase)
 			{
 
-				bool end = model_nextframe(
-					&mobj->modelplayers[i].frame,
-					mobj->modelplayers[i].model->fps,
-					mobj->modelplayers[i].action->startframe,
-					mobj->modelplayers[i].action->endframe
-				);
-				if(end)
+				if(entreg->entlinks == entlink)
+					entreg->entlinks = entreg->entlinks->next;
+
+				entity_t * erased = entlink;
+				entlink = entlink->next;
+				if(erased->prev)
+					erased->prev->next = erased->next;
+				if(erased->next)
+					erased->next->prev = erased->prev;
+
+				entity_model_play_pause_all(erased);
+
+				LIST2_PUSH(entreg->entlinks_erased, erased);
+				continue;
+			}
+
+			if(!entlink->allow_handle)
+			{
+				entlink = entlink->next;
+				continue;
+			}
+
+			const entityinfo_t * info = entlink->info;
+			if(!info) continue;
+
+			if(info->handle != NULL)
+			{
+				info->handle(entlink);
+			}
+
+			if(entlink->erase)
+			{
+				entlink = entlink->next;
+				continue;
+			}
+
+			for(i = 0; i < info->entmodels_num; i++)
+			{
+
+				if(
+						entlink->modelplayers[i].model != NULL &&
+						entlink->modelplayers[i].model->frames > 0 &&
+						entlink->modelplayers[i].model->fps > 0 &&
+						entlink->modelplayers[i].action != NULL
+				)
 				{
-					const ent_modelaction_t * action = mobj->modelplayers[i].action;
-					if(action != NULL && action->endframef != NULL)
+
+					bool end = model_nextframe(
+						&entlink->modelplayers[i].frame,
+						entlink->modelplayers[i].model->fps,
+						entlink->modelplayers[i].action->startframe,
+						entlink->modelplayers[i].action->endframe
+					);
+					if(end)
 					{
-						mobj->modelplayers[i].action = NULL;
-						action->endframef(
-							mobj,
-							i,
-							action->name
-						);
+						const ent_modelaction_t * action = entlink->modelplayers[i].action;
+						if(action != NULL && action->endframef != NULL)
+						{
+							entlink->modelplayers[i].action = NULL;
+							action->endframef(
+								entlink,
+								i,
+								action->name
+							);
+						}
 					}
+
 				}
 
 			}
+			entlink = entlink->next;
 
 		}
-		mobj = mobj->next;
-
 	}
 }
 
-static const ent_modelaction_t * mobj_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname)
+static const ent_modelaction_t * entity_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname)
 {
 	if(info->entmodels == NULL)
 		return NULL;
@@ -358,9 +353,9 @@ static const ent_modelaction_t * mobj_reginfo_action_get(const entityinfo_t * in
 /**
  * @description начать/возобновить проигрывание кадров модели
  */
-void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname)
+void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname)
 {
-	const entityinfo_t * info = mobj->info;
+	const entityinfo_t * info = entity->info;
 	if(imodel >= info->entmodels_num)
 	{
 		game_console_send("Error: Entity \"%s\": imodel %d not found, could not play frames.",
@@ -369,7 +364,7 @@ void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname
 		);
 		return;
 	}
-	const ent_modelaction_t * action = mobj_reginfo_action_get(info, imodel, actionname);
+	const ent_modelaction_t * action = entity_reginfo_action_get(info, imodel, actionname);
 	if(!action)
 	{
 		game_console_send("Error: Entity \"%s\", imodel %d: Action \"%s\" not found, could not play frames.",
@@ -380,7 +375,7 @@ void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname
 		return;
 	}
 
-	ent_modelplayer_t * modelplayer = &mobj->modelplayers[imodel];
+	ent_modelplayer_t * modelplayer = &entity->modelplayers[imodel];
 	if(modelplayer->action == NULL)
 	{
 		/* если действия нет или закончилось, начнём действие заново */
@@ -400,9 +395,9 @@ void mobj_model_play_start(mobj_t * mobj, unsigned int imodel, char * actionname
 /**
  * @description приостановить проигрывание кадров модели
  */
-void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel)
+void entity_model_play_pause(entity_t * entity, unsigned int imodel)
 {
-	const entityinfo_t * info = mobj->info;
+	const entityinfo_t * info = entity->info;
 	if(imodel >= info->entmodels_num)
 	{
 		game_console_send("Error: Entity \"%s\": imodel %d not found, could not pause frames.",
@@ -411,37 +406,37 @@ void mobj_model_play_pause(mobj_t * mobj, unsigned int imodel)
 		);
 		return;
 	}
-	mobj->modelplayers[imodel].action = NULL;
+	entity->modelplayers[imodel].action = NULL;
 }
 
-void mobj_model_play_pause_all(mobj_t * mobj)
+void entity_model_play_pause_all(entity_t * entity)
 {
-	const entityinfo_t * info = mobj->info;
+	const entityinfo_t * info = entity->info;
 	int imodel;
 	for(imodel = 0; imodel < info->entmodels_num; imodel++ )
 	{
-		mobj->modelplayers[imodel].action = NULL;
+		entity->modelplayers[imodel].action = NULL;
 	}
 }
 
 
 /**
- * получить следующий entity, соответствующий enttype
+ * получить первый entity, соответствующий name
  */
-mobj_t * entity_getnext(mobj_t * mobj, const char * enttype)
+entity_t * entity_getfirst(const char * name)
 {
-	if(mobj == NULL)
+	entityinfo_reg_t * entinfo = entityinfo_get(name);
+	if(entinfo == NULL)
 	{
-		if(enttype == NULL)
-			return mobjs;
+		game_console_send("Error: Unknown entity \"%s\".", name);
+		return NULL;
 	}
-	/* TODO */
-	return NULL;
+	return entinfo->entlinks;
 }
 
 static void ent_models_render(
 	camera_t * cam,
-	mobj_t * mobj
+	entity_t * entity
 )
 {
 	static GLfloat angles[] =
@@ -452,8 +447,8 @@ static void ent_models_render(
 			90.0f,  /* E */
 	};
 
-	vec2_t pos = mobj->pos;
-	const struct entityinfo_s * info = mobj->info;
+	vec2_t pos = entity->pos;
+	const struct entityinfo_s * info = entity->info;
 	entmodel_t * ent_models = info->entmodels;
 	size_t models_num = info->entmodels_num;
 
@@ -465,10 +460,10 @@ static void ent_models_render(
 	for( i = 0; i < models_num; i++ )
 	{
 		entmodel_t * ent_model = &ent_models[i];
-		ent_modelplayer_t * modelplayer = &mobj->modelplayers[i];
+		ent_modelplayer_t * modelplayer = &entity->modelplayers[i];
 
 		int frame = VEC_TRUNC(modelplayer->frame);
-		direction_t dir = mobj->dir;
+		direction_t dir = entity->dir;
 		model_render(
 			cam,
 			pos,
@@ -485,65 +480,39 @@ static void ent_models_render(
 /*
  * рисование объектов на карте
  */
-void mobjs_render(camera_t * cam)
+void entities_render(camera_t * cam)
 {
 	int cam_sx_half = cam->sx / 2;
 	int cam_sy_half = cam->sy / 2;
-	mobj_t * mobj;
 	int ent_rendered = 0;
-	for(mobj = mobjs; mobj; mobj = mobj->next)
+
+	size_t i;
+	for(i = 0; i < entityinfo_regs_num; i++)
 	{
-		if(mobj->erase) continue;
-		if(!mobj->allow_handle) continue;
+		entityinfo_reg_t * entreg = &entityinfo_regs[i];
 
-		//int viewbox_half = mobj->img->img_sx;
-		int viewbox_half = 16;
-
-
-		if(
-				mobj->allow_draw &&
-				( cam->pos.x  - cam_sx_half  <= mobj->pos.x + viewbox_half ) &&
-				( mobj->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
-				( cam->pos.y  - cam_sy_half  <= mobj->pos.y + viewbox_half ) &&
-				( mobj->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
-		)
+		entity_t * entlink;
+		for(entlink = entreg->entlinks; entlink; entlink = entlink->next)
 		{
-			ent_models_render(cam, mobj);
-			ent_rendered++;
+			if(entlink->erase) continue;
+			if(!entlink->allow_handle) continue;
+
+			//int viewbox_half = entity->img->img_sx;
+			int viewbox_half = 16;
+
+
+			if(
+					entlink->allow_draw &&
+					( cam->pos.x  - cam_sx_half  <= entlink->pos.x + viewbox_half ) &&
+					( entlink->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
+					( cam->pos.y  - cam_sy_half  <= entlink->pos.y + viewbox_half ) &&
+					( entlink->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
+			)
+			{
+				ent_models_render(cam, entlink);
+				ent_rendered++;
+			}
 		}
 	}
 	//game_console_send("ent_rendered = %d\n", ent_rendered);
 }
-
-/*
- * удаление взрыва из списка, после удаления
- *        explode указывает на предыдущий эл-т если
- *        он существует, если нет - то на следующий
- */
-/*
-void explode_remove(mobj_t ** mobj)
-{
-	mobj_t * p;
-
-	if (explList && *explode != NULL)
-	{
-		p = explList;
-		if(explList== *explode) { //если HEAD и explode совпадают
-			explList = p->next;
-			*explode          = explList;
-			Z_free(p);
-			p = NULL;
-		}
-		else
-		{
-			if(p->next)
-			{ // если в списке не один эл-т
-				while(p && p->next != *explode) p = p->next; // находим ссылку на нужный эл-т
-				p->next = (*explode)->next;
-				Z_free(*explode); // удаляем его
-				*explode = p;     // bull указ. на пред. эл-т
-			}
-		}
-	}
-}
-*/

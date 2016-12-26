@@ -37,7 +37,7 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 		{ { ITEM_SCOREPERCLASS * 6,   5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank6"}  /* BOSS */
 };
 
-#define tank_common_modelaction_endframef mobj_model_play_start
+#define tank_common_modelaction_endframef entity_model_play_start
 
 static const ent_modelaction_t tank_modelactions[] =
 {
@@ -103,26 +103,26 @@ static entmodel_t tank_boss_models[] =
 		}
 };
 
-static MOBJ_FUNCTION_INIT(player_mobj_init);
-static MOBJ_FUNCTION_DONE(player_mobj_done);
-static void player_handle(mobj_t * this);
+static MOBJ_FUNCTION_INIT(player_init);
+static MOBJ_FUNCTION_DONE(player_done);
+static void player_handle(entity_t * this);
 static void * player_store(client_storedata_t * storedata, const void * mobj);
 static void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata);
 
 
-static MOBJ_FUNCTION_INIT(enemy_mobj_init);
-static MOBJ_FUNCTION_DONE(enemy_mobj_done);
-static void enemy_handle(mobj_t * this);
+static MOBJ_FUNCTION_INIT(enemy_init);
+static MOBJ_FUNCTION_DONE(enemy_done);
+static void enemy_handle(entity_t * this);
 
-static MOBJ_FUNCTION_INIT(boss_mobj_init);
-static MOBJ_FUNCTION_DONE(boss_mobj_done);
-static void boss_handle(mobj_t * this);
+static MOBJ_FUNCTION_INIT(boss_init);
+static MOBJ_FUNCTION_DONE(boss_done);
+static void boss_handle(entity_t * this);
 
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
-		.mobjinit = player_mobj_init,
-		.mobjdone = player_mobj_done,
+		.entityinit = player_init,
+		.entitydone = player_done,
 		.handle   = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore,
@@ -133,8 +133,8 @@ static const entityinfo_t player_reginfo = {
 static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
-		.mobjinit = enemy_mobj_init,
-		.mobjdone = enemy_mobj_done,
+		.entityinit = enemy_init,
+		.entitydone = enemy_done,
 		.handle   = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -145,8 +145,8 @@ static const entityinfo_t enemy_reginfo = {
 static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
-		.mobjinit = boss_mobj_init,
-		.mobjdone = boss_mobj_done,
+		.entityinit = boss_init,
+		.entitydone = boss_done,
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -154,16 +154,16 @@ static const entityinfo_t boss_reginfo = {
 		.entmodels = tank_boss_models
 };
 
-void mobj_player_init()
+void entity_player_init()
 {
-	mobjinfo_register(&player_reginfo);
-	mobjinfo_register(&enemy_reginfo);
-	mobjinfo_register(&boss_reginfo);
+	entity_register(&player_reginfo);
+	entity_register(&enemy_reginfo);
+	entity_register(&boss_reginfo);
 }
 
-static void player_handle_common(mobj_t * player);
+static void player_handle_common(entity_t * player);
 
-MOBJ_FUNCTION_INIT(player_mobj_init)
+MOBJ_FUNCTION_INIT(player_init)
 {
 	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_RUS);
@@ -180,14 +180,14 @@ MOBJ_FUNCTION_INIT(player_mobj_init)
 
 }
 
-MOBJ_FUNCTION_DONE(player_mobj_done)
+MOBJ_FUNCTION_DONE(player_done)
 {
 	player_t * pl = thisdata;
 	sound_play_stop(pl->soundId_move);
 	ctrl_AI_done(&(pl->brain));
 }
 
-void player_handle(mobj_t * this)
+void player_handle(entity_t * this)
 {
 	think_human(this);
 	player_handle_common(this);
@@ -222,7 +222,7 @@ void player_restore(void * data, const client_storedata_t * storedata, const voi
 	);
 }
 
-MOBJ_FUNCTION_INIT(enemy_mobj_init)
+MOBJ_FUNCTION_INIT(enemy_init)
 {
 	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_WHITE);
@@ -230,28 +230,28 @@ MOBJ_FUNCTION_INIT(enemy_mobj_init)
 	ctrl_AI_init(&pl->brain);
 }
 
-MOBJ_FUNCTION_DONE(enemy_mobj_done)
+MOBJ_FUNCTION_DONE(enemy_done)
 {
-	player_mobj_done(this, thisdata);
+	player_done(this, thisdata);
 }
-void enemy_handle(mobj_t * this)
+void enemy_handle(entity_t * this)
 {
 	think_enemy(this);
 	player_handle_common(this);
 }
 
-MOBJ_FUNCTION_INIT(boss_mobj_init)
+MOBJ_FUNCTION_INIT(boss_init)
 {
 	player_t * pl = thisdata;
 	pl->Iflag = image_get(IMG_FLAG_USA);
 	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
 }
-MOBJ_FUNCTION_DONE(boss_mobj_done)
+MOBJ_FUNCTION_DONE(boss_done)
 {
-	player_mobj_done(this, thisdata);
+	player_done(this, thisdata);
 }
-void boss_handle(mobj_t * this)
+void boss_handle(entity_t * this)
 {
 	//think_enemy(player);
 	player_handle_common(this);
@@ -264,13 +264,13 @@ static void _move(int id, direction_t dir, bool go)
 {
 	client_t * cl = client_get(id);
 	if(!cl)return;
-	player_t * pl = cl->mobj->data;
+	player_t * pl = cl->entity->data;
 
 	if(go)
-		cl->mobj->dir = dir;
+		cl->entity->dir = dir;
 	else
 	{
-		if(cl->mobj->dir != dir)
+		if(cl->entity->dir != dir)
 			return;
 	}
 	pl->move.go = go;
@@ -280,7 +280,7 @@ static void _attack(int id, bool attack, weapontype_t weap)
 {
 	client_t * cl = client_get(id);
 	if(!cl)return;
-	player_t * pl = cl->mobj->data;
+	player_t * pl = cl->entity->data;
 
 	if(attack)
 		pl->weap = weap;
@@ -533,29 +533,29 @@ void check_value_int(int * val, int min, int max)
 	else if(*val < min) *val = min;
 }
 
-static void player_influence_message(mobj_t * actor, mobj_t * exposed)
+static void player_influence_message(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
 	game_message_send(ENT_MESSAGE(exposed)->message);
 }
 
-static void player_influence_exit(mobj_t * actor, mobj_t * exposed)
+static void player_influence_exit(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
 	game_message_send(ENT_EXIT(exposed)->message);
 	game._win_ = true;
 }
 
-static void player_influence_item(mobj_t * player, mobj_t * mobj)
+static void player_influence_item(entity_t * player, entity_t * entity)
 {
 	player_t * pl = player->data;
 
-	itemtype_t itemtype = items_mobjtype_to_itemtype(mobj->type);
+	itemtype_t itemtype = items_mobjtype_to_itemtype(entity->type);
 	if((int) itemtype < 0)
 	{
 		game_halt("player_items_get(): invalid itemtype = %d\n", itemtype);
 	}
-	item_t * item = mobj->data;
+	item_t * item = entity->data;
 	if(!item->exist) return;
 
 	playerinfo_t *playerinfo = &playerinfo_table[pl->level];
@@ -590,8 +590,7 @@ static void player_influence_item(mobj_t * player, mobj_t * mobj)
 /*
  * подбирание предметов игроком
  */
-//void player_item_get(mobj_t * player)
-static void player_obj_check(mobj_t * player)
+static void player_obj_check(entity_t * player)
 {
 	if(player->type != MOBJ_PLAYER) return;
 
@@ -599,56 +598,57 @@ static void player_obj_check(mobj_t * player)
 
 	if(pl->items[ITEM_HEALTH] <= 0) return;
 
-	mobj_t * mobj;
-	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
+	static char *list[] =
 	{
-		if(
-				( mobj->pos.x   - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
-				( player->pos.x - c_p_MDL_box    / 2 <= mobj->pos.x   + c_item_MDL_box / 2 ) &&
-				( mobj->pos.y   - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
-				( player->pos.y - c_p_MDL_box    / 2 <= mobj->pos.y   + c_item_MDL_box / 2 )
-		)
-		{
+			"item_scores",
+			"item_health",
+			"item_armor",
+			"item_ammo_missile",
+			"item_ammo_mine",
+			"message",
+			"exit"
+	};
 
-			switch(mobj->type)
+	int i;
+	for(i = 0; i < 7; i++)
+	{
+		entity_t * ent = entity_getfirst(list[i]);
+		for(; ent; ent = ent->next)
+		{
+			if(
+					( ent->pos.x    - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
+					( player->pos.x - c_p_MDL_box    / 2 <= ent->pos.x    + c_item_MDL_box / 2 ) &&
+					( ent->pos.y    - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
+					( player->pos.y - c_p_MDL_box    / 2 <= ent->pos.y    + c_item_MDL_box / 2 )
+			)
 			{
-			case MOBJ_SPAWN_PLAYER:
-			case MOBJ_SPAWN_ENEMY:
-			case MOBJ_SPAWN_BOSS:
-				break;
-			case MOBJ_ITEM_SCORES:
-			case MOBJ_ITEM_HEALTH:
-			case MOBJ_ITEM_ARMOR:
-			case MOBJ_ITEM_AMMO_MISSILE:
-			case MOBJ_ITEM_AMMO_MINE:
-				player_influence_item(player, mobj);
-				break;
-			case MOBJ_MESSAGE:
-				player_influence_message(player, mobj);
-				break;
-			case MOBJ_PLAYER:
-			case MOBJ_ENEMY:
-			case MOBJ_BOSS:
-			case MOBJ_BULL_ARTILLERY:
-			case MOBJ_BULL_MISSILE:
-			case MOBJ_BULL_MINE:
-			case MOBJ_EXPLODE_ARTILLERY:
-			case MOBJ_EXPLODE_MISSILE:
-			case MOBJ_EXPLODE_MINE:
-				break;
-			case MOBJ_EXIT:
-				player_influence_exit(player, mobj);
-				break;
-			default: ;
+
+				switch(ent->type)
+				{
+					case MOBJ_ITEM_SCORES:
+					case MOBJ_ITEM_HEALTH:
+					case MOBJ_ITEM_ARMOR:
+					case MOBJ_ITEM_AMMO_MISSILE:
+					case MOBJ_ITEM_AMMO_MINE:
+						player_influence_item(player, ent);
+						break;
+					case MOBJ_MESSAGE:
+						player_influence_message(player, ent);
+						break;
+					case MOBJ_EXIT:
+						player_influence_exit(player, ent);
+						break;
+					default: ;
+				}
 			}
-		}
-	} //end for
+		} //end for
+	}
 }
 
 /*
  * передвижение игрока
  */
-static void player_move(mobj_t * player, int dir, vec_t * speed)
+static void player_move(entity_t * player, int dir, vec_t * speed)
 {
 	vec2_t * pos = &player->pos;
 	vec_t dway = (*speed) * dtimed1000;
@@ -670,7 +670,7 @@ static void player_move(mobj_t * player, int dir, vec_t * speed)
 /*
  * обработка игрока
  */
-static void player_handle_common(mobj_t * player)
+static void player_handle_common(entity_t * player)
 {
 	enum
 	{
@@ -713,8 +713,8 @@ static void player_handle_common(mobj_t * player)
 	switch(state)
 	{
 		case STATE_IDLE: break;
-		case STATE_RUN_BEGIN: mobj_model_play_start(player, 0, "run"); break;
-		case STATE_RUN_END  : mobj_model_play_pause(player, 0); break;
+		case STATE_RUN_BEGIN: entity_model_play_start(player, 0, "run"); break;
+		case STATE_RUN_END  : entity_model_play_pause(player, 0); break;
 		case STATE_RUN: break;
 		case STATE_DEAD:
 
@@ -727,7 +727,7 @@ static void player_handle_common(mobj_t * player)
 			//если игрок мертв
 			if(pl->charact.spawned)
 			{
-				mobj_new(
+				entity_new(
 					MOBJ_EXPLODE_MISSILE,
 					player->pos.x,
 					player->pos.y,
@@ -856,11 +856,11 @@ static void player_handle_common(mobj_t * player)
 					{
 						// пули не кончились
 						pl->reloadtime_d = c_p_WEAP_reloadtime;
-						bulltype_t bulltype = mobj_weapon_type_to_bull_type(pl->weap);
+						bulltype_t bulltype = entity_weapon_type_to_bull_type(pl->weap);
 
 						//создаем пулю
-						mobj_new(
-							mobl_byulltype_to_mobj(bulltype),
+						entity_new(
+							entity_byulltype_to_mobj(bulltype),
 							player->pos.x,
 							player->pos.y,
 							player->dir,
@@ -898,7 +898,7 @@ static void player_handle_common(mobj_t * player)
 /*
  * инициализируем игрока при спавне
  */
-void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn)
+void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 {
 	spawn_t * sp = spawn->data;
 
@@ -952,26 +952,25 @@ void player_spawn_init(mobj_t * player, player_t * pl, const mobj_t * spawn)
 /**
  * получить любой спавн-поинт для игрока
  */
-mobj_t * player_spawn_get()
+entity_t * player_spawn_get()
 {
 
 	int count = 0;
+
+	entity_t * ent;
+
 	//считаем количество спавн-поинтов
-	mobj_t * mobj;
-	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
+	for(ent = entity_getfirst("spawn_player"); ent; ent = ent->next)
 	{
-		if(mobj->type == MOBJ_SPAWN_PLAYER) count++;
+		count++;
 	};
 	//выбираем случайным образом
 	count = xrand(count);
 
-	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
+	for(ent = entity_getfirst("spawn_player"); ent; ent = ent->next)
 	{
-		if(mobj->type == MOBJ_SPAWN_PLAYER)
-		{
-			if(count == 0) return mobj;
-			count--;
-		}
+		if(count == 0) return ent;
+		count--;
 	};
 	return NULL;
 }
@@ -982,11 +981,11 @@ mobj_t * player_spawn_get()
  * @return = 0 -спавнинг прошел успешно
  * @return = 1 -игрок является монстром, ошибка спавнинга
  */
-int player_respawn(mobj_t * player)
+int player_respawn(entity_t * player)
 {
 	if(player->type != MOBJ_PLAYER) return 1;//игрок является монстром, ошибка спавнинга
 
-	mobj_t * spawn = player_spawn_get();
+	entity_t * spawn = player_spawn_get();
 
 	player->pos.x = spawn->pos.x;
 	player->pos.y = spawn->pos.y;
@@ -997,7 +996,7 @@ int player_respawn(mobj_t * player)
 /*
  * вывод информации об игроке
  */
-void player_draw_status(camera_t * cam, mobj_t * player)
+void player_draw_status(camera_t * cam, entity_t * player)
 {
 	static image_index_t list[] =
 	{
@@ -1044,7 +1043,7 @@ void player_draw_status(camera_t * cam, mobj_t * player)
 /*
  * инициализация класса танка
  */
-void player_class_init(mobj_t * player, player_t * pl)
+void player_class_init(entity_t * player, player_t * pl)
 {
 	int level = pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
@@ -1069,14 +1068,14 @@ void player_class_init(mobj_t * player, player_t * pl)
 		}
 	}
 
-	mobj_model_set(player, 0, playerinfo->modelname);
+	entity_model_set(player, 0, playerinfo->modelname);
 
 }
 
 /*
  * вычисление повреждения наносимого игроку
  */
-void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius)
+void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius)
 {
 	player_t * pl = player->data;
 
@@ -1108,7 +1107,7 @@ void player_getdamage(mobj_t * player, mobj_t * explode, bool self, float radius
 			pl->items[ITEM_ARMOR] = armor;
 		if(pl->items[ITEM_HEALTH] <= 0)
 		{
-			mobj_t * mobj_player = EXPLODE(explode)->owner;
+			entity_t * mobj_player = EXPLODE(explode)->owner;
 			player_t * pl = mobj_player->data;
 			if(!self)
 			{

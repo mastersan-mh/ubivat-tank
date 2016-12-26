@@ -35,13 +35,13 @@ typedef struct
 {
 	//игрок, выпустивший пулю
 	explodetype_t type;
-	struct mobj_s * owner;
+	struct entlink_s * owner;
 } explode_t;
 
 #define EXPLODE(x) ((explode_t *)(x)->data)
 
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
-void mobj_explode_init();
+void entity_explode_init();
 
 #endif /* SRC_ENT_EXPLODE_H_ */

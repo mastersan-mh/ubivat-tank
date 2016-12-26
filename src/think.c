@@ -37,7 +37,7 @@ void ctrl_AI_done(think_t * thinker)
 /*
  * уворачивание от снарядов
  */
-static void ctrl_AI_checkdanger(mobj_t * player)
+static void ctrl_AI_checkdanger(entity_t * player)
 {
 	float Udist;
 	float Ddist;
@@ -52,89 +52,48 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 
 	bool danger = false;
 
-	mobj_t * mobj;
-
-	for(mobj = entity_getnext(NULL, NULL); mobj; mobj = mobj->next)
+	static char *list[] =
 	{
-		if(danger) break;
-		if(
-				mobj->type != MOBJ_BULL_ARTILLERY &&
-				mobj->type != MOBJ_BULL_MISSILE &&
-				mobj->type != MOBJ_BULL_MINE
-		) continue;
-		if(BULL(mobj)->owner == player) continue;
+			"bull_artillery",
+			"bull_missile",
+			"bull_mine"
+	};
 
-		explodeinfo_t * explodeinfo = &explodeinfo_table[mobj_bull_type_to_explode_type(BULL(mobj)->type)];
-		bullinfo_t * bullinfo = &bullinfo_table[BULL(mobj)->type];
+	int i;
+	for(i = 0; i < 3; i++)
+	{
+		entity_t * ent = entity_getfirst(list[i]);
 
-		//верхняя ближайшая стена
-		map_clip_find_near(&player->pos, 0, DIR_UP, 0xF0, 100, &Udist);
-		//нижняя ближайшая стена
-		map_clip_find_near(&player->pos, 0, DIR_DOWN, 0xF0, 100, &Ddist);
-		//левая ближайшая стена
-		map_clip_find_near(&player->pos, 0, DIR_LEFT, 0xF0, 160, &Ldist);
-		//правая ближайшая стена
-		map_clip_find_near(&player->pos, 0, DIR_RIGHT, 0xF0, 160, &Rdist);
-		Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (mobj->pos.y + explodeinfo->radius);
-		Dd = (mobj->pos.y - explodeinfo->radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
-		Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (mobj->pos.x + explodeinfo->radius);
-		Ld = (mobj->pos.x - explodeinfo->radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
-		if(
-				(player->pos.x-c_p_MDL_box/2 <= mobj->pos.x+ explodeinfo->radius)&&
-				(mobj->pos.x- explodeinfo->radius <= player->pos.x+c_p_MDL_box/2)&&
-				(VEC_ABS(player->pos.y-mobj->pos.y) < 128)
-		)
+		for(; ent; ent = ent->next)
 		{
+			if(danger) break;
+			if(BULL(ent)->owner == player) continue;
+
+			explodeinfo_t * explodeinfo = &explodeinfo_table[entity_bull_type_to_explode_type(BULL(ent)->type)];
+			bullinfo_t * bullinfo = &bullinfo_table[BULL(ent)->type];
+
+			//верхняя ближайшая стена
+			map_clip_find_near(&player->pos, 0, DIR_UP, 0xF0, 100, &Udist);
+			//нижняя ближайшая стена
+			map_clip_find_near(&player->pos, 0, DIR_DOWN, 0xF0, 100, &Ddist);
+			//левая ближайшая стена
+			map_clip_find_near(&player->pos, 0, DIR_LEFT, 0xF0, 160, &Ldist);
+			//правая ближайшая стена
+			map_clip_find_near(&player->pos, 0, DIR_RIGHT, 0xF0, 160, &Rdist);
+			Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (ent->pos.y + explodeinfo->radius);
+			Dd = (ent->pos.y - explodeinfo->radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
+			Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (ent->pos.x + explodeinfo->radius);
+			Ld = (ent->pos.x - explodeinfo->radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
 			if(
-					(mobj->dir == DIR_UP || bullinfo->speed < 0) &&
-					(VEC_ABS(player->pos.y-mobj->pos.y)<Ddist) &&
-					(mobj->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
+					(player->pos.x-c_p_MDL_box/2 <= ent->pos.x+ explodeinfo->radius)&&
+					(ent->pos.x- explodeinfo->radius <= player->pos.x+c_p_MDL_box/2)&&
+					(VEC_ABS(player->pos.y-ent->pos.y) < 128)
 			)
-			{
-				danger = true;
-				if(!pl->brain.Fdanger)
-				{
-					pl->move.go = true;
-					pl->brain.Fdanger = true;
-					if(0 <= Ld && 0 <= Rd) player->dir = xrand(2) + 2;
-					else
-						if(0 < Ld) player->dir = DIR_LEFT;
-						else
-							if(0<Rd) player->dir = DIR_RIGHT;
-				}
-			}
-			else
 			{
 				if(
-						(mobj->dir == DIR_DOWN ||  bullinfo->speed < 0) &&
-						(VEC_ABS(player->pos.y-mobj->pos.y)<Udist) &&
-						(player->pos.y+c_p_MDL_box/2 < mobj->pos.y - explodeinfo->radius)
-				)
-				{
-					danger = true;
-					if(!pl->brain.Fdanger) {
-						pl->move.go = true;
-						pl->brain.Fdanger = true;
-						if( 0 <= Ld && 0 <= Rd) player->dir = xrand(2)+2;
-						else
-							if(0 < Ld) player->dir = DIR_LEFT;
-							else
-								if(0<Rd) player->dir = DIR_RIGHT;
-					}
-				}
-			}
-		}
-		else {
-			if(
-					(player->pos.y - c_p_MDL_box/2 <= mobj->pos.y + explodeinfo->radius) &&
-					(mobj->pos.y - explodeinfo->radius <= player->pos.y + c_p_MDL_box/2) &&
-					(VEC_ABS(player->pos.x - mobj->pos.x) < 128)
-			)
-			{
-				if (
-						(mobj->dir == DIR_LEFT || bullinfo->speed < 0)&&
-						(VEC_ABS(player->pos.x-mobj->pos.x)<Rdist)&&
-						(player->pos.x+c_p_MDL_box/2 < mobj->pos.x- explodeinfo->radius)
+						(ent->dir == DIR_UP || bullinfo->speed < 0) &&
+						(VEC_ABS(player->pos.y-ent->pos.y)<Ddist) &&
+						(ent->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
 				)
 				{
 					danger = true;
@@ -142,19 +101,45 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 					{
 						pl->move.go = true;
 						pl->brain.Fdanger = true;
-						if(0 <= Ud && 0 <= Dd) player->dir = xrand(2);
+						if(0 <= Ld && 0 <= Rd) player->dir = xrand(2) + 2;
 						else
-							if(0 < Ud) player->dir = DIR_UP;
+							if(0 < Ld) player->dir = DIR_LEFT;
 							else
-								if(0 < Dd) player->dir = DIR_DOWN;
+								if(0<Rd) player->dir = DIR_RIGHT;
 					}
 				}
 				else
 				{
 					if(
-							(mobj->dir == DIR_RIGHT || bullinfo->speed < 0) &&
-							(VEC_ABS(player->pos.x - mobj->pos.x)<Ldist) &&
-							(mobj->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
+							(ent->dir == DIR_DOWN ||  bullinfo->speed < 0) &&
+							(VEC_ABS(player->pos.y-ent->pos.y)<Udist) &&
+							(player->pos.y+c_p_MDL_box/2 < ent->pos.y - explodeinfo->radius)
+					)
+					{
+						danger = true;
+						if(!pl->brain.Fdanger) {
+							pl->move.go = true;
+							pl->brain.Fdanger = true;
+							if( 0 <= Ld && 0 <= Rd) player->dir = xrand(2)+2;
+							else
+								if(0 < Ld) player->dir = DIR_LEFT;
+								else
+									if(0<Rd) player->dir = DIR_RIGHT;
+						}
+					}
+				}
+			}
+			else {
+				if(
+						(player->pos.y - c_p_MDL_box/2 <= ent->pos.y + explodeinfo->radius) &&
+						(ent->pos.y - explodeinfo->radius <= player->pos.y + c_p_MDL_box/2) &&
+						(VEC_ABS(player->pos.x - ent->pos.x) < 128)
+				)
+				{
+					if (
+							(ent->dir == DIR_LEFT || bullinfo->speed < 0)&&
+							(VEC_ABS(player->pos.x-ent->pos.x)<Rdist)&&
+							(player->pos.x+c_p_MDL_box/2 < ent->pos.x- explodeinfo->radius)
 					)
 					{
 						danger = true;
@@ -169,10 +154,31 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 									if(0 < Dd) player->dir = DIR_DOWN;
 						}
 					}
+					else
+					{
+						if(
+								(ent->dir == DIR_RIGHT || bullinfo->speed < 0) &&
+								(VEC_ABS(player->pos.x - ent->pos.x)<Ldist) &&
+								(ent->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
+						)
+						{
+							danger = true;
+							if(!pl->brain.Fdanger)
+							{
+								pl->move.go = true;
+								pl->brain.Fdanger = true;
+								if(0 <= Ud && 0 <= Dd) player->dir = xrand(2);
+								else
+									if(0 < Ud) player->dir = DIR_UP;
+									else
+										if(0 < Dd) player->dir = DIR_DOWN;
+							}
+						}
+					}
 				}
 			}
-		}
-	} // end for;
+		} // end for;
+	}
 	pl->brain.danger = danger;
 	if(!pl->brain.danger)
 	{
@@ -183,13 +189,13 @@ static void ctrl_AI_checkdanger(mobj_t * player)
 /*
  * атака
  */
-static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
+static void ctrl_AI_attack(entity_t * player, entity_t * target)
 {
 	player_t * pl = player->data;
 
 	explodeinfo_t * explodeinfo = &explodeinfo_table[
-													mobj_weapon_type_to_bull_type(
-														mobj_weapon_type_to_bull_type(pl->brain.weap)
+													entity_weapon_type_to_bull_type(
+														entity_weapon_type_to_bull_type(pl->brain.weap)
 													)
 													];
 
@@ -414,7 +420,7 @@ static void ctrl_AI_attack(mobj_t * player, mobj_t * target)
 /*
  * поиск врага
  */
-static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
+static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 {
 	player_t * pl = player->data;
 
@@ -464,7 +470,7 @@ static void ctrl_AI_findenemy(mobj_t * player, mobj_t * target)
 /*
  * управление вражеским игроком
  */
-void think_enemy(struct mobj_s * player)
+void think_enemy(struct entlink_s * player)
 {
 	player_t * pl = player->data;
 
@@ -477,7 +483,7 @@ void think_enemy(struct mobj_s * player)
 			int client_num = client_num_get();
 
 			int id = xrand(client_num);
-			mobj_t * target = client_get(id)->mobj;
+			entity_t * target = client_get(id)->entity;
 
 			player_t * enemy_pl = target->data;
 
@@ -494,7 +500,7 @@ void think_enemy(struct mobj_s * player)
 /*
  * управление игроком
  */
-void think_human(mobj_t * player)
+void think_human(entity_t * player)
 {
 
 };
