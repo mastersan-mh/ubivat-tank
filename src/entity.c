@@ -116,6 +116,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 
 	entity_t * entity = Z_malloc(sizeof(entity_t));
 
+	entity->parent = parent;
 	entity->erase = false;
 	entity->pos.x = x;
 	entity->pos.y = y;
@@ -192,6 +193,24 @@ void entities_erase()
 	}
 }
 
+/**
+ * указать нового родителя взамен старого
+ */
+static void reparent(entity_t * oldparent, entity_t * newparent)
+{
+	size_t ientreg;
+	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
+	{
+		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		entity_t * entity;
+		for(entity = entreg->entities; entity; entity = entity->next)
+		{
+			if(entity->parent == oldparent)
+				entity->parent = newparent;
+		}
+	}
+}
+
 /*
  * @return end-of-frames?
  */
@@ -229,6 +248,8 @@ void entities_handle()
 					entreg->entities = entreg->entities->next;
 
 				entity_t * erased = entlink;
+				/* укажем нового родителя, взамен удаляемого */
+				reparent(erased, erased->parent);
 				entlink = entlink->next;
 				if(erased->prev)
 					erased->prev->next = erased->next;
@@ -318,9 +339,9 @@ entity_t * entries_client_spawn()
 		entity_t * entity;
 		for(entity = entreg->entities; entity; entity = entity->next)
 		{
-			entity_t * entity = info->client_spawn(entity);
-			if(entity != NULL)
-				return entity;
+			entity_t * client_entity = info->client_spawn(entity);
+			if(client_entity != NULL)
+				return client_entity;
 		}
 	}
 	return NULL;

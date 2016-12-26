@@ -91,6 +91,8 @@ typedef struct entlink_s
 {
 	struct entlink_s * prev;
 	struct entlink_s * next;
+	/* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
+	struct entlink_s * parent;
 	/* удалить объект */
 	bool erase;
 	//позиция

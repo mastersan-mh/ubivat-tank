@@ -33,8 +33,8 @@ typedef struct
  */
 typedef struct
 {
-	//игрок, выпустивший пулю
 	explodetype_t type;
+	//игрок, выпустивший пулю
 	struct entlink_s * owner;
 } explode_t;
 
