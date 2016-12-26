@@ -10,7 +10,7 @@
 
 #include <types.h>
 #include <img.h>
-#include "mobjs.h"
+#include "entity.h"
 
 //флаг присутствия стены
 #define c_m_f_clip      0x10

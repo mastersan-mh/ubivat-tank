@@ -1,12 +1,12 @@
 /*
- * mobjs.h
+ * entity.h
  *
  *  Created on: 29 нояб. 2016 г.
  *      Author: mastersan
  */
 
-#ifndef SRC_MOBJS_H_
-#define SRC_MOBJS_H_
+#ifndef SRC_ENTITY_H_
+#define SRC_ENTITY_H_
 
 #include "vec.h"
 #include "types.h"
@@ -137,4 +137,4 @@ extern void entity_model_play_pause_all(entity_t * entity);
 
 extern int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname);
 
-#endif /* SRC_MOBJS_H_ */
+#endif /* SRC_ENTITY_H_ */

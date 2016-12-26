@@ -5,7 +5,7 @@
  *      Author: mastersan
  */
 
-#include "mobjs.h"
+#include "entity.h"
 #include "game.h"
 #include "ent_message.h"
 

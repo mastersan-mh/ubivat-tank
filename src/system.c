@@ -1,7 +1,9 @@
 
-#include <inttypes.h>
-#include <system.h>
+#include "system.h"
 
+#include "game.h"
+
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
@@ -65,5 +67,19 @@ unsigned long system_getTime_realTime_ms()
 		thistimereply = lasttimereply;
 
 	return (lasttimereply = thistimereply);
+}
+
+
+
+void randomize()
+{
+	srandom(1024);
+}
+
+int xrand(int hi)
+{
+	if(hi == 0)
+		game_halt("Error: xrand: hi == 0.");
+	return random() % hi;
 }
 

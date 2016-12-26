@@ -12,7 +12,7 @@
 #include "menu.h"
 #include "map.h"
 #include "weap.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "img.h"
 #include "video.h"
 #include "sound.h"

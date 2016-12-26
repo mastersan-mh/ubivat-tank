@@ -11,7 +11,7 @@
 #include "types.h"
 #include "video.h"
 #include "sound.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "client.h"
 
 /* MENU_MAIN */

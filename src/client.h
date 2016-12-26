@@ -25,7 +25,7 @@ typedef struct
 	void * userstoredata;
 }client_t;
 
-#include "mobjs.h"
+#include "entity.h"
 
 int client_connect();
 

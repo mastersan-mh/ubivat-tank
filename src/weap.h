@@ -10,7 +10,7 @@
 
 #include "types.h"
 #include "img.h"
-#include "mobjs.h"
+#include "entity.h"
 
 #include "ent_bull.h"
 #include "ent_explode.h"

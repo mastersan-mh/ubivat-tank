@@ -5,7 +5,7 @@
  *      Author: mastersan
  */
 
-#include "mobjs.h"
+#include "entity.h"
 #include "model.h"
 #include "ent_items.h"
 

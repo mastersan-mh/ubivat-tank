@@ -31,7 +31,7 @@ game.c \
 img.c \
 main.c \
 map.c \
-mobjs.c \
+entity.c \
 model.c \
 model_resources.c \
 menu.c \

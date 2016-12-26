@@ -12,6 +12,7 @@
 #include "weap.h"
 #include "map.h"
 #include "client.h"
+#include "system.h"
 
 #include <stdlib.h>
 #include <types.h>

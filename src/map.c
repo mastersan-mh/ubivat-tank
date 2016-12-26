@@ -11,15 +11,14 @@
 #include "img.h"
 #include "fonts.h"
 #include "utf8.h"
-
+#include "system.h"
+#include "types.h"
 
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include <string.h>
-#include <types.h>
 
 // карта
 #define MAP_FILE_EXT    ".mut"

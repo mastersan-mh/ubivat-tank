@@ -9,7 +9,7 @@
 #define SRC_THINK_H_
 
 #include "types.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "weap.h"
 
 //искуственный интеллект

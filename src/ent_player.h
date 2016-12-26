@@ -11,7 +11,7 @@
 #include "weap.h"
 #include "map.h"
 #include "types.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "ent_items.h"
 #include "think.h"
 

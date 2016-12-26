@@ -10,7 +10,7 @@
 
 #include <types.h>
 #include <map.h>
-#include "mobjs.h"
+#include "entity.h"
 #include "actions.h"
 
 #define GAME_LOGO \

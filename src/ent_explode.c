@@ -6,7 +6,7 @@
  */
 
 #include "game.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "model.h"
 #include "ent_explode.h"
 #include "ent_player.h"

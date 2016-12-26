@@ -123,9 +123,6 @@ bool checkchar(char chr);
 
 float sqrf(float v);
 
-void randomize();
-int xrand(int hi);
-
 char * str_addch(char * s0, char ch);
 
 void check_directory(const char * path);

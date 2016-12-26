@@ -7,7 +7,7 @@
 
 #include "game.h"
 #include "weap.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "model.h"
 #include "ent_bull.h"
 #include "ent_explode.h"

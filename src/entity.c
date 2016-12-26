@@ -6,7 +6,7 @@
  */
 
 #include "game.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "model.h"
 
 #define LIST2_PUSH(enttop, ent) \

@@ -6,7 +6,7 @@
  */
 
 #include "ent_exit.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "model.h"
 
 static entmodel_t exit_models[] =

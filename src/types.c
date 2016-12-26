@@ -57,18 +57,6 @@ float sqrf(float v)
 	return v*v;
 }
 
-void randomize()
-{
-	srandom(1024);
-}
-
-int xrand(int hi)
-{
-	if(hi == 0)
-		game_halt("Error: xrand: hi == 0.");
-	return random() % hi;
-}
-
 struct errno_ent_t
 {
 	int value;

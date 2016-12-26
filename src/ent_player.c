@@ -14,8 +14,9 @@
 #include "ent_explode.h"
 #include "ent_message.h"
 
+#include "system.h"
 #include "types.h"
-#include "mobjs.h"
+#include "entity.h"
 #include "video.h"
 #include "img.h"
 #include "map.h"

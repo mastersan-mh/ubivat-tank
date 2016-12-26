@@ -9,7 +9,7 @@
 #define SRC_ENT_ITEMS_H_
 
 #include "types.h"
-#include "mobjs.h"
+#include "entity.h"
 
 // предмет не используется
 #define ITEM_AMOUNT_NA  (0)
