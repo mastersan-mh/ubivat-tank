@@ -43,7 +43,7 @@ typedef struct
 
 #define ENT_ITEM(entity) ((item_t *) (entity)->data)
 
-itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype);
+itemtype_t items_enttype_to_itemtype(const char * entname);
 
 void entity_items_init();
 

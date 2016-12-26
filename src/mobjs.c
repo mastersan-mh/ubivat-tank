@@ -18,16 +18,12 @@
 			(enttop) = (ent);       \
 		}while(0)
 
+/*
 char *mobjnames[__MOBJ_NUM] =
 {
 		"spawn_player",
 		"spawn_enemy" ,
 		"spawn_boss"  ,
-		"item_scores" ,
-		"item_health" ,
-		"item_armor"  ,
-		"item_ammo_missile",
-		"item_ammo_mine",
 		"message"     ,
 		"player"      ,
 		"enemy"       ,
@@ -40,6 +36,7 @@ char *mobjnames[__MOBJ_NUM] =
 		"explode_mine",
 		"exit"
 };
+*/
 
 typedef struct
 {
@@ -108,6 +105,7 @@ void entity_register(const entityinfo_t * info)
 	}
 	entityinfo_regs[entityinfo_regs_num].info = info;
 	entityinfo_regs[entityinfo_regs_num].entlinks = NULL;
+	entityinfo_regs[entityinfo_regs_num].entlinks_erased = NULL;
 	entityinfo_regs_num++;
 }
 
@@ -125,34 +123,23 @@ int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
 /**
  * @description добавление объекта
  */
-entity_t * entity_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
+entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
 {
 	int i;
-	entityinfo_reg_t * entityinfo_reg = NULL;
-
-	if((int)mobj_type < 0)
-	{
-		game_console_send("Error: Cannot create unknown entity with mobj_type \"%d\".", mobj_type);
-		return NULL;
-	}
-
-	char * entityname = mobjnames[mobj_type];
-	entityinfo_reg = entityinfo_get(entityname);
+	entityinfo_reg_t * entityinfo_reg = entityinfo_get(name);
 	if(!entityinfo_reg)
 	{
-		game_console_send("Error: Cannot create unknown entity \"%s\".", entityname);
+		game_console_send("Error: Cannot create unknown entity \"%s\".", name);
 		return NULL;
 	}
-
 
 	entity_t * entity = Z_malloc(sizeof(entity_t));
 
 	entity->erase = false;
-	entity->type = mobj_type;
 	entity->pos.x = x;
 	entity->pos.y = y;
 	entity->dir   = dir;
-	entity->allow_handle  = true;
+	entity->allow_handle = true;
 	entity->allow_draw = true;
 
 	const entityinfo_t * entityinfo = entityinfo_reg->info;

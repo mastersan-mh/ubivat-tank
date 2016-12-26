@@ -45,27 +45,25 @@ explodetype_t entity_bull_type_to_explode_type(bulltype_t bulltype)
 	return EXPLODE_ARTILLERY;
 }
 
-mobj_type_t entity_byulltype_to_mobj(bulltype_t bulltype)
+const char * entity_bulltype_to_mobj(bulltype_t type)
 {
-	switch(bulltype)
+	static const char *list[] =
 	{
-		case BULL_ARTILLERY: return MOBJ_BULL_ARTILLERY;
-		case BULL_MISSILE  : return MOBJ_BULL_MISSILE;
-		case BULL_MINE     : return MOBJ_BULL_MINE;
-		default: ;
-	}
-	return __MOBJ_NUM;
+			"bull_artillery",
+			"bull_missile",
+			"bull_mine"
+	};
+	return list[type];
 }
 
-mobj_type_t entity_explodetype_to_mobjtype(explodetype_t type)
+const char * entity_explodetype_to_mobjtype(explodetype_t type)
 {
-	switch(type)
+	static const char *list[] =
 	{
-		case EXPLODE_ARTILLERY: return MOBJ_EXPLODE_ARTILLERY;
-		case EXPLODE_MISSILE  : return MOBJ_EXPLODE_MISSILE;
-		case EXPLODE_MINE     : return MOBJ_EXPLODE_MINE;
-		default: ;
-	}
-	return __MOBJ_NUM;
+			"explode_artillery",
+			"explode_missile",
+			"explode_mine"
+	};
+	return list[type];
 }
 

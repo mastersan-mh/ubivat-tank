@@ -247,9 +247,9 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		if(
 				//противник в прямой видимости
 				(VEC_ABS(player->pos.y - target->pos.y) < dist - c_p_MDL_box/2) ||
-				(wall       ) == c_m_w_w0   ||
-				(wall       ) == c_m_w_w1   ||
-				(wall & 0x0F) == c_m_water  ||
+				(wall       ) == MAP_WALL_W0   ||
+				(wall       ) == MAP_WALL_w1   ||
+				(wall & 0x0F) == MAP_WALL_water  ||
 				(wall       ) == c_m_f_clip
 		){
 			if(pl->items[ITEM_AMMO_MINE] > 0)
@@ -276,18 +276,18 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		}
 		else
 		{ //противник за стеной, пытаемся пробиться через стену
-			if((wall & 0x0F) == c_m_w_w0)
+			if((wall & 0x0F) == MAP_WALL_W0)
 				pl->brain.attack = false;              //сильная броня, не стреляем
 			else
 			{
-				if((wall & 0x0F)==c_m_w_brick)
+				if((wall & 0x0F)==MAP_WALL_brick)
 				{
 					pl->brain.weap = WEAP_ARTILLERY;          //кирпич
 					pl->brain.attack = true;
 				}
 				else
 				{
-					if((wall & 0x0F) == c_m_w_w1)
+					if((wall & 0x0F) == MAP_WALL_w1)
 					{                            //слабая броня
 						if(pl->items[ITEM_AMMO_MINE] > 0)
 						{
@@ -314,7 +314,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 			}
 			if(
 					(dist-c_p_MDL_box/2 < explodeinfo->radius)&&
-					(wall == (c_m_w_w0 | c_m_f_clip) || wall == (c_m_w_w1 | c_m_f_clip))
+					(wall == (MAP_WALL_W0 | c_m_f_clip) || wall == (MAP_WALL_w1 | c_m_f_clip))
 			) pl->brain.attack = false;
 		}
 	}
@@ -331,9 +331,9 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 			if(
 					//противник в прямой видимости
 					(VEC_ABS(player->pos.x - target->pos.x) < dist - c_p_MDL_box/2)||
-					(wall       ) == c_m_w_w0  ||
-					(wall       ) == c_m_w_w1  ||
-					(wall & 0x0F) == c_m_water ||
+					(wall       ) == MAP_WALL_W0  ||
+					(wall       ) == MAP_WALL_w1  ||
+					(wall & 0x0F) == MAP_WALL_water ||
 					(wall       ) == c_m_f_clip
 			)
 			{
@@ -356,15 +356,15 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				}
 			}
 			else {                                                         //противник за стеной, пытаемся пробиться через стену
-				if((wall & 0x0F)==c_m_w_w0) pl->brain.attack = false;             //сильная броня, не стреляем
+				if((wall & 0x0F)==MAP_WALL_W0) pl->brain.attack = false;             //сильная броня, не стреляем
 				else {
-					if((wall & 0x0F)==c_m_w_brick)
+					if((wall & 0x0F)==MAP_WALL_brick)
 					{ //кирпич
 						pl->brain.weap = WEAP_ARTILLERY;
 						pl->brain.attack = true;
 					}
 					else {
-						if((wall & 0x0F)==c_m_w_w1) {                           //слабая броня
+						if((wall & 0x0F)==MAP_WALL_w1) {                           //слабая броня
 							if(pl->items[ITEM_AMMO_MINE] > 0)
 							{
 								pl->brain.weap = 1+xrand(2);                            //выбираем наугад ракету или мину
@@ -389,7 +389,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				}
 				if(
 						(dist-c_p_MDL_box/2 < explodeinfo->radius) &&
-						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
+						((wall==MAP_WALL_W0+c_m_f_clip) || (wall==MAP_WALL_w1+c_m_f_clip))
 				)
 					pl->brain.attack = false;
 			}
@@ -401,7 +401,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 				if(
 						(dist-c_p_MDL_box/2<explodeinfo_table[1].radius) &&
-						((wall==c_m_w_w0+c_m_f_clip) || (wall==c_m_w_w1+c_m_f_clip))
+						((wall==MAP_WALL_W0+c_m_f_clip) || (wall==MAP_WALL_w1+c_m_f_clip))
 				)
 					pl->brain.attack = false;
 				else

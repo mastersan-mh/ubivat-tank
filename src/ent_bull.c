@@ -69,10 +69,9 @@ void bull_common_handle(entity_t * this)
 	{//предельное расстояние пройдено
 
 		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
 		/* следим за взрывом */
 		entity = entity_new(
-			mobj_type,
+			entity_explodetype_to_mobjtype(explodetype),
 			this->pos.x,
 			this->pos.y,
 			this->dir,
@@ -90,17 +89,15 @@ void bull_common_handle(entity_t * this)
 	map_clip_find(                                                     //найдем препятствия
 		&this->pos,
 		bullinfo->bodybox,
-		c_m_w_w0 | c_m_w_w1 | c_m_w_brick,
+		MAP_WALL_W0 | MAP_WALL_w1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 	);
 	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
 	{
 		//пуля попала в стену
 		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
-
 		entity = entity_new(
-			mobj_type,
+			entity_explodetype_to_mobjtype(explodetype),
 			this->pos.x,
 			this->pos.y,
 			this->dir,
@@ -137,9 +134,8 @@ void bull_common_handle(entity_t * this)
 	{
 		//попадание в игрока
 		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
-		mobj_type_t mobj_type = entity_explodetype_to_mobjtype(explodetype);
 		entity = entity_new(
-			mobj_type,
+			entity_explodetype_to_mobjtype(explodetype),
 			this->pos.x,
 			this->pos.y,
 			this->dir,
@@ -161,24 +157,23 @@ static void bull_common_modelaction_startplay(entity_t * this, unsigned int imod
 /**
  * @description содание пули
  */
-static void bull_common_entity_init(entity_t * this, void * thisdata, const entity_t * parent, bulltype_t bulltype)
+static void bull_common_init(entity_t * this, void * thisdata, const entity_t * parent, bulltype_t bulltype)
 {
 	bull_t * bull = thisdata;
 	bull->owner = (entity_t *)parent;
 	bull->type = bulltype;
 	bull->delta_s = 0;
 
-	if(this->type != MOBJ_BULL_ARTILLERY)
+	if(bulltype != BULL_ARTILLERY)
 		bull_common_modelaction_startplay(this, 0, "fly");
 
-	if(bulltype == BULL_MISSILE) ((player_t *)parent->data)->bull = this;
+	if(bulltype == BULL_MISSILE)
+		((player_t *)parent->data)->bull = this;
 }
 
 /*
  * bull_artillery
  */
-
-
 entmodel_t bull_artillery_models[] =
 {
 		{
@@ -192,7 +187,7 @@ entmodel_t bull_artillery_models[] =
 
 static MOBJ_FUNCTION_INIT(bull_artillery_entity_init)
 {
-	bull_common_entity_init(this, thisdata, parent, BULL_ARTILLERY);
+	bull_common_init(this, thisdata, parent, BULL_ARTILLERY);
 }
 
 static void bull_artillery_handle(entity_t * this)
@@ -239,7 +234,7 @@ static entmodel_t bull_missile_models[] =
 
 static MOBJ_FUNCTION_INIT(bull_missile_entity_init)
 {
-	return bull_common_entity_init(this, thisdata, parent, BULL_MISSILE);
+	bull_common_init(this, thisdata, parent, BULL_MISSILE);
 }
 
 static void bull_missile_handle(entity_t * this)
@@ -287,7 +282,7 @@ static entmodel_t bull_mine_models[] =
 
 static MOBJ_FUNCTION_INIT(bull_mine_entity_init)
 {
-	return bull_common_entity_init(this, thisdata, parent, BULL_MINE);
+	bull_common_init(this, thisdata, parent, BULL_MINE);
 }
 
 static void bull_mine_handle(entity_t * this)

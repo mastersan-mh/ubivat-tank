@@ -55,16 +55,22 @@ static entmodel_t item_ammo_mine_models[] =
 };
 
 
-itemtype_t items_mobjtype_to_itemtype(mobj_type_t mobjtype)
+itemtype_t items_enttype_to_itemtype(const char * entname)
 {
-	switch(mobjtype)
+	static const char *list[] =
 	{
-	case MOBJ_ITEM_SCORES: return ITEM_SCORES;
-	case MOBJ_ITEM_HEALTH: return ITEM_HEALTH;
-	case MOBJ_ITEM_ARMOR : return ITEM_ARMOR;
-	case MOBJ_ITEM_AMMO_MISSILE: return ITEM_AMMO_MISSILE;
-	case MOBJ_ITEM_AMMO_MINE   : return ITEM_AMMO_MINE;
-	default: ;
+			"item_scores" , /* ITEM_SCORES */
+			"item_health" , /* ITEM_HEALTH */
+			"item_armor"  , /* ITEM_ARMOR */
+			"item_ammo_missile", /* ITEM_AMMO_MISSILE */
+			"item_ammo_mine"     /* ITEM_AMMO_MINE */
+	};
+	size_t i;
+
+	for(i = 0; i < sizeof(list) / sizeof(*list); i++)
+	{
+		if(strcmp(list[i], entname) == 0)
+			return i;
 	}
 	return -1;
 }
@@ -73,7 +79,7 @@ static MOBJ_FUNCTION_INIT(item_init)
 {
 	item_t * item = thisdata;
 
-	itemtype_t itemtype = items_mobjtype_to_itemtype(this->type);
+	itemtype_t itemtype = items_enttype_to_itemtype(this->info->name);
 	item->type = itemtype;
 	item->exist = true;
 	item->amount = *((int*)args);

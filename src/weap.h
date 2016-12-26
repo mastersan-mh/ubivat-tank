@@ -38,7 +38,7 @@ extern weaponinfo_t wtable[__WEAP_NUM];
 
 bulltype_t entity_weapon_type_to_bull_type(weapontype_t type);
 explodetype_t entity_bull_type_to_explode_type(bulltype_t bull_type);
-mobj_type_t entity_byulltype_to_mobj(bulltype_t bulltype);
-mobj_type_t entity_explodetype_to_mobjtype(explodetype_t type);
+const char * entity_bulltype_to_mobj(bulltype_t bulltype);
+const char * entity_explodetype_to_mobjtype(explodetype_t type);
 
 #endif /* SRC_WEAP_H_ */

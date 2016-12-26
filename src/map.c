@@ -26,7 +26,7 @@
 // Map Ubivat Tank
 #define MAP_DATA_HEADER "MUT"
 
-char * map_class_names[__MAPDATA_MOBJ_NUM] =
+char * map_class_names[MAPDATA_MOBJ_NUM] =
 {
 		"SPAWN.PLAYER",
 		"SPAWN.ENEMY" ,
@@ -86,49 +86,49 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new(MOBJ_SPAWN_PLAYER, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new(MOBJ_SPAWN_ENEMY, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
 		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
 		spawn.items[ITEM_SCORES] = data->spawn.scores;
 		spawn.items[ITEM_HEALTH] = data->spawn.health;
 		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
-		entity_new(MOBJ_SPAWN_BOSS, data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity_new("boss", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
 		value_int = data->item.amount;
-		entity_new(MOBJ_ITEM_HEALTH, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new("item_health", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
 		value_int = data->item.amount;
-		entity_new(MOBJ_ITEM_ARMOR, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new("item_armor", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
 		value_int = data->item.amount;
-		entity_new(MOBJ_ITEM_SCORES, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new("item_scores", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
 		value_int = data->item.amount;
-		entity_new(MOBJ_ITEM_AMMO_MISSILE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new("item_ammo_missile", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
 		value_int = data->item.amount;
-		entity_new(MOBJ_ITEM_AMMO_MINE, data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity_new("item_ammo_mine", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		entity_new(MOBJ_EXIT, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		entity_new(MOBJ_MESSAGE, data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL, buf);
 		break;
 	default: ;
 	}
@@ -157,8 +157,8 @@ void map_clip_find(
 {
 
 	if(
-			orig->x < 0 || MAP_SX * MAP_BLOCKSIZE < orig->x ||
-			orig->y < 0 || MAP_SY * MAP_BLOCKSIZE < orig->y
+			orig->x < 0 || MAP_SX * MAP_WALLBLOCKSIZE < orig->x ||
+			orig->y < 0 || MAP_SY * MAP_WALLBLOCKSIZE < orig->y
 	)
 	{
 		*Ul = true; *Ur = true;
@@ -348,17 +348,15 @@ void map_clip_find_near_wall(vec2_t * orig, int dir, float * dist, char * wall)
 	}
 }
 
-static mapdata_entity_type_t mobj_type_name_to_value(const char * class)
+static mapdata_entity_type_t map_entity_name_to_value(const char * class)
 {
 	int mapdata_mobj_type;
-	for(mapdata_mobj_type = 0; mapdata_mobj_type < __MAPDATA_MOBJ_NUM; mapdata_mobj_type++)
+	for(mapdata_mobj_type = 0; mapdata_mobj_type < MAPDATA_MOBJ_NUM; mapdata_mobj_type++)
 	{
 		if(strcmp(class, map_class_names[mapdata_mobj_type]) == 0) return mapdata_mobj_type;
 	}
 	return MAPDATA_MOBJ_UNKNOWN;
 }
-
-
 
 /*
  * чтение класса предмета
@@ -375,8 +373,7 @@ mapdata_entity_type_t map_file_class_get(int fd)
 		class[i] = ch;
 		i++;
 	}while(count != 0 && ch!=0 );
-	mobj_type_t mobj_type = mobj_type_name_to_value(class);
-	return mobj_type;
+	return map_entity_name_to_value(class);
 }
 
 
@@ -385,7 +382,7 @@ mapdata_entity_type_t map_file_class_get(int fd)
  */
 static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_data_entity_t * data)
 {
-	static size_t datasize[__MAPDATA_MOBJ_NUM] =
+	static size_t datasize[MAPDATA_MOBJ_NUM] =
 	{
 			sizeof(map_data_spawn_t),	/* MAP_SPAWN_PLAYER */
 			sizeof(map_data_spawn_t),	/* MAP_SPAWN_ENEMY */
@@ -409,7 +406,7 @@ static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_
 	}while(count != 0 && ch != 0);
 	if(count == 0) return 1;
 
-	*mapdata_mobj_type = mobj_type_name_to_value(class);
+	*mapdata_mobj_type = map_entity_name_to_value(class);
 	if(*mapdata_mobj_type == MAPDATA_MOBJ_UNKNOWN)
 	{
 		game_console_send("map load error: no map object type %s", class);
@@ -601,10 +598,10 @@ void map_draw(camera_t * cam)
 			item_img_t * img = NULL;
 			switch(MAP_WALL_TEXTURE(map.map[y][x]))
 			{
-				case c_m_w_w0   : img = image_get(IMG_WALL_W0); break;
-				case c_m_w_w1   : img = image_get(IMG_WALL_W1); break;
-				case c_m_w_brick: img = image_get(IMG_WALL_BRICK); break;
-				case c_m_water  : img = game.w_water[xrand(3)]; break;
+				case MAP_WALL_W0   : img = image_get(IMG_WALL_W0); break;
+				case MAP_WALL_w1   : img = image_get(IMG_WALL_W1); break;
+				case MAP_WALL_brick: img = image_get(IMG_WALL_BRICK); break;
+				case MAP_WALL_water  : img = game.w_water[xrand(3)]; break;
 			}
 			if(img)
 			{

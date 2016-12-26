@@ -107,8 +107,6 @@ typedef struct
 	//время на перезарядку
 	long reloadtime_d;
 
-	//флаг
-	item_img_t * Iflag;
 	// мозг
 	think_t brain;
 	int soundId_move;

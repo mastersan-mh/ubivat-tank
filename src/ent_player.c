@@ -166,7 +166,6 @@ static void player_handle_common(entity_t * player);
 MOBJ_FUNCTION_INIT(player_init)
 {
 	player_t * pl = thisdata;
-	pl->Iflag = image_get(IMG_FLAG_RUS);
 
 #if defined(_DEBUG_PLAYERMAXLEVEL)
 	for( int i = 0; i < __ITEM_NUM; i++)
@@ -225,7 +224,6 @@ void player_restore(void * data, const client_storedata_t * storedata, const voi
 MOBJ_FUNCTION_INIT(enemy_init)
 {
 	player_t * pl = thisdata;
-	pl->Iflag = image_get(IMG_FLAG_WHITE);
 	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
 }
@@ -243,7 +241,6 @@ void enemy_handle(entity_t * this)
 MOBJ_FUNCTION_INIT(boss_init)
 {
 	player_t * pl = thisdata;
-	pl->Iflag = image_get(IMG_FLAG_USA);
 	player_spawn_init(this, pl, parent);
 	ctrl_AI_init(&pl->brain);
 }
@@ -550,7 +547,7 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 {
 	player_t * pl = player->data;
 
-	itemtype_t itemtype = items_mobjtype_to_itemtype(entity->type);
+	itemtype_t itemtype = items_enttype_to_itemtype(entity->info->name);
 	if((int) itemtype < 0)
 	{
 		game_halt("player_items_get(): invalid itemtype = %d\n", itemtype);
@@ -587,62 +584,72 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 	}
 }
 
+bool inbox(entity_t * entity, entity_t * player)
+{
+	return
+			( entity->pos.x - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
+			( player->pos.x - c_p_MDL_box    / 2 <= entity->pos.x + c_item_MDL_box / 2 ) &&
+			( entity->pos.y - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
+			( player->pos.y - c_p_MDL_box    / 2 <= entity->pos.y + c_item_MDL_box / 2 )
+			;
+}
+
 /*
  * подбирание предметов игроком
  */
 static void player_obj_check(entity_t * player)
 {
-	if(player->type != MOBJ_PLAYER) return;
-
 	player_t * pl = player->data;
 
 	if(pl->items[ITEM_HEALTH] <= 0) return;
 
-	static char *list[] =
-	{
-			"item_scores",
-			"item_health",
-			"item_armor",
-			"item_ammo_missile",
-			"item_ammo_mine",
-			"message",
-			"exit"
-	};
+	entity_t * entity;
 
-	int i;
-	for(i = 0; i < 7; i++)
-	{
-		entity_t * ent = entity_getfirst(list[i]);
-		for(; ent; ent = ent->next)
-		{
-			if(
-					( ent->pos.x    - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
-					( player->pos.x - c_p_MDL_box    / 2 <= ent->pos.x    + c_item_MDL_box / 2 ) &&
-					( ent->pos.y    - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
-					( player->pos.y - c_p_MDL_box    / 2 <= ent->pos.y    + c_item_MDL_box / 2 )
-			)
-			{
+#define FOR_ENTITIES(entity_name, entity) \
+	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
 
-				switch(ent->type)
-				{
-					case MOBJ_ITEM_SCORES:
-					case MOBJ_ITEM_HEALTH:
-					case MOBJ_ITEM_ARMOR:
-					case MOBJ_ITEM_AMMO_MISSILE:
-					case MOBJ_ITEM_AMMO_MINE:
-						player_influence_item(player, ent);
-						break;
-					case MOBJ_MESSAGE:
-						player_influence_message(player, ent);
-						break;
-					case MOBJ_EXIT:
-						player_influence_exit(player, ent);
-						break;
-					default: ;
-				}
-			}
-		} //end for
+	FOR_ENTITIES("item_scores", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_item(player, entity);
 	}
+
+	FOR_ENTITIES("item_health", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_item(player, entity);
+	}
+
+	FOR_ENTITIES("item_armor", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_item(player, entity);
+	}
+
+	FOR_ENTITIES("item_ammo_missile", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_item(player, entity);
+	}
+
+	FOR_ENTITIES("item_ammo_mine", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_item(player, entity);
+	}
+
+	FOR_ENTITIES("message", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_message(player, entity);
+	}
+
+	FOR_ENTITIES("exit", entity)
+	{
+		if( inbox(entity, player) )
+			player_influence_exit(player, entity);
+	}
+
 }
 
 /*
@@ -728,7 +735,7 @@ static void player_handle_common(entity_t * player)
 			if(pl->charact.spawned)
 			{
 				entity_new(
-					MOBJ_EXPLODE_MISSILE,
+					"explode_missile",
 					player->pos.x,
 					player->pos.y,
 					player->dir,
@@ -740,7 +747,7 @@ static void player_handle_common(entity_t * player)
 				pl->items[ITEM_AMMO_MISSILE] = 0;
 				pl->items[ITEM_AMMO_MINE] = 0;
 			};
-			if(player->type == MOBJ_BOSS)
+			if(strcmp(player->info->name, "boss") == 0)
 				game._win_ = true;
 			break;
 	}
@@ -825,7 +832,7 @@ static void player_handle_common(entity_t * player)
 		{
 			if(
 				((game.flags & c_g_f_2PLAYERS) != 0) &&
-				(player->type == MOBJ_PLAYER)
+				(strcmp(player->info->name, "player") == 0)
 				)
 			{
 				player_respawn(player);
@@ -860,7 +867,7 @@ static void player_handle_common(entity_t * player)
 
 						//создаем пулю
 						entity_new(
-							entity_byulltype_to_mobj(bulltype),
+							entity_bulltype_to_mobj(bulltype),
 							player->pos.x,
 							player->pos.y,
 							player->dir,
@@ -882,7 +889,7 @@ static void player_handle_common(entity_t * player)
 						};
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
-								player->type == MOBJ_PLAYER    // игрок не монстр(у монстров пули не кончаются)
+								(strcmp(player->info->name, "player") == 0)    // игрок не монстр(у монстров пули не кончаются)
 						)
 							pl->items[item]--;
 					}
@@ -911,7 +918,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
 	else
 	{
-		if(player->type != MOBJ_PLAYER)
+		if( strcmp(player->info->name, "player") != 0 )
 			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 		else
 		{
@@ -932,7 +939,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 		pl->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
 	else
 	{
-		if(player->type != MOBJ_PLAYER)
+		if( strcmp(player->info->name, "player") != 0 )
 			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 		else
 			if(game.flags & c_g_f_CASE) pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
@@ -983,7 +990,9 @@ entity_t * player_spawn_get()
  */
 int player_respawn(entity_t * player)
 {
-	if(player->type != MOBJ_PLAYER) return 1;//игрок является монстром, ошибка спавнинга
+	/* игрок является монстром, ошибка спавнинга */
+	if( strcmp(player->info->name, "player") != 0 )
+		return 1;
 
 	entity_t * spawn = player_spawn_get();
 
@@ -1047,7 +1056,8 @@ void player_class_init(entity_t * player, player_t * pl)
 {
 	int level = pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
-	if(player->type == MOBJ_BOSS) level = PLAYER_LEVEL_BOSS;
+	if( strcmp(player->info->name, "boss") == 0 )
+		level = PLAYER_LEVEL_BOSS;
 	pl->level = level;
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
@@ -1061,7 +1071,7 @@ void player_class_init(entity_t * player, player_t * pl)
 		else
 		{
 			if( pl->items[i] < 0 ) pl->items[i] = 0;
-			if( player->type != MOBJ_PLAYER )
+			if( strcmp(player->info->name, "player") != 0 )
 			{
 				pl->items[i] = playerinfo->items[i];
 			}

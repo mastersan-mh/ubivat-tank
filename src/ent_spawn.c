@@ -23,13 +23,13 @@ static MOBJ_FUNCTION_INIT(spawn_player_init)
 static MOBJ_FUNCTION_INIT(spawn_enemy_init)
 {
 	spawn_common_init(this, thisdata, parent, args);
-	entity_new(MOBJ_ENEMY, this->pos.x, this->pos.y, this->dir, this, NULL);
+	entity_new("enemy", this->pos.x, this->pos.y, this->dir, this, NULL);
 }
 
 static MOBJ_FUNCTION_INIT(spawn_boss_init)
 {
 	spawn_common_init(this, thisdata, parent, args);
-	entity_new(MOBJ_BOSS, this->pos.x, this->pos.y, this->dir, this, NULL);
+	entity_new("boss", this->pos.x, this->pos.y, this->dir, this, NULL);
 }
 
 static const entityinfo_t spawn_player_reginfo = {

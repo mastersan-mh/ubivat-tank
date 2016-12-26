@@ -15,7 +15,6 @@
 #include "model.h"
 #include "img.h"
 
-
 #define MOBJ_FUNCTION_INIT(x) \
 	void (x)(entity_t * this, void * thisdata, const entity_t * parent, const void * args)
 
@@ -33,30 +32,6 @@
 
 #define MOBJ_ALLOW_DRAW_SET(ent, bool_value) \
 		(ent)->allow_draw = (bool_value)
-
-typedef enum
-{
-	MOBJ_SPAWN_PLAYER,
-	MOBJ_SPAWN_ENEMY,
-	MOBJ_SPAWN_BOSS,
-	MOBJ_ITEM_SCORES,
-	MOBJ_ITEM_HEALTH,
-	MOBJ_ITEM_ARMOR,
-	MOBJ_ITEM_AMMO_MISSILE,
-	MOBJ_ITEM_AMMO_MINE,
-	MOBJ_MESSAGE,
-	MOBJ_PLAYER,
-	MOBJ_ENEMY,
-	MOBJ_BOSS,
-	MOBJ_BULL_ARTILLERY,
-	MOBJ_BULL_MISSILE,
-	MOBJ_BULL_MINE,
-	MOBJ_EXPLODE_ARTILLERY,
-	MOBJ_EXPLODE_MISSILE,
-	MOBJ_EXPLODE_MINE,
-	MOBJ_EXIT,
-	__MOBJ_NUM
-} mobj_type_t;
 
 typedef enum direction_e
 {
@@ -108,8 +83,6 @@ typedef struct entlink_s
 	struct entlink_s * next;
 	/* удалить объект */
 	bool erase;
-	//класс
-	mobj_type_t type;
 	//позиция
 	vec2_t pos;
 	/* направление взгляда/движения */
@@ -155,7 +128,7 @@ extern void entities_handle();
 
 extern void entities_render(camera_t * cam);
 
-extern entity_t * entity_new(mobj_type_t mobj_type, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
+extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
 extern void entities_erase();
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);

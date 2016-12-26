@@ -21,13 +21,13 @@
 #define MAP_WALL_TEXTURE(wall) ((wall) & 0x0F)
 
 //броня0
-#define c_m_w_w0        0x01
+#define MAP_WALL_W0        0x01
 //броня1
-#define c_m_w_w1        0x02
+#define MAP_WALL_w1        0x02
 //кирпич
-#define c_m_w_brick     0x04
+#define MAP_WALL_brick     0x04
 //вода
-#define c_m_water       0x08
+#define MAP_WALL_water     0x08
 
 #define MAP_NAME_SIZE (17)
 #define MAP_BRIEF_SIZE (129)
@@ -36,8 +36,8 @@
 #define MAP_SX 66
 // размер карты OY
 #define MAP_SY 50
-// размер блока карты
-#define MAP_BLOCKSIZE (8)
+// размер блока стены карты
+#define MAP_WALLBLOCKSIZE (8)
 
 typedef enum
 {
@@ -52,11 +52,11 @@ typedef enum
 	MAPDATA_MOBJ_ITEM_MINE   ,
 	MAPDATA_MOBJ_OBJ_EXIT    ,
 	MAPDATA_MOBJ_OBJ_MESS    ,
-	__MAPDATA_MOBJ_NUM
+	MAPDATA_MOBJ_NUM
 } mapdata_entity_type_t;
 
 
-extern char * map_class_names[__MAPDATA_MOBJ_NUM];
+extern char * map_class_names[MAPDATA_MOBJ_NUM];
 
 /* заголовок карты */
 typedef struct

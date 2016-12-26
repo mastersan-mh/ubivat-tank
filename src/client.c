@@ -69,7 +69,7 @@ void client_spawn(int id)
 	entity_t * spawn = player_spawn_get();
 
 	entity_t * player = entity_new(
-		MOBJ_PLAYER,
+		"player",
 		spawn->pos.x,
 		spawn->pos.y,
 		spawn->dir,

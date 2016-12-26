@@ -51,15 +51,15 @@ static void explode_detonate(entity_t * this)
 				{
 					switch(MAP_WALL_TEXTURE(wall))
 					{
-						case c_m_w_brick:
+						case MAP_WALL_brick:
 							map.map[y8][x8] = 0;
 							break;
-						case c_m_w_w1   :
+						case MAP_WALL_w1   :
 							if( explode->type == EXPLODE_MISSILE || explode->type == EXPLODE_MINE )
 								map.map[y8][x8] = 0;
 							break;
-						case c_m_w_w0   :
-						case c_m_water  :
+						case MAP_WALL_W0   :
+						case MAP_WALL_water  :
 							break;
 					}
 				}
