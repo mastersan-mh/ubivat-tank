@@ -5,9 +5,39 @@
  *      Author: mastersan
  */
 
-#include "entity.h"
 #include "game.h"
+#include "system.h"
+#include "entity.h"
 #include "ent_spawn.h"
+
+/**
+ * получить любой спавн-поинт для игрока
+ */
+static entity_t * spawn_get_random()
+{
+
+	int count = 0;
+
+	entity_t * ent;
+
+	//считаем количество спавн-поинтов
+	FOR_ENTITIES("spawn_player", ent)
+	{
+		count++;
+	};
+	if(count == 0)
+		return NULL;
+	count = xrand(count);
+
+	//выбираем случайным образом
+	FOR_ENTITIES("spawn_player", ent)
+	{
+		if(count == 0) return ent;
+		count--;
+	};
+	return NULL;
+}
+
 
 static void spawn_common_init(entity_t * this, void * thisdata, const entity_t * parent, const spawn_t * args)
 {
@@ -32,12 +62,28 @@ static MOBJ_FUNCTION_INIT(spawn_boss_init)
 	entity_new("boss", this->pos.x, this->pos.y, this->dir, this, NULL);
 }
 
+static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_player_spawn)
+{
+	entity_t * spawn = spawn_get_random();
+
+	entity_t * player = entity_new(
+		"player",
+		spawn->pos.x,
+		spawn->pos.y,
+		spawn->dir,
+		spawn,
+		NULL
+	);
+	return player;
+}
+
 static const entityinfo_t spawn_player_reginfo = {
 		.name = "spawn_player",
 		.datasize = sizeof(spawn_t),
-		.entityinit = spawn_player_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
-		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.init = spawn_player_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
+		.handle = MOBJ_FUNCTION_HANDLE_DEFAULT,
+		.client_spawn = spawn_player_spawn,
 		.client_store = NULL,
 		.client_restore = NULL
 };
@@ -45,8 +91,8 @@ static const entityinfo_t spawn_player_reginfo = {
 static const entityinfo_t spawn_enemy_reginfo = {
 		.name = "spawn_enemy",
 		.datasize = sizeof(spawn_t),
-		.entityinit = spawn_enemy_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.init = spawn_enemy_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL
@@ -55,8 +101,8 @@ static const entityinfo_t spawn_enemy_reginfo = {
 static const entityinfo_t spawn_boss_reginfo = {
 		.name = "spawn_boss",
 		.datasize = sizeof(spawn_t),
-		.entityinit = spawn_boss_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.init = spawn_boss_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL

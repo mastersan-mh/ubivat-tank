@@ -15,11 +15,21 @@
 #include "model.h"
 #include "img.h"
 
+/*
+ * цикл по объектам одного определённого типа
+ */
+#define FOR_ENTITIES(entity_name, entity) \
+	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
+
 #define MOBJ_FUNCTION_INIT(x) \
-	void (x)(entity_t * this, void * thisdata, const entity_t * parent, const void * args)
+	void x (entity_t * this, void * thisdata, const entity_t * parent, const void * args)
 
 #define MOBJ_FUNCTION_DONE(x) \
-	void (x)(entity_t * this, void * thisdata)
+	void x (entity_t * this, void * thisdata)
+
+#define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
+	entity_t * x (const entity_t * this)
+
 
 #define MOBJ_FUNCTION_DONE_DEFAULT NULL
 #define MOBJ_FUNCTION_HANDLE_DEFAULT NULL
@@ -103,12 +113,12 @@ typedef struct entityinfo_s
 {
 	char * name;
 	size_t datasize;
-	void (*entityinit)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
-	void (*entitydone)(entity_t * this, void * thisdata);
+	void (*init)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
+	void (*done)(entity_t * this, void * thisdata);
 
 	void (*handle)(entity_t * this);
 
-	void * (*connect)(const entity_t * this);
+	entity_t * (*client_spawn)(const entity_t * this);
 
 	void * (*client_store)(client_storedata_t * storedata, const void * data);
 	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
@@ -125,6 +135,7 @@ extern void entity_register(const entityinfo_t * info);
 extern entity_t * entity_getfirst(const char * name);
 
 extern void entities_handle();
+extern entity_t * entries_client_spawn();
 
 extern void entities_render(camera_t * cam);
 

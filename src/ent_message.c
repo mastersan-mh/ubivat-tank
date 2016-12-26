@@ -22,8 +22,8 @@ static void message_done(entity_t * this, void * thisdata)
 static const entityinfo_t message_reginfo = {
 		.name = "message",
 		.datasize = sizeof(ent_message_t),
-		.entityinit = message_init,
-		.entitydone = message_done,
+		.init = message_init,
+		.done = message_done,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL

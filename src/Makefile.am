@@ -14,8 +14,10 @@ ent_message.c \
 ent_spawn.c \
 ent_bull.c \
 ent_explode.c \
+ent_weap.c \
 ent_items.c \
 ent_player.c \
+ent_player_think.c \
 Z_mem.c \
 system.c \
 video.c \
@@ -26,7 +28,6 @@ _gr2D.c \
 fonts.c \
 actions.c \
 input.c \
-think.c \
 game.c \
 img.c \
 main.c \
@@ -35,5 +36,4 @@ entity.c \
 model.c \
 model_resources.c \
 menu.c \
-client.c \
-weap.c
+client.c

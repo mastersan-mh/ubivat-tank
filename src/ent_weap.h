@@ -5,15 +5,15 @@
  *      Author: mastersan
  */
 
-#ifndef SRC_WEAP_H_
-#define SRC_WEAP_H_
+#ifndef SRC_ENT_WEAP_H_
+#define SRC_ENT_WEAP_H_
+
+#include "ent_bull.h"
+#include "ent_explode.h"
 
 #include "types.h"
 #include "img.h"
 #include "entity.h"
-
-#include "ent_bull.h"
-#include "ent_explode.h"
 
 typedef enum
 {
@@ -41,4 +41,4 @@ explodetype_t entity_bull_type_to_explode_type(bulltype_t bull_type);
 const char * entity_bulltype_to_mobj(bulltype_t bulltype);
 const char * entity_explodetype_to_mobjtype(explodetype_t type);
 
-#endif /* SRC_WEAP_H_ */
+#endif /* SRC_ENT_WEAP_H_ */

@@ -8,12 +8,12 @@
 #ifndef SRC_ENT_PLAYER_H_
 #define SRC_ENT_PLAYER_H_
 
-#include "weap.h"
 #include "map.h"
 #include "types.h"
 #include "entity.h"
 #include "ent_items.h"
-#include "think.h"
+#include "ent_player_think.h"
+#include "ent_weap.h"
 
 /*
 	pix/s -> m/s -> km/h
@@ -151,7 +151,6 @@ void player2_attack_weapon3_ON();
 void player2_attack_weapon3_OFF();
 
 
-entity_t * player_spawn_get();
 int player_respawn(entity_t * player);
 
 void player_checkcode();

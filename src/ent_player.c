@@ -13,6 +13,7 @@
 #include "ent_bull.h"
 #include "ent_explode.h"
 #include "ent_message.h"
+#include "ent_weap.h"
 
 #include "system.h"
 #include "types.h"
@@ -20,12 +21,10 @@
 #include "video.h"
 #include "img.h"
 #include "map.h"
-#include "weap.h"
 #include "game.h"
 #include "_gr2D.h"
 #include "sound.h"
 #include "client.h"
-#include "think.h"
 
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
@@ -122,8 +121,8 @@ static void boss_handle(entity_t * this);
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
-		.entityinit = player_init,
-		.entitydone = player_done,
+		.init = player_init,
+		.done = player_done,
 		.handle   = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore,
@@ -134,8 +133,8 @@ static const entityinfo_t player_reginfo = {
 static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
-		.entityinit = enemy_init,
-		.entitydone = enemy_done,
+		.init = enemy_init,
+		.done = enemy_done,
 		.handle   = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -146,8 +145,8 @@ static const entityinfo_t enemy_reginfo = {
 static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
-		.entityinit = boss_init,
-		.entitydone = boss_done,
+		.init = boss_init,
+		.done = boss_done,
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -606,9 +605,6 @@ static void player_obj_check(entity_t * player)
 
 	entity_t * entity;
 
-#define FOR_ENTITIES(entity_name, entity) \
-	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
-
 	FOR_ENTITIES("item_scores", entity)
 	{
 		if( inbox(entity, player) )
@@ -962,7 +958,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 /**
  * получить любой спавн-поинт для игрока
  */
-entity_t * player_spawn_get()
+static entity_t * player_spawn_get() /* TODO: erase this func */
 {
 
 	int count = 0;

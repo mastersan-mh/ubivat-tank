@@ -6,10 +6,10 @@
 #include "ent_bull.h"
 #include "ent_explode.h"
 #include "ent_player.h"
+#include "ent_weap.h"
 
 #include "types.h"
 #include "game.h"
-#include "weap.h"
 #include "map.h"
 #include "client.h"
 #include "system.h"

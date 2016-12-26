@@ -11,8 +11,6 @@
 #include "actions.h"
 #include "menu.h"
 #include "map.h"
-#include "weap.h"
-#include "entity.h"
 #include "img.h"
 #include "video.h"
 #include "sound.h"
@@ -20,6 +18,7 @@
 #include "fonts.h"
 #include "client.h"
 #include "model_resources.h"
+#include "entity.h"
 
 // entities
 #include "ent_spawn.h"
@@ -29,6 +28,7 @@
 #include "ent_exit.h"
 #include "ent_items.h"
 #include "ent_player.h"
+#include "ent_weap.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -18,41 +18,22 @@
 			(enttop) = (ent);       \
 		}while(0)
 
-/*
-char *mobjnames[__MOBJ_NUM] =
-{
-		"spawn_player",
-		"spawn_enemy" ,
-		"spawn_boss"  ,
-		"message"     ,
-		"player"      ,
-		"enemy"       ,
-		"boss"        ,
-		"bull_artillery",
-		"bull_missile",
-		"bull_mine",
-		"explode_artillery",
-		"explode_missile",
-		"explode_mine",
-		"exit"
-};
-*/
-
 typedef struct
 {
+	/* информация о объектах в списках */
 	const entityinfo_t * info;
-	/* существующие объекты */
-	entity_t * entlinks;
-	/* удалённые объекты */
+	/* существующие объекты (все одного типа) */
+	entity_t * entities;
+	/* удалённые объекты (все одного типа) */
 	entity_t * entlinks_erased;
-}entityinfo_reg_t;
+}entity_registered_t;
 
 /* зарегестрированные объекты */
-static entityinfo_reg_t * entityinfo_regs = NULL;
+static entity_registered_t * entityinfo_regs = NULL;
 static size_t entityinfo_regs_size = 0;
 static size_t entityinfo_regs_num = 0;
 
-entityinfo_reg_t * entityinfo_get(const char * name)
+entity_registered_t * entityinfo_get(const char * name)
 {
 	size_t i;
 	for(i = 0; i < entityinfo_regs_num; i++)
@@ -65,7 +46,7 @@ entityinfo_reg_t * entityinfo_get(const char * name)
 
 void entity_register(const entityinfo_t * info)
 {
-	entityinfo_reg_t * tmp;
+	entity_registered_t * tmp;
 	if(info == NULL)
 	{
 		game_console_send("Entity registration failed: Register data is NULL.");
@@ -87,10 +68,10 @@ void entity_register(const entityinfo_t * info)
 		return;
 	}
 
-	if(info->datasize != 0 && info->entityinit == NULL)
+	if(info->datasize != 0 && info->init == NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .entityinit == NULL.", info->name);
 
-	if(info->datasize == 0 && info->entityinit != NULL)
+	if(info->datasize == 0 && info->init != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 
 	if(entityinfo_regs_size < entityinfo_regs_num + 1)
@@ -99,12 +80,12 @@ void entity_register(const entityinfo_t * info)
 			entityinfo_regs_size = 1;
 		else
 			entityinfo_regs_size *= 2;
-		tmp = Z_realloc(entityinfo_regs, sizeof(entityinfo_reg_t) * entityinfo_regs_size);
+		tmp = Z_realloc(entityinfo_regs, sizeof(entity_registered_t) * entityinfo_regs_size);
 		if(!tmp)game_halt("Entity registration failed: out of memory");
 		entityinfo_regs = tmp;
 	}
 	entityinfo_regs[entityinfo_regs_num].info = info;
-	entityinfo_regs[entityinfo_regs_num].entlinks = NULL;
+	entityinfo_regs[entityinfo_regs_num].entities = NULL;
 	entityinfo_regs[entityinfo_regs_num].entlinks_erased = NULL;
 	entityinfo_regs_num++;
 }
@@ -126,7 +107,7 @@ int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
 entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
 {
 	int i;
-	entityinfo_reg_t * entityinfo_reg = entityinfo_get(name);
+	entity_registered_t * entityinfo_reg = entityinfo_get(name);
 	if(!entityinfo_reg)
 	{
 		game_console_send("Error: Cannot create unknown entity \"%s\".", name);
@@ -145,7 +126,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 	const entityinfo_t * entityinfo = entityinfo_reg->info;
 	entity->info = entityinfo;
 
-	LIST2_PUSH(entityinfo_reg->entlinks, entity);
+	LIST2_PUSH(entityinfo_reg->entities, entity);
 
 	if(entityinfo->entmodels_num > 0)
 	{
@@ -161,8 +142,8 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 		entity->data = NULL;
 	else
 		entity->data = Z_malloc(entityinfo->datasize);
-	if(entityinfo->entityinit)
-		entity->info->entityinit(entity, entity->data, parent, args);
+	if(entityinfo->init)
+		entity->info->init(entity, entity->data, parent, args);
 
 	return entity;
 }
@@ -174,8 +155,8 @@ static void entity_freemem(entity_t * entity)
 {
 	if(entity->info != NULL)
 	{
-		if(entity->info->entitydone != NULL)
-			entity->info->entitydone(entity, entity->data);
+		if(entity->info->done != NULL)
+			entity->info->done(entity, entity->data);
 		if(entity->info->datasize)
 			Z_free(entity->data);
 	}
@@ -191,14 +172,14 @@ void entities_erase()
 	size_t i;
 	for(i = 0; i < entityinfo_regs_num; i++)
 	{
-		entityinfo_reg_t * entreg = &entityinfo_regs[i];
+		entity_registered_t * entreg = &entityinfo_regs[i];
 
 		entity_t * entlink;
 
-		while(entreg->entlinks)
+		while(entreg->entities)
 		{
-			entlink = entreg->entlinks;
-			entreg->entlinks = entreg->entlinks->next;
+			entlink = entreg->entities;
+			entreg->entities = entreg->entities->next;
 			entity_freemem(entlink);
 		}
 		while(entreg->entlinks_erased)
@@ -236,17 +217,16 @@ void entities_handle()
 	size_t ientreg;
 	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
 	{
-		entityinfo_reg_t * entreg = &entityinfo_regs[ientreg];
-
-		entity_t * entlink = entreg->entlinks;
+		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		entity_t * entlink = entreg->entities;
 		while(entlink)
 		{
 
 			if(entlink->erase)
 			{
 
-				if(entreg->entlinks == entlink)
-					entreg->entlinks = entreg->entlinks->next;
+				if(entreg->entities == entlink)
+					entreg->entities = entreg->entities->next;
 
 				entity_t * erased = entlink;
 				entlink = entlink->next;
@@ -319,6 +299,31 @@ void entities_handle()
 
 		}
 	}
+}
+
+/*
+ * обработка событий объектов появления клиента на карте.
+ * Как только обработчик объекта возвращает объект (не NULL),
+ * этот возвращённый объект становится "телом" клиента.
+ */
+entity_t * entries_client_spawn()
+{
+	size_t ientreg;
+	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
+	{
+		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		const entityinfo_t * info = entreg->info;
+		if(!info->client_spawn)
+			continue;
+		entity_t * entity;
+		for(entity = entreg->entities; entity; entity = entity->next)
+		{
+			entity_t * entity = info->client_spawn(entity);
+			if(entity != NULL)
+				return entity;
+		}
+	}
+	return NULL;
 }
 
 static const ent_modelaction_t * entity_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname)
@@ -412,13 +417,13 @@ void entity_model_play_pause_all(entity_t * entity)
  */
 entity_t * entity_getfirst(const char * name)
 {
-	entityinfo_reg_t * entinfo = entityinfo_get(name);
+	entity_registered_t * entinfo = entityinfo_get(name);
 	if(entinfo == NULL)
 	{
 		game_console_send("Error: Unknown entity \"%s\".", name);
 		return NULL;
 	}
-	return entinfo->entlinks;
+	return entinfo->entities;
 }
 
 static void ent_models_render(
@@ -476,10 +481,10 @@ void entities_render(camera_t * cam)
 	size_t i;
 	for(i = 0; i < entityinfo_regs_num; i++)
 	{
-		entityinfo_reg_t * entreg = &entityinfo_regs[i];
+		entity_registered_t * entreg = &entityinfo_regs[i];
 
 		entity_t * entlink;
-		for(entlink = entreg->entlinks; entlink; entlink = entlink->next)
+		for(entlink = entreg->entities; entlink; entlink = entlink->next)
 		{
 			if(entlink->erase) continue;
 			if(!entlink->allow_handle) continue;

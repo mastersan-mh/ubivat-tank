@@ -6,13 +6,13 @@
  */
 
 #include "game.h"
-#include "weap.h"
 #include "entity.h"
 #include "model.h"
+#include "sound.h"
 #include "ent_bull.h"
 #include "ent_explode.h"
 #include "ent_player.h"
-#include "sound.h"
+#include "ent_weap.h"
 
 bullinfo_t bullinfo_table[__BULL_NUM] =
 {
@@ -198,8 +198,8 @@ static void bull_artillery_handle(entity_t * this)
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = sizeof(bull_t),
-		.entityinit = bull_artillery_entity_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.init = bull_artillery_entity_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -245,8 +245,8 @@ static void bull_missile_handle(entity_t * this)
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = sizeof(bull_t),
-		.entityinit = bull_missile_entity_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.init = bull_missile_entity_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -293,8 +293,8 @@ static void bull_mine_handle(entity_t * this)
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = sizeof(bull_t),
-		.entityinit = bull_mine_entity_init,
-		.entitydone = MOBJ_FUNCTION_DONE_DEFAULT,
+		.init = bull_mine_entity_init,
+		.done = MOBJ_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,

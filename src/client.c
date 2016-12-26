@@ -8,7 +8,6 @@
 #include "client.h"
 #include "game.h"
 #include "map.h"
-#include "ent_player.h"
 
 static client_t ** clients;
 static size_t clients_size = 0;
@@ -28,7 +27,8 @@ int client_connect()
 		if(clients_size == 0) clients_size = 1;
 		else clients_size *= 2;
 		tmp = Z_realloc(clients, sizeof(client_t*) * clients_size);
-		if(!tmp)game_halt("mobj_register(): failed");
+		if(!tmp)
+			game_halt("client_connect(): Can not alloc memory, failed");
 		clients = tmp;
 	}
 
@@ -70,24 +70,16 @@ int client_spawn(int id)
 		game_console_send("Error: Could not spawn client: unknown client id %d.", id);
 		return -1;
 	}
-	entity_t * spawn = player_spawn_get();
 
-	if(spawn == NULL)
+	entity_t * entity = entries_client_spawn();
+
+	if(entity == NULL)
 	{
-		game_console_send("Error: Could not spawn client: spawn point not found.");
+		game_console_send("Error: No entity to spawn client.");
 		return -1;
 	}
 
-	entity_t * player = entity_new(
-		"player",
-		spawn->pos.x,
-		spawn->pos.y,
-		spawn->dir,
-		spawn,
-		NULL
-	);
-
-	clients[id]->entity = player;
+	clients[id]->entity = entity;
 	return 0;
 }
 

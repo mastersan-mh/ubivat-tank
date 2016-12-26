@@ -4,7 +4,7 @@
  * by Master San
  */
 
-#include "weap.h"
+#include "ent_weap.h"
 #include "ent_player.h"
 
 

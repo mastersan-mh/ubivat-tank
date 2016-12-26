@@ -32,8 +32,8 @@ static void exit_entity_done(entity_t * this, void * thisdata)
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
 		.datasize = sizeof(ent_exit_t),
-		.entityinit = exit_entity_init,
-		.entitydone = exit_entity_done,
+		.init = exit_entity_init,
+		.done = exit_entity_done,
 		.handle   = MOBJ_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
