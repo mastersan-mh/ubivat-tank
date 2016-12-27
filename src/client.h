@@ -8,38 +8,4 @@
 #ifndef SRC_CLIENT_H_
 #define SRC_CLIENT_H_
 
-typedef struct client_storedata_s
-{
-	//фрагов за пройденые карты
-	int fragstotal;
-	//фрагов на карте
-	int frags;
-	int level;
-	int scores;
-} client_storedata_t;
-
-typedef struct
-{
-	struct entlink_s * entity;
-	client_storedata_t storedata;
-	void * userstoredata;
-}client_t;
-
-#include "entity.h"
-
-int client_connect();
-
-void client_disconnect_all();
-
-int client_num_get();
-
-client_t * client_get(int id);
-
-int client_spawn(int id);
-
-void client_unspawn(int id);
-
-void client_store_all();
-void client_restore_all();
-
 #endif /* SRC_CLIENT_H_ */

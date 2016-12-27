@@ -8,8 +8,8 @@
 #ifndef SRC_MAP_H_
 #define SRC_MAP_H_
 
-#include <types.h>
-#include <img.h>
+#include "types.h"
+#include "img.h"
 #include "entity.h"
 
 //флаг присутствия стены

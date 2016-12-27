@@ -10,10 +10,10 @@
 
 #include "vec.h"
 #include "types.h"
-#include "client.h"
 #include "Z_mem.h"
 #include "model.h"
 #include "img.h"
+#include "server.h"
 
 /*
  * цикл по объектам одного определённого типа
@@ -51,14 +51,40 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-typedef void (*endframe_f)(struct entlink_s * this, unsigned int imodel, char * actionname);
+/*
+ * список объектов одного типа, у которых
+ * .erased == false и allow_handle == true
+ */
+typedef struct entity_s
+{
+	struct entity_s * prev;
+	struct entity_s * next;
+	/* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
+	struct entity_s * parent;
+	/* удалить объект */
+	bool erase;
+	//позиция
+	vec2_t pos;
+	/* направление взгляда/движения */
+	direction_t dir;
+	/* объект показывать и обрабатывать */
+	bool allow_handle;
+	/* объеккт разрешено показывать */
+	bool allow_draw;
+
+	const struct entityinfo_s * info;
+	/* структура для проигрывания кардов моделей, связанных с объектом */
+	struct ent_modelplayer_s * modelplayers;
+
+	void * data;
+} entity_t;
 
 typedef struct
 {
 	char * name;
 	unsigned int startframe;
 	unsigned int endframe;
-	endframe_f endframef;
+	void (*endframef)(entity_t * this, unsigned int imodel, char * actionname);
 } ent_modelaction_t;
 
 typedef struct
@@ -74,7 +100,7 @@ typedef struct
 } entmodel_t;
 
 /* структура для проигрывания кардов моделей, связанных с объектом */
-typedef struct
+typedef struct ent_modelplayer_s
 {
 	const model_t * model;
 //	/* воспроизводимое действие */
@@ -82,34 +108,6 @@ typedef struct
 	/* номер кадра */
 	float frame;
 } ent_modelplayer_t;
-
-/*
- * список объектов одного типа, у которых
- * .erased == false и allow_handle == true
- */
-typedef struct entlink_s
-{
-	struct entlink_s * prev;
-	struct entlink_s * next;
-	/* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
-	struct entlink_s * parent;
-	/* удалить объект */
-	bool erase;
-	//позиция
-	vec2_t pos;
-	/* направление взгляда/движения */
-	direction_t dir;
-	/* объект показывать и обрабатывать */
-	bool allow_handle;
-	/* объеккт разрешено показывать */
-	bool allow_draw;
-
-	const struct entityinfo_s * info;
-	/* структура для проигрывания кардов моделей, связанных с объектом */
-	ent_modelplayer_t * modelplayers;
-
-	void * data;
-} entity_t;
 
 typedef struct entityinfo_s
 {
@@ -122,8 +120,8 @@ typedef struct entityinfo_s
 
 	entity_t * (*client_spawn)(const entity_t * this);
 
-	void * (*client_store)(client_storedata_t * storedata, const void * data);
-	void (*client_restore)(void * data, const client_storedata_t * storedata, const void * userstoredata);
+	void * (*client_store)(struct client_storedata_s * storedata, const void * data);
+	void (*client_restore)(void * data, const struct client_storedata_s * storedata, const void * userstoredata);
 
 	/* размер массива моделей */
 	unsigned int entmodels_num;

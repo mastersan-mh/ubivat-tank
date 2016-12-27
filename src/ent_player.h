@@ -99,7 +99,7 @@ typedef struct
 	//характеристика
 	stat_t charact;
 	//для управляемой ракеты
-	struct entlink_s * bull;
+	struct entity_s * bull;
 	//передвижения
 	move_t move;
 	bool attack;
@@ -154,13 +154,12 @@ void player2_attack_weapon3_OFF();
 int player_respawn(entity_t * player);
 
 void player_checkcode();
-void player_item_get(struct entlink_s * player);
 
 void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
 
-void player_draw_status(camera_t * cam, struct entlink_s * player);
+void player_draw_status(camera_t * cam, entity_t * player);
 
-void player_getdamage(struct entlink_s * player, struct entlink_s * explode, bool self, float radius);
+void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius);
 
 void player_class_init(entity_t * player, player_t * pl);
 

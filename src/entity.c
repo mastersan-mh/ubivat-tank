@@ -25,7 +25,7 @@ typedef struct
 	/* существующие объекты (все одного типа) */
 	entity_t * entities;
 	/* удалённые объекты (все одного типа) */
-	entity_t * entlinks_erased;
+	entity_t * entities_erased;
 }entity_registered_t;
 
 /* зарегестрированные объекты */
@@ -86,7 +86,7 @@ void entity_register(const entityinfo_t * info)
 	}
 	entityinfo_regs[entityinfo_regs_num].info = info;
 	entityinfo_regs[entityinfo_regs_num].entities = NULL;
-	entityinfo_regs[entityinfo_regs_num].entlinks_erased = NULL;
+	entityinfo_regs[entityinfo_regs_num].entities_erased = NULL;
 	entityinfo_regs_num++;
 }
 
@@ -116,7 +116,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 
 	entity_t * entity = Z_malloc(sizeof(entity_t));
 
-	entity->parent = parent;
+	entity->parent = (entity_t*)parent;
 	entity->erase = false;
 	entity->pos.x = x;
 	entity->pos.y = y;
@@ -175,19 +175,19 @@ void entities_erase()
 	{
 		entity_registered_t * entreg = &entityinfo_regs[i];
 
-		entity_t * entlink;
+		entity_t * entity;
 
 		while(entreg->entities)
 		{
-			entlink = entreg->entities;
+			entity = entreg->entities;
 			entreg->entities = entreg->entities->next;
-			entity_freemem(entlink);
+			entity_freemem(entity);
 		}
-		while(entreg->entlinks_erased)
+		while(entreg->entities_erased)
 		{
-			entlink = entreg->entlinks_erased;
-			entreg->entlinks_erased = entreg->entlinks_erased->next;
-			entity_freemem(entlink);
+			entity = entreg->entities_erased;
+			entreg->entities_erased = entreg->entities_erased->next;
+			entity_freemem(entity);
 		}
 
 	}
@@ -196,7 +196,7 @@ void entities_erase()
 /**
  * указать нового родителя взамен старого
  */
-static void reparent(entity_t * oldparent, entity_t * newparent)
+static void reparent(const entity_t * oldparent, const entity_t * newparent)
 {
 	size_t ientreg;
 	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
@@ -206,7 +206,7 @@ static void reparent(entity_t * oldparent, entity_t * newparent)
 		for(entity = entreg->entities; entity; entity = entity->next)
 		{
 			if(entity->parent == oldparent)
-				entity->parent = newparent;
+				entity->parent = (entity_t*)newparent;
 		}
 	}
 }
@@ -237,20 +237,20 @@ void entities_handle()
 	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
 	{
 		entity_registered_t * entreg = &entityinfo_regs[ientreg];
-		entity_t * entlink = entreg->entities;
-		while(entlink)
+		entity_t * entity = entreg->entities;
+		while(entity)
 		{
 
-			if(entlink->erase)
+			if(entity->erase)
 			{
 
-				if(entreg->entities == entlink)
+				if(entreg->entities == entity)
 					entreg->entities = entreg->entities->next;
 
-				entity_t * erased = entlink;
+				entity_t * erased = entity;
 				/* укажем нового родителя, взамен удаляемого */
 				reparent(erased, erased->parent);
-				entlink = entlink->next;
+				entity = entity->next;
 				if(erased->prev)
 					erased->prev->next = erased->next;
 				if(erased->next)
@@ -258,27 +258,27 @@ void entities_handle()
 
 				entity_model_play_pause_all(erased);
 
-				LIST2_PUSH(entreg->entlinks_erased, erased);
+				LIST2_PUSH(entreg->entities_erased, erased);
 				continue;
 			}
 
-			if(!entlink->allow_handle)
+			if(!entity->allow_handle)
 			{
-				entlink = entlink->next;
+				entity = entity->next;
 				continue;
 			}
 
-			const entityinfo_t * info = entlink->info;
+			const entityinfo_t * info = entity->info;
 			if(!info) continue;
 
 			if(info->handle != NULL)
 			{
-				info->handle(entlink);
+				info->handle(entity);
 			}
 
-			if(entlink->erase)
+			if(entity->erase)
 			{
-				entlink = entlink->next;
+				entity = entity->next;
 				continue;
 			}
 			int ientmodel;
@@ -286,27 +286,27 @@ void entities_handle()
 			{
 
 				if(
-						entlink->modelplayers[ientmodel].model != NULL &&
-						entlink->modelplayers[ientmodel].model->frames > 0 &&
-						entlink->modelplayers[ientmodel].model->fps > 0 &&
-						entlink->modelplayers[ientmodel].action != NULL
+						entity->modelplayers[ientmodel].model != NULL &&
+						entity->modelplayers[ientmodel].model->frames > 0 &&
+						entity->modelplayers[ientmodel].model->fps > 0 &&
+						entity->modelplayers[ientmodel].action != NULL
 				)
 				{
 
 					bool end = model_nextframe(
-						&entlink->modelplayers[ientmodel].frame,
-						entlink->modelplayers[ientmodel].model->fps,
-						entlink->modelplayers[ientmodel].action->startframe,
-						entlink->modelplayers[ientmodel].action->endframe
+						&entity->modelplayers[ientmodel].frame,
+						entity->modelplayers[ientmodel].model->fps,
+						entity->modelplayers[ientmodel].action->startframe,
+						entity->modelplayers[ientmodel].action->endframe
 					);
 					if(end)
 					{
-						const ent_modelaction_t * action = entlink->modelplayers[ientmodel].action;
+						const ent_modelaction_t * action = entity->modelplayers[ientmodel].action;
 						if(action != NULL && action->endframef != NULL)
 						{
-							entlink->modelplayers[ientmodel].action = NULL;
+							entity->modelplayers[ientmodel].action = NULL;
 							action->endframef(
-								entlink,
+								entity,
 								ientmodel,
 								action->name
 							);
@@ -316,7 +316,7 @@ void entities_handle()
 				}
 
 			}
-			entlink = entlink->next;
+			entity = entity->next;
 
 		}
 	}
@@ -504,25 +504,25 @@ void entities_render(camera_t * cam)
 	{
 		entity_registered_t * entreg = &entityinfo_regs[i];
 
-		entity_t * entlink;
-		for(entlink = entreg->entities; entlink; entlink = entlink->next)
+		entity_t * entity;
+		for(entity = entreg->entities; entity; entity = entity->next)
 		{
-			if(entlink->erase) continue;
-			if(!entlink->allow_handle) continue;
+			if(entity->erase) continue;
+			if(!entity->allow_handle) continue;
 
 			//int viewbox_half = entity->img->img_sx;
 			int viewbox_half = 16;
 
 
 			if(
-					entlink->allow_draw &&
-					( cam->pos.x  - cam_sx_half  <= entlink->pos.x + viewbox_half ) &&
-					( entlink->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
-					( cam->pos.y  - cam_sy_half  <= entlink->pos.y + viewbox_half ) &&
-					( entlink->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
+					entity->allow_draw &&
+					( cam->pos.x  - cam_sx_half  <= entity->pos.x + viewbox_half ) &&
+					( entity->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
+					( cam->pos.y  - cam_sy_half  <= entity->pos.y + viewbox_half ) &&
+					( entity->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
 			)
 			{
-				ent_models_render(cam, entlink);
+				ent_models_render(cam, entity);
 				ent_rendered++;
 			}
 		}

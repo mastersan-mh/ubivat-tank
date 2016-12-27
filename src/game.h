@@ -8,8 +8,8 @@
 #ifndef SRC_GAME_H_
 #define SRC_GAME_H_
 
-#include <types.h>
-#include <map.h>
+#include "types.h"
+#include "map.h"
 #include "entity.h"
 #include "actions.h"
 

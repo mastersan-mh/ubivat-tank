@@ -278,8 +278,8 @@ int menu_game_new1P(void * ctx)
 		return MENU_ABORT;
 	}
 
-	client_connect();
-	client_spawn(0);
+	server_client_connect();
+	server_spawn_client(0);
 
 	return MENU_PRELEVEL;
 }
@@ -304,10 +304,10 @@ int menu_game_new2P(void * ctx)
 		return MENU_ABORT;
 	}
 
-	client_connect();
-	client_connect();
-	client_spawn(0);
-	client_spawn(1);
+	server_client_connect();
+	server_client_connect();
+	server_spawn_client(0);
+	server_spawn_client(1);
 
 	return MENU_PRELEVEL;
 }
@@ -788,7 +788,7 @@ static void menu_interlevel_draw(const void * ctx)
 	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
 
 	int i;
-	int num = client_num_get();
+	int num = server_client_num_get();
 
 	int refy;
 	if(num == 0) refy = 84;
@@ -799,7 +799,7 @@ static void menu_interlevel_draw(const void * ctx)
 
 	for(i = 0; i < num; i++)
 	{
-		client_t * client = client_get(i);
+		client_t * client = server_client_get(i);
 		item_img_t * img = image_get(list[client->storedata.level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);

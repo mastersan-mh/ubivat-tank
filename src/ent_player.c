@@ -259,7 +259,7 @@ void boss_handle(entity_t * this)
 
 static void _move(int id, direction_t dir, bool go)
 {
-	client_t * cl = client_get(id);
+	client_t * cl = server_client_get(id);
 	if(!cl)return;
 	player_t * pl = cl->entity->data;
 
@@ -275,7 +275,7 @@ static void _move(int id, direction_t dir, bool go)
 
 static void _attack(int id, bool attack, weapontype_t weap)
 {
-	client_t * cl = client_get(id);
+	client_t * cl = server_client_get(id);
 	if(!cl)return;
 	player_t * pl = cl->entity->data;
 

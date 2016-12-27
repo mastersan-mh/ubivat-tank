@@ -22,7 +22,7 @@ typedef struct
 	bool attack;
 	weapontype_t weap;
 	//цель
-	struct entlink_s * target;
+	entity_t * target;
 	//счетчик
 	long count;
 }think_t;

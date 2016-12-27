@@ -36,4 +36,5 @@ entity.c \
 model.c \
 model_resources.c \
 menu.c \
+server.c \
 client.c
