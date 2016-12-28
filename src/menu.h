@@ -27,8 +27,6 @@ typedef enum
 	MENU_CUSTOM_NEWP2,
 	MENU_OPTIONS,
 	MENU_ABOUT,
-	MENU_INTERLEVEL,
-	MENU_PRELEVEL,
 	MENU_ABORT,
 	MENU_QUIT,
 	MENU_NUM
@@ -104,16 +102,8 @@ typedef struct
 	int menu;
 } menu_about_ctx_t;
 /* MENU_INTERLEVEL */
-typedef struct
-{
-	int menu;
-} menu_interlevel_ctx_t;
+
 /* MENU_PRELEVEL */
-typedef struct
-{
-	int menu;
-	int sound_playId;
-} menu_prelevel_ctx_t;
 
 /* MENU_ABORT */
 

@@ -284,7 +284,6 @@ static void _attack(int id, bool attack, weapontype_t weap)
 	pl->attack = attack;
 }
 
-
 void player_moveUp_ON()
 {
 	_move(0, DIR_UP, true);

@@ -67,17 +67,68 @@ char * game_dir_home;
 char * game_dir_conf;
 char * game_dir_saves;
 
+/*
+ * заставка между уровнями
+ */
+static void game_state_intermission_draw()
+{
+	static image_index_t list[] =
+	{
+			IMG_TANK0,
+			IMG_TANK1,
+			IMG_TANK2,
+			IMG_TANK3,
+			IMG_TANK4
+	};
+	gr2D_setimage0(0, 0, game.m_i_interlv);
+	font_color_set3i(COLOR_15);
+	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
 
+	int i;
+	int num = server_client_num_get();
 
+	int refy;
+	if(num == 0) refy = 84;
+	else refy = 76;
 
-static int game_gameTick();
+	font_color_set3i(COLOR_15);
+	video_printf(48 + 8 * 00, refy      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+
+	for(i = 0; i < num; i++)
+	{
+		client_t * client = server_client_get(i);
+		item_img_t * img = image_get(list[client->storedata.level]);
+		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
+		font_color_set3i(COLOR_15);
+		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, orient_horiz, "%d" , client->storedata.scores);
+		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.frags);
+		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.fragstotal);
+	}
+}
+
+/*
+ * информация об уровне
+ */
+static void game_state_missionbrief_draw()
+{
+	gr2D_setimage0(0,0,game.m_i_interlv);
+	font_color_set3i(COLOR_15);
+	video_printf(160-06*4 ,8*5, orient_horiz, "КАРТА:");
+	font_color_set3i(COLOR_15);
+	video_printf(160-16*4, 8*7 , orient_horiz, map.name);
+	video_printf(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
+	video_printf(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
+	video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
+}
+
+static void game_gameTick();
 
 static void game_draw();
 
 
 void game_action_enter_mainmenu()
 {
-	game.ingame = false;
+	game.show_menu = true;
 }
 
 void game_action_win()
@@ -116,9 +167,9 @@ void game_init()
 	check_directory(game_dir_conf);
 	check_directory(game_dir_saves);
 
-	game.msg        = NULL;
-	game.created    = false;
-	game.ingame     = false;
+	game.msg       = NULL;
+	game.state     = GAMESTATE_NOGAME;
+	game.show_menu = true;
 
 	randomize();
 	printf("%s\n", c_strTITLE);
@@ -234,8 +285,9 @@ void game_main()
 {
 	bool quit = false;
 	menu_selector_t imenu = MENU_MAIN;
-	imenu = MENU_MAIN;
 	menu_selector_t imenu_process = imenu;
+
+	gamestate_t gamestate_prev = game.state;
 
 
 	//sound_play_start(SOUND_FIRE1);
@@ -288,29 +340,47 @@ void game_main()
 			cycletimeeventer = 0;
 		}
 
+		server();
+
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
+
 			//printf("event.type = %d\n", event.type);
-			if(game.ingame)
+
+			if(game.show_menu)
 			{
+				menu_send_event(&event);
+			}
+			else
+			{
+
 				switch(event.type)
 				{
 				case SDL_KEYDOWN:
-					input_key_setState(event.key.keysym.scancode, true);
+					if(game.state == GAMESTATE_INGAME)
+						input_key_setState(event.key.keysym.scancode, true);
+					else if(game.state == GAMESTATE_MISSION_BRIEF)
+					{
+						sound_play_start(SOUND_MENU_ENTER, 1);
+						game.state = GAMESTATE_INGAME;
+					}
+					else if(game.state == GAMESTATE_INTERMISSION)
+					{
+						sound_play_start(SOUND_MENU_ENTER, 1);
+						imenu = MENU_GAME_SAVE;
+						game.show_menu = true;
+					}
 					break;
 				case SDL_KEYUP:
-					input_key_setState(event.key.keysym.scancode, false);
+					if(game.state == GAMESTATE_INGAME)
+						input_key_setState(event.key.keysym.scancode, false);
 					break;
 				}
 				//player_checkcode();
 
-			}
-			else
-			{
-				menu_send_event(&event);
 			}
 
 			switch(event.type)
@@ -321,14 +391,13 @@ void game_main()
 			// handle your event here
 		}
 
-
 		client_events_send();
-		server_events_pump();
 
 		if(quit)break;
+
 		video_screen_draw_begin();
 
-		if(!game.ingame)
+		if(game.show_menu)
 		{
 			imenu_process = imenu;
 			imenu = menu_handle(imenu_process);
@@ -337,36 +406,63 @@ void game_main()
 			case MENU_QUIT: quit = true;break;
 			default: break;
 			}
-			if(quit)break;
-		}
-		else
-		{
-			int ret = game_gameTick();
-			if(ret >= 0) imenu = ret;
-		}
-
-
-
-		if(!game.ingame)
-		{
 			menu_draw(imenu_process);
 		}
 		else
 		{
-			game_draw();
+			switch(game.state)
+			{
+			case GAMESTATE_NOGAME:
+				gamestate_prev = game.state;
+				break;
+			case GAMESTATE_INGAME:
+				if(gamestate_prev != game.state)
+				{
+					if(game.sound_playId)
+					{
+						sound_play_stop(game.sound_playId);
+						game.sound_playId = 0;
+					}
+				}
+				gamestate_prev = game.state;
+				game_gameTick();
+				game_draw();
+				break;
+			case GAMESTATE_MISSION_BRIEF:
+				if(gamestate_prev != game.state)
+				{
+					sound_play_stop(game.sound_playId);
+					if(!game.sound_playId)
+						game.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
+				}
+				gamestate_prev = game.state;
+				game_state_missionbrief_draw();
+				break;
+			case GAMESTATE_INTERMISSION:
+				if(gamestate_prev != game.state)
+				{
+					sound_play_stop(game.sound_playId);
+					if(!game.sound_playId)
+						game.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
+				}
+				gamestate_prev = game.state;
+				game_state_intermission_draw();
+				imenu_process = MENU_GAME_SAVE;
+				gamestate_prev = game.state;
+				break;
+			}
 		}
 
 		font_color_set3i(COLOR_15);
 		video_printf(10,10, orient_horiz, "FPS = %d", fps);
 		video_screen_draw_end();
-
 	};
 }
 
 /*
  * главная процедура игры
  */
-int game_gameTick()
+void game_gameTick()
 {
 	entities_handle();
 
@@ -387,17 +483,16 @@ int game_gameTick()
 			{
 				//игра по выбору
 				game_abort();
-				return MENU_MAIN;
 			}
 			else
 			{
 				server_store_clients_info();
 				//игра по уровням
-				if(game_nextmap() == true) return MENU_INTERLEVEL;
+				if(game_nextmap() == true)
+					game.state = GAMESTATE_INTERMISSION;
 			}
 		}
 	}
-	return MENU_MAIN;
 }
 
 
@@ -802,7 +897,6 @@ int game_create()
 	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
 	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
-	if(game.created) return 1;
 	if((game.flags & c_g_f_2PLAYERS) == 0)
 	{
 		game.P0cam.pos.x = 0;
@@ -827,8 +921,12 @@ int game_create()
 		game.P1cam.sx    = cam_sx/2 - 1;
 		game.P1cam.sy    = cam_sy - statusbar_h;
 	};
-	game.created    = true;
-	game.ingame     = false;
+	game.show_menu = false;
+	game.state  = GAMESTATE_MISSION_BRIEF;
+	game.paused = false;
+
+	server_start();
+
 	return 0;
 }
 /*
@@ -840,11 +938,12 @@ void game_abort(void)
 
 	server_disconnect_clients();
 
+	server_stop();
+
 	//закроем карту
 	map_clear();
-	game.created    = false;
-	game.ingame     = false;
-	game._win_      = false;
+	game.state = GAMESTATE_NOGAME;
+	game._win_ = false;
 }
 
 /*
@@ -858,7 +957,7 @@ bool game_nextmap()
 
 	//закроем карту
 	map_clear();
-	game.ingame     = false;
+	game.state = GAMESTATE_MISSION_BRIEF;
 	game._win_      = false;
 	//menu_interlevel();
 

@@ -41,11 +41,6 @@ menu_custom_ctx_t menu_custom_ctx = {};
 menu_options_ctx_t menu_options_ctx = {};
 /* MENU_ABOUT */
 menu_about_ctx_t menu_about_ctx = {};
-/* MENU_INTERLEVEL */
-menu_interlevel_ctx_t menu_interlevel_ctx = {};
-/* MENU_PRELEVEL */
-menu_prelevel_ctx_t menu_prelevel_ctx = {};
-
 /* MENU_ABORT */
 
 /* MENU_QUIT */
@@ -174,15 +169,13 @@ int menu_main(void * ctx)
 	case RIGHT  : break;
 	case ENTER  :
 		sound_play_start(SOUND_MENU_ENTER, 1);
-		if(!game.created && __ctx->menu == 4)return MENU_MAIN;
+		if(game.state == GAMESTATE_NOGAME && __ctx->menu == 4)
+			return MENU_MAIN;
 		return menus[__ctx->menu];
 	case LEAVE  :
 		sound_play_start(SOUND_MENU_ENTER, 1);
-		if(game.created)
-		{
-			game.ingame = true;
-			return -1;
-		}
+		if(game.state != GAMESTATE_NOGAME)
+			game.show_menu = false;
 		break;
 	case SPACE: break;
 	}
@@ -210,7 +203,7 @@ static void menu_main_draw(const void * ctx)
 	};
 	for(int i = 0; i < 6; i++)
 	{
-		if(i != 4 || game.created)
+		if(i != 4 || game.state != GAMESTATE_NOGAME)
 			gr2D_setimage0(120, 30 + 23 * i, image_get(list[i]));
 	}
 	gr2D_setimage0( 97,30+23 * menu, game.m_i_cur_0);
@@ -261,7 +254,8 @@ static void menu_game_draw(const void * ctx)
 int menu_game_new1P(void * ctx)
 {
 	int ret;
-	if(game.created) return MENU_MAIN;
+	if(game.state != GAMESTATE_NOGAME)
+		return MENU_MAIN;
 	game.gamemap = mapList;
 	game.flags = 0;
 	ret = game_create();
@@ -281,13 +275,14 @@ int menu_game_new1P(void * ctx)
 	server_client_connect();
 	server_spawn_client(0);
 
-	return MENU_PRELEVEL;
+	return MENU_MAIN;
 }
 
 int menu_game_new2P(void * ctx)
 {
 	int ret;
-	if(game.created) return MENU_MAIN;
+	if(game.state != GAMESTATE_NOGAME)
+		return MENU_MAIN;
 	game.gamemap = mapList;
 	game.flags = c_g_f_2PLAYERS;
 	ret = game_create();
@@ -309,7 +304,7 @@ int menu_game_new2P(void * ctx)
 	server_spawn_client(0);
 	server_spawn_client(1);
 
-	return MENU_PRELEVEL;
+	return MENU_MAIN;
 }
 
 
@@ -338,11 +333,12 @@ int menu_game_load(void * ctx)
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_LOAD_INIT;
-			if(game.created) return MENU_MAIN;
+			if(game.state != GAMESTATE_NOGAME)
+				return MENU_MAIN;
 			if(!game.saveslist[__ctx->menu].exist) break;
 			ret = game_record_load(__ctx->menu);
 			if(!ret)
-				return MENU_PRELEVEL;
+				return MENU_MAIN;
 			if(2<=ret)
 			{
 				game_msg_error(ret+10);
@@ -417,7 +413,11 @@ int menu_game_save(void * ctx)
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_SAVE_INIT;
-			return MENU_PRELEVEL;
+
+			game.show_menu = false;
+			game.state = GAMESTATE_MISSION_BRIEF;
+
+			return MENU_MAIN;
 		case SPACE  :break;
 		}
 		break;
@@ -548,7 +548,8 @@ static void menu_custom_draw(const void * ctx)
 int menu_custom_new1P(void * ctx)
 {
 	int ret;
-	if(game.created) return MENU_MAIN;
+	if(game.state != GAMESTATE_NOGAME)
+		return MENU_MAIN;
 	ret = map_load(game.custommap->map);
 	if(ret)
 	{
@@ -557,13 +558,14 @@ int menu_custom_new1P(void * ctx)
 	}
 	game.flags = c_g_f_CASE;
 	ret = game_create();
-	return MENU_PRELEVEL;
+	return MENU_MAIN;
 }
 
 int menu_custom_new2P(void * ctx)
 {
 	int ret;
-	if(game.created) return MENU_MAIN;
+	if(game.state != GAMESTATE_NOGAME)
+		return MENU_MAIN;
 	ret = map_load(game.custommap->map);
 	if(ret)
 	{
@@ -572,7 +574,7 @@ int menu_custom_new2P(void * ctx)
 	}
 	game.flags = c_g_f_2PLAYERS | c_g_f_CASE;
 	ret = game_create();
-	return MENU_PRELEVEL;
+	return MENU_MAIN;
 }
 
 int menu_options(void * ctx)
@@ -709,105 +711,6 @@ static void menu_about_draw(const void * ctx)
 	}
 }
 
-/*
- * информация об уровне
- */
-int menu_prelevel(void * ctx)
-{
-
-	menu_prelevel_ctx_t * __ctx = ctx;
-
-	if(!__ctx->sound_playId)
-		__ctx->sound_playId = sound_play_start(SOUND_MUSIC1, -1);
-
-
-	switch(menu_key_get())
-	{
-	case NOTHING: break;
-	case UP     : break;
-	case DOWN   : break;
-	case LEFT   : break;
-	case RIGHT  : break;
-	case ENTER  :
-	case LEAVE  :
-	case SPACE  :
-		sound_play_stop(__ctx->sound_playId);
-		__ctx->sound_playId = 0;
-		sound_play_start(SOUND_MENU_ENTER, 1);
-		game.ingame = true;
-		return MENU_MAIN;
-	}
-	return MENU_PRELEVEL;
-};
-static void menu_prelevel_draw(const void * ctx)
-{
-	gr2D_setimage0(0,0,game.m_i_interlv);
-	font_color_set3i(COLOR_15);
-	video_printf(160-06*4 ,8*5, orient_horiz, "КАРТА:");
-	font_color_set3i(COLOR_15);
-	video_printf(160-16*4, 8*7 , orient_horiz, map.name);
-	video_printf(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
-	video_printf(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
-	video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
-}
-/*
- * заставка между уровнями
- */
-int menu_interlevel(void * ctx)
-{
-	switch(menu_key_get())
-	{
-	case NOTHING: break;
-	case UP     : break;
-	case DOWN   : break;
-	case LEFT   : break;
-	case RIGHT  : break;
-	case ENTER  : return
-		sound_play_start(SOUND_MENU_ENTER, 1);
-		return MENU_GAME_SAVE;
-	case LEAVE  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
-		return MENU_GAME_SAVE;
-	case SPACE  : return MENU_GAME_SAVE;
-	}
-	return MENU_INTERLEVEL;
-}
-
-static void menu_interlevel_draw(const void * ctx)
-{
-	static image_index_t list[] =
-	{
-			IMG_TANK0,
-			IMG_TANK1,
-			IMG_TANK2,
-			IMG_TANK3,
-			IMG_TANK4
-	};
-	gr2D_setimage0(0, 0, game.m_i_interlv);
-	font_color_set3i(COLOR_15);
-	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
-
-	int i;
-	int num = server_client_num_get();
-
-	int refy;
-	if(num == 0) refy = 84;
-	else refy = 76;
-
-	font_color_set3i(COLOR_15);
-	video_printf(48 + 8 * 00, refy      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-
-	for(i = 0; i < num; i++)
-	{
-		client_t * client = server_client_get(i);
-		item_img_t * img = image_get(list[client->storedata.level]);
-		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
-		font_color_set3i(COLOR_15);
-		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, orient_horiz, "%d" , client->storedata.scores);
-		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.frags);
-		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.fragstotal);
-	}
-}
 
 int menu_abort(void * ctx)
 {
@@ -832,8 +735,6 @@ menu_t menus[MENU_NUM] =
 		{ NULL                , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
 		{ &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
 		{ &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
-		{ &menu_interlevel_ctx, menu_interlevel  , menu_interlevel_draw }, /* MENU_INTERLEVEL */
-		{ &menu_prelevel_ctx  , menu_prelevel    , menu_prelevel_draw }, /* MENU_PRELEVEL */
 		{ NULL                , menu_abort       , NULL }, /* MENU_ABORT */
 		{ NULL                , NULL             , NULL }  /* MENU_QUIT */
 };

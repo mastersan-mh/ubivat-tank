@@ -61,6 +61,14 @@ typedef struct
 	uint16_t flags;
 } gamesave_descr_t;
 
+typedef enum gamestate_s
+{
+	GAMESTATE_NOGAME, /* игра не создана */
+	GAMESTATE_INGAME,
+	GAMESTATE_MISSION_BRIEF,
+	GAMESTATE_INTERMISSION
+} gamestate_t;
+
 //состояние игры
 typedef struct
 {
@@ -72,11 +80,6 @@ typedef struct
 
 	//флаги состояния игры
 	int flags;
-
-	//игра создана т.е. карта загружена
-	bool created;
-	//находимся ли в процедуре игры
-	bool ingame;
 
 	//игрок победил
 	bool _win_;
@@ -115,6 +118,12 @@ typedef struct
 	//список записей
 	gamesave_descr_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
+
+	gamestate_t state;
+	bool show_menu;
+	bool paused;
+	int sound_playId;
+
 } game_t;
 
 

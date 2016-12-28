@@ -23,6 +23,8 @@ typedef struct
 	struct entity_s * entity;
 	client_storedata_t storedata;
 	void * userstoredata;
+	/* ассоциированный сокет */
+	int fd;
 }client_t;
 
 #include "entity.h"
@@ -42,6 +44,9 @@ void server_unspawn_client(int id);
 void server_store_clients_info();
 void server_restore_clients_info();
 
-void server_events_pump();
+void server_start();
+void server_stop();
+
+void server();
 
 #endif /* SRC_SERVER_H_ */
