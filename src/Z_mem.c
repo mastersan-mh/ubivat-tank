@@ -206,7 +206,8 @@ void * Z_Z_realloc(void * __ptr, size_t __size _ZMEM_ARGS2_DECL)
 
 void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL)
 {
-	if(!__ptr)return;
+	if(!__ptr)
+		return;
 #if defined(_ZMEM_DEBUG) && defined(_ZMEM_DEBUG_TRACE)
 	printf("Z_free(): %p at %s: %d\n", __ptr, __file, __line);
 #endif

@@ -30,9 +30,11 @@
 #define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
 	entity_t * x (const entity_t * this)
 
-
 #define ENTITY_FUNCTION_DONE_DEFAULT NULL
 #define ENTITY_FUNCTION_HANDLE_DEFAULT NULL
+
+#define ENTITY_FUNCTION_ACTION(x) \
+	void x (entity_t * this, void * thisdata, const char * action)
 
 
 #define ENTITY_ERASE(ent) (ent)->erase = true
@@ -109,6 +111,12 @@ typedef struct ent_modelplayer_s
 	float frame;
 } ent_modelplayer_t;
 
+typedef struct entityaction_s
+{
+	char * action;
+	void (*action_f)(struct entity_s * this, void * thisdata, const char * action);
+} entityaction_t;
+
 typedef struct entityinfo_s
 {
 	char * name;
@@ -122,6 +130,10 @@ typedef struct entityinfo_s
 
 	void * (*client_store)(struct client_storedata_s * storedata, const void * data);
 	void (*client_restore)(void * data, const struct client_storedata_s * storedata, const void * userstoredata);
+
+	/* массив действий, допустимых для entity */
+	unsigned int actions_num;
+	entityaction_t * actions;
 
 	/* размер массива моделей */
 	unsigned int entmodels_num;

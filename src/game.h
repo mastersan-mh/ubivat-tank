@@ -47,7 +47,11 @@ typedef struct
 	int16_t ammo3;
 } ATTR_PACKED game_savedata_player_t;
 
-typedef uint32_t control_t[__ACTION_NUM];
+typedef struct
+{
+	int key;
+	char * action;
+} keyconfig_t;
 
 //запись иры
 typedef struct
@@ -114,7 +118,6 @@ typedef struct
 	item_img_t * m_i_lineR;
 	item_img_t * m_i_flagRUS;
 	item_img_t * m_i_flagUSA;
-	control_t controls;
 	//список записей
 	gamesave_descr_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
@@ -128,6 +131,7 @@ typedef struct
 
 
 extern game_t game;
+extern unsigned long time_current;
 extern long dtime;
 extern double dtimed;
 extern double dtimed1000;

@@ -118,16 +118,80 @@ static ENTITY_FUNCTION_INIT(boss_init);
 static ENTITY_FUNCTION_DONE(boss_done);
 static void boss_handle(entity_t * this);
 
+
+static void player_action_move(entity_t * this, player_t * pl, direction_t dir, bool go)
+{
+	if(go)
+		this->dir = dir;
+	else
+	{
+		if(this->dir != dir)
+			return;
+	}
+	pl->move.go = go;
+}
+
+static void player_action_attack(entity_t * this, player_t * pl, bool attack, weapontype_t weap)
+{
+	if(attack)
+		pl->weap = weap;
+	pl->attack = attack;
+}
+
+
+ENTITY_FUNCTION_ACTION(player_action_move_north_on ) { player_action_move(this, thisdata, DIR_UP   , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_north_off) { player_action_move(this, thisdata, DIR_UP   , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_south_on ) { player_action_move(this, thisdata, DIR_DOWN , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_south_off) { player_action_move(this, thisdata, DIR_DOWN , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_west_on  ) { player_action_move(this, thisdata, DIR_LEFT , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move(this, thisdata, DIR_LEFT , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move(this, thisdata, DIR_RIGHT, true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move(this, thisdata, DIR_RIGHT, false); }
+
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(this, thisdata, true , WEAP_ARTILLERY);}
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(this, thisdata, false, WEAP_ARTILLERY);}
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(this, thisdata, true , WEAP_MISSILE);}
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(this, thisdata, false, WEAP_MISSILE);}
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(this, thisdata, true , WEAP_MINE);}
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(this, thisdata, false, WEAP_MINE);}
+
+
+static entityaction_t player_actions[] =
+{
+		{"+move_north", player_action_move_north_on },
+		{"-move_north", player_action_move_north_off},
+		{"+move_south", player_action_move_south_on },
+		{"-move_south", player_action_move_south_off},
+		{"+move_west" , player_action_move_west_on  },
+		{"-move_west" , player_action_move_west_off },
+		{"+move_east" , player_action_move_east_on  },
+		{"-move_east" , player_action_move_east_off },
+		{"+attack_artillery", player_attack_weapon1_on },
+		{"-attack_artillery", player_attack_weapon1_off},
+		{"+attack_missile"  , player_attack_weapon2_on },
+		{"-attack_missile"  , player_attack_weapon2_off},
+		{"+attack_mine"     , player_attack_weapon3_on },
+		{"-attack_mine"     , player_attack_weapon3_off}
+};
+
+#define ENTITYINFO_ACTIONS(xactions) \
+		.actions_num = ARRAYSIZE(xactions), \
+		.actions = xactions
+
+#define ENTITYINFO_ENTMODELS(xentmodels) \
+		.entmodels_num = ARRAYSIZE(xentmodels), \
+		.entmodels = xentmodels
+
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
 		.init = player_init,
 		.done = player_done,
-		.handle   = player_handle,
+		.handle = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore,
-		.entmodels_num = 2,
-		.entmodels = tank_player_models
+		ENTITYINFO_ACTIONS(player_actions),
+		ENTITYINFO_ENTMODELS(tank_player_models)
 };
 
 static const entityinfo_t enemy_reginfo = {
@@ -254,169 +318,36 @@ void boss_handle(entity_t * this)
 	player_handle_common(this);
 }
 
-
-
-
-static void _move(int id, direction_t dir, bool go)
-{
-	client_t * cl = server_client_get(id);
-	if(!cl)return;
-	player_t * pl = cl->entity->data;
-
-	if(go)
-		cl->entity->dir = dir;
-	else
-	{
-		if(cl->entity->dir != dir)
-			return;
-	}
-	pl->move.go = go;
-}
-
-static void _attack(int id, bool attack, weapontype_t weap)
-{
-	client_t * cl = server_client_get(id);
-	if(!cl)return;
-	player_t * pl = cl->entity->data;
-
-	if(attack)
-		pl->weap = weap;
-	pl->attack = attack;
-}
-
-void player_moveUp_ON()
-{
-	_move(0, DIR_UP, true);
-}
-
-void player_moveUp_OFF()
-{
-	_move(0, DIR_UP, false);
-}
-
-void player_moveDown_ON()
-{
-	_move(0, DIR_DOWN, true);
-}
-
-void player_moveDown_OFF()
-{
-	_move(0, DIR_DOWN, false);
-}
-
-void player_moveLeft_ON()
-{
-	_move(0, DIR_LEFT, true);
-}
-
-void player_moveLeft_OFF()
-{
-	_move(0, DIR_LEFT, false);
-}
-
-void player_moveRight_ON()
-{
-	_move(0, DIR_RIGHT, true);
-}
-
-void player_moveRight_OFF()
-{
-	_move(0, DIR_RIGHT, false);
-}
-
-void player_attack_weapon1_ON()
-{
-	_attack(0, true, WEAP_ARTILLERY);
-}
-void player_attack_weapon1_OFF()
-{
-	_attack(0, false, WEAP_ARTILLERY);
-}
-
-void player_attack_weapon2_ON()
-{
-	_attack(0, true, WEAP_MISSILE);
-}
-void player_attack_weapon2_OFF()
-{
-	_attack(0, false, WEAP_MISSILE);
-}
-
-void player_attack_weapon3_ON()
-{
-	_attack(0, true, WEAP_MINE);
-}
-void player_attack_weapon3_OFF()
-{
-	_attack(0, false, WEAP_MINE);
-}
-
-void player2_moveUp_ON()
-{
-	_move(1, DIR_UP, true);
-}
-
-void player2_moveUp_OFF()
-{
-	_move(1, DIR_UP, false);
-}
-
-void player2_moveDown_ON()
-{
-	_move(1, DIR_DOWN, true);
-}
-
-void player2_moveDown_OFF()
-{
-	_move(1, DIR_DOWN, false);
-}
-
-void player2_moveLeft_ON()
-{
-	_move(1, DIR_LEFT, true);
-}
-
-void player2_moveLeft_OFF()
-{
-	_move(1, DIR_LEFT, false);
-}
-
-void player2_moveRight_ON()
-{
-	_move(1, DIR_RIGHT, true);
-}
-
-void player2_moveRight_OFF()
-{
-	_move(1, DIR_RIGHT, false);
-}
-
-void player2_attack_weapon1_ON()
-{
-	_attack(1, true, WEAP_ARTILLERY);
-}
-void player2_attack_weapon1_OFF()
-{
-	_attack(1, false, WEAP_ARTILLERY);
-}
-
-void player2_attack_weapon2_ON()
-{
-	_attack(1, true, WEAP_MISSILE);
-}
-void player2_attack_weapon2_OFF()
-{
-	_attack(1, false, WEAP_MISSILE);
-}
-
-void player2_attack_weapon3_ON()
-{
-	_attack(1, true, WEAP_MINE);
-}
-void player2_attack_weapon3_OFF()
-{
-	_attack(1, false, WEAP_MINE);
-}
+/*
+void player_moveUp_ON()    { client_event_control_send(0, "+move_north"); }
+void player_moveUp_OFF()   { client_event_control_send(0, "-move_north"); }
+void player_moveDown_ON()  { client_event_control_send(0, "+move_south"); }
+void player_moveDown_OFF() { client_event_control_send(0, "-move_south"); }
+void player_moveLeft_ON()  { client_event_control_send(0, "+move_west"); }
+void player_moveLeft_OFF() { client_event_control_send(0, "-move_west"); }
+void player_moveRight_ON() { client_event_control_send(0, "+move_east"); }
+void player_moveRight_OFF(){ client_event_control_send(0, "-move_east"); }
+void player_attack_weapon1_ON() { client_event_control_send(0, "+attack_artillery"); }
+void player_attack_weapon1_OFF(){ client_event_control_send(0, "-attack_artillery"); }
+void player_attack_weapon2_ON() { client_event_control_send(0, "+attack_missile"  ); }
+void player_attack_weapon2_OFF(){ client_event_control_send(0, "-attack_missile"  ); }
+void player_attack_weapon3_ON() { client_event_control_send(0, "+attack_mine"     ); }
+void player_attack_weapon3_OFF(){ client_event_control_send(0, "-attack_mine"     ); }
+void player2_moveUp_ON()    { client_event_control_send(1, "+move_north" ); }
+void player2_moveUp_OFF()   { client_event_control_send(1, "-move_north" ); }
+void player2_moveDown_ON()  { client_event_control_send(1, "+move_south" ); }
+void player2_moveDown_OFF() { client_event_control_send(1, "-move_south" ); }
+void player2_moveLeft_ON()  { client_event_control_send(1, "+move_west" ); }
+void player2_moveLeft_OFF() { client_event_control_send(1, "-move_west" ); }
+void player2_moveRight_ON() { client_event_control_send(1, "+move_east" ); }
+void player2_moveRight_OFF(){ client_event_control_send(1, "-move_east" ); }
+void player2_attack_weapon1_ON() { client_event_control_send(1, "+attack_artillery" ); }
+void player2_attack_weapon1_OFF(){ client_event_control_send(1, "-attack_artillery" ); }
+void player2_attack_weapon2_ON() { client_event_control_send(1, "+attack_missile"   ); }
+void player2_attack_weapon2_OFF(){ client_event_control_send(1, "-attack_missile"   ); }
+void player2_attack_weapon3_ON() { client_event_control_send(1, "+attack_mine"      ); }
+void player2_attack_weapon3_OFF(){ client_event_control_send(1, "-attack_mine"      ); }
+*/
 
 /*
  * набор и проверка кодов (добавление 10.05.2006)

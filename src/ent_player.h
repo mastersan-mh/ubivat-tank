@@ -119,7 +119,7 @@ extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
 void entity_player_init();
 
-
+/*
 void player_moveUp_ON();
 void player_moveUp_OFF();
 void player_moveDown_ON();
@@ -149,7 +149,7 @@ void player2_attack_weapon2_ON();
 void player2_attack_weapon2_OFF();
 void player2_attack_weapon3_ON();
 void player2_attack_weapon3_OFF();
-
+*/
 
 int player_respawn(entity_t * player);
 

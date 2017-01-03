@@ -8,6 +8,8 @@
 #ifndef SRC_SERVER_H_
 #define SRC_SERVER_H_
 
+#include "net.h"
+
 typedef struct client_storedata_s
 {
 	//фрагов за пройденые карты
@@ -23,19 +25,17 @@ typedef struct
 	struct entity_s * entity;
 	client_storedata_t storedata;
 	void * userstoredata;
-	/* ассоциированный сокет */
-	int fd;
-}client_t;
+	/* адрес клиента */
+	net_socket_t * ns;
+} host_client_t;
 
 #include "entity.h"
-
-int server_client_connect();
 
 void server_disconnect_clients();
 
 int server_client_num_get();
 
-client_t * server_client_get(int id);
+host_client_t * server_client_get(int id);
 
 int server_spawn_client(int id);
 

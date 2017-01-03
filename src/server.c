@@ -5,6 +5,8 @@
  *      Author: mastersan
  */
 
+#include "g_events.h"
+#include "net.h"
 #include "server.h"
 #include "game.h"
 #include "map.h"
@@ -12,9 +14,18 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/select.h>
-#include <sys/socket.h>
-
 #include <sys/ioctl.h>
+#include <netinet/in.h>
+
+#include <errno.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 static int server_run = 0;
 
@@ -22,7 +33,7 @@ fd_set readfds;
 fd_set writefds;
 fd_set exceptfds;
 
-static client_t ** clients;
+static host_client_t ** clients;
 static size_t clients_size = 0;
 static size_t clients_num = 0;
 
@@ -31,27 +42,25 @@ static size_t clients_num = 0;
  * @return id
  * @return -1 ошибка
  */
-int server_client_connect()
+static int server_client_connect(const net_socket_t * ns)
 {
-	client_t ** tmp;
+	host_client_t ** tmp;
 
 	if(clients_size < clients_num + 1)
 	{
 		if(clients_size == 0) clients_size = 1;
 		else clients_size *= 2;
-		tmp = Z_realloc(clients, sizeof(client_t*) * clients_size);
+		tmp = Z_realloc(clients, sizeof(host_client_t*) * clients_size);
 		if(!tmp)
-			game_halt("client_connect(): Can not alloc memory, failed");
+			game_halt("server_client_connect(): Can not alloc memory, failed");
 		clients = tmp;
 	}
 
-	client_t * client = Z_malloc(sizeof(client_t));
+	host_client_t * client = Z_malloc(sizeof(host_client_t));
 	client->entity = NULL;
 	client->userstoredata = NULL;
 
-
-
-	client->fd = socket(PF_LOCAL, SOCK_STREAM, 0);
+	client->ns = (net_socket_t *) ns;
 
 	clients[clients_num] = client;
 	clients_num++;
@@ -64,11 +73,24 @@ void server_disconnect_clients()
 	while(clients_num > 0)
 	{
 		clients_num--;
-		close(clients[clients_num]->fd);
 		server_unspawn_client(clients_num);
 		Z_free(clients[clients_num]->userstoredata);
 		Z_free(clients[clients_num]);
 	}
+}
+
+static host_client_t * server_client_find_by_addr(const struct sockaddr * addr)
+{
+	host_client_t * client;
+	size_t i;
+	for(i = 0; i < clients_num; i++)
+	{
+		client = clients[i];
+		if( !memcmp(&client->ns->addr, addr, sizeof(struct sockaddr)) )
+			return client;
+		clients_num++;
+	}
+	return NULL;
 }
 
 int server_client_num_get()
@@ -76,7 +98,7 @@ int server_client_num_get()
 	return clients_num;
 }
 
-client_t * server_client_get(int id)
+host_client_t * server_client_get(int id)
 {
 	if(id < 0 || id >= clients_num) return NULL;
 	return clients[id];
@@ -118,7 +140,7 @@ void server_store_clients_info()
 	int id;
 	for(id = 0; id < clients_num; id++)
 	{
-		client_t * client = clients[id];
+		host_client_t * client = clients[id];
 		if(client->entity->info == NULL) continue;
 		client->userstoredata = client->entity->info->client_store(
 			&(client->storedata),
@@ -135,7 +157,7 @@ void server_restore_clients_info()
 	int id;
 	for(id = 0; id < clients_num; id++)
 	{
-		client_t * client = clients[id];
+		host_client_t * client = clients[id];
 		if(client->entity->info == NULL) continue;
 		client->entity->info->client_restore(
 			client->entity->data,
@@ -149,6 +171,7 @@ void server_restore_clients_info()
 
 static void server_fd_set()
 {
+	/*
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	FD_ZERO(&exceptfds);
@@ -158,11 +181,12 @@ static void server_fd_set()
 	{
 		FD_SET(clients[id]->fd, &readfds);
 	}
+	*/
 }
 
 static void server_events_pump()
 {
-
+/*
 	int id;
 
 	static char buf[1000];
@@ -208,28 +232,125 @@ static void server_events_pump()
 			break;
 	}
 
-
+*/
 
 }
+
+
+net_socket_t * host_ns = NULL;
 
 void server_start()
 {
 	server_run = 1;
+
+	host_ns = net_socket_create(NET_PORT, "127.0.0.1");
+
+	if(host_ns == NULL)
+	{
+		game_halt("socket() failed");
+	}
+
+	if(bind(host_ns->sock, &host_ns->addr, sizeof(host_ns->addr)) < 0)
+	{
+		game_halt("bind");
+	}
+
 }
 
 void server_stop()
 {
+	net_socket_close(host_ns);
+	host_ns = NULL;
 	server_run = 0;
 }
+
+
 
 void server()
 {
 	if(!server_run)
 		return;
 
-	server_fd_set();
+	union
+	{
+		struct sockaddr addr;
+		struct sockaddr_in addr_in;
+	} sender;
 
-	server_events_pump();
+	size_t i;
+	gevent_t event;
+	//struct sockaddr sender_addr;
+
+	socklen_t sender_addr_len = sizeof(sender.addr);
+
+	/*
+	 * https://www.linux.org.ru/forum/development/10072313
+	 */
+
+	char buf[2048];       // буфур для приема
+
+
+	size_t maxcontentlength = 512;
+	int value = recvfrom(host_ns->sock, buf, maxcontentlength, 0, &sender.addr, &sender_addr_len);
+	if(value < 0)
+	{
+		return;
+	}
+
+	event.type = buf[0];
+	switch( event.type )
+	{
+		case GEVENT_CLIENT_MSG_CONNECT:
+			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
+			int id = server_client_connect(ns);
+			char reply = SERVER_MSG_CONNECTION_ACCEPTED;
+			size_t size = 1;
+			net_send(ns, &reply, size);
+			server_spawn_client(id);
+			break;
+		case GEVENT_CONTROL:
+			strncpy(event.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
+			game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
+				event.control.action
+				);
+
+
+			host_client_t * client = server_client_find_by_addr(&sender.addr);
+			if(!client)
+			{
+				game_console_send("server: no client 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+				break;
+			}
+
+			/* execute action */
+			{
+				bool found = false;
+				entity_t * ent = client->entity;
+				const entityinfo_t * info = ent->info;
+
+				for(i = 0; i< info->actions_num; i++)
+				{
+					entityaction_t * action = &info->actions[i];
+					if(!strncmp(action->action, event.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
+					{
+						found = true;
+						if(action->action_f)
+							action->action_f(ent, ent->data, action->action);
+						break;
+					}
+				}
+				if(!found)
+				{
+					game_console_send("server: unknown action :%d.", event.control.action);
+				}
+			}
+
+			break;
+
+
+	}
+
 
 }
 

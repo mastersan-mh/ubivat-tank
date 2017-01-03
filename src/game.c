@@ -4,10 +4,11 @@
  * by Master San
  */
 
-
+#include "g_events.h"
 #include "system.h"
 #include "game.h"
-#include "input.h"
+#include "client.h"
+#include "cl_input.h"
 #include "actions.h"
 #include "menu.h"
 #include "map.h"
@@ -16,9 +17,9 @@
 #include "sound.h"
 #include "_gr2D.h"
 #include "fonts.h"
-#include "client.h"
 #include "model_resources.h"
 #include "entity.h"
+#include "actions.h"
 
 // entities
 #include "ent_spawn.h"
@@ -42,12 +43,45 @@
 #include <stdarg.h>
 #include <types.h>
 
+keyconfig_t keyconfig1[] =
+{
+		{ SDL_SCANCODE_UP    , "+move_north" },
+		{ SDL_SCANCODE_DOWN  , "+move_south" },
+		{ SDL_SCANCODE_LEFT  , "+move_west"  },
+		{ SDL_SCANCODE_RIGHT , "+move_east"  },
+		{ SDL_SCANCODE_SLASH , "+attack_artillery" },
+		{ SDL_SCANCODE_PERIOD, "+attack_missile"   },
+		{ SDL_SCANCODE_COMMA , "+attack_mine"      }
+};
+
+keyconfig_t keyconfig2[] =
+{
+		{ SDL_SCANCODE_R   , "+move_north" },
+		{ SDL_SCANCODE_F   , "+move_south" },
+		{ SDL_SCANCODE_D   , "+move_west"  },
+		{ SDL_SCANCODE_G   , "+move_east"  },
+		{ SDL_SCANCODE_W   , "+attack_artillery" },
+		{ SDL_SCANCODE_Q   , "+attack_missile"   },
+		{ SDL_SCANCODE_TAB , "+attack_mine"      }
+};
+
+uint32_t controls[ACTION_NUM] =
+{
+		[ACTION_ENTER_MAINMENU] = SDL_SCANCODE_ESCAPE,
+		[ACTION_CHEAT_WIN     ] = SDL_SCANCODE_Z,
+		[ACTION_SFACTOR] = SDL_SCANCODE_X,
+		[ACTION_DFACTOR] = SDL_SCANCODE_C
+
+};
+
 //состояние игры
 game_t game;
 
 int game_video_dfactor = 7;
 int game_video_sfactor = 6;
 
+/* текущее время, мс */
+unsigned long time_current;
 /* (ms) */
 long dtime;
 /* (ms) */
@@ -96,7 +130,7 @@ static void game_state_intermission_draw()
 
 	for(i = 0; i < num; i++)
 	{
-		client_t * client = server_client_get(i);
+		host_client_t * client = server_client_get(i);
 		item_img_t * img = image_get(list[client->storedata.level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
@@ -139,12 +173,22 @@ void game_action_win()
 void game_rebind_keys_all()
 {
 	input_key_unbind_all();
-	int i;
-	for(i = 0; i < __ACTION_NUM; i++)
+	size_t i;
+	for(i = 0; i < ACTION_NUM; i++)
 	{
-
-		input_key_bindAction(game.controls[i], actions[i]);
+		input_key_bindAction(controls[i], actions[i]);
 	}
+
+	for(i = 0; i < ARRAYSIZE(keyconfig1); i++)
+	{
+		input_key_bind_act(keyconfig1[i].key, keyconfig1[i].action);
+	}
+
+	for(i = 0; i < ARRAYSIZE(keyconfig2); i++)
+	{
+		input_key_bind_act(keyconfig2[i].key, keyconfig2[i].action);
+	}
+
 }
 
 void game_init()
@@ -271,6 +315,28 @@ void game_done()
 	images_done();
 };
 
+void client_event_pump(menu_selector_t * imenu)
+{
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
+	{
+		//printf("event.type = %d\n", event.type);
+		switch(event.type)
+		{
+			case SDL_KEYDOWN:
+				input_key_setState(event.key.keysym.scancode, true);
+				if(game.state == GAMESTATE_INTERMISSION)
+				{
+					*imenu = MENU_GAME_SAVE;
+				}
+				break;
+			case SDL_KEYUP:
+				input_key_setState(event.key.keysym.scancode, false);
+				break;
+		}
+		//player_checkcode();
+	}
+}
 
 void client_events_send()
 {
@@ -304,9 +370,8 @@ void game_main()
 	}
 */
 
-
 	unsigned long time_prev;
-	unsigned long time_current = system_getTime_realTime_ms();
+	time_current = system_getTime_realTime_ms();
 	unsigned long time_second = 0; // отсчёт секунды
 	int frames = 0;
 	int fps = 0;
@@ -342,53 +407,17 @@ void game_main()
 
 		server();
 
+		client();
+
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
+		if(game.show_menu)
 		{
-
-			//printf("event.type = %d\n", event.type);
-
-			if(game.show_menu)
-			{
-				menu_send_event(&event);
-			}
-			else
-			{
-
-				switch(event.type)
-				{
-				case SDL_KEYDOWN:
-					if(game.state == GAMESTATE_INGAME)
-						input_key_setState(event.key.keysym.scancode, true);
-					else if(game.state == GAMESTATE_MISSION_BRIEF)
-					{
-						sound_play_start(SOUND_MENU_ENTER, 1);
-						game.state = GAMESTATE_INGAME;
-					}
-					else if(game.state == GAMESTATE_INTERMISSION)
-					{
-						sound_play_start(SOUND_MENU_ENTER, 1);
-						imenu = MENU_GAME_SAVE;
-						game.show_menu = true;
-					}
-					break;
-				case SDL_KEYUP:
-					if(game.state == GAMESTATE_INGAME)
-						input_key_setState(event.key.keysym.scancode, false);
-					break;
-				}
-				//player_checkcode();
-
-			}
-
-			switch(event.type)
-			{
-			case SDL_QUIT:quit = true;break;
-			}
-
-			// handle your event here
+			menu_events_pump();
+		}
+		else
+		{
+			client_event_pump(&imenu);
 		}
 
 		client_events_send();
@@ -539,7 +568,10 @@ void game_draw()
 		camera_t * cam;
 		if(i == 0) cam = &game.P0cam;
 		else cam = &game.P1cam;
-		game_draw_cam(server_client_get(i)->entity, cam);
+
+		entity_t * ent =server_client_get(i)->entity;
+		if(ent)
+			game_draw_cam(ent, cam);
 
 	}
 
@@ -568,30 +600,43 @@ void game_draw()
 int game_cfg_save()
 {
 	int ret = 0;
-	ssize_t count;
+	size_t i;
 
 	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
 	strcpy(path, game_dir_conf);
 	strcat(path, FILENAME_CONFIG);
-	int fd = open(path, O_CREAT | O_WRONLY, 0644);
+	FILE * f = fopen(path, "w");
 	Z_free(path);
-	if(fd <= 0)
+	if(!f)
 	{
 		ret = 1;
 		goto __end;
 	}
-	count = write(fd, game.controls, sizeof(game.controls));
-	if(count != sizeof(game.controls))
+
+	for(i = 0; i < ARRAYSIZE(keyconfig1); i++)
 	{
-		ret = 2;
-		goto __end;
+		if(fprintf(f, "bind %d %s\n", keyconfig1[i].key, keyconfig1[i].action) !=0 )
+		{
+			ret = 2;
+			goto __end;
+		}
 	}
+
+	for(i = 0; i < ARRAYSIZE(keyconfig2); i++)
+	{
+		if(fprintf(f, "bind2 %d %s\n", keyconfig2[i].key, keyconfig2[i].action) !=0 )
+		{
+			ret = 2;
+			goto __end;
+		}
+	}
+
 	__end:
 	switch(ret)
 	{
 		case 0:
 		case 2:
-			close(fd);
+			fclose(f);
 		case 1:;
 	}
 	return ret ? -1 : 0;
@@ -601,55 +646,74 @@ int game_cfg_save()
  */
 int game_cfg_new()
 {
-	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
-	game.controls[ACTION_PLAYER_MOVE_UP   ]     = SDL_SCANCODE_UP;
-	game.controls[ACTION_PLAYER_MOVE_DOWN ]     = SDL_SCANCODE_DOWN ;
-	game.controls[ACTION_PLAYER_MOVE_LEFT ]     = SDL_SCANCODE_LEFT ;
-	game.controls[ACTION_PLAYER_MOVE_RIGHT]     = SDL_SCANCODE_RIGHT;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON1] = SDL_SCANCODE_SLASH;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON2] = SDL_SCANCODE_PERIOD;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON3] = SDL_SCANCODE_COMMA ;
-	game.controls[ACTION_PLAYER2_MOVE_UP   ]     = SDL_SCANCODE_R;
-	game.controls[ACTION_PLAYER2_MOVE_DOWN ]     = SDL_SCANCODE_F;
-	game.controls[ACTION_PLAYER2_MOVE_LEFT ]     = SDL_SCANCODE_D;
-	game.controls[ACTION_PLAYER2_MOVE_RIGHT]     = SDL_SCANCODE_G;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON1] = SDL_SCANCODE_W;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON2] = SDL_SCANCODE_Q;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON3] = SDL_SCANCODE_TAB;
-	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
 	return game_cfg_save();
 }
 /********чтение конфига********/
 int game_cfg_load()
 {
 	int ret = 0;
-	int fd;
+	FILE * f;
 	ssize_t count;
 
 	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
 	strcpy(path, game_dir_conf);
 	strcat(path, FILENAME_CONFIG);
-	fd = open(path, O_RDONLY);
+	f = fopen(path, "r");
 	Z_free(path);
-	if(fd < 0) return game_cfg_new();
-	count = read(fd, game.controls, sizeof(game.controls));
-	if(count != sizeof(game.controls))
+	if(!f)
+		return game_cfg_new();
+
+	char * line;
+	size_t line_size = 0;
+	ssize_t value;
+
+	static const char delims[] = " \t";
+
+	char * ptrptr;
+
+	do
 	{
-		ret = 2;
-		goto end;
-	}
+		line = NULL;
+		value = getline(&line, &line_size, f);
+
+		char * tok = strtok_r(line, delims, &ptrptr);
+
+		keyconfig_t * keyconfig;
+
+		if(strcmp(tok, "bind"))
+		{
+			keyconfig = keyconfig1;
+		}
+		else if(strcmp(tok, "bind2"))
+		{
+			keyconfig = keyconfig2;
+		}
+
+		tok = strtok_r(NULL, delims, &ptrptr);
+		int key = atoi(tok);
+		tok = strtok_r(NULL, delims, &ptrptr);
+		char * action = tok;
+#error here
+
+/*
+		if(count != sizeof(game.controls))
+		{
+			ret = 2;
+			goto end;
+		}
+*/
+
+		free(line);
+	} while (value > 0);
+
 	end:
 	switch(ret)
 	{
 	case 0:
 	case 2:
-		close(fd);
+		fclose(fd);
 	case 1:;
 	}
-	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
-	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
-	game.controls[ACTION_SFACTOR] = SDL_SCANCODE_X;
-	game.controls[ACTION_DFACTOR] = SDL_SCANCODE_C;
 	return ret ? -1 : 0;
 }
 
@@ -870,7 +934,7 @@ int game_record_load(int isave)
 	int i;
 	for(i = 0 ; i < player_num; i++)
 	{
-		int id = server_client_connect();
+		int id = client_connect();
 		server_spawn_client(id);
 	}
 

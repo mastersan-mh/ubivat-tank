@@ -27,7 +27,7 @@ types.c \
 _gr2D.c \
 fonts.c \
 actions.c \
-input.c \
+cl_input.c \
 game.c \
 img.c \
 main.c \

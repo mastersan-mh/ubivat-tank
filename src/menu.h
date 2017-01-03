@@ -109,22 +109,6 @@ typedef struct
 
 /* MENU_QUIT */
 
-
-/*
- * считывание статуса меню
- */
-typedef enum
-{
-	NOTHING,
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	ENTER,
-	LEAVE,
-	SPACE
-} menu_key_t;
-
 typedef struct
 {
 	void * context;
@@ -134,7 +118,7 @@ typedef struct
 
 extern menu_t menus[MENU_NUM];
 
-extern void menu_send_event(SDL_Event * event);
+extern void menu_events_pump();
 extern int menu_handle(int imenu);
 extern void menu_draw(int imenu);
 

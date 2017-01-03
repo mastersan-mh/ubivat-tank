@@ -14,6 +14,18 @@
 #include "entity.h"
 #include "client.h"
 
+typedef enum
+{
+	NOTHING,
+	UP,
+	DOWN,
+	LEFT,
+	RIGHT,
+	ENTER,
+	LEAVE,
+	SPACE
+} menu_key_t;
+
 /* MENU_MAIN */
 menu_main_ctx_t menu_main_ctx = {};
 
@@ -44,8 +56,6 @@ menu_about_ctx_t menu_about_ctx = {};
 /* MENU_ABORT */
 
 /* MENU_QUIT */
-
-
 
 static void _menu_dec(const int menu_amount, int * menu)
 {
@@ -89,7 +99,7 @@ buffer_key_t buffer_dequeue_nowait()
 	return key;
 }
 
-void menu_send_event(SDL_Event * event)
+static void menu_send_event(SDL_Event * event)
 {
 	switch(event->type)
 	{
@@ -98,7 +108,6 @@ void menu_send_event(SDL_Event * event)
 		event->key.keysym.scancode; //SDL_Scancode
 		event->key.keysym.sym; //SDL_Keycode  - для ввода текста
 		 */
-
 		if(
 				buffer_end + 1 == buffer_start ||
 				(buffer_end == KEYBUFFER_SIZE-1 && buffer_start == 0)
@@ -112,11 +121,21 @@ void menu_send_event(SDL_Event * event)
 		}
 		break;
 	case SDL_KEYUP:
-
 		break;
-	default: break;
+	case SDL_QUIT:
+		break;
+	default:
+		break;
 	}
-//event->type
+}
+
+void menu_events_pump()
+{
+	SDL_Event event;
+	while (SDL_PollEvent(&event))
+	{
+		menu_send_event(&event);
+	}
 }
 
 
@@ -272,8 +291,7 @@ int menu_game_new1P(void * ctx)
 		return MENU_ABORT;
 	}
 
-	server_client_connect();
-	server_spawn_client(0);
+	client_connect();
 
 	return MENU_MAIN;
 }
@@ -299,10 +317,8 @@ int menu_game_new2P(void * ctx)
 		return MENU_ABORT;
 	}
 
-	server_client_connect();
-	server_client_connect();
-	server_spawn_client(0);
-	server_spawn_client(1);
+	client_connect();
+	client_connect();
 
 	return MENU_MAIN;
 }
@@ -742,12 +758,12 @@ menu_t menus[MENU_NUM] =
 
 int menu_handle(int imenu)
 {
-		if(0 <= imenu && imenu < MENU_NUM)
-		{
-			menu_t * menu = &menus[imenu];
-			if(menu->handle) imenu = menu->handle(menu->context);
-		}
-		return imenu;
+	if(0 <= imenu && imenu < MENU_NUM)
+	{
+		menu_t * menu = &menus[imenu];
+		if(menu->handle) imenu = menu->handle(menu->context);
+	}
+	return imenu;
 }
 
 void menu_draw(int imenu)
