@@ -5,6 +5,8 @@
  */
 
 #include "menu.h"
+#include "cl_input.h"
+#include "g_conf.h"
 #include "img.h"
 #include "_gr2D.h"
 #include "fonts.h"
@@ -208,8 +210,8 @@ static void menu_main_draw(const void * ctx)
 	menu_draw_conback();
 	gr2D_setimage0(277  ,159    ,game.m_i_logo);
 	font_color_set3i(COLOR_1);
-	video_printf(1     ,183          , orient_horiz, c_strTITLE);
-	video_printf(1     ,191          , orient_horiz, c_strCORP);
+	video_printf(1     ,183          , c_strTITLE);
+	video_printf(1     ,191          , c_strCORP);
 
 	static image_index_t list[] =
 	{
@@ -387,10 +389,10 @@ static void menu_game_load_draw(const void * ctx)
 		font_color_set3i(COLOR_7);
 		if(!game.saveslist[irow].exist)
 		{
-			video_printf(97+23+4, 33+irow*15, orient_horiz, "---===EMPTY===---");
+			video_printf(97+23+4, 33+irow*15, "---===EMPTY===---");
 			continue;
 		}
-		video_printf(97+23+4, 33+irow*15, orient_horiz, game.saveslist[irow].name);
+		video_printf(97+23+4, 33+irow*15, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
@@ -494,10 +496,10 @@ static void menu_game_save_draw(const void * ctx)
 		font_color_set3i(COLOR_7);
 		if(!game.saveslist[irow].exist)
 		{
-			video_printf(97+23+4,33+irow*15, orient_horiz, "---===EMPTY===---");
+			video_printf(97+23+4,33+irow*15, "---===EMPTY===---");
 			continue;
 		}
-		video_printf(97+23+4,33+irow*15, orient_horiz, game.saveslist[irow].name);
+		video_printf(97+23+4,33+irow*15, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
@@ -557,8 +559,8 @@ static void menu_custom_draw(const void * ctx)
 	gr2D_setimage0(120,30+23*2       , game.m_i_g_new_p2);
 	gr2D_setimage0( 97,30+23 * __ctx->menu, game.m_i_cur_0);
 	font_color_set3i(COLOR_25);
-	video_printf(133, 33+23*0, orient_horiz, game.custommap->map);
-	video_printf(133, 41+23*0, orient_horiz, game.custommap->name);
+	video_printf(133, 33+23*0, game.custommap->map);
+	video_printf(133, 41+23*0, game.custommap->name);
 }
 
 int menu_custom_new1P(void * ctx)
@@ -593,26 +595,33 @@ int menu_custom_new2P(void * ctx)
 	return MENU_MAIN;
 }
 
+enum
+{
+		ACTION_PLAYER_MOVE_NORTH,
+		ACTION_PLAYER_MOVE_SOUTH,
+		ACTION_PLAYER_MOVE_WEST,
+		ACTION_PLAYER_MOVE_EAST,
+		ACTION_PLAYER_ATTACK_WEAPON1,
+		ACTION_PLAYER_ATTACK_WEAPON2,
+		ACTION_PLAYER_ATTACK_WEAPON3,
+		ACTION_PLAYER_NUM,
+};
+
+static const char *player_actions[ACTION_PLAYER_NUM] =
+{
+		"+move_north",
+		"+move_south",
+		"+move_west" ,
+		"+move_east" ,
+		"+attack_artillery",
+		"+attack_missile",
+		"+attack_mine"
+
+};
+
 int menu_options(void * ctx)
 {
 	menu_options_ctx_t * __ctx = ctx;
-	static actions_t menuactions[] =
-	{
-			ACTION_PLAYER_MOVE_UP,
-			ACTION_PLAYER_MOVE_DOWN,
-			ACTION_PLAYER_MOVE_LEFT,
-			ACTION_PLAYER_MOVE_RIGHT,
-			ACTION_PLAYER_ATTACK_WEAPON1,
-			ACTION_PLAYER_ATTACK_WEAPON2,
-			ACTION_PLAYER_ATTACK_WEAPON3,
-			ACTION_PLAYER2_MOVE_UP,
-			ACTION_PLAYER2_MOVE_DOWN,
-			ACTION_PLAYER2_MOVE_LEFT,
-			ACTION_PLAYER2_MOVE_RIGHT,
-			ACTION_PLAYER2_ATTACK_WEAPON1,
-			ACTION_PLAYER2_ATTACK_WEAPON2,
-			ACTION_PLAYER2_ATTACK_WEAPON3
-	};
 #define MENU_ROWS 7
 	switch(__ctx->state)
 	{
@@ -622,15 +631,15 @@ int menu_options(void * ctx)
 		case NOTHING: break;
 		case UP     : _menu_dec(MENU_ROWS, &__ctx->menu);break;
 		case DOWN   : _menu_inc(MENU_ROWS, &__ctx->menu);break;
-		case LEFT   : _menu_dec(1, &__ctx->column);break;
-		case RIGHT  : _menu_inc(1, &__ctx->column);break;
+		case LEFT   : _menu_dec(2, &__ctx->column);break;
+		case RIGHT  : _menu_inc(2, &__ctx->column);break;
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_OPTIONS_WAIT_KEY;break;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
-			game_cfg_save();
-			game_rebind_keys_all();
+			gconf_save();
+			gconf_rebind_all();
 			__ctx->state = MENU_OPTIONS_SELECT;
 			return MENU_MAIN;
 		case SPACE  : break;
@@ -639,7 +648,8 @@ int menu_options(void * ctx)
 	case MENU_OPTIONS_WAIT_KEY:
 
 
-		if(buffer_isEmpty())break;
+		if(buffer_isEmpty())
+			break;
 		buffer_key_t scancode = buffer_dequeue_nowait();
 		switch(scancode)
 		{
@@ -648,7 +658,8 @@ int menu_options(void * ctx)
 			__ctx->state = MENU_OPTIONS_SELECT;
 			break;
 		default:
-			game.controls[menuactions[__ctx->menu + __ctx->column * MENU_ROWS ]] = scancode;
+			input_action_unbind(__ctx->column, player_actions[__ctx->menu]);
+			input_key_bind_act(__ctx->column, scancode, player_actions[__ctx->menu]);
 			__ctx->state = MENU_OPTIONS_SELECT;
 		}
 	}
@@ -667,29 +678,22 @@ static void menu_options_draw(const void * ctx)
 	if(__ctx->state == MENU_OPTIONS_SELECT)
 		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, game.m_i_cur_1);
 	font_color_set3i(COLOR_25);
-	video_printf( 58+131*0, 30+9*0, 0, "ИГРОК1");
-	video_printf( 58+131*1, 30+9*0, 0, "ИГРОК2");
-	video_printf( 9,32+12*1, 0, "Вперед");
-	video_printf( 9,32+12*2, 0, "Назад");
-	video_printf( 9,32+12*3, 0, "Влево");
-	video_printf( 9,32+12*4, 0, "Вправо");
-	video_printf( 9,32+12*5, 0, "Пульки");
-	video_printf( 9,32+12*6, 0, "Ракета");
-	video_printf( 9,32+12*7, 0, "Мина");
-	video_printf(82+131*0,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_UP]);
-	video_printf(82+131*0,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_DOWN]);
-	video_printf(82+131*0,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_LEFT]);
-	video_printf(82+131*0,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER_MOVE_RIGHT]);
-	video_printf(82+131*0,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON1]);
-	video_printf(82+131*0,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON2]);
-	video_printf(82+131*0,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER_ATTACK_WEAPON3]);
-	video_printf(82+131*1,32+12*1, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_UP]);
-	video_printf(82+131*1,32+12*2, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_DOWN]);
-	video_printf(82+131*1,32+12*3, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_LEFT]);
-	video_printf(82+131*1,32+12*4, orient_horiz, "%d", game.controls[ACTION_PLAYER2_MOVE_RIGHT]);
-	video_printf(82+131*1,32+12*5, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON1]);
-	video_printf(82+131*1,32+12*6, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON2]);
-	video_printf(82+131*1,32+12*7, orient_horiz, "%d", game.controls[ACTION_PLAYER2_ATTACK_WEAPON3]);
+	video_printf( 58+131*0, 30+9*0, "[ИГРОК 1]");
+	video_printf( 58+131*1, 30+9*0, "[ИГРОК 2]");
+	video_printf( 9,32+12*1, "Вперед");
+	video_printf( 9,32+12*2, "Назад");
+	video_printf( 9,32+12*3, "Влево");
+	video_printf( 9,32+12*4, "Вправо");
+	video_printf( 9,32+12*5, "Пульки");
+	video_printf( 9,32+12*6, "Ракета");
+	video_printf( 9,32+12*7, "Мина");
+
+	size_t i;
+	for(i = 0; i < ACTION_PLAYER_NUM; i++)
+	{
+		video_printf(82 + 131 * 0, 32 + 12 + 12 * i, "%d", input_key_get(0, player_actions[i]));
+		video_printf(82 + 131 * 1, 32 + 12 + 12 * i, "%d", input_key_get(1, player_actions[i]));
+	}
 }
 
 
@@ -714,15 +718,15 @@ static void menu_about_draw(const void * ctx)
 	coloredtext_t * text;
 
 	font_color_set3i(COLOR_13);
-	video_printf( 8,10 * 1, orient_horiz, c_strTITLE);
-	video_printf(56,10 * 2, orient_horiz, c_strCORP);
+	video_printf( 8,10 * 1, c_strTITLE);
+	video_printf(56,10 * 2, c_strCORP);
 
 	for(;;)
 	{
 		text = &c_about[i];
 		if(!text->text)break;
 		font_color_sets(&text->color);
-		video_printf( 8, 10 * (i + 3), orient_horiz, text->text);
+		video_printf( 8, 10 * (i + 3), text->text);
 		i++;
 	}
 }

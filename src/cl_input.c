@@ -3,57 +3,71 @@
 #include "game.h"
 #include "sound.h"
 
-
+#include <stdlib.h>
 #include <string.h>
+
+/* количество клавиш */
+#define KEYS_HASH_NUM 256
+
+#define CL_INPUT_ACTION_LEN (63)
+
+/* сравнение действий: true / false */
+#define ACTIONCMP(act1, act2) \
+	( act1 && act2 && !strncmp(act1, act2, CL_INPUT_ACTION_LEN) )
 
 typedef struct
 {
-	/* хэш клавиш клавиатуры */
-	game_keyHash_t key[KEYS_HASH_NUM];
+	/* количество ключей в коллизии */
+	size_t amount;
+	/* коллизии клавиш */
+	input_key_t *collision;
+} keyhash_t;
 
-}game_input_t;
-static game_input_t game_input;
+/* хэш клавиш клавиатуры */
+static keyhash_t keyhashs[KEYS_HASH_NUM] = {};
 
-static void * __xrealloc(void * __ptrmem, size_t __newsize, size_t __oldsize)
+static void * xrealloc(void * ptrmem, size_t newsize, size_t oldsize)
 {
-	if(__newsize==__oldsize)
+	if(newsize == oldsize)
 	{
-		return __ptrmem;
+		return ptrmem;
 	}
 
-	void *__new;
-	__new = malloc(__newsize);
+	void * newmem;
+	newmem = malloc(newsize);
 
-	if(__newsize > __oldsize)
+	if(newsize > oldsize)
 	{
-		memcpy(__new, __ptrmem, __oldsize);
-		memset(__new+__oldsize, 0, __newsize-__oldsize);
+		memcpy(newmem, ptrmem, oldsize);
+		memset(newmem + oldsize, 0, newsize - oldsize);
 	}
 	else
 	{
-		memcpy(__new, __ptrmem, __newsize);
+		memcpy(newmem, ptrmem, newsize);
 	}
-	if(__ptrmem)
-		free(__ptrmem);
-	return __new;
+	if(ptrmem)
+		free(ptrmem);
+	return newmem;
 }
 
 /*
  * вставка новой коллизии
  */
-static int __extendHash(game_keyHash_t * keyHash)
+static size_t hash_extend(keyhash_t * keyhash)
 {
-	int size;
-	int oldsize;
+	size_t size;
+	size_t oldsize;
 	/* индекс нового элемента коллизии */
-	int newIndex;
+	size_t newIndex;
 
 	/* расширим массив коллизий */
-	oldsize = keyHash->amount * sizeof(game_key_t);
-	newIndex = keyHash->amount;
-	keyHash->amount++;
-	size = keyHash->amount*sizeof(game_key_t);
-	keyHash->collision = __xrealloc(keyHash->collision, size, oldsize);
+	if(keyhash->amount == 0)
+		keyhash->collision = NULL;
+	oldsize = keyhash->amount * sizeof(input_key_t);
+	newIndex = keyhash->amount;
+	keyhash->amount++;
+	size = keyhash->amount * sizeof(input_key_t);
+	keyhash->collision = xrealloc(keyhash->collision, size, oldsize);
 
 	return newIndex;
 }
@@ -64,11 +78,11 @@ static int __extendHash(game_keyHash_t * keyHash)
  *   = -1 - не нашли
  *   = 0...n - индекс
  */
-static int __findHashCollision(game_keyHash_t *__keyHash, int __key)
+static int hash_find_collision(keyhash_t * keyhash, int key)
 {
-	for(size_t i = 0; i < __keyHash->amount; i++)
+	for(size_t i = 0; i <  keyhash->amount; i++)
 	{
-		if(__keyHash->collision[i].key == __key)
+		if( keyhash->collision[i].key == key)
 			return i;
 	}
 	return -1;
@@ -79,7 +93,7 @@ static int __findHashCollision(game_keyHash_t *__keyHash, int __key)
  */
 void input_init()
 {
-	memset(&game_input, 0, sizeof(game_input));
+	memset(&keyhashs, 0, sizeof(keyhashs));
 }
 
 /*
@@ -93,31 +107,36 @@ void input_done()
 /*
  *
  */
-void input_key_setState(int __key, bool __state)
+void input_key_setState(int key, bool state)
 {
 	int collisionIndex;
 	actionf_t func = NULL;
 	char * action;
-	game_keyHash_t * __keyHash = &(game_input.key[__key%KEYS_HASH_NUM]);
+	keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);
 
 
-	collisionIndex = __findHashCollision(__keyHash, __key);
+	collisionIndex = hash_find_collision(keyhash, key);
 
 	if(collisionIndex < 0)
 	{
-		collisionIndex = __extendHash(__keyHash);
-		__keyHash->collision[collisionIndex].key = __key;
+		collisionIndex = hash_extend(keyhash);
+		keyhash->collision[collisionIndex].key = key;
 	}
 
 
 	int clientId = 0;
 
-	if(__state)
+	input_actionsrc_t actionsrc = keyhash->collision[collisionIndex].actionsrc;
+
+	if(state)
 	{
 		if(game.state == GAMESTATE_INGAME)
 		{
-			action = __keyHash->collision[collisionIndex].action_press;
-			func = __keyHash->collision[collisionIndex].press;
+			switch(actionsrc)
+			{
+			case INPUT_ACTIONSRC_STR:  action = keyhash->collision[collisionIndex].action.str.press; break;
+			case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[collisionIndex].action.func.press; break;
+			}
 		}
 		else if(game.state == GAMESTATE_MISSION_BRIEF)
 		{
@@ -136,8 +155,11 @@ void input_key_setState(int __key, bool __state)
 
 		if(game.state == GAMESTATE_INGAME)
 		{
-			action = __keyHash->collision[collisionIndex].action_release;
-			func = __keyHash->collision[collisionIndex].release;
+			switch(actionsrc)
+			{
+			case INPUT_ACTIONSRC_STR : action = keyhash->collision[collisionIndex].action.str.release; break;
+			case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[collisionIndex].action.func.release; break;
+			}
 		}
 	}
 
@@ -150,69 +172,147 @@ void input_key_setState(int __key, bool __state)
 
 }
 
-void input_key_bind_act(int __key, const char * action)
+int input_key_get(int clientId, const char * action)
 {
-	game_keyHash_t * __keyHash = &(game_input.key[__key % KEYS_HASH_NUM]);
-
-	int collisionIndex = __findHashCollision(__keyHash, __key);
-
-	if(collisionIndex < 0)
+	size_t i;
+	for(i = 0; i < KEYS_HASH_NUM; i++)
 	{
-		collisionIndex = __extendHash(__keyHash);
+		keyhash_t * keyhash = &keyhashs[i];
+		for(size_t cindex = 0; cindex < keyhash->amount ; cindex++)
+		{
+			input_key_t * keybind = &keyhash->collision[cindex];
+			if(
+					keybind->clientId == clientId &&
+					keybind->actionsrc == INPUT_ACTIONSRC_STR &&
+					(
+							ACTIONCMP(keybind->action.str.press, action) ||
+							ACTIONCMP(keybind->action.str.release, action)
+					)
+			)
+				return keybind->key;
+		}
 	}
-	__keyHash->collision[collisionIndex].key = __key;
-	__keyHash->collision[collisionIndex].action_press = strdup(action);
+	return -1;
+}
+
+int input_foreverykey(int (*callback)(const input_key_t * keybind, void * userdata), void * userdata )
+{
+	for(size_t i = 0; i < KEYS_HASH_NUM; i++)
+	{
+		keyhash_t * keyhash = &keyhashs[i];
+		for(size_t cindex = 0; cindex < keyhash->amount ; cindex++)
+		{
+			input_key_t * keybind = &keyhash->collision[cindex];
+			int ret = (*callback)(keybind, userdata);
+			if(ret)
+				return ret;
+		}
+	}
+	return 0;
+}
+
+/*
+ * установка действия. Для действия '+', на отжатие клавиши автоматически устанавливается действие '-'
+ */
+int input_key_bind_act(int clientId, int key, const char * action)
+{
+	keyhash_t * keyhash = &keyhashs[key % KEYS_HASH_NUM];
+
+	int collisionIndex = hash_find_collision(keyhash, key);
+
+	if(collisionIndex >= 0)
+		return -1;
+	collisionIndex = hash_extend(keyhash);
+	input_key_t * keybind = &keyhash->collision[collisionIndex];
+	keybind->clientId = clientId;
+	keybind->key = key;
+	keybind->actionsrc = INPUT_ACTIONSRC_STR;
+	keybind->action.str.press = strdup(action);
+	keybind->action.str.release = NULL;
 	if(action[0] == '+')
 	{
-		__keyHash->collision[collisionIndex].action_release = strdup(action);
-		__keyHash->collision[collisionIndex].action_release[0] = '-';
+		keybind->action.str.release = strdup(action);
+		keybind->action.str.release[0] = '-';
 	}
+	return 0;
 }
 
 /*
  * привязать функцию к клавише
  */
-void input_key_bind(int __key, actionf_t __press, actionf_t __release)
+int input_key_bind(int key, actionf_t press, actionf_t release)
 {
-	game_keyHash_t * __keyHash = &(game_input.key[__key % KEYS_HASH_NUM]);
+	keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);
 
-	int collisionIndex = __findHashCollision(__keyHash, __key);
+	int collisionIndex = hash_find_collision(keyhash, key);
 
-	if(collisionIndex < 0)
-	{
-		collisionIndex = __extendHash(__keyHash);
-	}
-	__keyHash->collision[collisionIndex].key = __key;
-	__keyHash->collision[collisionIndex].press = __press;
-	__keyHash->collision[collisionIndex].release = __release;
-
+	if(collisionIndex >= 0)
+		return -1;
+	collisionIndex = hash_extend(keyhash);
+	input_key_t * keybind = &keyhash->collision[collisionIndex];
+	keybind->actionsrc = INPUT_ACTIONSRC_FUNC;
+	keybind->key = key;
+	keybind->action.func.press = press;
+	keybind->action.func.release = release;
+	return 0;
 }
 
-void input_key_bindAction(int __key, action_t __action)
+int input_key_bindAction(int key, action_t action)
 {
-	input_key_bind(__key, __action.press, __action.release);
+	return input_key_bind(key, action.press, action.release);
 }
 
 /*
  * отвязать функцию от клавиши
  */
-void input_key_unbind(int __key)
+void input_key_unbind(int clientId, int key)
 {
 	int collisionIndex;
-	game_keyHash_t *__keyHash = &(game_input.key[__key%KEYS_HASH_NUM]);
+	keyhash_t *keyhash = &keyhashs[key%KEYS_HASH_NUM];
 
-	collisionIndex=__findHashCollision(__keyHash, __key);
+	collisionIndex = hash_find_collision(keyhash, key);
 
-	if(collisionIndex >= 0)
+	if(collisionIndex < 0)
+		return;
+
+	if(clientId != CLIENT_ALL && keyhash->collision[collisionIndex].clientId != clientId)
+		return;
+
+	size_t newamount = keyhash->amount - 1;
+	if(newamount == 0)
 	{
-		__keyHash->collision[collisionIndex].press = NULL;
-		__keyHash->collision[collisionIndex].release = NULL;
-		if(__keyHash->collision[collisionIndex].action_press)
-			free(__keyHash->collision[collisionIndex].action_press);
-		if(__keyHash->collision[collisionIndex].action_release)
-			free(__keyHash->collision[collisionIndex].action_release);
+		keyhash->amount = 0;
+		free(keyhash->collision);
+		keyhash->collision = NULL;
 	}
+	else
+	{
+		input_key_t * tmp = malloc(newamount * sizeof(input_key_t));
+		switch(keyhash->collision[collisionIndex].actionsrc)
+		{
+		case INPUT_ACTIONSRC_STR:
+			free(keyhash->collision[collisionIndex].action.str.press);
+			free(keyhash->collision[collisionIndex].action.str.release);
+			break;
+		case INPUT_ACTIONSRC_FUNC:
+			break;
+		}
 
+		size_t i;
+		for( i = 0; i < collisionIndex; i++)
+		{
+			tmp[i] = keyhash->collision[i];
+		}
+
+		for( ; i < newamount; i++)
+		{
+			tmp[i] = keyhash->collision[i + 1];
+		}
+		keyhash->amount = newamount;
+		free(keyhash->collision);
+		keyhash->collision = tmp;
+
+	}
 }
 
 /*
@@ -220,17 +320,85 @@ void input_key_unbind(int __key)
  */
 void input_key_unbind_all()
 {
-	for(int i=0; i < KEYS_HASH_NUM; i++)
+	for(size_t i = 0; i < KEYS_HASH_NUM; i++)
 	{
-		game_input.key[i].amount = 0;
-		for(int j; j < game_input.key[i].amount ; j++)
+		keyhash_t * keyhash = &keyhashs[i % KEYS_HASH_NUM];
+		for(size_t cindex = 0; cindex < keyhash->amount; cindex++)
 		{
-			if(game_input.key[i].collision[j].action_press)
-				free(game_input.key[i].collision[j].action_press);
-			if(game_input.key[i].collision[j].action_release)
-				free(game_input.key[i].collision[j].action_release);
+
+			switch(keyhash->collision[cindex].actionsrc)
+			{
+			case INPUT_ACTIONSRC_STR:
+				free(keyhash->collision[cindex].action.str.press);
+				free(keyhash->collision[cindex].action.str.release);
+				break;
+			case INPUT_ACTIONSRC_FUNC:
+				break;
+			}
 		}
-		free(game_input.key[i].collision);
-		game_input.key[i].collision = NULL;
+		free(keyhash->collision);
+		keyhash->collision = NULL;
+		keyhash->amount = 0;
+	}
+}
+
+void input_action_unbind(int clientId, const char * action)
+{
+	for(size_t i = 0; i < KEYS_HASH_NUM; i++)
+	{
+		keyhash_t * keyhash = &keyhashs[i];
+		size_t newamount = 0;
+		for(size_t cindex = 0; cindex < keyhash->amount ; cindex++)
+		{
+			input_key_t * keybind = &keyhash->collision[cindex];
+			if(
+					!(
+							keybind->clientId == clientId &&
+							keybind->actionsrc == INPUT_ACTIONSRC_STR &&
+							(
+									ACTIONCMP(keybind->action.str.press, action) ||
+									ACTIONCMP(keybind->action.str.release, action)
+							)
+					)
+			)
+				newamount++;
+		}
+
+		if(newamount < keyhash->amount)
+		{
+			if(newamount == 0)
+			{
+				keyhash->amount = newamount;
+				free(keyhash->collision);
+				keyhash->collision = NULL;
+			}
+			else
+			{
+				size_t newsize = newamount * sizeof(input_key_t);
+				input_key_t * newcollision = malloc(newsize);
+				size_t ci = 0;
+				for(size_t cindex = 0; cindex < keyhash->amount ; cindex++)
+				{
+					input_key_t * keybind = &keyhash->collision[cindex];
+					if(
+							(
+									keybind->clientId == clientId &&
+									keybind->actionsrc == INPUT_ACTIONSRC_STR &&
+									(
+											ACTIONCMP(keybind->action.str.press, action) ||
+											ACTIONCMP(keybind->action.str.release, action)
+									)
+							)
+					)
+					{
+						newcollision[ci++] = *keybind;
+					}
+				}
+				keyhash->amount = newamount;
+				free(keyhash->collision);
+				keyhash->collision = newcollision;
+			}
+
+		}
 	}
 }

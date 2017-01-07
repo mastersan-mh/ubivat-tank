@@ -47,12 +47,6 @@ typedef struct
 	int16_t ammo3;
 } ATTR_PACKED game_savedata_player_t;
 
-typedef struct
-{
-	int key;
-	char * action;
-} keyconfig_t;
-
 //запись иры
 typedef struct
 {
@@ -157,13 +151,6 @@ void game_done();
 void game_main();
 
 bool game_nextmap();
-
-
-int game_cfg_save();
-int game_cfg_new();
-int game_cfg_load();
-
-void game_rebind_keys_all();
 
 int game_pal_get();
 void game_record_getsaves();

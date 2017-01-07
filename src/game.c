@@ -9,6 +9,7 @@
 #include "game.h"
 #include "client.h"
 #include "cl_input.h"
+#include "g_conf.h"
 #include "actions.h"
 #include "menu.h"
 #include "map.h"
@@ -42,37 +43,6 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <types.h>
-
-keyconfig_t keyconfig1[] =
-{
-		{ SDL_SCANCODE_UP    , "+move_north" },
-		{ SDL_SCANCODE_DOWN  , "+move_south" },
-		{ SDL_SCANCODE_LEFT  , "+move_west"  },
-		{ SDL_SCANCODE_RIGHT , "+move_east"  },
-		{ SDL_SCANCODE_SLASH , "+attack_artillery" },
-		{ SDL_SCANCODE_PERIOD, "+attack_missile"   },
-		{ SDL_SCANCODE_COMMA , "+attack_mine"      }
-};
-
-keyconfig_t keyconfig2[] =
-{
-		{ SDL_SCANCODE_R   , "+move_north" },
-		{ SDL_SCANCODE_F   , "+move_south" },
-		{ SDL_SCANCODE_D   , "+move_west"  },
-		{ SDL_SCANCODE_G   , "+move_east"  },
-		{ SDL_SCANCODE_W   , "+attack_artillery" },
-		{ SDL_SCANCODE_Q   , "+attack_missile"   },
-		{ SDL_SCANCODE_TAB , "+attack_mine"      }
-};
-
-uint32_t controls[ACTION_NUM] =
-{
-		[ACTION_ENTER_MAINMENU] = SDL_SCANCODE_ESCAPE,
-		[ACTION_CHEAT_WIN     ] = SDL_SCANCODE_Z,
-		[ACTION_SFACTOR] = SDL_SCANCODE_X,
-		[ACTION_DFACTOR] = SDL_SCANCODE_C
-
-};
 
 //состояние игры
 game_t game;
@@ -116,7 +86,7 @@ static void game_state_intermission_draw()
 	};
 	gr2D_setimage0(0, 0, game.m_i_interlv);
 	font_color_set3i(COLOR_15);
-	video_printf(108,191,0,"НАЖМИ ПРОБЕЛ");
+	video_printf(108,191,"НАЖМИ ПРОБЕЛ");
 
 	int i;
 	int num = server_client_num_get();
@@ -126,7 +96,7 @@ static void game_state_intermission_draw()
 	else refy = 76;
 
 	font_color_set3i(COLOR_15);
-	video_printf(48 + 8 * 00, refy      , orient_horiz, "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
+	video_printf(48 + 8 * 00, refy      , "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
 
 	for(i = 0; i < num; i++)
 	{
@@ -134,9 +104,9 @@ static void game_state_intermission_draw()
 		item_img_t * img = image_get(list[client->storedata.level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
-		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, orient_horiz, "%d" , client->storedata.scores);
-		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.frags);
-		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, orient_horiz, "%ld", client->storedata.fragstotal);
+		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%d" , client->storedata.scores);
+		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", client->storedata.frags);
+		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", client->storedata.fragstotal);
 	}
 }
 
@@ -147,11 +117,11 @@ static void game_state_missionbrief_draw()
 {
 	gr2D_setimage0(0,0,game.m_i_interlv);
 	font_color_set3i(COLOR_15);
-	video_printf(160-06*4 ,8*5, orient_horiz, "КАРТА:");
+	video_printf(160-06*4 ,8*5, "КАРТА:");
 	font_color_set3i(COLOR_15);
-	video_printf(160-16*4, 8*7 , orient_horiz, map.name);
-	video_printf(160-07*4, 8*10, orient_horiz, "ЗАДАЧА:");
-	video_printf(108     , 191 , orient_horiz, "НАЖМИ ПРОБЕЛ");
+	video_printf(160-16*4, 8*7 , map.name);
+	video_printf(160-07*4, 8*10, "ЗАДАЧА:");
+	video_printf(108     , 191 , "НАЖМИ ПРОБЕЛ");
 	video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
 }
 
@@ -168,27 +138,6 @@ void game_action_enter_mainmenu()
 void game_action_win()
 {
 	game._win_ = true;
-}
-
-void game_rebind_keys_all()
-{
-	input_key_unbind_all();
-	size_t i;
-	for(i = 0; i < ACTION_NUM; i++)
-	{
-		input_key_bindAction(controls[i], actions[i]);
-	}
-
-	for(i = 0; i < ARRAYSIZE(keyconfig1); i++)
-	{
-		input_key_bind_act(keyconfig1[i].key, keyconfig1[i].action);
-	}
-
-	for(i = 0; i < ARRAYSIZE(keyconfig2); i++)
-	{
-		input_key_bind_act(keyconfig2[i].key, keyconfig2[i].action);
-	}
-
 }
 
 void game_init()
@@ -277,11 +226,9 @@ void game_init()
 
 	//чтение конфига
 	printf("Config init...\n");
-	game_cfg_load();
-
 	input_init();
-
-	game_rebind_keys_all();
+	gconf_load();
+	gconf_rebind_all();
 
 	model_resources_register();
 
@@ -315,7 +262,7 @@ void game_done()
 	images_done();
 };
 
-void client_event_pump(menu_selector_t * imenu)
+void client_events_pump(menu_selector_t * imenu)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
@@ -417,12 +364,13 @@ void game_main()
 		}
 		else
 		{
-			client_event_pump(&imenu);
+			client_events_pump(&imenu);
 		}
 
 		client_events_send();
 
-		if(quit)break;
+		if(quit)
+			break;
 
 		video_screen_draw_begin();
 
@@ -483,7 +431,7 @@ void game_main()
 		}
 
 		font_color_set3i(COLOR_15);
-		video_printf(10,10, orient_horiz, "FPS = %d", fps);
+		video_printf(10,10, "FPS = %d", fps);
 		video_screen_draw_end();
 	};
 }
@@ -591,131 +539,6 @@ void game_draw()
 
 }
 
-/*
- * процедура перехода на следующую карту
- */
-/*
- * запись конфига
- */
-int game_cfg_save()
-{
-	int ret = 0;
-	size_t i;
-
-	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-	strcpy(path, game_dir_conf);
-	strcat(path, FILENAME_CONFIG);
-	FILE * f = fopen(path, "w");
-	Z_free(path);
-	if(!f)
-	{
-		ret = 1;
-		goto __end;
-	}
-
-	for(i = 0; i < ARRAYSIZE(keyconfig1); i++)
-	{
-		if(fprintf(f, "bind %d %s\n", keyconfig1[i].key, keyconfig1[i].action) !=0 )
-		{
-			ret = 2;
-			goto __end;
-		}
-	}
-
-	for(i = 0; i < ARRAYSIZE(keyconfig2); i++)
-	{
-		if(fprintf(f, "bind2 %d %s\n", keyconfig2[i].key, keyconfig2[i].action) !=0 )
-		{
-			ret = 2;
-			goto __end;
-		}
-	}
-
-	__end:
-	switch(ret)
-	{
-		case 0:
-		case 2:
-			fclose(f);
-		case 1:;
-	}
-	return ret ? -1 : 0;
-};
-/*
- * новый конфиг
- */
-int game_cfg_new()
-{
-	return game_cfg_save();
-}
-/********чтение конфига********/
-int game_cfg_load()
-{
-	int ret = 0;
-	FILE * f;
-	ssize_t count;
-
-	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-	strcpy(path, game_dir_conf);
-	strcat(path, FILENAME_CONFIG);
-	f = fopen(path, "r");
-	Z_free(path);
-	if(!f)
-		return game_cfg_new();
-
-	char * line;
-	size_t line_size = 0;
-	ssize_t value;
-
-	static const char delims[] = " \t";
-
-	char * ptrptr;
-
-	do
-	{
-		line = NULL;
-		value = getline(&line, &line_size, f);
-
-		char * tok = strtok_r(line, delims, &ptrptr);
-
-		keyconfig_t * keyconfig;
-
-		if(strcmp(tok, "bind"))
-		{
-			keyconfig = keyconfig1;
-		}
-		else if(strcmp(tok, "bind2"))
-		{
-			keyconfig = keyconfig2;
-		}
-
-		tok = strtok_r(NULL, delims, &ptrptr);
-		int key = atoi(tok);
-		tok = strtok_r(NULL, delims, &ptrptr);
-		char * action = tok;
-#error here
-
-/*
-		if(count != sizeof(game.controls))
-		{
-			ret = 2;
-			goto end;
-		}
-*/
-
-		free(line);
-	} while (value > 0);
-
-	end:
-	switch(ret)
-	{
-	case 0:
-	case 2:
-		fclose(fd);
-	case 1:;
-	}
-	return ret ? -1 : 0;
-}
 
 /*
  * чтение файла палитры
@@ -1072,14 +895,14 @@ void game_msg_error(int error)
 	while(!quit)
 	{
 		font_color_set3i(COLOR_4);
-		video_printf(x+(sx / 2)-6*8, y+2, orient_horiz, "ERROR: ");
+		video_printf(x+(sx / 2)-6*8, y+2, "ERROR: ");
 		font_color_set3i(COLOR_15);
 		int e;
 		if(error <= 5)e = error;
 		else e = error - 5;
 		if(e > ERR_MAX) e = ERR_MAX;
 
-		video_printf(x+2, y+16, orient_horiz, errList[e]);
+		video_printf(x+2, y+16, errList[e]);
 
 		do{ } while(true);
 	}

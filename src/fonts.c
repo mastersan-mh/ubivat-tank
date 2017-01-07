@@ -617,7 +617,6 @@ static int video_printf_char_handle(int i, uint32_t c, int lchar, int wchar, voi
 void video_printf(
 	int x,
 	int y,
-	enum text_orient_e orientation,
 	const char * format,
 	...
 )

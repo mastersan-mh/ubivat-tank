@@ -37,12 +37,6 @@ typedef struct
 	char * text;
 } coloredtext_t;
 
-enum text_orient_e
-{
-	orient_horiz,
-	orient_vert
-};
-
 void fonts_test();
 
 void fonts_init();
@@ -62,17 +56,16 @@ extern void font_color_setindex(
 	uint8_t index
 );
 
-void video_print_char(int out_x, int out_y, char ch);
+extern void video_print_char(int out_x, int out_y, char ch);
 
-void video_printf(
+extern void video_printf(
 	int px,
 	int py,
-	enum text_orient_e orientation,
 	const char * format,
 	...
 );
 
-void video_printf_wide(
+extern void video_printf_wide(
 	int x,
 	int y,
 	int pixels_width,

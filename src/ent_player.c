@@ -959,10 +959,10 @@ void player_draw_status(camera_t * cam, entity_t * player)
 	gr2D_setimage0(cam->x + 16 * 0     , ref_y, game.i_health);
 	gr2D_setimage0(cam->x + 16 * 6     , ref_y, game.i_armor);
 
-	video_printf(cam->x + 16 * 0 + 16, ref_y, orient_horiz, "%d", pl->items[ITEM_HEALTH]);
-	video_printf(cam->x + 16 * 6 + 16, ref_y, orient_horiz, "%d", pl->items[ITEM_ARMOR]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_HEALTH]);
-	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, orient_horiz, "%d", playerinfo->items[ITEM_ARMOR]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y, "%d", pl->items[ITEM_HEALTH]);
+	video_printf(cam->x + 16 * 6 + 16, ref_y, "%d", pl->items[ITEM_ARMOR]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
+	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
 
 	/* вторая строка */
 	ref_y += 16;
@@ -971,12 +971,12 @@ void player_draw_status(camera_t * cam, entity_t * player)
 	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get( wtable[1].icon ));
 	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get( wtable[2].icon ));
 
-	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, orient_horiz, "@"); // player->items[ITEM_AMMO_ARTILLERY]
+	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
 	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
-		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, orient_horiz, "%d", pl->items[ITEM_AMMO_MISSILE]);
+		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MISSILE]);
 	if(pl->items[ITEM_AMMO_MINE] >= 0)
-		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, orient_horiz , "%d", pl->items[ITEM_AMMO_MINE]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, orient_horiz, "%d", pl->items[ITEM_SCORES]);
+		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MINE]);
+	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, "%d", pl->items[ITEM_SCORES]);
 
 }
 

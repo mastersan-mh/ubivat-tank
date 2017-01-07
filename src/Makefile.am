@@ -20,6 +20,7 @@ ent_player.c \
 ent_player_think.c \
 Z_mem.c \
 system.c \
+net.c \
 video.c \
 sound.c \
 utf8.c \
@@ -28,6 +29,7 @@ _gr2D.c \
 fonts.c \
 actions.c \
 cl_input.c \
+g_conf.c \
 game.c \
 img.c \
 main.c \
