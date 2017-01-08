@@ -47,7 +47,7 @@ void gconf_rebind_all()
 	size_t i;
 	for(i = 0; i < ACTION_NUM; i++)
 	{
-		input_key_unbind(CLIENT_ALL, controls[i]);
+		input_key_unbind(controls[i]);
 		input_key_bindAction(controls[i], actions[i]);
 	}
 
@@ -117,7 +117,7 @@ int gconf_save()
 		goto __end;
 	}
 
-	ret = input_foreverykey(conf_line_save, f);
+	ret = input_foreachkey(conf_line_save, f);
 
 	__end:
 	switch(ret)

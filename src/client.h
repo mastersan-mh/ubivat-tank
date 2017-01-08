@@ -30,7 +30,7 @@ typedef struct
 
 extern int client_connect();
 
-extern void client_event_send(client_t * client, gevent_t * event);
+extern void client_event_send(client_t * client, gclientevent_t * event);
 
 extern void client_event_control_send(int clientId, const char * action_name);
 

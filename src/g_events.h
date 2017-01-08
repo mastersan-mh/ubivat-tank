@@ -12,10 +12,15 @@
 
 typedef enum
 {
-	GEVENT_CLIENT_MSG_CONNECT,
-	GEVENT_CONTROL
-} geventtype_t;
+	GCLIENTEVENT_CONNECT,
+	GCLIENTEVENT_CONTROL
+} gclienteventtype_t;
 
+typedef enum
+{
+	GHOSTEVENT_CONNECTION_ACCEPTED,
+	GHOSTEVENT_CONNECTION_CLOSE,
+} ghosteventtype_t;
 /*
 #define CLIENT_MSG_CONNECT  0x01
 //#define CLIENT_MSG_SPAWN_ME 0x02
@@ -24,8 +29,8 @@ typedef enum
 
 typedef struct
 {
-	/* тип события, geventtype_t */
-	geventtype_t type;
+	/* тип события */
+	gclienteventtype_t type;
 	union
 	{
 		struct
@@ -34,6 +39,12 @@ typedef struct
 		} control;
 	};
 
-} gevent_t;
+} gclientevent_t;
+
+typedef struct
+{
+	/* тип события */
+	ghosteventtype_t type;
+} ghostevent_t;
 
 #endif /* SRC_G_EVENTS_H_ */

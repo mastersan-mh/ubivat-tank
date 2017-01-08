@@ -19,22 +19,22 @@ static client_t ** clients;
 static size_t clients_size = 0;
 static size_t clients_num = 0;
 
-void client_event_send(client_t * client, gevent_t * event)
+void client_event_send(client_t * client, gclientevent_t * event)
 {
 /* TODO: this function*/
 
 	size_t buflen = 0;
 	size_t len;
-	char buf[sizeof(gevent_t)];
+	char buf[sizeof(gclientevent_t)];
 	memset(buf, 0, sizeof(buf));
 
 	switch(event->type)
 	{
-		case GEVENT_CLIENT_MSG_CONNECT:
+		case GCLIENTEVENT_CONNECT:
 			buf[buflen] = event->type;
 			buflen++;
 			break;
-		case GEVENT_CONTROL:
+		case GCLIENTEVENT_CONTROL:
 			buf[buflen] = event->type;
 			buflen++;
 			len = strnlen(event->control.action, GAME_EVENT_CONTROL_ACTION_LEN) + 1;
@@ -82,8 +82,8 @@ int client_connect()
 	clients_num++;
 
 
-	gevent_t event;
-	event.type = GEVENT_CLIENT_MSG_CONNECT;
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_CONNECT;
 	client_event_send(client, &event);
 
 	return clients_num - 1;
@@ -122,7 +122,7 @@ static void client_listen_clients()
 
 				client->time = time_current;
 
-				if(buf[0] == SERVER_MSG_CONNECTION_ACCEPTED)
+				if(buf[0] == GHOSTEVENT_CONNECTION_ACCEPTED)
 				{
 					game_console_send("client: server accept connection to 0x%00000000x:%d.", client->ns->addr_in.sin_addr, ntohs(client->ns->addr_in.sin_port));
 
@@ -146,8 +146,8 @@ static void client_listen_clients()
 
 void client_event_control_send(int clientId, const char * action_name)
 {
-	gevent_t event;
-	event.type = GEVENT_CONTROL;
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_CONTROL;
 	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_LEN);
 	client_event_send(clients[clientId], &event);
 }

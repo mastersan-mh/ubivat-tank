@@ -14,11 +14,6 @@
 
 #define NET_PORT 20000
 
-#define SERVER_MSG_CONNECTION_ACCEPTED 0x01
-
-
-
-
 typedef struct net_socket_s
 {
 	struct net_socket_s * prev;

@@ -638,8 +638,8 @@ int menu_options(void * ctx)
 			__ctx->state = MENU_OPTIONS_WAIT_KEY;break;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
-			gconf_save();
 			gconf_rebind_all();
+			gconf_save();
 			__ctx->state = MENU_OPTIONS_SELECT;
 			return MENU_MAIN;
 		case SPACE  : break;
@@ -658,6 +658,7 @@ int menu_options(void * ctx)
 			__ctx->state = MENU_OPTIONS_SELECT;
 			break;
 		default:
+			input_key_unbind(scancode);
 			input_action_unbind(__ctx->column, player_actions[__ctx->menu]);
 			input_key_bind_act(__ctx->column, scancode, player_actions[__ctx->menu]);
 			__ctx->state = MENU_OPTIONS_SELECT;

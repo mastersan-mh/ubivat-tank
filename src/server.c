@@ -37,6 +37,32 @@ static host_client_t ** clients;
 static size_t clients_size = 0;
 static size_t clients_num = 0;
 
+
+void host_event_send(const host_client_t * client, const ghostevent_t * event)
+{
+	size_t buflen = 0;
+	char buf[sizeof(ghostevent_t)];
+	memset(buf, 0, sizeof(buf));
+
+	switch(event->type)
+	{
+		case GHOSTEVENT_CONNECTION_ACCEPTED:
+			buf[buflen] = event->type;
+			buflen++;
+			break;
+		case GHOSTEVENT_CONNECTION_CLOSE:
+			buf[buflen] = event->type;
+			buflen++;
+			break;
+	}
+	net_send(
+		client->ns,
+		buf,
+		buflen
+	);
+}
+
+
 /**
  * подключение игрока к игре
  * @return id
@@ -68,12 +94,23 @@ static int server_client_connect(const net_socket_t * ns)
 	return clients_num - 1;
 }
 
+static void server_send_client_disconnect(host_client_t * client)
+{
+	ghostevent_t event;
+	event.type = GHOSTEVENT_CONNECTION_CLOSE;
+	host_event_send(client, &event);
+}
+
 void server_disconnect_clients()
 {
 	while(clients_num > 0)
 	{
 		clients_num--;
 		server_unspawn_client(clients_num);
+
+		server_send_client_disconnect(clients[clients_num]);
+
+		net_socket_close(clients[clients_num]->ns);
 		Z_free(clients[clients_num]->userstoredata);
 		Z_free(clients[clients_num]);
 	}
@@ -126,9 +163,8 @@ int server_spawn_client(int id)
 
 void server_unspawn_client(int id)
 {
-	if(id < 0 || id >= clients_num) return;
-	//mobj_free(clients[id]->mobj);
-
+	if(id < 0 || id >= clients_num)
+		return;
 	clients[id]->entity = NULL;
 }
 
@@ -278,7 +314,8 @@ void server()
 	} sender;
 
 	size_t i;
-	gevent_t event;
+	ghostevent_t hevent;
+	gclientevent_t cevent;
 	//struct sockaddr sender_addr;
 
 	socklen_t sender_addr_len = sizeof(sender.addr);
@@ -297,22 +334,21 @@ void server()
 		return;
 	}
 
-	event.type = buf[0];
-	switch( event.type )
+	cevent.type = buf[0];
+	switch( cevent.type )
 	{
-		case GEVENT_CLIENT_MSG_CONNECT:
+		case GCLIENTEVENT_CONNECT:
 			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
 			int id = server_client_connect(ns);
-			char reply = SERVER_MSG_CONNECTION_ACCEPTED;
-			size_t size = 1;
-			net_send(ns, &reply, size);
+			hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
+			host_event_send(clients[id], &hevent);
 			server_spawn_client(id);
 			break;
-		case GEVENT_CONTROL:
-			strncpy(event.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
+		case GCLIENTEVENT_CONTROL:
+			strncpy(cevent.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
 			game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
-				event.control.action
+				cevent.control.action
 				);
 
 
@@ -332,7 +368,7 @@ void server()
 				for(i = 0; i< info->actions_num; i++)
 				{
 					entityaction_t * action = &info->actions[i];
-					if(!strncmp(action->action, event.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
+					if(!strncmp(action->action, cevent.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
 					{
 						found = true;
 						if(action->action_f)
@@ -342,7 +378,7 @@ void server()
 				}
 				if(!found)
 				{
-					game_console_send("server: unknown action :%d.", event.control.action);
+					game_console_send("server: unknown action :%d.", cevent.control.action);
 				}
 			}
 
