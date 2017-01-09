@@ -448,7 +448,7 @@ void game_gameTick()
 		}
 		if( alive )
 		{
-			if(game.flags & c_g_f_CASE)
+			if(game.flags & GAMEFLAG_CUSTOMGAME)
 			{
 				//игра по выбору
 				game_abort();
@@ -697,7 +697,7 @@ int game_record_load(int isave)
 	int fd;
 
 	if(!rec->exist) return 1;
-	if(!(rec->flags & c_g_f_CASE))
+	if(!(rec->flags & GAMEFLAG_CUSTOMGAME))
 	{
 		game.gamemap = mapList;
 		while(game.gamemap)
@@ -743,7 +743,7 @@ int game_record_load(int isave)
 	// спавним всех игроков
 
 	int player_num;
-	if(rec->flags & c_g_f_2PLAYERS) player_num = 2;
+	if(rec->flags & GAMEFLAG_2PLAYERS) player_num = 2;
 	else player_num = 1;
 
 	int i;
@@ -776,7 +776,7 @@ int game_create()
 	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
 	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
-	if((game.flags & c_g_f_2PLAYERS) == 0)
+	if(!(game.flags & GAMEFLAG_2PLAYERS))
 	{
 		game.P0cam.pos.x = 0;
 		game.P0cam.pos.y = 0;

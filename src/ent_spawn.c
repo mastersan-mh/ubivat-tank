@@ -8,41 +8,14 @@
 #include "game.h"
 #include "system.h"
 #include "entity.h"
+#include "entity_helpers.h"
 #include "ent_spawn.h"
-
-/**
- * получить любой спавн-поинт для игрока
- */
-static entity_t * spawn_get_random()
-{
-
-	int count = 0;
-
-	entity_t * ent;
-
-	//считаем количество спавн-поинтов
-	FOR_ENTITIES("spawn_player", ent)
-	{
-		count++;
-	};
-	if(count == 0)
-		return NULL;
-	count = xrand(count);
-
-	//выбираем случайным образом
-	FOR_ENTITIES("spawn_player", ent)
-	{
-		if(count == 0) return ent;
-		count--;
-	};
-	return NULL;
-}
-
 
 static void spawn_common_init(entity_t * this, void * thisdata, const entity_t * parent, const spawn_t * args)
 {
-	int i;
-	for(i = 0; i < __ITEM_NUM; i++) ((spawn_t *)thisdata)->items[i] = args->items[i];
+	size_t i;
+	for(i = 0; i < __ITEM_NUM; i++)
+		((spawn_t *)thisdata)->items[i] = args->items[i];
 }
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
@@ -64,7 +37,7 @@ static ENTITY_FUNCTION_INIT(spawn_boss_init)
 
 static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_player_spawn)
 {
-	entity_t * spawn = spawn_get_random();
+	entity_t * spawn = entity_get_random("spawn_player");
 
 	entity_t * player = entity_new(
 		"player",

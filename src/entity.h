@@ -15,16 +15,23 @@
 #include "img.h"
 #include "server.h"
 
+#define ENTITY_NAME_LEN (63)
 /*
  * цикл по объектам одного определённого типа
  */
-#define FOR_ENTITIES(entity_name, entity) \
+#define ENTITIES_FOREACH(entity_name, entity) \
 	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
 
 #define ENTITY_FUNCTION_INIT(x) \
 	void x (entity_t * this, void * thisdata, const entity_t * parent, const void * args)
 
 #define ENTITY_FUNCTION_DONE(x) \
+	void x (entity_t * this, void * thisdata)
+
+#define ENTITY_FUNCTION_SPAWN(x) \
+	void x (entity_t * this, void * thisdata)
+
+#define ENTITY_FUNCTION_HANDLE(x) \
 	void x (entity_t * this, void * thisdata)
 
 #define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
@@ -39,11 +46,29 @@
 
 #define ENTITY_ERASE(ent) (ent)->erase = true
 
+/* entity является объектом типа entity_name */
+#define ENTITY_IS(entity, entity_name) \
+		( strncmp( (entity)->info->name, (entity_name), ENTITY_NAME_LEN ) == 0 )
+
 #define ENTITY_ALLOW_HANDLE_SET(ent, bool_value) \
 		(ent)->allow_handle = (bool_value)
 
 #define ENTITY_ALLOW_DRAW_SET(ent, bool_value) \
 		(ent)->allow_draw = (bool_value)
+
+#define ENTITY_IS_SPAWNED(ent) \
+		((ent)->spawned == true)
+
+#define ENTITY_UNSPAWN(ent) \
+		(ent)->spawned = false
+
+#define ENTITYINFO_ACTIONS(xactions) \
+		.actions_num = ARRAYSIZE(xactions), \
+		.actions = xactions
+
+#define ENTITYINFO_ENTMODELS(xentmodels) \
+		.entmodels_num = ARRAYSIZE(xentmodels), \
+		.entmodels = xentmodels
 
 typedef enum direction_e
 {
@@ -73,6 +98,14 @@ typedef struct entity_s
 	bool allow_handle;
 	/* объеккт разрешено показывать */
 	bool allow_draw;
+	/*
+	объект находится на карте, с ним можно взаимодействовать, от отрисовывается.
+	Ели функция info->spawn() не задана, объект всегда spawned.
+	При этом, если насильно сделать объект не spawned, он никогда не появится,
+	потому-что info->handle() никогда не вызовтся.
+	Ели функция info->spawn() задана, тогда изначально spawned = false
+	 */
+	bool spawned;
 
 	const struct entityinfo_s * info;
 	/* структура для проигрывания кардов моделей, связанных с объектом */
@@ -124,12 +157,14 @@ typedef struct entityinfo_s
 	void (*init)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
 	void (*done)(entity_t * this, void * thisdata);
 
-	void (*handle)(entity_t * this);
+	void (*spawn)(entity_t * this, void * thisdata);
+
+	void (*handle)(entity_t * this, void * thisdata);
 
 	entity_t * (*client_spawn)(const entity_t * this);
 
-	void * (*client_store)(struct client_storedata_s * storedata, const void * data);
-	void (*client_restore)(void * data, const struct client_storedata_s * storedata, const void * userstoredata);
+	void * (*client_store)(struct client_storedata_s * storedata, const void * thisdata);
+	void (*client_restore)(void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
 
 	/* массив действий, допустимых для entity */
 	unsigned int actions_num;

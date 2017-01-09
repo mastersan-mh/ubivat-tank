@@ -135,7 +135,6 @@ int gconf_save()
  */
 int gconf_load()
 {
-	int ret = 0;
 	FILE * f;
 
 	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);

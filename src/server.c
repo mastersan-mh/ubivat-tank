@@ -394,8 +394,23 @@ void server()
 					if(!strncmp(action->action, cevent.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
 					{
 						found = true;
-						if(action->action_f)
-							action->action_f(ent, ent->data, action->action);
+						if(ent->spawned)
+						{
+							if(action->action_f)
+								action->action_f(ent, ent->data, action->action);
+						}
+						else
+						{
+							if(info->spawn)
+							{
+								if(game.flags & GAMEFLAG_2PLAYERS)
+								{
+									game_console_send("server: spawn client.");
+									info->spawn(ent, ent->data);
+									ent->spawned = true;
+								}
+							}
+						}
 						break;
 					}
 				}

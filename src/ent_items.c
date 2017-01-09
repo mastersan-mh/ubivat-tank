@@ -85,9 +85,9 @@ static ENTITY_FUNCTION_INIT(item_init)
 	item->amount = *((int*)args);
 }
 
-static void item_handle(entity_t * this)
+static ENTITY_FUNCTION_HANDLE(item_handle)
 {
-	ENTITY_ALLOW_HANDLE_SET(this, ((item_t *)this->data)->exist);
+	ENTITY_ALLOW_HANDLE_SET(this, ((item_t *)thisdata)->exist);
 }
 
 static const entityinfo_t item_scores_reginfo = {
@@ -95,7 +95,7 @@ static const entityinfo_t item_scores_reginfo = {
 		.datasize = sizeof(item_t),
 		.init = item_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
-		.handle   = item_handle,
+		.handle = item_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,

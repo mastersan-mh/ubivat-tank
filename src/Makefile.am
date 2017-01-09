@@ -35,6 +35,7 @@ img.c \
 main.c \
 map.c \
 entity.c \
+entity_helpers.c \
 model.c \
 model_resources.c \
 menu.c \

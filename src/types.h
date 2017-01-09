@@ -62,9 +62,9 @@ typedef enum {
 
 //флаги состояния игры:
 //2 игрока
-#define c_g_f_2PLAYERS  0x01
+#define GAMEFLAG_2PLAYERS  0x01
 //игра по выбору
-#define c_g_f_CASE      0x02
+#define GAMEFLAG_CUSTOMGAME      0x02
 //флаги спавнпоинта
 
 

@@ -95,27 +95,6 @@ static void client_disconnect(client_t * client)
 	client_delete(client);
 }
 
-/* проход по элементам с возможностью удаления */
-#define LIST2_FOREACH_ERASEABLE(list, ent, erased) \
-		for((ent) = (list), (erased) = NULL; (ent) != NULL; (erased) = NULL)
-
-/* переход к следующему элементу в списке для цикла с возможностью удаления */
-#define LIST2_FOREACH_NEXT(ent, erased) \
-		if(!(erased) && (ent)) \
-			(ent) = (ent)->next;
-
-
-#define LIST2_EXCLUDE_IN_FOREACH(list, ent, erased) \
-		(erased) = (ent); \
-		(ent) = (ent)->next; \
-		if((erased) == (list)) \
-			(list) = (list)->next; \
-		if((erased)->prev) \
-			(erased)->prev->next = (erased)->next; \
-		if((erased)->next) \
-			(erased)->next->prev = (erased)->prev
-
-
 static void client_listen_clients()
 {
 	struct sockaddr addr;
@@ -127,7 +106,7 @@ static void client_listen_clients()
 	client_t * erased;
 
 
-	LIST2_FOREACH_ERASEABLE(clients, client, erased)
+	LIST2_FOREACHM(clients, client, erased)
 	{
 
 		buf = net_recv(client->ns, &buf_size, &addr, &addr_len);
@@ -139,7 +118,7 @@ static void client_listen_clients()
 					if(time_current - client->time > CLIENT_TIMEOUT)
 					{
 
-						LIST2_EXCLUDE_IN_FOREACH(clients, client, erased);
+						LIST2_FOREACHM_EXCLUDE(clients, client, erased);
 
 						client_delete(erased);
 					}
@@ -162,7 +141,7 @@ static void client_listen_clients()
 					break;
 				if(buf[0] == GHOSTEVENT_CONNECTION_CLOSE)
 				{
-					LIST2_EXCLUDE_IN_FOREACH(clients, client, erased);
+					LIST2_FOREACHM_EXCLUDE(clients, client, erased);
 					client_delete(erased);
 					game_console_send("client: host closed the connection.");
 				}
@@ -173,7 +152,7 @@ static void client_listen_clients()
 		}
 		net_recv_free(buf);
 
-		LIST2_FOREACH_NEXT(client, erased);
+		LIST2_FOREACHM_NEXT(client, erased);
 
 	}
 }

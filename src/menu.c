@@ -304,7 +304,7 @@ int menu_game_new2P(void * ctx)
 	if(game.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
 	game.gamemap = mapList;
-	game.flags = c_g_f_2PLAYERS;
+	game.flags = GAMEFLAG_2PLAYERS;
 	ret = game_create();
 	if(ret)
 	{
@@ -395,7 +395,7 @@ static void menu_game_load_draw(const void * ctx)
 		video_printf(97+23+4, 33+irow*15, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
-		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
+		if(game.saveslist[irow].flags & GAMEFLAG_2PLAYERS)
 		{
 			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		};
@@ -502,7 +502,7 @@ static void menu_game_save_draw(const void * ctx)
 		video_printf(97+23+4,33+irow*15, game.saveslist[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
-		if(game.saveslist[irow].flags & c_g_f_2PLAYERS)
+		if(game.saveslist[irow].flags & GAMEFLAG_2PLAYERS)
 			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 	}
 }
@@ -574,7 +574,7 @@ int menu_custom_new1P(void * ctx)
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
-	game.flags = c_g_f_CASE;
+	game.flags = GAMEFLAG_CUSTOMGAME;
 	ret = game_create();
 	return MENU_MAIN;
 }
@@ -590,7 +590,7 @@ int menu_custom_new2P(void * ctx)
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
-	game.flags = c_g_f_2PLAYERS | c_g_f_CASE;
+	game.flags = GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME;
 	ret = game_create();
 	return MENU_MAIN;
 }

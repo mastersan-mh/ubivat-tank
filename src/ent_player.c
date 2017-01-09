@@ -6,6 +6,7 @@
  */
 
 #include "ent_player.h"
+#include "ent_player_think.h"
 #include "ent_spawn.h"
 #include "ent_message.h"
 #include "ent_exit.h"
@@ -18,13 +19,70 @@
 #include "system.h"
 #include "types.h"
 #include "entity.h"
+#include "entity_helpers.h"
 #include "video.h"
 #include "img.h"
 #include "map.h"
 #include "game.h"
-#include "_gr2D.h"
 #include "sound.h"
 #include "client.h"
+
+/*
+ * инициализируем игрока при спавне
+ */
+void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
+{
+	if(!spawn)
+		game_halt("Error: Player spawn is NULL, can not create player.");
+	spawn_t * sp = spawn->data;
+
+	player->pos.x = spawn->pos.x;
+	player->pos.y = spawn->pos.y;
+
+	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
+		pl->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
+	player_class_init(player, pl);
+	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
+
+	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
+		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
+	else
+	{
+		if( strcmp(player->info->name, "player") != 0 )
+			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+		else
+		{
+			if(game.flags & GAMEFLAG_CUSTOMGAME)
+				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+			else
+			{
+				//по уровням
+				if(game.gamemap == mapList) // первая карта
+					pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+				else // не первая карта
+					if(pl->items[ITEM_HEALTH] <= 0)
+						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+			}
+		}
+	}
+	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
+		pl->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
+	else
+	{
+		if( ENTITY_IS(player, "player") )
+			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+		else
+			if(game.flags & GAMEFLAG_CUSTOMGAME) pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+	};
+	pl->charact.frags = 0;
+	pl->bull          = NULL;
+	pl->move.speed    = 0;
+	pl->move.go       = false;
+	pl->attack        = false;
+	pl->reloadtime_d  = 0;
+	pl->soundId_move  = 0;
+};
+
 
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
@@ -105,18 +163,52 @@ static entmodel_t tank_boss_models[] =
 
 static ENTITY_FUNCTION_INIT(player_init);
 static ENTITY_FUNCTION_DONE(player_done);
-static void player_handle(entity_t * this);
-static void * player_store(client_storedata_t * storedata, const void * mobj);
-static void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata);
+
+static ENTITY_FUNCTION_SPAWN(player_spawn)
+{
+	entity_t * spawn = entity_get_random("spawn_player");
+	player_spawn_init(this, thisdata, spawn);
+}
+
+static ENTITY_FUNCTION_HANDLE(player_handle);
+
+static void * player_store(client_storedata_t * storedata, const void * thisdata)
+{
+	storedata->fragstotal = ((player_t *)thisdata)->charact.fragstotal;
+	storedata->frags      = ((player_t *)thisdata)->charact.frags;
+	storedata->level      = ((player_t *)thisdata)->level;
+	storedata->scores     = ((player_t *)thisdata)->items[ITEM_SCORES];
+
+	void * usersoredata = Z_malloc(sizeof(int) * __ITEM_NUM);
+	memcpy(
+		usersoredata,
+		((player_t *)thisdata)->items,
+		sizeof(int) * __ITEM_NUM
+	);
+	return usersoredata;
+}
+
+static void player_restore(void * thisdata, const client_storedata_t * storedata, const void * userstoredata)
+{
+	((player_t *)thisdata)->charact.fragstotal = storedata->fragstotal;
+	((player_t *)thisdata)->charact.frags      = storedata->frags;
+	((player_t *)thisdata)->level              = storedata->level;
+	((player_t *)thisdata)->items[ITEM_SCORES] = storedata->scores;
+	memcpy(
+		((player_t *)thisdata)->items,
+		userstoredata,
+		sizeof(int) * __ITEM_NUM
+	);
+}
 
 
 static ENTITY_FUNCTION_INIT(enemy_init);
 static ENTITY_FUNCTION_DONE(enemy_done);
-static void enemy_handle(entity_t * this);
+static ENTITY_FUNCTION_HANDLE(enemy_handle);
 
 static ENTITY_FUNCTION_INIT(boss_init);
 static ENTITY_FUNCTION_DONE(boss_done);
-static void boss_handle(entity_t * this);
+static ENTITY_FUNCTION_HANDLE(boss_handle);
 
 
 static void player_action_move(entity_t * this, player_t * pl, direction_t dir, bool go)
@@ -174,19 +266,12 @@ static entityaction_t player_actions[] =
 		{"-attack_mine"     , player_attack_weapon3_off}
 };
 
-#define ENTITYINFO_ACTIONS(xactions) \
-		.actions_num = ARRAYSIZE(xactions), \
-		.actions = xactions
-
-#define ENTITYINFO_ENTMODELS(xentmodels) \
-		.entmodels_num = ARRAYSIZE(xentmodels), \
-		.entmodels = xentmodels
-
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
 		.init = player_init,
 		.done = player_done,
+		.spawn = player_spawn,
 		.handle = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore,
@@ -202,8 +287,7 @@ static const entityinfo_t enemy_reginfo = {
 		.handle   = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 2,
-		.entmodels = tank_enemy_models
+		ENTITYINFO_ENTMODELS(tank_enemy_models)
 };
 
 static const entityinfo_t boss_reginfo = {
@@ -214,8 +298,7 @@ static const entityinfo_t boss_reginfo = {
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 2,
-		.entmodels = tank_boss_models
+		ENTITYINFO_ENTMODELS(tank_boss_models)
 };
 
 void entity_player_init()
@@ -225,7 +308,7 @@ void entity_player_init()
 	entity_register(&boss_reginfo);
 }
 
-static void player_handle_common(entity_t * player);
+static void player_handle_common(entity_t * player, player_t * pl);
 
 ENTITY_FUNCTION_INIT(player_init)
 {
@@ -250,39 +333,9 @@ ENTITY_FUNCTION_DONE(player_done)
 	ctrl_AI_done(&(pl->brain));
 }
 
-void player_handle(entity_t * this)
+ENTITY_FUNCTION_HANDLE(player_handle)
 {
-	think_human(this);
-	player_handle_common(this);
-}
-
-void * player_store(client_storedata_t * storedata, const void * data)
-{
-	storedata->fragstotal = ((player_t *)data)->charact.fragstotal;
-	storedata->frags      = ((player_t *)data)->charact.frags;
-	storedata->level      = ((player_t *)data)->level;
-	storedata->scores     = ((player_t *)data)->items[ITEM_SCORES];
-
-	void * usersoredata = Z_malloc(sizeof(int) * __ITEM_NUM);
-	memcpy(
-		usersoredata,
-		((player_t *)data)->items,
-		sizeof(int) * __ITEM_NUM
-	);
-	return usersoredata;
-}
-
-void player_restore(void * data, const client_storedata_t * storedata, const void * userstoredata)
-{
-	((player_t *)data)->charact.fragstotal = storedata->fragstotal;
-	((player_t *)data)->charact.frags      = storedata->frags;
-	((player_t *)data)->level              = storedata->level;
-	((player_t *)data)->items[ITEM_SCORES] = storedata->scores;
-	memcpy(
-		((player_t *)data)->items,
-		userstoredata,
-		sizeof(int) * __ITEM_NUM
-	);
+	player_handle_common(this, thisdata);
 }
 
 ENTITY_FUNCTION_INIT(enemy_init)
@@ -296,10 +349,11 @@ ENTITY_FUNCTION_DONE(enemy_done)
 {
 	player_done(this, thisdata);
 }
-void enemy_handle(entity_t * this)
+
+ENTITY_FUNCTION_HANDLE(enemy_handle)
 {
 	think_enemy(this);
-	player_handle_common(this);
+	player_handle_common(this, thisdata);
 }
 
 ENTITY_FUNCTION_INIT(boss_init)
@@ -312,10 +366,10 @@ ENTITY_FUNCTION_DONE(boss_done)
 {
 	player_done(this, thisdata);
 }
-void boss_handle(entity_t * this)
+ENTITY_FUNCTION_HANDLE(boss_handle)
 {
 	//think_enemy(player);
-	player_handle_common(this);
+	player_handle_common(this, thisdata);
 }
 
 /*
@@ -504,43 +558,43 @@ static void player_obj_check(entity_t * player)
 
 	entity_t * entity;
 
-	FOR_ENTITIES("item_scores", entity)
+	ENTITIES_FOREACH("item_scores", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_item(player, entity);
 	}
 
-	FOR_ENTITIES("item_health", entity)
+	ENTITIES_FOREACH("item_health", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_item(player, entity);
 	}
 
-	FOR_ENTITIES("item_armor", entity)
+	ENTITIES_FOREACH("item_armor", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_item(player, entity);
 	}
 
-	FOR_ENTITIES("item_ammo_missile", entity)
+	ENTITIES_FOREACH("item_ammo_missile", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_item(player, entity);
 	}
 
-	FOR_ENTITIES("item_ammo_mine", entity)
+	ENTITIES_FOREACH("item_ammo_mine", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_item(player, entity);
 	}
 
-	FOR_ENTITIES("message", entity)
+	ENTITIES_FOREACH("message", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_message(player, entity);
 	}
 
-	FOR_ENTITIES("exit", entity)
+	ENTITIES_FOREACH("exit", entity)
 	{
 		if( inbox(entity, player) )
 			player_influence_exit(player, entity);
@@ -573,7 +627,7 @@ static void player_move(entity_t * player, int dir, vec_t * speed)
 /*
  * обработка игрока
  */
-static void player_handle_common(entity_t * player)
+static void player_handle_common(entity_t * player, player_t * pl)
 {
 	enum
 	{
@@ -587,8 +641,6 @@ static void player_handle_common(entity_t * player)
 	vec2_t Sorig;
 	vec_t L,R,U,D;
 	vec_t speed_s;
-
-	player_t * pl = player->data;
 
 	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
 
@@ -628,7 +680,7 @@ static void player_handle_common(entity_t * player)
 			}
 
 			//если игрок мертв
-			if(pl->charact.spawned)
+			if(ENTITY_IS_SPAWNED(player))
 			{
 				entity_new(
 					"explode_missile",
@@ -638,7 +690,10 @@ static void player_handle_common(entity_t * player)
 					player,
 					NULL
 				);
-				pl->charact.spawned = false;
+				ENTITY_UNSPAWN(player);
+
+				if(!ENTITY_IS(player, "player"))
+					ENTITY_ALLOW_DRAW_SET(player, false);
 				pl->items[ITEM_ARMOR] = 0;
 				pl->items[ITEM_AMMO_MISSILE] = 0;
 				pl->items[ITEM_AMMO_MINE] = 0;
@@ -648,7 +703,6 @@ static void player_handle_common(entity_t * player)
 			break;
 	}
 
-	ENTITY_ALLOW_DRAW_SET(player, pl->charact.spawned);
 
 	if(pl->items[ITEM_HEALTH] > 0)
 	{
@@ -724,18 +778,7 @@ static void player_handle_common(entity_t * player)
 	else
 	{
 		//игрок атакует
-		if(pl->items[ITEM_HEALTH] <= 0)
-		{
-			if(
-				((game.flags & c_g_f_2PLAYERS) != 0) &&
-				(strcmp(player->info->name, "player") == 0)
-				)
-			{
-				player_respawn(player);
-				pl->reloadtime_d = c_p_WEAP_reloadtime;
-			};
-		}
-		else
+		if(pl->items[ITEM_HEALTH] > 0)
 		{
 			if(pl->reloadtime_d > 0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
 			else
@@ -798,109 +841,8 @@ static void player_handle_common(entity_t * player)
 	player_obj_check(player);
 }
 
-/*
- * инициализируем игрока при спавне
- */
-void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
-{
-	if(!spawn)
-		game_halt("Error: Player spawn is NULL, can not create player.");
-	spawn_t * sp = spawn->data;
-
-	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= c_score_max)
-		pl->items[ITEM_SCORES] = sp->items[ITEM_SCORES];
-	player_class_init(player, pl);
-	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
-
-	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
-		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
-	else
-	{
-		if( strcmp(player->info->name, "player") != 0 )
-			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-		else
-		{
-			if(game.flags & c_g_f_CASE)
-				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-			else
-			{
-				//по уровням
-				if(game.gamemap == mapList) // первая карта
-					pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-				else // не первая карта
-					if(!pl->charact.spawned && pl->items[ITEM_HEALTH] <= 0)
-						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-			}
-		}
-	}
-	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
-		pl->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
-	else
-	{
-		if( strcmp(player->info->name, "player") != 0 )
-			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
-		else
-			if(game.flags & c_g_f_CASE) pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
-	};
-	pl->charact.frags = 0;
-	pl->charact.spawned = true;
-	pl->bull            = NULL;
-	pl->move.speed      = 0;
-	pl->move.go         = false;
-	pl->attack          = false;
-	pl->reloadtime_d    = 0;
-	pl->soundId_move    = 0;
-
-};
-
-
-/**
- * получить любой спавн-поинт для игрока
- */
-static entity_t * player_spawn_get() /* TODO: erase this func */
-{
-
-	int count = 0;
-
-	entity_t * ent;
-
-	//считаем количество спавн-поинтов
-	for(ent = entity_getfirst("spawn_player"); ent; ent = ent->next)
-	{
-		count++;
-	};
-	if(count == 0)
-		return NULL;
-	count = xrand(count);
-
-	//выбираем случайным образом
-	for(ent = entity_getfirst("spawn_player"); ent; ent = ent->next)
-	{
-		if(count == 0) return ent;
-		count--;
-	};
-	return NULL;
-}
-
-
-/**
- * появление/восстановление игрока на карте
- * @return = 0 -спавнинг прошел успешно
- * @return = 1 -игрок является монстром, ошибка спавнинга
- */
-int player_respawn(entity_t * player)
-{
-	/* игрок является монстром, ошибка спавнинга */
-	if( strcmp(player->info->name, "player") != 0 )
-		return 1;
-
-	entity_t * spawn = player_spawn_get();
-
-	player->pos.x = spawn->pos.x;
-	player->pos.y = spawn->pos.y;
-	player_spawn_init(player, player->data, spawn);
-	return 0;
-}
+/****************/
+#include "_gr2D.h"
 
 /*
  * вывод информации об игроке
@@ -956,7 +898,7 @@ void player_class_init(entity_t * player, player_t * pl)
 {
 	int level = pl->items[ITEM_SCORES] / ITEM_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
-	if( strcmp(player->info->name, "boss") == 0 )
+	if( ENTITY_IS(player, "boss") )
 		level = PLAYER_LEVEL_BOSS;
 	pl->level = level;
 	playerinfo_t * playerinfo = &playerinfo_table[level];

@@ -136,7 +136,18 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 	else
 		entity->data = Z_malloc(entityinfo->datasize);
 	if(entityinfo->init)
-		entity->info->init(entity, entity->data, parent, args);
+		entityinfo->init(entity, entity->data, parent, args);
+
+	if(entityinfo->spawn == NULL)
+	{
+		entity->spawned = true;
+	}
+	else
+	{
+		entity->spawned = false;
+		entityinfo->spawn(entity, entity->data);
+		entity->spawned = true;
+	}
 
 	return entity;
 }
@@ -254,7 +265,10 @@ void entities_handle()
 				continue;
 			}
 
-			if(!entity->allow_handle)
+			if(
+					!entity->allow_handle ||
+					!entity->spawned
+			)
 			{
 				entity = entity->next;
 				continue;
@@ -265,7 +279,7 @@ void entities_handle()
 
 			if(info->handle != NULL)
 			{
-				info->handle(entity);
+				info->handle(entity, entity->data);
 			}
 
 			if(entity->erase)
@@ -501,6 +515,8 @@ void entities_render(camera_t * cam)
 		{
 			if(entity->erase) continue;
 			if(!entity->allow_handle) continue;
+			if(!entity->spawned) continue;
+
 
 			//int viewbox_half = entity->img->img_sx;
 			int viewbox_half = 16;

@@ -189,7 +189,7 @@ static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
 	bull_common_init(this, thisdata, parent, BULL_ARTILLERY);
 }
 
-static void bull_artillery_handle(entity_t * this)
+static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
 	bull_common_handle(this);
 }
@@ -236,7 +236,7 @@ static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 	bull_common_init(this, thisdata, parent, BULL_MISSILE);
 }
 
-static void bull_missile_handle(entity_t * this)
+static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 {
 	bull_common_handle(this);
 }
@@ -246,7 +246,7 @@ static const entityinfo_t bull_missile_reginfo = {
 		.datasize = sizeof(bull_t),
 		.init = bull_missile_entity_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
-		.handle   = bull_missile_handle,
+		.handle = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
 		.entmodels_num = 1,
@@ -284,7 +284,7 @@ static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 	bull_common_init(this, thisdata, parent, BULL_MINE);
 }
 
-static void bull_mine_handle(entity_t * this)
+static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 {
 	bull_common_handle(this);
 }

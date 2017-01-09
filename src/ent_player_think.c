@@ -5,9 +5,11 @@
  */
 #include "ent_bull.h"
 #include "ent_explode.h"
+#include "ent_player_think.h"
 #include "ent_player.h"
 #include "ent_weap.h"
 
+#include "entity_helpers.h"
 #include "types.h"
 #include "game.h"
 #include "map.h"
@@ -476,34 +478,25 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 void think_enemy(entity_t * player)
 {
 	player_t * pl = player->data;
-
-	if(debug_noAI)return;
+	if(debug_noAI)
+		return;
 	if(pl->items[ITEM_HEALTH] > 0)
 	{
 		ctrl_AI_checkdanger(player);
 		if(!pl->brain.danger)
 		{
-			int client_num = host_client_num_get();
-
-			int id = xrand(client_num);
-			entity_t * target = host_client_get(id)->entity;
-
+			entity_t * target = entity_get_random("player");
+			if(!target)
+				return;
 			player_t * enemy_pl = target->data;
 
-			if(enemy_pl->items[ITEM_HEALTH] <= 0) pl->attack = false;
+			if(enemy_pl->items[ITEM_HEALTH] <= 0)
+				pl->attack = false;
 			else
 			{
 				if(!pl->bull && !pl->attack) ctrl_AI_findenemy(player, target);
 				ctrl_AI_attack(player, target);
-			};
+			}
 		}
 	}
 }
-
-/*
- * управление игроком
- */
-void think_human(entity_t * player)
-{
-
-};
