@@ -8,15 +8,7 @@
 #include "game.h"
 #include "entity.h"
 #include "model.h"
-
-#define LIST2_PUSH(enttop, ent) \
-		do                      \
-		{                       \
-			(ent)->prev = NULL;     \
-			(ent)->next = (enttop); \
-			if( (enttop) != NULL ) (enttop)->prev = (ent); \
-			(enttop) = (ent);       \
-		}while(0)
+#include "common_list2.h"
 
 typedef struct
 {

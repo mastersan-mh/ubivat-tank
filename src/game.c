@@ -89,7 +89,7 @@ static void game_state_intermission_draw()
 	video_printf(108,191,"НАЖМИ ПРОБЕЛ");
 
 	int i;
-	int num = server_client_num_get();
+	int num = host_client_num_get();
 
 	int refy;
 	if(num == 0) refy = 84;
@@ -100,7 +100,7 @@ static void game_state_intermission_draw()
 
 	for(i = 0; i < num; i++)
 	{
-		host_client_t * client = server_client_get(i);
+		host_client_t * client = host_client_get(i);
 		item_img_t * img = image_get(list[client->storedata.level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
@@ -285,12 +285,6 @@ void client_events_pump(menu_selector_t * imenu)
 	}
 }
 
-void client_events_send()
-{
-
-}
-
-
 /*
  *
  */
@@ -366,8 +360,6 @@ void game_main()
 		{
 			client_events_pump(&imenu);
 		}
-
-		client_events_send();
 
 		if(quit)
 			break;
@@ -447,11 +439,11 @@ void game_gameTick()
 	{
 		int i;
 		bool alive = true;
-		int num = server_client_num_get();
+		int num = host_client_num_get();
 		// проверим что все игроки живы
 		for(i = 0; i < num; i++)
 		{
-			if( ((player_t *)server_client_get(i)->entity->data)->items[ITEM_HEALTH] < 0 )
+			if( ((player_t *)host_client_get(i)->entity->data)->items[ITEM_HEALTH] < 0 )
 				alive = false;
 		}
 		if( alive )
@@ -510,14 +502,14 @@ static void game_draw_cam(entity_t * player, camera_t * cam)
 void game_draw()
 {
 	int i;
-	int num = server_client_num_get();
+	int num = host_client_num_get();
 	for(i = 0; i < num; i++)
 	{
 		camera_t * cam;
 		if(i == 0) cam = &game.P0cam;
 		else cam = &game.P1cam;
 
-		entity_t * ent =server_client_get(i)->entity;
+		entity_t * ent =host_client_get(i)->entity;
 		if(ent)
 			game_draw_cam(ent, cam);
 
@@ -682,10 +674,10 @@ bool game_record_save(int isave)
 	}
 
 	int i;
-	int num = server_client_num_get();
+	int num = host_client_num_get();
 	for(i = 0; i < num; i++)
 	{
-		game_record_save_player(fd, server_client_get(i)->entity);
+		game_record_save_player(fd, host_client_get(i)->entity);
 	}
 
 	close(fd);
@@ -758,12 +750,12 @@ int game_record_load(int isave)
 	for(i = 0 ; i < player_num; i++)
 	{
 		int id = client_connect();
-		server_spawn_client(id);
+		host_client_spawn_id(id);
 	}
 
 	for(i = 0; i < player_num; i++)
 	{
-		game_record_load_player(fd, server_client_get(i)->entity);
+		game_record_load_player(fd, host_client_get(i)->entity);
 	}
 	close(fd);
 	return 0;
@@ -821,10 +813,6 @@ int game_create()
  */
 void game_abort(void)
 {
-	//дисконнект всех игроков
-
-	server_disconnect_clients();
-
 	server_stop();
 
 	//закроем карту
@@ -839,8 +827,8 @@ void game_abort(void)
 bool game_nextmap()
 {
 	int ret;
-	server_unspawn_client(0);
-	server_unspawn_client(1);
+	host_client_unspawn_id(0);
+	host_client_unspawn_id(1);
 
 	//закроем карту
 	map_clear();
@@ -863,8 +851,8 @@ bool game_nextmap()
 		return false;
 	}
 
-	server_spawn_client(0);
-	server_spawn_client(1);
+	host_client_spawn_id(0);
+	host_client_spawn_id(1);
 
 	server_restore_clients_info();
 

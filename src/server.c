@@ -5,6 +5,7 @@
  *      Author: mastersan
  */
 
+#include "common_list2.h"
 #include "g_events.h"
 #include "net.h"
 #include "server.h"
@@ -33,10 +34,13 @@ fd_set readfds;
 fd_set writefds;
 fd_set exceptfds;
 
-static host_client_t ** clients;
-static size_t clients_size = 0;
-static size_t clients_num = 0;
+static host_client_t * clients;
+static int clients_num = 0;
 
+static void host_client_unspawn(host_client_t * client)
+{
+	client->entity = NULL;
+}
 
 void host_event_send(const host_client_t * client, const ghostevent_t * event)
 {
@@ -68,80 +72,97 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
  * @return id
  * @return -1 ошибка
  */
-static int server_client_connect(const net_socket_t * ns)
+static host_client_t * host_client_create(const net_socket_t * ns)
 {
-	host_client_t ** tmp;
-
-	if(clients_size < clients_num + 1)
-	{
-		if(clients_size == 0) clients_size = 1;
-		else clients_size *= 2;
-		tmp = Z_realloc(clients, sizeof(host_client_t*) * clients_size);
-		if(!tmp)
-			game_halt("server_client_connect(): Can not alloc memory, failed");
-		clients = tmp;
-	}
-
 	host_client_t * client = Z_malloc(sizeof(host_client_t));
+	if(!client)
+		game_halt("server_client_create(): Can not alloc memory, failed");
+
 	client->entity = NULL;
 	client->userstoredata = NULL;
-
 	client->ns = (net_socket_t *) ns;
 
-	clients[clients_num] = client;
+	LIST2_PUSH(clients, client);
+
 	clients_num++;
 
-	return clients_num - 1;
+	return client;
 }
 
-static void server_send_client_disconnect(host_client_t * client)
+static void host_client_delete(host_client_t * client)
+{
+	host_client_unspawn(client);
+	net_socket_close(client->ns);
+	Z_free(client->userstoredata);
+	Z_free(client);
+}
+
+static void host_client_disconnect(host_client_t * client)
 {
 	ghostevent_t event;
 	event.type = GHOSTEVENT_CONNECTION_CLOSE;
 	host_event_send(client, &event);
+
+	LIST2_UNLINK(clients, client);
+
+	host_client_delete(client);
 }
 
-void server_disconnect_clients()
+void host_clients_disconnect()
 {
-	while(clients_num > 0)
+	ghostevent_t event;
+	event.type = GHOSTEVENT_CONNECTION_CLOSE;
+	host_client_t * client;
+
+	while(clients)
 	{
+		client = clients;
+		clients = clients->next;
+		host_event_send(client, &event);
+		host_client_delete(client);
 		clients_num--;
-		server_unspawn_client(clients_num);
-
-		server_send_client_disconnect(clients[clients_num]);
-
-		net_socket_close(clients[clients_num]->ns);
-		Z_free(clients[clients_num]->userstoredata);
-		Z_free(clients[clients_num]);
 	}
 }
 
-static host_client_t * server_client_find_by_addr(const struct sockaddr * addr)
+static host_client_t * host_client_find_by_addr(const struct sockaddr * addr)
 {
 	host_client_t * client;
-	size_t i;
-	for(i = 0; i < clients_num; i++)
+	LIST2_FOREACH(clients, client)
 	{
-		client = clients[i];
 		if( !memcmp(&client->ns->addr, addr, sizeof(struct sockaddr)) )
 			return client;
-		clients_num++;
 	}
 	return NULL;
 }
 
-int server_client_num_get()
+int host_client_num_get()
 {
 	return clients_num;
 }
 
-host_client_t * server_client_get(int id)
+host_client_t * host_client_get(int id)
 {
 	if(id < 0 || id >= clients_num) return NULL;
-	return clients[id];
+	host_client_t * client = clients;
+	id = clients_num - 1 - id;
+	int i;
+	LIST2_LIST_TO_IENT(clients, client, i, id);
+	return client;
 }
 
-int server_spawn_client(int id)
+static int host_client_spawn(host_client_t * client)
+{
+	entity_t * entity = entries_client_spawn();
+	if(entity == NULL)
+	{
+		game_console_send("Error: No entity to spawn client.");
+		return -1;
+	}
+	client->entity = entity;
+	return 0;
+}
+
+int host_client_spawn_id(int id)
 {
 	if(id < 0 || id >= clients_num)
 	{
@@ -149,23 +170,22 @@ int server_spawn_client(int id)
 		return -1;
 	}
 
-	entity_t * entity = entries_client_spawn();
-
-	if(entity == NULL)
-	{
-		game_console_send("Error: No entity to spawn client.");
-		return -1;
-	}
-
-	clients[id]->entity = entity;
-	return 0;
+	host_client_t * client = clients;
+	id = clients_num - 1 - id;
+	int i;
+	LIST2_LIST_TO_IENT(clients, client, i, id);
+	return host_client_spawn(client);
 }
 
-void server_unspawn_client(int id)
+void host_client_unspawn_id(int id)
 {
 	if(id < 0 || id >= clients_num)
 		return;
-	clients[id]->entity = NULL;
+	host_client_t * client = clients;
+	id = clients_num - 1 - id;
+	int i;
+	LIST2_LIST_TO_IENT(clients, client, i, id);
+	host_client_unspawn(client);
 }
 
 /**
@@ -173,11 +193,9 @@ void server_unspawn_client(int id)
  */
 void server_store_clients_info()
 {
-	int id;
-	for(id = 0; id < clients_num; id++)
+	host_client_t * client;
+	LIST2_FOREACH(clients, client)
 	{
-		host_client_t * client = clients[id];
-		if(client->entity->info == NULL) continue;
 		client->userstoredata = client->entity->info->client_store(
 			&(client->storedata),
 			client->entity->data
@@ -190,11 +208,9 @@ void server_store_clients_info()
  */
 void server_restore_clients_info()
 {
-	int id;
-	for(id = 0; id < clients_num; id++)
+	host_client_t * client;
+	LIST2_FOREACH(clients, client)
 	{
-		host_client_t * client = clients[id];
-		if(client->entity->info == NULL) continue;
 		client->entity->info->client_restore(
 			client->entity->data,
 			&(client->storedata),
@@ -295,6 +311,9 @@ void server_start()
 
 void server_stop()
 {
+	//дисконнект всех игроков
+	host_clients_disconnect();
+
 	net_socket_close(host_ns);
 	host_ns = NULL;
 	server_run = 0;
@@ -334,25 +353,29 @@ void server()
 		return;
 	}
 
+	host_client_t * client;
+
 	cevent.type = buf[0];
 	switch( cevent.type )
 	{
 		case GCLIENTEVENT_CONNECT:
 			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-			int id = server_client_connect(ns);
+			client = host_client_create(ns);
 			hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-			host_event_send(clients[id], &hevent);
-			server_spawn_client(id);
+			host_event_send(client, &hevent);
+			host_client_spawn(client);
+			break;
+		case GCLIENTEVENT_DISCONNECT:
+			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+
 			break;
 		case GCLIENTEVENT_CONTROL:
 			strncpy(cevent.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
 			game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
 				cevent.control.action
-				);
-
-
-			host_client_t * client = server_client_find_by_addr(&sender.addr);
+			);
+			client = host_client_find_by_addr(&sender.addr);
 			if(!client)
 			{
 				game_console_send("server: no client 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));

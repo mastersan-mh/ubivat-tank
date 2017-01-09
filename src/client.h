@@ -13,8 +13,11 @@
 
 #define CLIENT_TIMEOUT 30000
 
-typedef struct
+typedef struct client_s
 {
+	struct client_s * prev;
+	struct client_s * next;
+
 	/* ассоциированный сокет */
 	net_socket_t * ns;
 	enum

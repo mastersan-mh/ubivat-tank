@@ -483,10 +483,10 @@ void think_enemy(entity_t * player)
 		ctrl_AI_checkdanger(player);
 		if(!pl->brain.danger)
 		{
-			int client_num = server_client_num_get();
+			int client_num = host_client_num_get();
 
 			int id = xrand(client_num);
-			entity_t * target = server_client_get(id)->entity;
+			entity_t * target = host_client_get(id)->entity;
 
 			player_t * enemy_pl = target->data;
 

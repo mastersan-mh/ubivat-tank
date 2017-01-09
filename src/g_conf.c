@@ -135,6 +135,7 @@ int gconf_save()
  */
 int gconf_load()
 {
+	int ret = 0;
 	FILE * f;
 
 	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
@@ -176,7 +177,19 @@ int gconf_load()
 		}
 
 		tok = strtok_r(NULL, delims, &ptrptr);
+		if(!tok)
+		{
+			free(line);
+			fclose(f);
+			return gconf_new();
+		}
 		int key = atoi(tok);
+		if(!tok)
+		{
+			free(line);
+			fclose(f);
+			return gconf_new();
+		}
 		tok = strtok_r(NULL, delims, &ptrptr);
 		char * action = tok;
 
@@ -184,7 +197,6 @@ int gconf_load()
 
 		free(line);
 	};
-
 	fclose(f);
 	return 0;
 }

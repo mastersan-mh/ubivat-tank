@@ -319,37 +319,6 @@ void boss_handle(entity_t * this)
 }
 
 /*
-void player_moveUp_ON()    { client_event_control_send(0, "+move_north"); }
-void player_moveUp_OFF()   { client_event_control_send(0, "-move_north"); }
-void player_moveDown_ON()  { client_event_control_send(0, "+move_south"); }
-void player_moveDown_OFF() { client_event_control_send(0, "-move_south"); }
-void player_moveLeft_ON()  { client_event_control_send(0, "+move_west"); }
-void player_moveLeft_OFF() { client_event_control_send(0, "-move_west"); }
-void player_moveRight_ON() { client_event_control_send(0, "+move_east"); }
-void player_moveRight_OFF(){ client_event_control_send(0, "-move_east"); }
-void player_attack_weapon1_ON() { client_event_control_send(0, "+attack_artillery"); }
-void player_attack_weapon1_OFF(){ client_event_control_send(0, "-attack_artillery"); }
-void player_attack_weapon2_ON() { client_event_control_send(0, "+attack_missile"  ); }
-void player_attack_weapon2_OFF(){ client_event_control_send(0, "-attack_missile"  ); }
-void player_attack_weapon3_ON() { client_event_control_send(0, "+attack_mine"     ); }
-void player_attack_weapon3_OFF(){ client_event_control_send(0, "-attack_mine"     ); }
-void player2_moveUp_ON()    { client_event_control_send(1, "+move_north" ); }
-void player2_moveUp_OFF()   { client_event_control_send(1, "-move_north" ); }
-void player2_moveDown_ON()  { client_event_control_send(1, "+move_south" ); }
-void player2_moveDown_OFF() { client_event_control_send(1, "-move_south" ); }
-void player2_moveLeft_ON()  { client_event_control_send(1, "+move_west" ); }
-void player2_moveLeft_OFF() { client_event_control_send(1, "-move_west" ); }
-void player2_moveRight_ON() { client_event_control_send(1, "+move_east" ); }
-void player2_moveRight_OFF(){ client_event_control_send(1, "-move_east" ); }
-void player2_attack_weapon1_ON() { client_event_control_send(1, "+attack_artillery" ); }
-void player2_attack_weapon1_OFF(){ client_event_control_send(1, "-attack_artillery" ); }
-void player2_attack_weapon2_ON() { client_event_control_send(1, "+attack_missile"   ); }
-void player2_attack_weapon2_OFF(){ client_event_control_send(1, "-attack_missile"   ); }
-void player2_attack_weapon3_ON() { client_event_control_send(1, "+attack_mine"      ); }
-void player2_attack_weapon3_OFF(){ client_event_control_send(1, "-attack_mine"      ); }
-*/
-
-/*
  * набор и проверка кодов (добавление 10.05.2006)
  */
 void player_checkcode()

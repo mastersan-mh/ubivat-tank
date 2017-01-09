@@ -20,8 +20,11 @@ typedef struct client_storedata_s
 	int scores;
 } client_storedata_t;
 
-typedef struct
+typedef struct host_client_s
 {
+	struct host_client_s * prev;
+	struct host_client_s * next;
+
 	struct entity_s * entity;
 	client_storedata_t storedata;
 	void * userstoredata;
@@ -31,15 +34,15 @@ typedef struct
 
 #include "entity.h"
 
-void server_disconnect_clients();
+void host_clients_disconnect();
 
-int server_client_num_get();
+int host_client_num_get();
 
-host_client_t * server_client_get(int id);
+host_client_t * host_client_get(int id);
 
-int server_spawn_client(int id);
+int host_client_spawn_id(int id);
 
-void server_unspawn_client(int id);
+void host_client_unspawn_id(int id);
 
 void server_store_clients_info();
 void server_restore_clients_info();

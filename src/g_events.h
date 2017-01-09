@@ -13,6 +13,7 @@
 typedef enum
 {
 	GCLIENTEVENT_CONNECT,
+	GCLIENTEVENT_DISCONNECT,
 	GCLIENTEVENT_CONTROL
 } gclienteventtype_t;
 
