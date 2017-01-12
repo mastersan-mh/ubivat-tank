@@ -48,7 +48,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
 	else
 	{
-		if( strcmp(player->info->name, "player") != 0 )
+		if( !ENTITY_IS(player, "player") )
 			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 		else
 		{
@@ -464,8 +464,8 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 		game_halt("player_items_get(): invalid itemtype = %d\n", itemtype);
 	}
 	item_t * item = entity->data;
-	if(!item->exist) return;
-
+	if(!item->exist)
+		return;
 	playerinfo_t *playerinfo = &playerinfo_table[pl->level];
 
 	if(
@@ -479,7 +479,8 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 	{
 		item->exist = false;
 		pl->items[itemtype] += item->amount;
-		check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
+		if(itemtype != ITEM_SCORES)
+			check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
 	};
 
 	if(itemtype == ITEM_SCORES)
@@ -489,7 +490,7 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 		{
 			if(pl->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
 				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-			if(pl->items[ITEM_ARMOR] < pl->items[ITEM_ARMOR])
+			if(pl->items[ITEM_ARMOR] < playerinfo->items[ITEM_ARMOR])
 				pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 		}
 	}
@@ -508,7 +509,7 @@ bool inbox(entity_t * entity, entity_t * player)
 /*
  * подбирание предметов игроком
  */
-static void player_obj_check(entity_t * player)
+static void player_pickup(entity_t * player)
 {
 	player_t * pl = player->data;
 
@@ -656,7 +657,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 				pl->items[ITEM_AMMO_MISSILE] = 0;
 				pl->items[ITEM_AMMO_MINE] = 0;
 			};
-			if(strcmp(player->info->name, "boss") == 0)
+			if(ENTITY_IS(player, "boss"))
 				game._win_ = true;
 			break;
 	}
@@ -796,7 +797,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	}
 	if(pl->reloadtime_d < 0) pl->reloadtime_d = 0;
 	//подбираем предметы
-	player_obj_check(player);
+	player_pickup(player);
 }
 
 /*
@@ -821,7 +822,7 @@ void player_class_init(entity_t * player, player_t * pl)
 		else
 		{
 			if( pl->items[i] < 0 ) pl->items[i] = 0;
-			if( strcmp(player->info->name, "player") != 0 )
+			if( !ENTITY_IS(player, "player") )
 			{
 				pl->items[i] = playerinfo->items[i];
 			}
