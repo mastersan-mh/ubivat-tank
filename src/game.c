@@ -464,71 +464,9 @@ void game_gameTick()
 	}
 }
 
-
-static void game_draw_cam(entity_t * player, camera_t * cam)
-{
-
-	player_t * pl = player->data;
-
-	if(pl->bull)
-	{
-		cam->pos.x = pl->bull->pos.x;
-		cam->pos.y = pl->bull->pos.y;
-	}
-	else
-	{
-		cam->pos.x = player->pos.x;
-		cam->pos.y = player->pos.y;
-	}
-
-	video_viewport_set(
-		cam->x,
-		cam->y,
-		cam->sx,
-		cam->sy
-	);
-
-	map_draw(cam);
-
-	video_viewport_set(
-		0.0f,
-		0.0f,
-		VIDEO_SCREEN_W,
-		VIDEO_SCREEN_H
-	);
-	player_draw_status(cam, player);
-}
-
 void game_draw()
 {
-	int i;
-	int num = host_client_num_get();
-	for(i = 0; i < num; i++)
-	{
-		camera_t * cam;
-		if(i == 0) cam = &game.P0cam;
-		else cam = &game.P1cam;
-
-		entity_t * ent =host_client_get(i)->entity;
-		if(ent)
-			game_draw_cam(ent, cam);
-
-	}
-
-	video_viewport_set(
-		0.0f,
-		0.0f,
-		VIDEO_SCREEN_W,
-		VIDEO_SCREEN_H
-	);
-
-	if(game.msg)
-	{
-		font_color_set3i(COLOR_1);
-		video_printf_wide(96, 84, 128, game.msg);
-		game.msg = NULL;
-	};
-
+	client_draw();
 }
 
 
@@ -753,6 +691,8 @@ int game_record_load(int isave)
 		host_client_spawn_id(id);
 	}
 
+	clients_initcams();
+
 	for(i = 0; i < player_num; i++)
 	{
 		game_record_load_player(fd, host_client_get(i)->entity);
@@ -771,35 +711,6 @@ int game_record_load(int isave)
 int game_create()
 {
 	game.gamemap = mapList;
-
-	float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
-	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
-
-	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
-	if(!(game.flags & GAMEFLAG_2PLAYERS))
-	{
-		game.P0cam.pos.x = 0;
-		game.P0cam.pos.y = 0;
-		game.P0cam.x     = 0;
-		game.P0cam.y     = 0;
-		game.P0cam.sx    = cam_sx;
-		game.P0cam.sy    = cam_sy - statusbar_h;//184
-	}
-	else
-	{
-		game.P0cam.pos.x = 0;
-		game.P0cam.pos.y = 0;
-		game.P0cam.x     = cam_sx/2 + 1;
-		game.P0cam.y     = 0;
-		game.P0cam.sx    = cam_sx/2 - 1;
-		game.P0cam.sy    = cam_sy - statusbar_h;
-		game.P1cam.pos.x = 0;
-		game.P1cam.pos.y = 0;
-		game.P1cam.x     = 0;
-		game.P1cam.y     = 0;
-		game.P1cam.sx    = cam_sx/2 - 1;
-		game.P1cam.sy    = cam_sy - statusbar_h;
-	};
 	game.show_menu = false;
 	game.state  = GAMESTATE_MISSION_BRIEF;
 	game.paused = false;

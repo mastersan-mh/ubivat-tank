@@ -53,6 +53,11 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 		case GHOSTEVENT_CONNECTION_ACCEPTED:
 			buf[buflen] = event->type;
 			buflen++;
+			strncpy(&buf[buflen], event->accepted.entityname, GAME_HOSTEVENT_ENTNAME_LEN);
+			buflen += GAME_HOSTEVENT_ENTNAME_LEN+1;
+			size_t size = sizeof(entity_t*);
+			memcpy(&buf[buflen], &event->accepted.entity, size);
+			buflen += size;
 			break;
 		case GHOSTEVENT_CONNECTION_CLOSE:
 			buf[buflen] = event->type;
@@ -362,9 +367,17 @@ void server()
 			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
 			client = host_client_create(ns);
-			hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-			host_event_send(client, &hevent);
-			host_client_spawn(client);
+			if(host_client_spawn(client) != 0)
+			{
+				game_console_send("server: can not spawn client, no entity to spawn");
+			}
+			else
+			{
+				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
+				strncpy(hevent.accepted.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_LEN);
+				hevent.accepted.entity = client->entity;
+				host_event_send(client, &hevent);
+			}
 			break;
 		case GCLIENTEVENT_DISCONNECT:
 			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));

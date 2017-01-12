@@ -641,6 +641,33 @@ void video_printf(
 
 }
 
+/*
+ * вывод текста на экран
+ */
+void video_vprintf(
+	int x,
+	int y,
+	const char * format,
+	va_list ap
+)
+{
+
+	static char string[MAX_MESSAGE_SIZE];
+#ifdef HAVE_VSNPRINTF
+	vsnprintf(string, MAX_MESSAGE_SIZE, format, ap);
+#else
+	vsprintf(string, format, argptr);
+#endif
+
+	video_printf_data_t ud = {
+			.x = x,
+			.y = y
+	};
+
+	utf8nstringloop(string, MAX_MESSAGE_SIZE - 1, video_printf_char_handle, &ud);
+
+}
+
 typedef struct
 {
 	int start_x;

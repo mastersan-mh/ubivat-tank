@@ -117,11 +117,7 @@ extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
 void entity_player_init();
 
-void player_checkcode();
-
 void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
-
-void player_draw_status(camera_t * cam, entity_t * player);
 
 void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius);
 

@@ -38,6 +38,7 @@ entity.c \
 entity_helpers.c \
 model.c \
 model_resources.c \
+ui.c \
 menu.c \
 server.c \
 client.c

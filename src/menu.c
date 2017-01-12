@@ -294,6 +294,7 @@ int menu_game_new1P(void * ctx)
 	}
 
 	client_connect();
+	clients_initcams();
 
 	return MENU_MAIN;
 }
@@ -321,6 +322,7 @@ int menu_game_new2P(void * ctx)
 
 	client_connect();
 	client_connect();
+	clients_initcams();
 
 	return MENU_MAIN;
 }

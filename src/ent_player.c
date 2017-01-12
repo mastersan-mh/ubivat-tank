@@ -16,11 +16,11 @@
 #include "ent_message.h"
 #include "ent_weap.h"
 
+#include "ui.h"
 #include "system.h"
 #include "types.h"
 #include "entity.h"
 #include "entity_helpers.h"
-#include "video.h"
 #include "img.h"
 #include "map.h"
 #include "game.h"
@@ -265,48 +265,6 @@ static entityaction_t player_actions[] =
 		{"+attack_mine"     , player_attack_weapon3_on },
 		{"-attack_mine"     , player_attack_weapon3_off}
 };
-
-static const entityinfo_t player_reginfo = {
-		.name = "player",
-		.datasize = sizeof(player_t),
-		.init = player_init,
-		.done = player_done,
-		.spawn = player_spawn,
-		.handle = player_handle,
-		.client_store = player_store,
-		.client_restore = player_restore,
-		ENTITYINFO_ACTIONS(player_actions),
-		ENTITYINFO_ENTMODELS(tank_player_models)
-};
-
-static const entityinfo_t enemy_reginfo = {
-		.name = "enemy",
-		.datasize = sizeof(player_t),
-		.init = enemy_init,
-		.done = enemy_done,
-		.handle   = enemy_handle,
-		.client_store = NULL,
-		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(tank_enemy_models)
-};
-
-static const entityinfo_t boss_reginfo = {
-		.name = "boss",
-		.datasize = sizeof(player_t),
-		.init = boss_init,
-		.done = boss_done,
-		.handle   = boss_handle,
-		.client_store = NULL,
-		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(tank_boss_models)
-};
-
-void entity_player_init()
-{
-	entity_register(&player_reginfo);
-	entity_register(&enemy_reginfo);
-	entity_register(&boss_reginfo);
-}
 
 static void player_handle_common(entity_t * player, player_t * pl);
 
@@ -841,56 +799,6 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	player_obj_check(player);
 }
 
-/****************/
-#include "_gr2D.h"
-
-/*
- * вывод информации об игроке
- */
-void player_draw_status(camera_t * cam, entity_t * player)
-{
-	static image_index_t list[] =
-	{
-			IMG_TANK0,
-			IMG_TANK1,
-			IMG_TANK2,
-			IMG_TANK3,
-			IMG_TANK4
-	};
-
-	player_t * pl = player->data;
-
-	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
-	int ref_y = VIDEO_SCREEN_H - 16 * 2;
-
-	font_color_set3i(COLOR_1);
-	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
-	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
-
-	gr2D_setimage0(cam->x + 16 * 0     , ref_y, game.i_health);
-	gr2D_setimage0(cam->x + 16 * 6     , ref_y, game.i_armor);
-
-	video_printf(cam->x + 16 * 0 + 16, ref_y, "%d", pl->items[ITEM_HEALTH]);
-	video_printf(cam->x + 16 * 6 + 16, ref_y, "%d", pl->items[ITEM_ARMOR]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
-	video_printf(cam->x + 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
-
-	/* вторая строка */
-	ref_y += 16;
-	gr2D_setimage1(cam->x + 16 * 0, ref_y, image_get( list[pl->level] ), 0, 0, c_p_MDL_box,c_p_MDL_box);
-	gr2D_setimage0(cam->x + 16 * 4, ref_y, image_get( wtable[0].icon ));
-	gr2D_setimage0(cam->x + 16 * 6, ref_y, image_get( wtable[1].icon ));
-	gr2D_setimage0(cam->x + 16 * 8, ref_y, image_get( wtable[2].icon ));
-
-	video_printf(cam->x + 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
-	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
-		video_printf(cam->x + 16 * 6 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MISSILE]);
-	if(pl->items[ITEM_AMMO_MINE] >= 0)
-		video_printf(cam->x + 16 * 8 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MINE]);
-	video_printf(cam->x + 16 * 0 + 16, ref_y +  4, "%d", pl->items[ITEM_SCORES]);
-
-}
-
 /*
  * инициализация класса танка
  */
@@ -981,3 +889,100 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 	}
 }
 
+
+/****************/
+
+#include "_gr2D.h"
+#include "video.h"
+
+/*
+ * вывод информации об игроке
+ */
+static void player_ui_draw(camera_t * cam, entity_t * player)
+{
+	static image_index_t list[] =
+	{
+			IMG_TANK0,
+			IMG_TANK1,
+			IMG_TANK2,
+			IMG_TANK3,
+			IMG_TANK4
+	};
+
+	player_t * pl = player->data;
+
+	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
+	int ref_y = VIDEO_SCREEN_H - 16 * 2;
+
+	font_color_set3i(COLOR_1);
+	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
+	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
+
+	ui_drawimage(cam, 16 * 0     , ref_y, game.i_health);
+	ui_drawimage(cam, 16 * 6     , ref_y, game.i_armor);
+
+	ui_printf(cam, 16 * 0 + 16, ref_y, "%d", pl->items[ITEM_HEALTH]);
+	ui_printf(cam, 16 * 6 + 16, ref_y, "%d", pl->items[ITEM_ARMOR]);
+	ui_printf(cam, 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
+	ui_printf(cam, 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
+
+	/* вторая строка */
+	ref_y += 16;
+	//gr2D_setimage1(cam->x + 16 * 0, ref_y, image_get( list[pl->level] ), 0, 0, c_p_MDL_box,c_p_MDL_box);
+	ui_drawimage(cam, 16 * 4, ref_y, image_get( wtable[0].icon ));
+	ui_drawimage(cam, 16 * 6, ref_y, image_get( wtable[1].icon ));
+	ui_drawimage(cam, 16 * 8, ref_y, image_get( wtable[2].icon ));
+
+	ui_printf(cam, 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
+	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
+		ui_printf(cam, 16 * 6 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MISSILE]);
+	if(pl->items[ITEM_AMMO_MINE] >= 0)
+		ui_printf(cam, 16 * 8 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MINE]);
+	ui_printf(cam, 16 * 0 + 16, ref_y +  4, "%d", pl->items[ITEM_SCORES]);
+
+}
+
+
+
+static const entityinfo_t player_reginfo = {
+		.name = "player",
+		.datasize = sizeof(player_t),
+		.init = player_init,
+		.done = player_done,
+		.spawn = player_spawn,
+		.handle = player_handle,
+		.client_store = player_store,
+		.client_restore = player_restore,
+		ENTITYINFO_ACTIONS(player_actions),
+		ENTITYINFO_ENTMODELS(tank_player_models)
+};
+
+static const entityinfo_t enemy_reginfo = {
+		.name = "enemy",
+		.datasize = sizeof(player_t),
+		.init = enemy_init,
+		.done = enemy_done,
+		.handle   = enemy_handle,
+		.client_store = NULL,
+		.client_restore = NULL,
+		ENTITYINFO_ENTMODELS(tank_enemy_models)
+};
+
+static const entityinfo_t boss_reginfo = {
+		.name = "boss",
+		.datasize = sizeof(player_t),
+		.init = boss_init,
+		.done = boss_done,
+		.handle   = boss_handle,
+		.client_store = NULL,
+		.client_restore = NULL,
+		ENTITYINFO_ENTMODELS(tank_boss_models)
+};
+
+void entity_player_init()
+{
+	entity_register(&player_reginfo);
+	entity_register(&enemy_reginfo);
+	entity_register(&boss_reginfo);
+	ui_register(player_ui_draw);
+}

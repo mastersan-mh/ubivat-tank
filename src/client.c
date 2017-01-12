@@ -11,6 +11,8 @@
 #include "g_events.h"
 #include "game.h"
 #include "Z_mem.h"
+#include "ui.h"
+#include "video.h"
 
 #include <string.h>
 
@@ -84,6 +86,38 @@ int client_connect()
 	return (i - 1);
 }
 
+/*
+ * инициализация камер клиентов
+ */
+void clients_initcams()
+{
+	client_t * client;
+	size_t clients_num;
+	LIST2_FOREACH_I(clients, client, clients_num);
+
+	float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
+	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
+
+	cam_sx /= clients_num;
+
+	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
+
+	float border = 1.0;
+	float x = border;
+	LIST2_FOREACH(clients, client)
+	{
+		client->cam.pos.x = 0;
+		client->cam.pos.y = 0;
+
+		client->cam.x     = x;
+		client->cam.y     = 0;
+		client->cam.sx    = cam_sx - (border * 2.0);
+		client->cam.sy    = cam_sy - statusbar_h;//184
+		x = x + cam_sx;
+	}
+
+}
+
 static void client_disconnect(client_t * client)
 {
 	gclientevent_t event;
@@ -101,6 +135,7 @@ static void client_listen_clients()
 	socklen_t addr_len = 0;
 	size_t buf_size;
 	char * buf = NULL;
+	size_t ofs;
 
 	client_t * client;
 	client_t * erased;
@@ -126,12 +161,23 @@ static void client_listen_clients()
 				}
 
 				client->time = time_current;
-
-				if(buf[0] == GHOSTEVENT_CONNECTION_ACCEPTED)
+				ofs = 0;
+				if(buf[ofs] == GHOSTEVENT_CONNECTION_ACCEPTED)
 				{
 					game_console_send("client: server accept connection to 0x%00000000x:%d.", client->ns->addr_in.sin_addr, ntohs(client->ns->addr_in.sin_port));
 
+					ofs++;
+					char * entname = &buf[ofs];
+					ofs += GAME_HOSTEVENT_ENTNAME_LEN + 1;
+					entity_t * clientent;
+					memcpy(&clientent, &buf[ofs], sizeof(entity_t*));
+
 					client->state = CLIENT_LISTEN;
+					bool local_client = true;
+					if(local_client)
+					{
+						client->entity = clientent;
+					}
 				}
 
 				break;
@@ -173,8 +219,71 @@ void client_event_control_send(int clientId, const char * action_name)
 
 void client()
 {
-
 	client_listen_clients();
-
 }
 
+#include "video.h"
+
+#include "ent_player.h"
+
+static void client_game_draw_cam(camera_t * cam, entity_t * player)
+{
+
+	player_t * pl = player->data;
+
+	if(pl->bull)
+	{
+		cam->pos.x = pl->bull->pos.x;
+		cam->pos.y = pl->bull->pos.y;
+	}
+	else
+	{
+		cam->pos.x = player->pos.x;
+		cam->pos.y = player->pos.y;
+	}
+
+	map_draw(cam);
+}
+
+
+void client_draw()
+{
+	client_t * client;
+
+
+
+	LIST2_FOREACH(clients, client)
+	{
+		entity_t * entity = client->entity;
+		if(entity)
+		{
+			camera_t * cam = &client->cam;
+
+			video_viewport_set(
+				cam->x,
+				cam->y,
+				cam->sx,
+				cam->sy
+			);
+
+			client_game_draw_cam(cam, entity);
+			ui_draw(cam, entity);
+		}
+	}
+
+	video_viewport_set(
+		0.0f,
+		0.0f,
+		VIDEO_SCREEN_W,
+		VIDEO_SCREEN_H
+	);
+
+	if(game.msg)
+	{
+		font_color_set3i(COLOR_1);
+		video_printf_wide(96, 84, 128, game.msg);
+		game.msg = NULL;
+	};
+
+
+}

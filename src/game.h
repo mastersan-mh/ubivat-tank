@@ -70,10 +70,6 @@ typedef enum gamestate_s
 //состояние игры
 typedef struct
 {
-	//камера игрока 0
-	camera_t P0cam;
-	//камера игрока 1
-	camera_t P1cam;
 	char * msg;
 
 	//флаги состояния игры

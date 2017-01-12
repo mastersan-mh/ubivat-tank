@@ -8,7 +8,10 @@
 #ifndef SRC_G_EVENTS_H_
 #define SRC_G_EVENTS_H_
 
+#include "entity.h"
+
 #define GAME_EVENT_CONTROL_ACTION_LEN (63)
+#define GAME_HOSTEVENT_ENTNAME_LEN (63)
 
 typedef enum
 {
@@ -46,6 +49,14 @@ typedef struct
 {
 	/* тип события */
 	ghosteventtype_t type;
+	union
+	{
+		struct
+		{
+			char entityname[GAME_HOSTEVENT_ENTNAME_LEN + 1];
+			entity_t * entity;
+		} accepted;
+	};
 } ghostevent_t;
 
 #endif /* SRC_G_EVENTS_H_ */

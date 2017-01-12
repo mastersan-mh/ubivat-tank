@@ -9,6 +9,7 @@
 #define SRC__FONTS_H_
 
 #include <inttypes.h>
+#include <stdarg.h>
 
 #define COLOR_0   0x00, 0x00, 0x00
 #define COLOR_1   0x00, 0x00, 0x2a
@@ -63,6 +64,13 @@ extern void video_printf(
 	int py,
 	const char * format,
 	...
+);
+
+void video_vprintf(
+	int x,
+	int y,
+	const char * format,
+	va_list ap
 );
 
 extern void video_printf_wide(
