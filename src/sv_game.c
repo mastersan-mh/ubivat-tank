@@ -19,10 +19,6 @@ extern server_state_t sv_state;
 void sv_game_abort(void)
 {
 	server_stop();
-	//закроем карту
-	map_clear();
-	sv_state.state = GAMESTATE_NOGAME;
-	sv_state.win = false;
 }
 
 void sv_game_message_send(const char * mess)

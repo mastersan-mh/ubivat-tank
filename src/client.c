@@ -217,7 +217,7 @@ static void client_listen()
 	LIST2_FOREACHM(clients, client, erased)
 	{
 
-		for(;;)
+		for(;client != NULL;)
 		{
 			buf = net_recv(client->ns, &buf_size, &addr, &addr_len);
 			if(!buf)
@@ -299,6 +299,9 @@ static void client_listen()
 		LIST2_FOREACHM_NEXT(client, erased);
 
 	}
+
+	if(clients == NULL)
+		cl_state.state = GAMESTATE_NOGAME;
 }
 
 static void client_events_pump(menu_selector_t * imenu)

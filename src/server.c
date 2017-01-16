@@ -321,11 +321,6 @@ void server_start(int flags)
 
 void server_stop()
 {
-	//дисконнект всех игроков
-	host_clients_disconnect();
-
-	net_socket_close(host_ns);
-	host_ns = NULL;
 	server_run = 0;
 }
 
@@ -472,5 +467,18 @@ void server()
 
 	server_listen();
 
+	if(!server_run)
+	{
+		//дисконнект всех игроков
+		host_clients_disconnect();
+		net_socket_close(host_ns);
+		host_ns = NULL;
+		//закроем карту
+		map_clear();
+		sv_state.state = GAMESTATE_NOGAME;
+		sv_state.win = false;
+	}
+
 	sv_game_mainTick();
+
 }
