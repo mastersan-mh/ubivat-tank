@@ -130,36 +130,18 @@ void input_key_setState(int key, bool state)
 
 	if(state)
 	{
-		if(game.state == GAMESTATE_INGAME)
+		switch(actionsrc)
 		{
-			switch(actionsrc)
-			{
-			case INPUT_ACTIONSRC_STR:  action = keyhash->collision[cindex].action.str.press; break;
-			case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[cindex].action.func.press; break;
-			}
-		}
-		else if(game.state == GAMESTATE_MISSION_BRIEF)
-		{
-			sound_play_start(SOUND_MENU_ENTER, 1);
-			game.state = GAMESTATE_INGAME;
-		}
-		else if(game.state == GAMESTATE_INTERMISSION)
-		{
-			sound_play_start(SOUND_MENU_ENTER, 1);
-			// *imenu = MENU_GAME_SAVE;
-			game.show_menu = true;
+		case INPUT_ACTIONSRC_STR:  action = keyhash->collision[cindex].action.str.press; break;
+		case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[cindex].action.func.press; break;
 		}
 	}
 	else
 	{
-
-		if(game.state == GAMESTATE_INGAME)
+		switch(actionsrc)
 		{
-			switch(actionsrc)
-			{
-			case INPUT_ACTIONSRC_STR : action = keyhash->collision[cindex].action.str.release; break;
-			case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[cindex].action.func.release; break;
-			}
+		case INPUT_ACTIONSRC_STR : action = keyhash->collision[cindex].action.str.release; break;
+		case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[cindex].action.func.release; break;
 		}
 	}
 
@@ -168,7 +150,6 @@ void input_key_setState(int key, bool state)
 
 	if(action)
 		client_event_control_send(clientId, action);
-
 
 }
 

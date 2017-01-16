@@ -6,6 +6,7 @@
 
 #include "ent_spawn.h"
 
+#include "entity.h"
 #include "video.h"
 #include "game.h"
 #include "img.h"
@@ -54,6 +55,18 @@ enum
 	MAP_ERR_FORMAT
 };
 static int map_error;
+
+maplist_t * map_find(const char * name)
+{
+	maplist_t * gamemap = mapList;
+	while(gamemap)
+	{
+		if(!strcmp(name, gamemap->map))
+			return gamemap;
+		gamemap = gamemap->next;
+	}
+	return NULL;
+}
 
 int map_error_get()
 {
@@ -627,16 +640,16 @@ void map_list_add(const char *map, const char * name)
 	mapEnt->next = NULL;
 	mapEnt->map  = Z_strdup(map);
 	mapEnt->name = Z_strdup(name);
-	if(mapList == NULL) mapList = mapEnt;
+	if(mapList == NULL)
+		mapList = mapEnt;
 	else
 	{
 		p = mapList;
-		while(p->next) p = p->next;
+		while(p->next)
+			p = p->next;
 		mapEnt->prev = p;
 		p->next = mapEnt;
 	}
-	game.custommap = mapList;
-	game.gamemap = mapList;
 }
 /*
  * удаление списка карт
@@ -644,8 +657,6 @@ void map_list_add(const char *map, const char * name)
 void map_list_removeall()
 {
 	maplist_t * mapEnt;
-	game.custommap = NULL;
-	game.gamemap = NULL;
 	while(mapList)
 	{
 		mapEnt  = mapList;

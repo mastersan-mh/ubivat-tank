@@ -519,7 +519,7 @@ static void __video_print_char(
 	character_t * character;
 	character = (character_t *)pairs_get(charpairs, 'A');
 	if(!character)
-		game_abort("gr2Don_setchar(): no character 'A'");
+		game_halt("gr2Don_setchar(): no character 'A'");
 	int www = character->size_x;
 	int hhh = character->size_y;
 

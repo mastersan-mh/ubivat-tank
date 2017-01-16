@@ -1,4 +1,5 @@
 #include "actions.h"
+#include "cl_game.h"
 #include "game.h"
 #include "cl_input.h"
 #include "ent_player.h"
@@ -11,8 +12,9 @@
 
 
 action_t actions[ACTION_NUM] = {
-		{ game_action_enter_mainmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
-		{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
+		{ cl_game_action_showmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
+		{ NULL, NULL }, /* ACTION_CHEAT_WIN */
+		//{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
 		{ action_sfactor, NULL},
 		{ action_dfactor, NULL}
 };

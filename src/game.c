@@ -9,6 +9,7 @@
 #include "game.h"
 #include "client.h"
 #include "cl_input.h"
+#include "cl_game.h"
 #include "g_conf.h"
 #include "actions.h"
 #include "menu.h"
@@ -71,75 +72,6 @@ char * game_dir_home;
 char * game_dir_conf;
 char * game_dir_saves;
 
-/*
- * заставка между уровнями
- */
-static void game_state_intermission_draw()
-{
-	static image_index_t list[] =
-	{
-			IMG_TANK0,
-			IMG_TANK1,
-			IMG_TANK2,
-			IMG_TANK3,
-			IMG_TANK4
-	};
-	gr2D_setimage0(0, 0, game.m_i_interlv);
-	font_color_set3i(COLOR_15);
-	video_printf(108,191,"НАЖМИ ПРОБЕЛ");
-
-	int i;
-	int num = host_client_num_get();
-
-	int refy;
-	if(num == 0) refy = 84;
-	else refy = 76;
-
-	font_color_set3i(COLOR_15);
-	video_printf(48 + 8 * 00, refy      , "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-
-	for(i = 0; i < num; i++)
-	{
-		host_client_t * client = host_client_get(i);
-		item_img_t * img = image_get(list[client->storedata.level]);
-		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
-		font_color_set3i(COLOR_15);
-		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%d" , client->storedata.scores);
-		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", client->storedata.frags);
-		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", client->storedata.fragstotal);
-	}
-}
-
-/*
- * информация об уровне
- */
-static void game_state_missionbrief_draw()
-{
-	gr2D_setimage0(0,0,game.m_i_interlv);
-	font_color_set3i(COLOR_15);
-	video_printf(160-06*4 ,8*5, "КАРТА:");
-	font_color_set3i(COLOR_15);
-	video_printf(160-16*4, 8*7 , map.name);
-	video_printf(160-07*4, 8*10, "ЗАДАЧА:");
-	video_printf(108     , 191 , "НАЖМИ ПРОБЕЛ");
-	video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
-}
-
-static void game_gameTick();
-
-static void game_draw();
-
-
-void game_action_enter_mainmenu()
-{
-	game.show_menu = true;
-}
-
-void game_action_win()
-{
-	game._win_ = true;
-}
-
 void game_init()
 {
 	char * home_dir = getenv("HOME");
@@ -160,16 +92,17 @@ void game_init()
 	check_directory(game_dir_conf);
 	check_directory(game_dir_saves);
 
-	game.msg       = NULL;
-	game.state     = GAMESTATE_NOGAME;
-	game.show_menu = true;
 
 	randomize();
 	printf("%s\n", c_strTITLE);
 	printf("%s\n", c_strCORP);
 	printf(GAME_LOGO);
 	map_init();
+
 	map_load_list();
+
+	server_init();
+	cl_game_init();
 
 	printf("ENTERING GRAPHIC...\n");
 	if(video_init())
@@ -197,7 +130,6 @@ void game_init()
 	images_init();
 	game.m_i_logo     = image_get(IMG_MENU_LOGO     );
 	game.m_i_conback  = image_get(IMG_MENU_CONBACK  );
-	game.m_i_interlv  = image_get(IMG_MENU_I_INTERLV);
 	game.m_i_game     = image_get(IMG_MENU_GAME     );
 	game.m_i_g_new_p1 = image_get(IMG_MENU_G_NEW_P1 );
 	game.m_i_g_new_p2 = image_get(IMG_MENU_G_NEW_P2 );
@@ -255,47 +187,20 @@ void game_done()
 	sound_done();
 	video_done();
 	//прекратим игру
-	game_abort();
+	cl_done();
+	server_done();
 	//очистим список карт
 	map_list_removeall();
 	//очистим память от изображений
 	images_done();
 };
 
-void client_events_pump(menu_selector_t * imenu)
-{
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-		//printf("event.type = %d\n", event.type);
-		switch(event.type)
-		{
-			case SDL_KEYDOWN:
-				input_key_setState(event.key.keysym.scancode, true);
-				if(game.state == GAMESTATE_INTERMISSION)
-				{
-					*imenu = MENU_GAME_SAVE;
-				}
-				break;
-			case SDL_KEYUP:
-				input_key_setState(event.key.keysym.scancode, false);
-				break;
-		}
-		//player_checkcode();
-	}
-}
 
 /*
  *
  */
 void game_main()
 {
-	bool quit = false;
-	menu_selector_t imenu = MENU_MAIN;
-	menu_selector_t imenu_process = imenu;
-
-	gamestate_t gamestate_prev = game.state;
-
 
 	//sound_play_start(SOUND_FIRE1);
 	//sound_play_start(SOUND_MUSIC1, -1);
@@ -319,7 +224,7 @@ void game_main()
 
 	long int cycletimeeventer = 0;
 
-	while(!quit)
+	while(!cl_game_quit_get())
 	{
 		time_prev = time_current;
 		time_current = system_getTime_realTime_ms();
@@ -346,127 +251,16 @@ void game_main()
 			cycletimeeventer = 0;
 		}
 
-		server();
-
-		client();
-
-		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
-
-		if(game.show_menu)
-		{
-			menu_events_pump();
-		}
-		else
-		{
-			client_events_pump(&imenu);
-		}
-
-		if(quit)
-			break;
-
 		video_screen_draw_begin();
 
-		if(game.show_menu)
-		{
-			imenu_process = imenu;
-			imenu = menu_handle(imenu_process);
-			switch(imenu_process)
-			{
-			case MENU_QUIT: quit = true;break;
-			default: break;
-			}
-			menu_draw(imenu_process);
-		}
-		else
-		{
-			switch(game.state)
-			{
-			case GAMESTATE_NOGAME:
-				gamestate_prev = game.state;
-				break;
-			case GAMESTATE_INGAME:
-				if(gamestate_prev != game.state)
-				{
-					if(game.sound_playId)
-					{
-						sound_play_stop(game.sound_playId);
-						game.sound_playId = 0;
-					}
-				}
-				gamestate_prev = game.state;
-				game_gameTick();
-				game_draw();
-				break;
-			case GAMESTATE_MISSION_BRIEF:
-				if(gamestate_prev != game.state)
-				{
-					sound_play_stop(game.sound_playId);
-					if(!game.sound_playId)
-						game.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
-				}
-				gamestate_prev = game.state;
-				game_state_missionbrief_draw();
-				break;
-			case GAMESTATE_INTERMISSION:
-				if(gamestate_prev != game.state)
-				{
-					sound_play_stop(game.sound_playId);
-					if(!game.sound_playId)
-						game.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
-				}
-				gamestate_prev = game.state;
-				game_state_intermission_draw();
-				imenu_process = MENU_GAME_SAVE;
-				gamestate_prev = game.state;
-				break;
-			}
-		}
+		server();
+		client();
 
 		font_color_set3i(COLOR_15);
 		video_printf(10,10, "FPS = %d", fps);
 		video_screen_draw_end();
-	};
-}
 
-/*
- * главная процедура игры
- */
-void game_gameTick()
-{
-	entities_handle();
-
-	if( game._win_)
-	{
-		int i;
-		bool alive = true;
-		int num = host_client_num_get();
-		// проверим что все игроки живы
-		for(i = 0; i < num; i++)
-		{
-			if( ((player_t *)host_client_get(i)->entity->data)->items[ITEM_HEALTH] < 0 )
-				alive = false;
-		}
-		if( alive )
-		{
-			if(game.flags & GAMEFLAG_CUSTOMGAME)
-			{
-				//игра по выбору
-				game_abort();
-			}
-			else
-			{
-				server_store_clients_info();
-				//игра по уровням
-				if(game_nextmap() == true)
-					game.state = GAMESTATE_INTERMISSION;
-			}
-		}
 	}
-}
-
-void game_draw()
-{
-	client_draw();
 }
 
 
@@ -634,20 +428,17 @@ int game_record_load(int isave)
 	int ret;
 	int fd;
 
-	if(!rec->exist) return 1;
-	if(!(rec->flags & GAMEFLAG_CUSTOMGAME))
-	{
-		game.gamemap = mapList;
-		while(game.gamemap)
-		{
-			if(!strcmp(rec->mapfilename, game.gamemap->map))break;
-			game.gamemap = game.gamemap->next;
-		}
-		if(!game.gamemap) return 2;
-	};
 	//закроем открытую карту
 	map_clear();
 
+	if(!rec->exist) return 1;
+	/*
+	if(!(rec->flags & GAMEFLAG_CUSTOMGAME))
+	{
+		game.gamemap = map_find(rec->mapfilename);
+		if(!game.gamemap) return 2;
+	};
+*/
 	char filename[16];
 	_make_gamesave_filename(filename, isave);
 	char * path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
@@ -670,14 +461,13 @@ int game_record_load(int isave)
 	strncpy(rec->name, header.name, 15);
 	strncpy(rec->mapfilename, header.mapfilename, 15);
 	rec->flags = header.flags;
-	game.flags = rec->flags;
 
 	//прочитаем карту
 	ret = map_load(rec->mapfilename);
 	if(ret) return 3;
 
 	// создаем игру
-	ret = game_create();
+	ret = cl_game_create(rec->flags);
 	// спавним всех игроков
 
 	int player_num;
@@ -699,75 +489,6 @@ int game_record_load(int isave)
 	}
 	close(fd);
 	return 0;
-}
-/*
- * создане игры
- *
- * @return = 0 - игра создана успешно
- * @return = 1 - игра уже создана
- * @return = 2 - ошибка создания серверного игрока
- * @return = 3 - ошибка создания серверного игрока
- */
-int game_create()
-{
-	game.gamemap = mapList;
-	game.show_menu = false;
-	game.state  = GAMESTATE_MISSION_BRIEF;
-	game.paused = false;
-
-	server_start();
-
-	return 0;
-}
-/*
- * прерывание игры
- */
-void game_abort(void)
-{
-	server_stop();
-
-	//закроем карту
-	map_clear();
-	game.state = GAMESTATE_NOGAME;
-	game._win_ = false;
-}
-
-/*
- * сообщения об ошибках
- */
-bool game_nextmap()
-{
-	int ret;
-	host_client_unspawn_id(0);
-	host_client_unspawn_id(1);
-
-	//закроем карту
-	map_clear();
-	game.state = GAMESTATE_MISSION_BRIEF;
-	game._win_      = false;
-	//menu_interlevel();
-
-	game.gamemap = game.gamemap->next;
-	if(!game.gamemap)
-	{
-		// конец игры, последняя карта
-		game_abort();
-		return false;
-	}
-	ret = map_load(game.gamemap->map);
-	if(ret)
-	{
-		game_msg_error(ret);
-		game_abort();
-		return false;
-	}
-
-	host_client_spawn_id(0);
-	host_client_spawn_id(1);
-
-	server_restore_clients_info();
-
-	return true;
 }
 
 void game_msg_error(int error)
@@ -806,12 +527,6 @@ void game_msg_error(int error)
 		do{ } while(true);
 	}
 }
-
-void game_message_send(const char * mess)
-{
-	game.msg = (char*)mess;
-};
-
 
 void game_console_send(const char *error, ...)
 {

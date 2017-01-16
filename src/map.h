@@ -9,8 +9,6 @@
 #define SRC_MAP_H_
 
 #include "types.h"
-#include "img.h"
-#include "entity.h"
 
 //флаг присутствия стены
 #define c_m_f_clip      0x10
@@ -142,6 +140,8 @@ extern map_t map;
 extern maplist_t * mapList;
 
 int map_error_get();
+
+extern maplist_t * map_find(const char * name);
 
 void map_init();
 

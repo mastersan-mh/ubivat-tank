@@ -17,6 +17,7 @@ typedef enum
 {
 	GCLIENTEVENT_CONNECT,
 	GCLIENTEVENT_DISCONNECT,
+	GCLIENTEVENT_GAMEABORT,
 	GCLIENTEVENT_CONTROL
 } gclienteventtype_t;
 
@@ -24,6 +25,10 @@ typedef enum
 {
 	GHOSTEVENT_CONNECTION_ACCEPTED,
 	GHOSTEVENT_CONNECTION_CLOSE,
+	GHOSTEVENT_GAMEWIN,
+	GHOSTEVENT_GAMESTATE,
+	GHOSTEVENT_IMENU,
+	GHOSTEVENT_CONNECTION_SETPLAYERENTITY
 } ghosteventtype_t;
 /*
 #define CLIENT_MSG_CONNECT  0x01
@@ -53,9 +58,21 @@ typedef struct
 	{
 		struct
 		{
+			char pad[1];
+		} accepted;
+		struct
+		{
+			uint8_t state;
+		} gamestate;
+		struct
+		{
+			uint8_t imenu;
+		} imenu;
+		struct
+		{
 			char entityname[GAME_HOSTEVENT_ENTNAME_LEN + 1];
 			entity_t * entity;
-		} accepted;
+		} setplayerentity;
 	};
 } ghostevent_t;
 

@@ -7,10 +7,13 @@
 
 #include "common_list2.h"
 #include "g_events.h"
+#include "sv_game.h"
 #include "net.h"
 #include "server.h"
 #include "game.h"
 #include "map.h"
+#include "sound.h"
+#include "menu.h"
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -27,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+server_state_t sv_state = {};
 
 static int server_run = 0;
 
@@ -36,6 +40,17 @@ fd_set exceptfds;
 
 static host_client_t * clients;
 static int clients_num = 0;
+
+void server_init()
+{
+	sv_state.custommap = mapList;
+	sv_state.gamemap   = mapList;
+}
+
+void server_done()
+{
+
+}
 
 static void host_client_unspawn(host_client_t * client)
 {
@@ -47,23 +62,34 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 	size_t buflen = 0;
 	char buf[sizeof(ghostevent_t)];
 	memset(buf, 0, sizeof(buf));
+	buf[buflen] = event->type;
+	buflen++;
 
 	switch(event->type)
 	{
 		case GHOSTEVENT_CONNECTION_ACCEPTED:
-			buf[buflen] = event->type;
-			buflen++;
-			strncpy(&buf[buflen], event->accepted.entityname, GAME_HOSTEVENT_ENTNAME_LEN);
-			buflen += GAME_HOSTEVENT_ENTNAME_LEN+1;
-			size_t size = sizeof(entity_t*);
-			memcpy(&buf[buflen], &event->accepted.entity, size);
-			buflen += size;
 			break;
 		case GHOSTEVENT_CONNECTION_CLOSE:
-			buf[buflen] = event->type;
+			break;
+		case GHOSTEVENT_CONNECTION_SETPLAYERENTITY:
+			strncpy(&buf[buflen], event->setplayerentity.entityname, GAME_HOSTEVENT_ENTNAME_LEN);
+			buflen += GAME_HOSTEVENT_ENTNAME_LEN+1;
+			size_t size = sizeof(entity_t*);
+			memcpy(&buf[buflen], &event->setplayerentity.entity, size);
+			buflen += size;
+			break;
+		case GHOSTEVENT_GAMEWIN:
+			break;
+		case GHOSTEVENT_GAMESTATE:
+			buf[buflen] = event->gamestate.state;
+			buflen++;
+			break;
+		case GHOSTEVENT_IMENU:
+			buf[buflen] = event->imenu.imenu;
 			buflen++;
 			break;
 	}
+
 	net_send(
 		client->ns,
 		buf,
@@ -71,6 +97,49 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 	);
 }
 
+void host_setcliententity(host_client_t * client)
+{
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_CONNECTION_SETPLAYERENTITY;
+	strncpy(hevent.setplayerentity.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_LEN);
+	hevent.setplayerentity.entity = client->entity;
+	host_event_send(client, &hevent);
+}
+
+void host_event_send_win()
+{
+	host_client_t * client;
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_GAMEWIN;
+	LIST2_FOREACH(clients, client)
+		host_event_send(client, &hevent);
+}
+
+void host_setgamestate(gamestate_t state)
+{
+	sv_state.state = state;
+			host_client_t * client;
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_GAMESTATE;
+	hevent.gamestate.state = state;
+	LIST2_FOREACH(clients, client)
+		host_event_send(client, &hevent);
+
+}
+
+void host_event_send_imenu(menu_selector_t imenu)
+{
+	/* послать только серверу (первый игрок) */
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_IMENU;
+	hevent.imenu.imenu = imenu;
+	host_client_t * client;
+	LIST2_FOREACH(clients, client)
+	{
+		if(!client->next)
+			host_event_send(client, &hevent);
+	}
+}
 
 /**
  * подключение игрока к игре
@@ -226,79 +295,15 @@ void server_restore_clients_info()
 	}
 }
 
-static void server_fd_set()
-{
-	/*
-	FD_ZERO(&readfds);
-	FD_ZERO(&writefds);
-	FD_ZERO(&exceptfds);
-
-	int id;
-	for(id = 0; id < clients_num; id++)
-	{
-		FD_SET(clients[id]->fd, &readfds);
-	}
-	*/
-}
-
-static void server_events_pump()
-{
-/*
-	int id;
-
-	static char buf[1000];
-
-	struct timeval timeout;
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
-
-	int ret = select(FD_SETSIZE, &readfds, &writefds, &exceptfds, &timeout);
-
-
-	switch(ret)
-	{
-		case 0:
-			printf("timeout\n");
-			break;
-		case -1:
-			perror("select");
-			exit(1);
-		default:
-
-			for(id = 0; id < clients_num; id++)
-			{
-				int fd = clients[id]->fd;
-				if (FD_ISSET(fd, &readfds))
-				{
-					int nread;
-					ioctl(fd, FIONREAD, &nread);
-					if (nread == 0)
-					{
-						//printf("done\n");
-					}
-					else
-					{
-						ssize_t count = read(fd, buf, nread);
-						buf[count] = 0;
-						//game_console_send("Event: server read event sended by client %d.", id);
-						printf("client %d: read %ld: %s\n", id, count, buf);
-					}
-				}
-
-			}
-			break;
-	}
-
-*/
-
-}
-
-
 net_socket_t * host_ns = NULL;
 
-void server_start()
+void server_start(int flags)
 {
 	server_run = 1;
+	sv_state.state = GAMESTATE_MISSION_BRIEF;
+
+	sv_state.show_menu = false;
+	sv_state.paused = false;
 
 	host_ns = net_socket_create(NET_PORT, "127.0.0.1");
 
@@ -326,10 +331,8 @@ void server_stop()
 
 
 
-void server()
+static void server_listen()
 {
-	if(!server_run)
-		return;
 
 	union
 	{
@@ -348,8 +351,8 @@ void server()
 	 * https://www.linux.org.ru/forum/development/10072313
 	 */
 
-	char buf[2048];       // буфур для приема
-
+	// буфур для приема
+	char buf[2048];
 
 	size_t maxcontentlength = 512;
 	int value = recvfrom(host_ns->sock, buf, maxcontentlength, 0, &sender.addr, &sender_addr_len);
@@ -374,14 +377,21 @@ void server()
 			else
 			{
 				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-				strncpy(hevent.accepted.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_LEN);
-				hevent.accepted.entity = client->entity;
 				host_event_send(client, &hevent);
+
+				host_setcliententity(client);
+				host_setgamestate(sv_state.state);
+
 			}
 			break;
 		case GCLIENTEVENT_DISCONNECT:
 			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 
+			break;
+
+		case GCLIENTEVENT_GAMEABORT:
+			game_console_send("server: client aborted game.");
+			sv_game_abort();
 			break;
 		case GCLIENTEVENT_CONTROL:
 			strncpy(cevent.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
@@ -401,7 +411,7 @@ void server()
 				entity_t * ent = client->entity;
 				const entityinfo_t * info = ent->info;
 
-				for(i = 0; i< info->actions_num; i++)
+				for(i = 0; i < info->actions_num; i++)
 				{
 					entityaction_t * action = &info->actions[i];
 					if(!strncmp(action->action, cevent.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
@@ -409,14 +419,29 @@ void server()
 						found = true;
 						if(ent->spawned)
 						{
-							if(action->action_f)
-								action->action_f(ent, ent->data, action->action);
+							if(sv_state.state == GAMESTATE_INGAME)
+							{
+								/* func */
+								if(action->action_f)
+									action->action_f(ent, ent->data, action->action);
+							}
+							else if(sv_state.state == GAMESTATE_MISSION_BRIEF)
+							{
+								sound_play_start(SOUND_MENU_ENTER, 1);
+								sv_state.state = GAMESTATE_INGAME;
+							}
+							else if(sv_state.state == GAMESTATE_INTERMISSION)
+							{
+								sound_play_start(SOUND_MENU_ENTER, 1);
+								// *imenu = MENU_GAME_SAVE;
+								sv_state.show_menu = true;
+							}
 						}
 						else
 						{
 							if(info->spawn)
 							{
-								if(game.flags & GAMEFLAG_2PLAYERS)
+								if(sv_state.flags & GAMEFLAG_2PLAYERS)
 								{
 									game_console_send("server: spawn client.");
 									info->spawn(ent, ent->data);
@@ -435,10 +460,17 @@ void server()
 
 			break;
 
-
 	}
 
 
 }
 
+void server()
+{
+	if(!server_run)
+		return;
 
+	server_listen();
+
+	sv_game_mainTick();
+}

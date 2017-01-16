@@ -41,4 +41,6 @@ model_resources.c \
 ui.c \
 menu.c \
 server.c \
-client.c
+sv_game.c \
+client.c \
+cl_game.c

@@ -5,7 +5,6 @@
  */
 
 #include "menu.h"
-#include "cl_input.h"
 #include "g_conf.h"
 #include "img.h"
 #include "_gr2D.h"
@@ -15,6 +14,8 @@
 #include "sound.h"
 #include "entity.h"
 #include "client.h"
+#include "cl_input.h"
+#include "cl_game.h"
 
 typedef enum
 {
@@ -169,7 +170,7 @@ static void menu_draw_conback(void)
 /*
  * главное меню
  */
-int menu_main(void * ctx)
+static int menu_main(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -190,13 +191,13 @@ int menu_main(void * ctx)
 	case RIGHT  : break;
 	case ENTER  :
 		sound_play_start(SOUND_MENU_ENTER, 1);
-		if(game.state == GAMESTATE_NOGAME && __ctx->menu == 4)
+		if(cl_state.state == GAMESTATE_NOGAME && __ctx->menu == 4)
 			return MENU_MAIN;
 		return menus[__ctx->menu];
 	case LEAVE  :
 		sound_play_start(SOUND_MENU_ENTER, 1);
-		if(game.state != GAMESTATE_NOGAME)
-			game.show_menu = false;
+		if(cl_state.state != GAMESTATE_NOGAME)
+			cl_state.show_menu = false;
 		break;
 	case SPACE: break;
 	}
@@ -224,7 +225,7 @@ static void menu_main_draw(const void * ctx)
 	};
 	for(int i = 0; i < 6; i++)
 	{
-		if(i != 4 || game.state != GAMESTATE_NOGAME)
+		if(i != 4 || cl_state.state != GAMESTATE_NOGAME)
 			gr2D_setimage0(120, 30 + 23 * i, image_get(list[i]));
 	}
 	gr2D_setimage0( 97,30+23 * menu, game.m_i_cur_0);
@@ -232,7 +233,7 @@ static void menu_main_draw(const void * ctx)
 /*
  * меню "ИГРА"
  */
-int menu_game(void * ctx)
+static int menu_game(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -272,23 +273,22 @@ static void menu_game_draw(const void * ctx)
 	gr2D_setimage0( 97, 30+23* __ctx->menu, game.m_i_cur_0);
 };
 
-int menu_game_new1P(void * ctx)
+static int menu_game_new1P(void * ctx)
 {
 	int ret;
-	if(game.state != GAMESTATE_NOGAME)
+	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	game.gamemap = mapList;
-	game.flags = 0;
-	ret = game_create();
+	cl_state.gamemap = mapList;
+	ret = cl_game_create(0);
 	if(ret)
 	{
 		game_msg_error(map_error_get());
 		return MENU_ABORT;
 	}
-	ret = map_load(game.gamemap->map);
+	ret = map_load(cl_state.gamemap->map);
 	if(ret)
 	{
-		game_abort();
+		cl_game_abort();
 		game_msg_error(map_error_get());
 		return MENU_ABORT;
 	}
@@ -299,23 +299,22 @@ int menu_game_new1P(void * ctx)
 	return MENU_MAIN;
 }
 
-int menu_game_new2P(void * ctx)
+static int menu_game_new2P(void * ctx)
 {
 	int ret;
-	if(game.state != GAMESTATE_NOGAME)
+	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	game.gamemap = mapList;
-	game.flags = GAMEFLAG_2PLAYERS;
-	ret = game_create();
+	cl_state.gamemap = mapList;
+	ret = cl_game_create(GAMEFLAG_2PLAYERS);
 	if(ret)
 	{
 		game_msg_error(map_error_get());
 		return MENU_ABORT;
 	}
-	ret = map_load(game.gamemap->map);
+	ret = map_load(cl_state.gamemap->map);
 	if(ret)
 	{
-		game_abort();
+		cl_game_abort();
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
@@ -331,7 +330,7 @@ int menu_game_new2P(void * ctx)
 /*
  * меню "ЗАГРУЗКА"
  */
-int menu_game_load(void * ctx)
+static int menu_game_load(void * ctx)
 {
 	menu_game_load_ctx_t * __ctx = ctx;
 	int ret;
@@ -353,7 +352,7 @@ int menu_game_load(void * ctx)
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_LOAD_INIT;
-			if(game.state != GAMESTATE_NOGAME)
+			if(cl_state.state != GAMESTATE_NOGAME)
 				return MENU_MAIN;
 			if(!game.saveslist[__ctx->menu].exist) break;
 			ret = game_record_load(__ctx->menu);
@@ -404,7 +403,7 @@ static void menu_game_load_draw(const void * ctx)
 	};
 	gr2D_setimage0(97, 30 + 15 * __ctx->menu + 2, game.m_i_cur_1);
 }
-int menu_game_save(void * ctx)
+static int menu_game_save(void * ctx)
 {
 	menu_game_save_ctx_t * __ctx = ctx;
 	size_t l;
@@ -426,7 +425,7 @@ int menu_game_save(void * ctx)
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->rec = game.saveslist[__ctx->menu];
-			game.saveslist[__ctx->menu].flags = game.flags;
+			game.saveslist[__ctx->menu].flags = cl_state.flags;
 			game.saveslist[__ctx->menu].exist = true;
 			__ctx->state = MENU_GAME_SAVE_INPUT;
 			break;
@@ -434,8 +433,8 @@ int menu_game_save(void * ctx)
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_SAVE_INIT;
 
-			game.show_menu = false;
-			game.state = GAMESTATE_MISSION_BRIEF;
+			cl_state.show_menu = false;
+			cl_state.state = GAMESTATE_MISSION_BRIEF;
 
 			return MENU_MAIN;
 		case SPACE  :break;
@@ -512,7 +511,7 @@ static void menu_game_save_draw(const void * ctx)
 /*
  * меню "ВЫБОР"
  */
-int menu_custom(void * ctx)
+static int menu_custom(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -533,9 +532,9 @@ int menu_custom(void * ctx)
 		if(__ctx->menu == 0)
 		{
 			if(menukey == LEFT)
-				if(game.custommap->prev) game.custommap = game.custommap->prev;
+				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
 			if(menukey == RIGHT)
-				if(game.custommap->next) game.custommap = game.custommap->next;
+				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
 		}
 		break;
 	case ENTER  :
@@ -561,39 +560,37 @@ static void menu_custom_draw(const void * ctx)
 	gr2D_setimage0(120,30+23*2       , game.m_i_g_new_p2);
 	gr2D_setimage0( 97,30+23 * __ctx->menu, game.m_i_cur_0);
 	font_color_set3i(COLOR_25);
-	video_printf(133, 33+23*0, game.custommap->map);
-	video_printf(133, 41+23*0, game.custommap->name);
+	video_printf(133, 33+23*0, cl_state.custommap->map);
+	video_printf(133, 41+23*0, cl_state.custommap->name);
 }
 
-int menu_custom_new1P(void * ctx)
+static int menu_custom_new1P(void * ctx)
 {
 	int ret;
-	if(game.state != GAMESTATE_NOGAME)
+	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	ret = map_load(game.custommap->map);
+	ret = map_load(cl_state.custommap->map);
 	if(ret)
 	{
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
-	game.flags = GAMEFLAG_CUSTOMGAME;
-	ret = game_create();
+	ret = cl_game_create(GAMEFLAG_CUSTOMGAME);
 	return MENU_MAIN;
 }
 
-int menu_custom_new2P(void * ctx)
+static int menu_custom_new2P(void * ctx)
 {
 	int ret;
-	if(game.state != GAMESTATE_NOGAME)
+	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	ret = map_load(game.custommap->map);
+	ret = map_load(cl_state.custommap->map);
 	if(ret)
 	{
 		game_msg_error(ret);
 		return MENU_ABORT;
 	}
-	game.flags = GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME;
-	ret = game_create();
+	ret = cl_game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
 	return MENU_MAIN;
 }
 
@@ -621,7 +618,7 @@ static const char *player_actions[ACTION_PLAYER_NUM] =
 
 };
 
-int menu_options(void * ctx)
+static int menu_options(void * ctx)
 {
 	menu_options_ctx_t * __ctx = ctx;
 #define MENU_ROWS 7
@@ -704,7 +701,7 @@ static void menu_options_draw(const void * ctx)
 /*
  * меню "О ИГРЕ"
  */
-int menu_about(void * ctx)
+static int menu_about(void * ctx)
 {
 	if(menu_key_get() == LEAVE)
 	{
@@ -716,7 +713,7 @@ int menu_about(void * ctx)
 
 static void menu_about_draw(const void * ctx)
 {
-	gr2D_setimage0( 0, 0, game.m_i_interlv);
+	gr2D_setimage0( 0, 0, image_get(IMG_MENU_I_INTERLV));
 	int i = 0;
 	coloredtext_t * text;
 
@@ -735,13 +732,17 @@ static void menu_about_draw(const void * ctx)
 }
 
 
-int menu_abort(void * ctx)
+static int menu_abort(void * ctx)
 {
-	game_abort();
+	cl_game_abort();
 	return MENU_MAIN;
 }
 
-
+static int menu_quit(void * ctx)
+{
+	cl_game_quit_set();
+	return MENU_MAIN;
+}
 
 
 
@@ -759,7 +760,7 @@ menu_t menus[MENU_NUM] =
 		{ &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
 		{ &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
 		{ NULL                , menu_abort       , NULL }, /* MENU_ABORT */
-		{ NULL                , NULL             , NULL }  /* MENU_QUIT */
+		{ NULL                , menu_quit        , NULL }  /* MENU_QUIT */
 };
 
 
@@ -784,6 +785,7 @@ void menu_draw(int imenu)
 	if(0 <= imenu && imenu < MENU_NUM)
 	{
 		menu_t * menu = &menus[imenu];
-		if(menu->draw) menu->draw(menu->context);
+		if(menu->draw)
+			menu->draw(menu->context);
 	}
 }

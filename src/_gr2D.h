@@ -8,7 +8,7 @@
 #ifndef SRC__GR2D_H_
 #define SRC__GR2D_H_
 
-#include <img.h>
+#include "img.h"
 
 void gr2D_setimage0(
 	int out_x,

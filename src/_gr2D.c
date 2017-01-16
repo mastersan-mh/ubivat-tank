@@ -1,10 +1,11 @@
 
 // delete it
+
 #include "game.h"
+#include "_gr2D.h"
+#include "video.h"
 
-#include <_gr2D.h>
-#include <video.h>
-
+/*
 static int list[14] =
 {
 		GL_ZERO,
@@ -24,6 +25,7 @@ static int list[14] =
 		GL_CONSTANT_ALPHA,
 		GL_ONE_MINUS_CONSTANT_ALPHA
 };
+*/
 
 /*
  * вывод байтового образа bytemap размерами full_x,full_y, в позицию

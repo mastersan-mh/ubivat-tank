@@ -9,9 +9,7 @@
 #define SRC_GAME_H_
 
 #include "types.h"
-#include "map.h"
-#include "entity.h"
-#include "actions.h"
+#include "img.h"
 
 #define GAME_LOGO \
 		"          _____    ______              __     ______ \n"\
@@ -70,16 +68,6 @@ typedef enum gamestate_s
 //состояние игры
 typedef struct
 {
-	char * msg;
-
-	//флаги состояния игры
-	int flags;
-
-	//игрок победил
-	bool _win_;
-
-	maplist_t * gamemap;
-	maplist_t * custommap;
 
 	item_img_t * i_health;
 	item_img_t * i_armor;
@@ -88,7 +76,6 @@ typedef struct
 	/***********************/
 	item_img_t * m_i_logo;
 	item_img_t * m_i_conback;
-	item_img_t * m_i_interlv;
 	item_img_t * m_i_game;
 	item_img_t * m_i_g_new_p1;
 	item_img_t * m_i_g_new_p2;
@@ -112,10 +99,6 @@ typedef struct
 	gamesave_descr_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
 
-	gamestate_t state;
-	bool show_menu;
-	bool paused;
-	int sound_playId;
 
 } game_t;
 
@@ -139,24 +122,19 @@ extern char * game_dir_saves;
 extern int game_video_dfactor;
 extern int game_video_sfactor;
 
-void game_action_enter_mainmenu();
 void game_action_win();
 
 void game_init();
 void game_done();
 void game_main();
 
-bool game_nextmap();
-
 int game_pal_get();
 void game_record_getsaves();
 bool game_record_save(int isave);
 int game_record_load(int isave);
-int game_create();
-void game_abort();
+int cl_game_create(int flags);
 void game_msg_error  (int error);
 
-void game_message_send(const char * mess);
 
 void game_halt(const char *error, ...)
 	__attribute__ ((noreturn));

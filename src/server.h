@@ -8,7 +8,30 @@
 #ifndef SRC_SERVER_H_
 #define SRC_SERVER_H_
 
+#include "game.h"
 #include "net.h"
+#include "map.h"
+#include "menu.h"
+
+//состояние игры
+typedef struct
+{
+	gamestate_t state;
+	gamestate_t state_prev;
+
+	char * msg;
+	/* флаги состояния игры */
+	int flags;
+	/* игрок победил */
+	bool win;
+	bool show_menu;
+	bool paused;
+	int sound_playId;
+
+	maplist_t * gamemap;
+	maplist_t * custommap;
+
+} server_state_t;
 
 typedef struct client_storedata_s
 {
@@ -34,22 +57,28 @@ typedef struct host_client_s
 
 #include "entity.h"
 
-void host_clients_disconnect();
+extern void server_init();
+extern void server_done();
 
-int host_client_num_get();
+extern void host_clients_disconnect();
 
-host_client_t * host_client_get(int id);
+extern int host_client_num_get();
 
-int host_client_spawn_id(int id);
+extern host_client_t * host_client_get(int id);
 
-void host_client_unspawn_id(int id);
+extern int host_client_spawn_id(int id);
 
-void server_store_clients_info();
-void server_restore_clients_info();
+extern void host_client_unspawn_id(int id);
 
-void server_start();
-void server_stop();
+extern void host_event_send_win();
+extern void host_event_send_imenu(menu_selector_t imenu);
 
-void server();
+extern void server_store_clients_info();
+extern void server_restore_clients_info();
+
+extern void server_start();
+extern void server_stop();
+
+extern void server();
 
 #endif /* SRC_SERVER_H_ */

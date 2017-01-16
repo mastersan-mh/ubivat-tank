@@ -30,7 +30,7 @@ typedef enum
 	MENU_ABORT,
 	MENU_QUIT,
 	MENU_NUM
-}menu_selector_t;
+} menu_selector_t;
 
 
 /* MENU_MAIN */

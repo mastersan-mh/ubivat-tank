@@ -23,7 +23,8 @@
 #include "entity_helpers.h"
 #include "img.h"
 #include "map.h"
-#include "game.h"
+#include "server.h"
+#include "sv_game.h"
 #include "sound.h"
 #include "client.h"
 
@@ -52,12 +53,12 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 		else
 		{
-			if(game.flags & GAMEFLAG_CUSTOMGAME)
+			if(sv_game_is_custom_game())
 				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 			else
 			{
 				//по уровням
-				if(game.gamemap == mapList) // первая карта
+				if(sv_game_is_first_map()) // первая карта
 					pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
 				else // не первая карта
 					if(pl->items[ITEM_HEALTH] <= 0)
@@ -72,7 +73,8 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 		if( ENTITY_IS(player, "player") )
 			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 		else
-			if(game.flags & GAMEFLAG_CUSTOMGAME) pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+			if(sv_game_is_custom_game())
+				pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 	};
 	pl->charact.frags = 0;
 	pl->bull          = NULL;
@@ -444,14 +446,14 @@ void check_value_int(int * val, int min, int max)
 static void player_influence_message(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	game_message_send(ENT_MESSAGE(exposed)->message);
+	sv_game_message_send(ENT_MESSAGE(exposed)->message);
 }
 
 static void player_influence_exit(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	game_message_send(ENT_EXIT(exposed)->message);
-	game._win_ = true;
+	sv_game_message_send(ENT_EXIT(exposed)->message);
+	sv_game_win();
 }
 
 static void player_influence_item(entity_t * player, entity_t * entity)
@@ -658,7 +660,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 				pl->items[ITEM_AMMO_MINE] = 0;
 			};
 			if(ENTITY_IS(player, "boss"))
-				game._win_ = true;
+				sv_game_win();
 			break;
 	}
 
@@ -901,15 +903,6 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
  */
 static void player_ui_draw(camera_t * cam, entity_t * player)
 {
-	static image_index_t list[] =
-	{
-			IMG_TANK0,
-			IMG_TANK1,
-			IMG_TANK2,
-			IMG_TANK3,
-			IMG_TANK4
-	};
-
 	player_t * pl = player->data;
 
 	playerinfo_t * playerinfo = &playerinfo_table[pl->level];
