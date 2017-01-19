@@ -78,24 +78,17 @@ typedef struct
 	//направление движения
 } move_t;
 
-/*
- * характеристика игрока
- */
-typedef struct
-{
-	//фрагов за пройденые карты
-	long fragstotal;
-	//фрагов на карте
-	long frags;
-} stat_t;
 
 typedef struct
 {
 	int level;
 	int items[__ITEM_NUM];
 
-	//характеристика
-	stat_t charact;
+	//фрагов за пройденые карты
+	long fragstotal;
+	//фрагов на карте
+	long frags;
+
 	//для управляемой ракеты
 	struct entity_s * bull;
 	//передвижения

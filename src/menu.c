@@ -428,7 +428,7 @@ static int menu_game_save(void * ctx)
 			game.saveslist[__ctx->menu].flags = cl_state.flags;
 			game.saveslist[__ctx->menu].exist = true;
 			__ctx->state = MENU_GAME_SAVE_INPUT;
-			client_event_nextgamestate_send(0);
+			client_event_nextgamestate_send();
 			break;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
@@ -436,7 +436,7 @@ static int menu_game_save(void * ctx)
 
 			cl_state.show_menu = false;
 
-			client_event_nextgamestate_send(0);
+			client_event_nextgamestate_send();
 			return MENU_MAIN;
 		case SPACE  :break;
 		}

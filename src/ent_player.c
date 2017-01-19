@@ -76,7 +76,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 			if(sv_game_is_custom_game())
 				pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
 	};
-	pl->charact.frags = 0;
+	pl->frags         = 0;
 	pl->bull          = NULL;
 	pl->move.speed    = 0;
 	pl->move.go       = false;
@@ -176,8 +176,8 @@ static ENTITY_FUNCTION_HANDLE(player_handle);
 
 static void * player_store(client_storedata_t * storedata, const void * thisdata)
 {
-	storedata->fragstotal = ((player_t *)thisdata)->charact.fragstotal;
-	storedata->frags      = ((player_t *)thisdata)->charact.frags;
+	storedata->fragstotal = ((player_t *)thisdata)->fragstotal;
+	storedata->frags      = ((player_t *)thisdata)->frags;
 	storedata->level      = ((player_t *)thisdata)->level;
 	storedata->scores     = ((player_t *)thisdata)->items[ITEM_SCORES];
 
@@ -192,8 +192,8 @@ static void * player_store(client_storedata_t * storedata, const void * thisdata
 
 static void player_restore(void * thisdata, const client_storedata_t * storedata, const void * userstoredata)
 {
-	((player_t *)thisdata)->charact.fragstotal = storedata->fragstotal;
-	((player_t *)thisdata)->charact.frags      = storedata->frags;
+	((player_t *)thisdata)->fragstotal         = storedata->fragstotal;
+	((player_t *)thisdata)->frags              = storedata->frags;
 	((player_t *)thisdata)->level              = storedata->level;
 	((player_t *)thisdata)->items[ITEM_SCORES] = storedata->scores;
 	memcpy(
@@ -878,15 +878,15 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 
 				//атакующему добавим очки
 				pl->items[ITEM_SCORES] += c_score_pertank;
-				pl->charact.fragstotal++;
-				pl->charact.frags++;
+				pl->fragstotal++;
+				pl->frags++;
 			}
 			else
 			{
 				//атакующий умер от своей пули
 				pl->items[ITEM_SCORES] = 0;
-				pl->charact.fragstotal--;
-				pl->charact.frags--;
+				pl->fragstotal--;
+				pl->frags--;
 			}
 			player_class_init(eplayer, pl);
 		}

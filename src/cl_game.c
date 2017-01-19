@@ -174,13 +174,13 @@ void cl_game_draw()
 	{
 	case GAMESTATE_NOGAME:
 		break;
-	case GAMESTATE_INGAME:
-		cl_draw();
+	case GAMESTATE_MISSION_BRIEF:
+		cl_game_state_missionbrief_draw();
 		break;
 	case GAMESTATE_GAMESAVE:
 		break;
-	case GAMESTATE_MISSION_BRIEF:
-		cl_game_state_missionbrief_draw();
+	case GAMESTATE_INGAME:
+		cl_draw();
 		break;
 	case GAMESTATE_INTERMISSION:
 		cl_game_state_intermission_draw();

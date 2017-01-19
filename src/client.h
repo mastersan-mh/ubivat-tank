@@ -62,17 +62,17 @@ typedef struct client_s
 
 } client_t;
 
-extern void cl_game_init();
-extern void cl_done();
+extern void cl_game_init(void);
+extern void cl_done(void);
 
-extern int client_connect();
-extern void clients_initcams();
+extern int client_connect(void);
+extern void clients_initcams(void);
 
 extern void client_event_send(const client_t * client, const gclientevent_t * event);
-extern void client_event_join_send(int clientId);
-extern void client_event_gameabort_send();
+extern void client_event_join_send(void);
 extern void client_event_control_send(int clientId, const char * action_name);
-extern void client_event_nextgamestate_send(int clientId);
+extern void client_event_gameabort_send(void);
+extern void client_event_nextgamestate_send(void);
 
 extern void client();
 

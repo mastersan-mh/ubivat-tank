@@ -382,8 +382,6 @@ static void __audio_callback(void * userdata, Uint8 * stream, int len)
 
 	__mix_laurence(stream, len);
 
-
-
 }
 
 static snd_renderbuffer_t * __buffer_alloc(const snd_format_t * requested)

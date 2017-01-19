@@ -24,7 +24,7 @@ client_state_t cl_state = {};
 
 client_t * clients = NULL;
 
-void cl_game_init()
+void cl_game_init(void)
 {
 	cl_state.quit = false;
 
@@ -38,7 +38,7 @@ void cl_game_init()
 
 }
 
-void cl_done()
+void cl_done(void)
 {
 
 }
@@ -61,14 +61,14 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 			break;
 		case GCLIENTEVENT_JOIN:
 			break;
-		case GCLIENTEVENT_GAMEABORT:
-			break;
 		case GCLIENTEVENT_CONTROL:
 			len = strnlen(event->control.action, GAME_EVENT_CONTROL_ACTION_LEN) + 1;
 			memcpy(&(buf[1]), event->control.action, len);
 			buflen += len;
 			break;
-		case GCLIENTEVENT_NEXTGAMESTATE:
+		case GCLIENTEVENT_SVCTRL_GAMEABORT:
+			break;
+		case GCLIENTEVENT_SVCTRL_NEXTGAMESTATE:
 			break;
 	}
 
@@ -80,26 +80,16 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 
 }
 
-void client_event_join_send(int clientId)
+void client_event_join_send(void)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_JOIN;
 	client_t * client;
-	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, clientId);
-	client_event_send(client, &event);
-}
-
-void client_event_gameabort_send()
-{
-	gclientevent_t event;
-	event.type = GCLIENTEVENT_GAMEABORT;
-	client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
-		if(!client->next)
-			client_event_send(client, &event);
+		client_event_send(client, &event);
 	}
+
 }
 
 void client_event_control_send(int clientId, const char * action_name)
@@ -107,20 +97,35 @@ void client_event_control_send(int clientId, const char * action_name)
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_CONTROL;
 	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_LEN);
+
 	client_t * client;
-	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, clientId);
+	int num, i;
+	LIST2_FOREACH_I(clients, client, num);
+	LIST2_LIST_TO_IENT(clients, client, i, num - 1 - clientId);
+
 	client_event_send(client, &event);
 }
 
-void client_event_nextgamestate_send(int clientId)
+void client_event_gameabort_send(void)
 {
 	gclientevent_t event;
-	event.type = GCLIENTEVENT_NEXTGAMESTATE;
+	event.type = GCLIENTEVENT_SVCTRL_GAMEABORT;
 	client_t * client;
-	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, clientId);
-	client_event_send(client, &event);
+	LIST2_FOREACH(clients, client)
+	{
+		client_event_send(client, &event);
+	}
+}
+
+void client_event_nextgamestate_send(void)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_SVCTRL_NEXTGAMESTATE;
+	client_t * client;
+	LIST2_FOREACH(clients, client)
+	{
+		client_event_send(client, &event);
+	}
 }
 
 static void client_delete(client_t * client)
@@ -134,7 +139,7 @@ static void client_delete(client_t * client)
  * @return id
  * @return -1 ошибка
  */
-int client_connect()
+int client_connect(void)
 {
 	net_socket_t * ns = net_socket_create(NET_PORT, "127.0.0.1");
 	if(!ns)
@@ -159,7 +164,7 @@ int client_connect()
 /*
  * инициализация камер клиентов
  */
-void clients_initcams()
+void clients_initcams(void)
 {
 	client_t * client;
 	size_t clients_num;

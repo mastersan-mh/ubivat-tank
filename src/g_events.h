@@ -19,10 +19,10 @@ typedef enum
 	GCLIENTEVENT_DISCONNECT,
 	/* назначить игроку объект на карте */
 	GCLIENTEVENT_JOIN,
-	GCLIENTEVENT_GAMEABORT,
 	GCLIENTEVENT_CONTROL,
+	GCLIENTEVENT_SVCTRL_GAMEABORT,
 	/* перейти на следующее состояние, если допустимо */
-	GCLIENTEVENT_NEXTGAMESTATE,
+	GCLIENTEVENT_SVCTRL_NEXTGAMESTATE,
 } gclienteventtype_t;
 
 typedef enum

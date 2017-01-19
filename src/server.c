@@ -95,9 +95,17 @@ void host_event_cliententity_send(host_client_t * client)
 	host_event_send(client, &hevent);
 }
 
-void host_setgamestate(gamestate_t state)
+void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 {
 	sv_state.state = state;
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_GAMESTATE;
+	host_event_send(client, &hevent);
+}
+
+void host_setgamestate(gamestate_t state)
+{
+	//sv_state.state = state;
 	host_client_t * client;
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
@@ -132,7 +140,7 @@ static void server_client_info_restore(host_client_t * client)
 	client->userstoredata = NULL;
 }
 
-static host_client_t * host_client_create(const net_socket_t * ns)
+static host_client_t * host_client_create(const net_socket_t * ns, bool main)
 {
 	host_client_t * client = Z_malloc(sizeof(host_client_t));
 	if(!client)
@@ -141,6 +149,7 @@ static host_client_t * host_client_create(const net_socket_t * ns)
 	client->entity = NULL;
 	client->userstoredata = NULL;
 	client->ns = (net_socket_t *) ns;
+	client->main = main;
 
 	LIST2_PUSH(hclients, client);
 
@@ -296,142 +305,147 @@ static void server_listen()
 	char buf[2048];
 
 	size_t maxcontentlength = 512;
-	int value = recvfrom(host_ns->sock, buf, maxcontentlength, 0, &sender.addr, &sender_addr_len);
-	if(value < 0)
+	int value;
+	bool mainclient;
+	while( (value = recvfrom(host_ns->sock, buf, maxcontentlength, 0, &sender.addr, &sender_addr_len)) > 0 )
 	{
-		return;
-	}
+		host_client_t * client;
+		cevent.type = buf[0];
+		switch( cevent.type )
+		{
+			case GCLIENTEVENT_CONNECT:
+				game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 
-	host_client_t * client;
 
-	cevent.type = buf[0];
-	switch( cevent.type )
-	{
-		case GCLIENTEVENT_CONNECT:
-			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+				net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
+				mainclient = (hclients == NULL);
+				client = host_client_create(ns, mainclient);
 
-			host_setgamestate(sv_state.state);
+				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
+				host_event_send(client, &hevent);
 
-			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-			client = host_client_create(ns);
+				host_event_gamestate_send(client, sv_state.state);
 
-			hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-			host_event_send(client, &hevent);
-
-			break;
-		case GCLIENTEVENT_DISCONNECT:
-			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
-
-			break;
-		case GCLIENTEVENT_JOIN:
-			client = host_client_find_by_addr(&sender.addr);
-			if(client->entity)
-			{
-				game_console_send("server: client already joined.");
 				break;
-			}
-			if(host_client_join(client) != 0)
-			{
-				game_console_send("server: can not join client, no entity to spawn.");
+			case GCLIENTEVENT_DISCONNECT:
+				game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+
 				break;
-			}
-			host_event_cliententity_send(client);
-			game_console_send("server: client joined to game.");
-			break;
-		case GCLIENTEVENT_GAMEABORT:
-			game_console_send("server: client aborted game.");
-			sv_game_abort();
-			break;
-		case GCLIENTEVENT_CONTROL:
-			strncpy(cevent.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
-			game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
-				cevent.control.action
-			);
-			client = host_client_find_by_addr(&sender.addr);
-			if(!client)
-			{
-				game_console_send("server: no client 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
-				break;
-			}
-
-			/* execute action */
-			entity_t * ent = client->entity;
-			if(ent)
-			{
-				bool found = false;
-
-				const entityinfo_t * info = ent->info;
-
-				for(i = 0; i < info->actions_num; i++)
+			case GCLIENTEVENT_JOIN:
+				client = host_client_find_by_addr(&sender.addr);
+				if(client->entity)
 				{
-					entityaction_t * action = &info->actions[i];
-					if(!strncmp(action->action, cevent.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
+					game_console_send("server: client already joined.");
+					break;
+				}
+				if(host_client_join(client) != 0)
+				{
+					game_console_send("server: can not join client, no entity to spawn.");
+					break;
+				}
+				host_event_cliententity_send(client);
+				game_console_send("server: client joined to game.");
+				break;
+			case GCLIENTEVENT_CONTROL:
+				strncpy(cevent.control.action, &buf[1], GAME_EVENT_CONTROL_ACTION_LEN);
+				game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
+					cevent.control.action
+				);
+				client = host_client_find_by_addr(&sender.addr);
+				if(!client)
+				{
+					game_console_send("server: no client 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+					break;
+				}
+
+				/* execute action */
+				entity_t * ent = client->entity;
+				if(ent)
+				{
+					bool found = false;
+
+					const entityinfo_t * info = ent->info;
+
+					for(i = 0; i < info->actions_num; i++)
 					{
-						found = true;
-						if(ent->spawned)
+						entityaction_t * action = &info->actions[i];
+						if(!strncmp(action->action, cevent.control.action, GAME_EVENT_CONTROL_ACTION_LEN))
 						{
-							switch(sv_state.state)
+							found = true;
+							if(ent->spawned)
 							{
-								case GAMESTATE_NOGAME:
-									break;
-								case GAMESTATE_INGAME:
-									/* func */
-									if(action->action_f)
-										(*action->action_f)(ent, ent->data, action->action);
-									break;
-								case GAMESTATE_GAMESAVE:
-									break;
-								case GAMESTATE_MISSION_BRIEF:
-									break;
-								case GAMESTATE_INTERMISSION:
-									break;
-							}
-						}
-						else
-						{
-							if(info->spawn)
-							{
-								if(sv_state.flags & GAMEFLAG_2PLAYERS)
+								switch(sv_state.state)
 								{
-									game_console_send("server: spawn client.");
-									info->spawn(ent, ent->data);
-									ent->spawned = true;
+									case GAMESTATE_NOGAME:
+										break;
+									case GAMESTATE_MISSION_BRIEF:
+										break;
+									case GAMESTATE_GAMESAVE:
+										break;
+									case GAMESTATE_INGAME:
+										/* func */
+										if(action->action_f)
+											(*action->action_f)(ent, ent->data, action->action);
+										break;
+									case GAMESTATE_INTERMISSION:
+										break;
 								}
 							}
+							else
+							{
+								if(info->spawn)
+								{
+									if(sv_state.flags & GAMEFLAG_2PLAYERS)
+									{
+										game_console_send("server: spawn client.");
+										info->spawn(ent, ent->data);
+										ent->spawned = true;
+									}
+								}
+							}
+							break;
 						}
-						break;
+					}
+					if(!found)
+					{
+						game_console_send("server: unknown action :%d.", cevent.control.action);
 					}
 				}
-				if(!found)
+
+				break;
+			case GCLIENTEVENT_SVCTRL_GAMEABORT:
+				client = host_client_find_by_addr(&sender.addr);
+				if(!client || !client->main)
+					break;
+				game_console_send("server: client aborted game.");
+				sv_game_abort();
+				break;
+			case GCLIENTEVENT_SVCTRL_NEXTGAMESTATE:
+				client = host_client_find_by_addr(&sender.addr);
+				if(!client || !client->main)
+					break;
+
+				switch(sv_state.state)
 				{
-					game_console_send("server: unknown action :%d.", cevent.control.action);
+					case GAMESTATE_NOGAME:
+						break;
+					case GAMESTATE_MISSION_BRIEF:
+						sv_state.state = GAMESTATE_GAMESAVE;
+						break;
+					case GAMESTATE_GAMESAVE:
+						sv_state.state = GAMESTATE_INGAME;
+						break;
+					case GAMESTATE_INGAME:
+						break;
+					case GAMESTATE_INTERMISSION:
+						sv_state.state = GAMESTATE_MISSION_BRIEF;
+						break;
 				}
-			}
 
-			break;
-		case GCLIENTEVENT_NEXTGAMESTATE:
+				break;
 
-			switch(sv_state.state)
-			{
-				case GAMESTATE_NOGAME:
-					break;
-				case GAMESTATE_INGAME:
-					break;
-				case GAMESTATE_GAMESAVE:
-					sv_state.state = GAMESTATE_INGAME;
-					break;
-				case GAMESTATE_MISSION_BRIEF:
-					sv_state.state = GAMESTATE_GAMESAVE;
-					break;
-				case GAMESTATE_INTERMISSION:
-					sv_state.state = GAMESTATE_MISSION_BRIEF;
-					break;
-			}
-
-			break;
-
+		}
 	}
-
 
 }
 

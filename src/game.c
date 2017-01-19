@@ -335,8 +335,8 @@ static bool game_record_save_player(int fd, entity_t * player)
 	player_t * pl = player->data;
 	game_savedata_player_t savedata =
 	{
-		.fragstotal = pl->charact.fragstotal,
-		.frags      = pl->charact.frags,
+		.fragstotal = pl->fragstotal,
+		.frags      = pl->frags,
 		.scores     = pl->items[ITEM_SCORES],
 		.health     = pl->items[ITEM_HEALTH],
 		.armor      = pl->items[ITEM_ARMOR],
@@ -360,8 +360,8 @@ static bool game_record_load_player(int fd, entity_t * player)
 	game_savedata_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	pl->charact.fragstotal = savedata.fragstotal;
-	pl->charact.frags      = savedata.frags;
+	pl->fragstotal         = savedata.fragstotal;
+	pl->frags              = savedata.frags;
 	pl->items[ITEM_SCORES] = savedata.scores;
 	pl->items[ITEM_HEALTH] = savedata.health;
 	pl->items[ITEM_ARMOR]  = savedata.armor;
@@ -371,6 +371,7 @@ static bool game_record_load_player(int fd, entity_t * player)
 	player_class_init(player, player->data);
 	return true;
 };
+
 /**
  * сохраниние записи
  * @return true| false

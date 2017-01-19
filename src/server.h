@@ -49,6 +49,10 @@ typedef struct host_client_s
 	void * userstoredata;
 	/* адрес клиента */
 	net_socket_t * ns;
+	/* клиент является главным, может управлять сервером.
+	 * только от него принимаются команды управления сервером.
+	 */
+	bool main;
 } host_client_t;
 
 #include "entity.h"
@@ -67,6 +71,7 @@ extern host_client_t * host_client_get(int id);
 
 extern void host_event_send_win();
 extern void host_event_cliententity_send(host_client_t * client);
+extern void host_event_gamestate_send(host_client_t * client, gamestate_t state);
 
 extern void server_unjoin_clients();
 extern void server_restore_client_info(host_client_t * client);

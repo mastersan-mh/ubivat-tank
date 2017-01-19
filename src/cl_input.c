@@ -149,21 +149,21 @@ void input_key_setState(int key, bool state)
 	{
 		case GAMESTATE_NOGAME:
 			break;
+		case GAMESTATE_MISSION_BRIEF:
+			if(!state) break;
+			sound_play_start(SOUND_MENU_ENTER, 1);
+			client_event_nextgamestate_send();
+			client_event_join_send();
+			break;
+		case GAMESTATE_GAMESAVE:
+			break;
 		case GAMESTATE_INGAME:
 			if(action)
 				client_event_control_send(clientId, action);
 			break;
-		case GAMESTATE_GAMESAVE:
-			break;
-		case GAMESTATE_MISSION_BRIEF:
-			if(!state) break;
-			sound_play_start(SOUND_MENU_ENTER, 1);
-			client_event_nextgamestate_send(clientId);
-			client_event_join_send(clientId);
-			break;
 		case GAMESTATE_INTERMISSION:
 			if(!state) break;
-			client_event_nextgamestate_send(clientId);
+			client_event_nextgamestate_send();
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			break;
 	}

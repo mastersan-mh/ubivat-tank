@@ -88,6 +88,16 @@ void sv_game_mainTick()
 	{
 		case GAMESTATE_NOGAME:
 			break;
+		case GAMESTATE_MISSION_BRIEF:
+			if(state_prev != sv_state.state)
+			{
+				sound_play_stop(sv_state.sound_playId);
+				if(!sv_state.sound_playId)
+					sv_state.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
+			}
+			break;
+		case GAMESTATE_GAMESAVE:
+			break;
 		case GAMESTATE_INGAME:
 			if(state_prev != sv_state.state)
 			{
@@ -98,16 +108,6 @@ void sv_game_mainTick()
 				}
 			}
 			sv_game_gameTick();
-			break;
-		case GAMESTATE_GAMESAVE:
-			break;
-		case GAMESTATE_MISSION_BRIEF:
-			if(state_prev != sv_state.state)
-			{
-				sound_play_stop(sv_state.sound_playId);
-				if(!sv_state.sound_playId)
-					sv_state.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
-			}
 			break;
 		case GAMESTATE_INTERMISSION:
 			if(state_prev != sv_state.state)
@@ -134,7 +134,7 @@ bool sv_game_nextmap()
 	//закроем карту
 	map_clear();
 	sv_state.state = GAMESTATE_MISSION_BRIEF;
-	//menu_interlevel();
+
 
 	sv_state.gamemap = sv_state.gamemap->next;
 	if(!sv_state.gamemap)
