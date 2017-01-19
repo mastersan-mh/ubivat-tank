@@ -21,17 +21,17 @@ typedef struct
 }entity_registered_t;
 
 /* зарегестрированные объекты */
-static entity_registered_t * entityinfo_regs = NULL;
-static size_t entityinfo_regs_size = 0;
-static size_t entityinfo_regs_num = 0;
+static entity_registered_t * entityregs = NULL;
+static size_t entityregs_size = 0;
+static size_t entityregs_num = 0;
 
 entity_registered_t * entityinfo_get(const char * name)
 {
 	size_t i;
-	for(i = 0; i < entityinfo_regs_num; i++)
+	for(i = 0; i < entityregs_num; i++)
 	{
-		if(!strncmp(entityinfo_regs[i].info->name, name, 64))
-			return &entityinfo_regs[i];
+		if(!strncmp(entityregs[i].info->name, name, 64))
+			return &entityregs[i];
 	}
 	return NULL;
 }
@@ -66,20 +66,20 @@ void entity_register(const entityinfo_t * info)
 	if(info->datasize == 0 && info->init != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 
-	if(entityinfo_regs_size < entityinfo_regs_num + 1)
+	if(entityregs_size < entityregs_num + 1)
 	{
-		if(entityinfo_regs_size == 0)
-			entityinfo_regs_size = 1;
+		if(entityregs_size == 0)
+			entityregs_size = 1;
 		else
-			entityinfo_regs_size *= 2;
-		tmp = Z_realloc(entityinfo_regs, sizeof(entity_registered_t) * entityinfo_regs_size);
+			entityregs_size *= 2;
+		tmp = Z_realloc(entityregs, sizeof(entity_registered_t) * entityregs_size);
 		if(!tmp)game_halt("Entity registration failed: out of memory");
-		entityinfo_regs = tmp;
+		entityregs = tmp;
 	}
-	entityinfo_regs[entityinfo_regs_num].info = info;
-	entityinfo_regs[entityinfo_regs_num].entities = NULL;
-	entityinfo_regs[entityinfo_regs_num].entities_erased = NULL;
-	entityinfo_regs_num++;
+	entityregs[entityregs_num].info = info;
+	entityregs[entityregs_num].entities = NULL;
+	entityregs[entityregs_num].entities_erased = NULL;
+	entityregs_num++;
 }
 
 /**
@@ -174,9 +174,9 @@ static void entity_freemem(entity_t * entity)
 void entities_erase()
 {
 	size_t i;
-	for(i = 0; i < entityinfo_regs_num; i++)
+	for(i = 0; i < entityregs_num; i++)
 	{
-		entity_registered_t * entreg = &entityinfo_regs[i];
+		entity_registered_t * entreg = &entityregs[i];
 
 		entity_t * entity;
 
@@ -202,9 +202,9 @@ void entities_erase()
 static void reparent(const entity_t * oldparent, const entity_t * newparent)
 {
 	size_t ientreg;
-	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
+	for(ientreg = 0; ientreg < entityregs_num; ientreg++)
 	{
-		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		entity_registered_t * entreg = &entityregs[ientreg];
 		entity_t * entity;
 		for(entity = entreg->entities; entity; entity = entity->next)
 		{
@@ -237,9 +237,14 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 void entities_handle()
 {
 	size_t ientreg;
-	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
+	for(ientreg = 0; ientreg < entityregs_num; ientreg++)
 	{
-		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		entity_registered_t * entreg = &entityregs[ientreg];
+
+		const entityinfo_t * info = entreg->info;
+		if(!info)
+			continue;
+
 		entity_t * entity = entreg->entities;
 		while(entity)
 		{
@@ -274,12 +279,9 @@ void entities_handle()
 				continue;
 			}
 
-			const entityinfo_t * info = entity->info;
-			if(!info) continue;
-
 			if(info->handle != NULL)
 			{
-				info->handle(entity, entity->data);
+				(*info->handle)(entity, entity->data);
 			}
 
 			if(entity->erase)
@@ -329,23 +331,23 @@ void entities_handle()
 }
 
 /*
- * обработка событий объектов появления клиента на карте.
+ * обработка событий объектов присоедениения клиента к игре.
  * Как только обработчик объекта возвращает объект (не NULL),
  * этот возвращённый объект становится "телом" клиента.
  */
-entity_t * entries_client_spawn()
+entity_t * entries_client_join()
 {
 	size_t ientreg;
-	for(ientreg = 0; ientreg < entityinfo_regs_num; ientreg++)
+	for(ientreg = 0; ientreg < entityregs_num; ientreg++)
 	{
-		entity_registered_t * entreg = &entityinfo_regs[ientreg];
+		entity_registered_t * entreg = &entityregs[ientreg];
 		const entityinfo_t * info = entreg->info;
-		if(!info->client_spawn)
+		if(!info->client_join)
 			continue;
 		entity_t * entity;
 		for(entity = entreg->entities; entity; entity = entity->next)
 		{
-			entity_t * client_entity = info->client_spawn(entity);
+			entity_t * client_entity = (*info->client_join)(entity);
 			if(client_entity != NULL)
 				return client_entity;
 		}
@@ -506,9 +508,9 @@ void entities_render(camera_t * cam)
 	int ent_rendered = 0;
 
 	size_t i;
-	for(i = 0; i < entityinfo_regs_num; i++)
+	for(i = 0; i < entityregs_num; i++)
 	{
-		entity_registered_t * entreg = &entityinfo_regs[i];
+		entity_registered_t * entreg = &entityregs[i];
 
 		entity_t * entity;
 		for(entity = entreg->entities; entity; entity = entity->next)

@@ -29,8 +29,6 @@ void cl_game_init()
 	cl_state.quit = false;
 
 	cl_state.imenu = MENU_MAIN;
-	cl_state.imenu_process = cl_state.imenu;
-
 
 	cl_state.msg       = NULL;
 	cl_state.state     = GAMESTATE_NOGAME;
@@ -45,33 +43,32 @@ void cl_done()
 
 }
 
-void client_event_send(client_t * client, gclientevent_t * event)
+void client_event_send(const client_t * client, const gclientevent_t * event)
 {
 	size_t buflen = 0;
 	size_t len;
 	char buf[sizeof(gclientevent_t)];
 	memset(buf, 0, sizeof(buf));
 
+	buf[buflen] = event->type;
+	buflen++;
+
 	switch(event->type)
 	{
 		case GCLIENTEVENT_CONNECT:
-			buf[buflen] = event->type;
-			buflen++;
 			break;
 		case GCLIENTEVENT_DISCONNECT:
-			buf[buflen] = event->type;
-			buflen++;
+			break;
+		case GCLIENTEVENT_JOIN:
 			break;
 		case GCLIENTEVENT_GAMEABORT:
-			buf[buflen] = event->type;
-			buflen++;
 			break;
 		case GCLIENTEVENT_CONTROL:
-			buf[buflen] = event->type;
-			buflen++;
 			len = strnlen(event->control.action, GAME_EVENT_CONTROL_ACTION_LEN) + 1;
 			memcpy(&(buf[1]), event->control.action, len);
 			buflen += len;
+			break;
+		case GCLIENTEVENT_NEXTGAMESTATE:
 			break;
 	}
 
@@ -83,12 +80,10 @@ void client_event_send(client_t * client, gclientevent_t * event)
 
 }
 
-void client_event_control_send(int clientId, const char * action_name)
+void client_event_join_send(int clientId)
 {
 	gclientevent_t event;
-	event.type = GCLIENTEVENT_CONTROL;
-	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_LEN);
-
+	event.type = GCLIENTEVENT_JOIN;
 	client_t * client;
 	int i;
 	LIST2_LIST_TO_IENT(clients, client, i, clientId);
@@ -105,6 +100,27 @@ void client_event_gameabort_send()
 		if(!client->next)
 			client_event_send(client, &event);
 	}
+}
+
+void client_event_control_send(int clientId, const char * action_name)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_CONTROL;
+	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_LEN);
+	client_t * client;
+	int i;
+	LIST2_LIST_TO_IENT(clients, client, i, clientId);
+	client_event_send(client, &event);
+}
+
+void client_event_nextgamestate_send(int clientId)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_NEXTGAMESTATE;
+	client_t * client;
+	int i;
+	LIST2_LIST_TO_IENT(clients, client, i, clientId);
+	client_event_send(client, &event);
 }
 
 static void client_delete(client_t * client)
@@ -130,7 +146,6 @@ int client_connect()
 	client->time = time_current;
 
 	LIST2_PUSH(clients, client);
-
 
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_CONNECT;
@@ -190,8 +205,9 @@ static const char * gamestate_to_str(gamestate_t state)
 	{
 			"GAMESTATE_NOGAME",
 			"GAMESTATE_INGAME",
+			"GAMESTATE_GAMESAVE",
 			"GAMESTATE_MISSION_BRIEF",
-			"GAMESTATE_INTERMISSION"
+			"GAMESTATE_INTERMISSION",
 	};
 	return list[state];
 }
@@ -264,19 +280,19 @@ static void client_listen()
 							client_delete(erased);
 							game_console_send("client: host closed the connection.");
 							break;
-						case GHOSTEVENT_GAMEWIN:
-							game_console_send("client: host say: GAME WIN!");
-							cl_state._win_ = true;
-							break;
 						case GHOSTEVENT_GAMESTATE:
 							hevent.gamestate.state = buf[ofs];
 							cl_state.state = hevent.gamestate.state;
 							game_console_send("client: host change gamestate to %s.", gamestate_to_str(cl_state.state));
+
+							if(hevent.gamestate.state == GAMESTATE_INTERMISSION)
+							{
+								game_console_send("client: host say: GAME WIN!");
+								cl_state.win = true;
+							}
+
 							break;
-						case GHOSTEVENT_IMENU:
-							hevent.imenu.imenu = buf[ofs];
-							break;
-						case GHOSTEVENT_CONNECTION_SETPLAYERENTITY:
+						case GHOSTEVENT_SETPLAYERENTITY:
 							entname = &buf[ofs];
 							ofs += GAME_HOSTEVENT_ENTNAME_LEN + 1;
 							entity_t * clientent;
@@ -304,7 +320,7 @@ static void client_listen()
 		cl_state.state = GAMESTATE_NOGAME;
 }
 
-static void client_events_pump(menu_selector_t * imenu)
+static void client_events_pump()
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
@@ -314,10 +330,6 @@ static void client_events_pump(menu_selector_t * imenu)
 		{
 			case SDL_KEYDOWN:
 				input_key_setState(event.key.keysym.scancode, true);
-				if(cl_state.state == GAMESTATE_INTERMISSION)
-				{
-					*imenu = MENU_GAME_SAVE;
-				}
 				break;
 			case SDL_KEYUP:
 				input_key_setState(event.key.keysym.scancode, false);
@@ -332,28 +344,32 @@ void client()
 
 	client_listen();
 
+	if(cl_state.state == GAMESTATE_GAMESAVE)
+	{
+		cl_state.show_menu = true;
+		cl_state.imenu     = MENU_GAME_SAVE;
+	}
+
 	if(cl_state.show_menu)
 	{
 		menu_events_pump();
 	}
 	else
 	{
-		client_events_pump(&cl_state.imenu);
+		client_events_pump();
 	}
-
-
-	cl_game_draw();
 
 	if(cl_state.show_menu)
 	{
 		cl_state.paused = true;
-		cl_state.imenu_process = cl_state.imenu;
-		cl_state.imenu = menu_handle(cl_state.imenu_process);
-		menu_draw(cl_state.imenu_process);
+		menu_selector_t imenu_process = cl_state.imenu;
+		cl_state.imenu = menu_handle(imenu_process);
+		menu_draw(imenu_process);
 	}
 	else
 	{
 		cl_state.paused = false;
+		cl_game_draw();
 	}
 
 }

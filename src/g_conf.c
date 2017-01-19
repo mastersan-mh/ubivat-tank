@@ -17,7 +17,6 @@
 static uint32_t controls[ACTION_NUM] =
 {
 		[ACTION_ENTER_MAINMENU] = SDL_SCANCODE_ESCAPE,
-		[ACTION_CHEAT_WIN     ] = SDL_SCANCODE_Z,
 		[ACTION_SFACTOR] = SDL_SCANCODE_X,
 		[ACTION_DFACTOR] = SDL_SCANCODE_C
 
@@ -38,7 +37,8 @@ static const keybind_t keybinds_default[] =
 		{ 1, SDL_SCANCODE_G   , "+move_east"  },
 		{ 1, SDL_SCANCODE_W   , "+attack_artillery" },
 		{ 1, SDL_SCANCODE_Q   , "+attack_missile"   },
-		{ 1, SDL_SCANCODE_TAB , "+attack_mine"      }
+		{ 1, SDL_SCANCODE_TAB , "+attack_mine"      },
+		{ 0, SDL_SCANCODE_Z   , "win"               },
 };
 
 void gconf_rebind_all()
@@ -53,24 +53,26 @@ void gconf_rebind_all()
 
 }
 
-/*
- * новый конфиг
- */
-static int gconf_new()
+void gconf_newbind()
 {
 	size_t i;
 	for( i = 0; i < ARRAYSIZE(keybinds_default); i++)
 	{
 		const keybind_t * keybind = &keybinds_default[i];
-
 		input_key_bind_act(
 			keybind->clientId,
 			keybind->key,
 			keybind->action
 		);
-
-
 	}
+}
+
+/*
+ * новый конфиг
+ */
+static int gconf_new()
+{
+	gconf_newbind();
 	return gconf_save();
 }
 

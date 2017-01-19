@@ -61,8 +61,10 @@ typedef enum gamestate_s
 {
 	GAMESTATE_NOGAME, /* игра не создана */
 	GAMESTATE_INGAME,
+	GAMESTATE_GAMESAVE,
 	GAMESTATE_MISSION_BRIEF,
-	GAMESTATE_INTERMISSION
+	GAMESTATE_INTERMISSION,
+//	GAMESTATE_ENDLEVEL,
 } gamestate_t;
 
 //состояние игры

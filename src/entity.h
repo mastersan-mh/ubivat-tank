@@ -161,7 +161,7 @@ typedef struct entityinfo_s
 
 	void (*handle)(entity_t * this, void * thisdata);
 
-	entity_t * (*client_spawn)(const entity_t * this);
+	entity_t * (*client_join)(const entity_t * this);
 
 	void * (*client_store)(struct client_storedata_s * storedata, const void * thisdata);
 	void (*client_restore)(void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
@@ -182,7 +182,7 @@ extern void entity_register(const entityinfo_t * info);
 extern entity_t * entity_getfirst(const char * name);
 
 extern void entities_handle();
-extern entity_t * entries_client_spawn();
+extern entity_t * entries_client_join();
 
 extern void entities_render(camera_t * cam);
 

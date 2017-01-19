@@ -38,7 +38,7 @@ fd_set readfds;
 fd_set writefds;
 fd_set exceptfds;
 
-static host_client_t * clients;
+host_client_t * hclients = NULL;
 static int clients_num = 0;
 
 void server_init()
@@ -50,11 +50,6 @@ void server_init()
 void server_done()
 {
 
-}
-
-static void host_client_unspawn(host_client_t * client)
-{
-	client->entity = NULL;
 }
 
 void host_event_send(const host_client_t * client, const ghostevent_t * event)
@@ -71,21 +66,15 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 			break;
 		case GHOSTEVENT_CONNECTION_CLOSE:
 			break;
-		case GHOSTEVENT_CONNECTION_SETPLAYERENTITY:
+		case GHOSTEVENT_SETPLAYERENTITY:
 			strncpy(&buf[buflen], event->setplayerentity.entityname, GAME_HOSTEVENT_ENTNAME_LEN);
 			buflen += GAME_HOSTEVENT_ENTNAME_LEN+1;
 			size_t size = sizeof(entity_t*);
 			memcpy(&buf[buflen], &event->setplayerentity.entity, size);
 			buflen += size;
 			break;
-		case GHOSTEVENT_GAMEWIN:
-			break;
 		case GHOSTEVENT_GAMESTATE:
 			buf[buflen] = event->gamestate.state;
-			buflen++;
-			break;
-		case GHOSTEVENT_IMENU:
-			buf[buflen] = event->imenu.imenu;
 			buflen++;
 			break;
 	}
@@ -97,48 +86,24 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 	);
 }
 
-void host_setcliententity(host_client_t * client)
+void host_event_cliententity_send(host_client_t * client)
 {
 	ghostevent_t hevent;
-	hevent.type = GHOSTEVENT_CONNECTION_SETPLAYERENTITY;
+	hevent.type = GHOSTEVENT_SETPLAYERENTITY;
 	strncpy(hevent.setplayerentity.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_LEN);
 	hevent.setplayerentity.entity = client->entity;
 	host_event_send(client, &hevent);
 }
 
-void host_event_send_win()
-{
-	host_client_t * client;
-	ghostevent_t hevent;
-	hevent.type = GHOSTEVENT_GAMEWIN;
-	LIST2_FOREACH(clients, client)
-		host_event_send(client, &hevent);
-}
-
 void host_setgamestate(gamestate_t state)
 {
 	sv_state.state = state;
-			host_client_t * client;
+	host_client_t * client;
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
 	hevent.gamestate.state = state;
-	LIST2_FOREACH(clients, client)
+	LIST2_FOREACH(hclients, client)
 		host_event_send(client, &hevent);
-
-}
-
-void host_event_send_imenu(menu_selector_t imenu)
-{
-	/* послать только серверу (первый игрок) */
-	ghostevent_t hevent;
-	hevent.type = GHOSTEVENT_IMENU;
-	hevent.imenu.imenu = imenu;
-	host_client_t * client;
-	LIST2_FOREACH(clients, client)
-	{
-		if(!client->next)
-			host_event_send(client, &hevent);
-	}
 }
 
 /**
@@ -146,6 +111,27 @@ void host_event_send_imenu(menu_selector_t imenu)
  * @return id
  * @return -1 ошибка
  */
+static void server_client_info_store(host_client_t * client)
+{
+	client->userstoredata = client->entity->info->client_store(
+		&(client->storedata),
+		client->entity->data
+	);
+}
+
+static void server_client_info_restore(host_client_t * client)
+{
+	if(!client->userstoredata)
+		return;
+	(*client->entity->info->client_restore)(
+		client->entity->data,
+		&(client->storedata),
+		client->userstoredata
+	);
+	Z_free(client->userstoredata);
+	client->userstoredata = NULL;
+}
+
 static host_client_t * host_client_create(const net_socket_t * ns)
 {
 	host_client_t * client = Z_malloc(sizeof(host_client_t));
@@ -156,7 +142,7 @@ static host_client_t * host_client_create(const net_socket_t * ns)
 	client->userstoredata = NULL;
 	client->ns = (net_socket_t *) ns;
 
-	LIST2_PUSH(clients, client);
+	LIST2_PUSH(hclients, client);
 
 	clients_num++;
 
@@ -165,7 +151,6 @@ static host_client_t * host_client_create(const net_socket_t * ns)
 
 static void host_client_delete(host_client_t * client)
 {
-	host_client_unspawn(client);
 	net_socket_close(client->ns);
 	Z_free(client->userstoredata);
 	Z_free(client);
@@ -177,7 +162,7 @@ static void host_client_disconnect(host_client_t * client)
 	event.type = GHOSTEVENT_CONNECTION_CLOSE;
 	host_event_send(client, &event);
 
-	LIST2_UNLINK(clients, client);
+	LIST2_UNLINK(hclients, client);
 
 	host_client_delete(client);
 }
@@ -188,10 +173,10 @@ void host_clients_disconnect()
 	event.type = GHOSTEVENT_CONNECTION_CLOSE;
 	host_client_t * client;
 
-	while(clients)
+	while(hclients)
 	{
-		client = clients;
-		clients = clients->next;
+		client = hclients;
+		hclients = hclients->next;
 		host_event_send(client, &event);
 		host_client_delete(client);
 		clients_num--;
@@ -201,7 +186,7 @@ void host_clients_disconnect()
 static host_client_t * host_client_find_by_addr(const struct sockaddr * addr)
 {
 	host_client_t * client;
-	LIST2_FOREACH(clients, client)
+	LIST2_FOREACH(hclients, client)
 	{
 		if( !memcmp(&client->ns->addr, addr, sizeof(struct sockaddr)) )
 			return client;
@@ -217,81 +202,44 @@ int host_client_num_get()
 host_client_t * host_client_get(int id)
 {
 	if(id < 0 || id >= clients_num) return NULL;
-	host_client_t * client = clients;
+	host_client_t * client = hclients;
 	id = clients_num - 1 - id;
 	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, id);
+	LIST2_LIST_TO_IENT(hclients, client, i, id);
 	return client;
 }
 
-static int host_client_spawn(host_client_t * client)
+int host_client_join(host_client_t * client)
 {
-	entity_t * entity = entries_client_spawn();
+	entity_t * entity = entries_client_join();
 	if(entity == NULL)
 	{
 		game_console_send("Error: No entity to spawn client.");
 		return -1;
 	}
 	client->entity = entity;
+
+	server_client_info_restore(client);
+
 	return 0;
 }
 
-int host_client_spawn_id(int id)
-{
-	if(id < 0 || id >= clients_num)
-	{
-		game_console_send("Error: Could not spawn client: unknown client id %d.", id);
-		return -1;
-	}
-
-	host_client_t * client = clients;
-	id = clients_num - 1 - id;
-	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, id);
-	return host_client_spawn(client);
-}
-
-void host_client_unspawn_id(int id)
-{
-	if(id < 0 || id >= clients_num)
-		return;
-	host_client_t * client = clients;
-	id = clients_num - 1 - id;
-	int i;
-	LIST2_LIST_TO_IENT(clients, client, i, id);
-	host_client_unspawn(client);
-}
-
 /**
- * сохранение информации о клиентах между уровнями
+ * @description сохранение информации о клиенте
  */
-void server_store_clients_info()
+/**
+ * восстановление информации о клиенте
+ */
+/**
+ * @description убирание клиентов из игры (не дисконект!), сохранение информации о клиентах
+ */
+void server_unjoin_clients()
 {
 	host_client_t * client;
-	LIST2_FOREACH(clients, client)
+	LIST2_FOREACH(hclients, client)
 	{
-		client->userstoredata = client->entity->info->client_store(
-			&(client->storedata),
-			client->entity->data
-		);
-	}
-}
-
-/**
- * восстановление информации о клиентах
- */
-void server_restore_clients_info()
-{
-	host_client_t * client;
-	LIST2_FOREACH(clients, client)
-	{
-		client->entity->info->client_restore(
-			client->entity->data,
-			&(client->storedata),
-			client->userstoredata
-		);
-		Z_free(client->userstoredata);
-		client->userstoredata = NULL;
+		server_client_info_store(client);
+		client->entity = NULL;
 	}
 }
 
@@ -301,8 +249,6 @@ void server_start(int flags)
 {
 	server_run = 1;
 	sv_state.state = GAMESTATE_MISSION_BRIEF;
-
-	sv_state.show_menu = false;
 	sv_state.paused = false;
 
 	host_ns = net_socket_create(NET_PORT, "127.0.0.1");
@@ -363,27 +309,35 @@ static void server_listen()
 	{
 		case GCLIENTEVENT_CONNECT:
 			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+
+			host_setgamestate(sv_state.state);
+
 			net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
 			client = host_client_create(ns);
-			if(host_client_spawn(client) != 0)
-			{
-				game_console_send("server: can not spawn client, no entity to spawn");
-			}
-			else
-			{
-				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-				host_event_send(client, &hevent);
 
-				host_setcliententity(client);
-				host_setgamestate(sv_state.state);
+			hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
+			host_event_send(client, &hevent);
 
-			}
 			break;
 		case GCLIENTEVENT_DISCONNECT:
 			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 
 			break;
-
+		case GCLIENTEVENT_JOIN:
+			client = host_client_find_by_addr(&sender.addr);
+			if(client->entity)
+			{
+				game_console_send("server: client already joined.");
+				break;
+			}
+			if(host_client_join(client) != 0)
+			{
+				game_console_send("server: can not join client, no entity to spawn.");
+				break;
+			}
+			host_event_cliententity_send(client);
+			game_console_send("server: client joined to game.");
+			break;
 		case GCLIENTEVENT_GAMEABORT:
 			game_console_send("server: client aborted game.");
 			sv_game_abort();
@@ -401,9 +355,11 @@ static void server_listen()
 			}
 
 			/* execute action */
+			entity_t * ent = client->entity;
+			if(ent)
 			{
 				bool found = false;
-				entity_t * ent = client->entity;
+
 				const entityinfo_t * info = ent->info;
 
 				for(i = 0; i < info->actions_num; i++)
@@ -414,22 +370,21 @@ static void server_listen()
 						found = true;
 						if(ent->spawned)
 						{
-							if(sv_state.state == GAMESTATE_INGAME)
+							switch(sv_state.state)
 							{
-								/* func */
-								if(action->action_f)
-									action->action_f(ent, ent->data, action->action);
-							}
-							else if(sv_state.state == GAMESTATE_MISSION_BRIEF)
-							{
-								sound_play_start(SOUND_MENU_ENTER, 1);
-								sv_state.state = GAMESTATE_INGAME;
-							}
-							else if(sv_state.state == GAMESTATE_INTERMISSION)
-							{
-								sound_play_start(SOUND_MENU_ENTER, 1);
-								// *imenu = MENU_GAME_SAVE;
-								sv_state.show_menu = true;
+								case GAMESTATE_NOGAME:
+									break;
+								case GAMESTATE_INGAME:
+									/* func */
+									if(action->action_f)
+										(*action->action_f)(ent, ent->data, action->action);
+									break;
+								case GAMESTATE_GAMESAVE:
+									break;
+								case GAMESTATE_MISSION_BRIEF:
+									break;
+								case GAMESTATE_INTERMISSION:
+									break;
 							}
 						}
 						else
@@ -451,6 +406,26 @@ static void server_listen()
 				{
 					game_console_send("server: unknown action :%d.", cevent.control.action);
 				}
+			}
+
+			break;
+		case GCLIENTEVENT_NEXTGAMESTATE:
+
+			switch(sv_state.state)
+			{
+				case GAMESTATE_NOGAME:
+					break;
+				case GAMESTATE_INGAME:
+					break;
+				case GAMESTATE_GAMESAVE:
+					sv_state.state = GAMESTATE_INGAME;
+					break;
+				case GAMESTATE_MISSION_BRIEF:
+					sv_state.state = GAMESTATE_GAMESAVE;
+					break;
+				case GAMESTATE_INTERMISSION:
+					sv_state.state = GAMESTATE_MISSION_BRIEF;
+					break;
 			}
 
 			break;
@@ -476,7 +451,6 @@ void server()
 		//закроем карту
 		map_clear();
 		sv_state.state = GAMESTATE_NOGAME;
-		sv_state.win = false;
 	}
 
 	sv_game_mainTick();

@@ -24,6 +24,7 @@ typedef struct
 	char * action;
 } keybind_t;
 
+extern void gconf_newbind();
 extern int gconf_key_get(int player, const char * action);
 extern int gconf_save();
 extern int gconf_load();

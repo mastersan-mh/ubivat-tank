@@ -242,13 +242,13 @@ ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move(this, 
 ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move(this, thisdata, DIR_RIGHT, true ); }
 ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move(this, thisdata, DIR_RIGHT, false); }
 
-ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(this, thisdata, true , WEAP_ARTILLERY);}
-ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(this, thisdata, false, WEAP_ARTILLERY);}
-ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(this, thisdata, true , WEAP_MISSILE);}
-ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(this, thisdata, false, WEAP_MISSILE);}
-ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(this, thisdata, true , WEAP_MINE);}
-ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(this, thisdata, false, WEAP_MINE);}
-
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(this, thisdata, true , WEAP_ARTILLERY); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(this, thisdata, false, WEAP_ARTILLERY); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(this, thisdata, true , WEAP_MISSILE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(this, thisdata, false, WEAP_MISSILE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(this, thisdata, true , WEAP_MINE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(this, thisdata, false, WEAP_MINE); }
+ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 static entityaction_t player_actions[] =
 {
@@ -265,7 +265,8 @@ static entityaction_t player_actions[] =
 		{"+attack_missile"  , player_attack_weapon2_on },
 		{"-attack_missile"  , player_attack_weapon2_off},
 		{"+attack_mine"     , player_attack_weapon3_on },
-		{"-attack_mine"     , player_attack_weapon3_off}
+		{"-attack_mine"     , player_attack_weapon3_off},
+		{"win"              , player_win               },
 };
 
 static void player_handle_common(entity_t * player, player_t * pl);

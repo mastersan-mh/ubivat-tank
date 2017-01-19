@@ -159,6 +159,7 @@ void game_init()
 	//чтение конфига
 	printf("Config init...\n");
 	input_init();
+	gconf_newbind();
 	gconf_load();
 	gconf_rebind_all();
 
@@ -477,8 +478,7 @@ int game_record_load(int isave)
 	int i;
 	for(i = 0 ; i < player_num; i++)
 	{
-		int id = client_connect();
-		host_client_spawn_id(id);
+		client_connect();
 	}
 
 	clients_initcams();

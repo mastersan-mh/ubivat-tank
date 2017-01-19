@@ -24,14 +24,13 @@ typedef struct
 	gamestate_t state;
 
 	menu_selector_t imenu;
-	menu_selector_t imenu_process;
 	bool show_menu;
 
 	char * msg;
 	/* флаги состояния игры */
 	int flags;
 	/* игрок победил */
-	bool _win_;
+	bool win;
 	bool paused;
 	int sound_playId;
 
@@ -69,9 +68,11 @@ extern void cl_done();
 extern int client_connect();
 extern void clients_initcams();
 
-extern void client_event_send(client_t * client, gclientevent_t * event);
+extern void client_event_send(const client_t * client, const gclientevent_t * event);
+extern void client_event_join_send(int clientId);
 extern void client_event_gameabort_send();
 extern void client_event_control_send(int clientId, const char * action_name);
+extern void client_event_nextgamestate_send(int clientId);
 
 extern void client();
 

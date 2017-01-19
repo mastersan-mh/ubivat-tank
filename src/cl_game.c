@@ -170,13 +170,14 @@ static void cl_draw()
 
 void cl_game_draw()
 {
-
 	switch(cl_state.state)
 	{
 	case GAMESTATE_NOGAME:
 		break;
 	case GAMESTATE_INGAME:
 		cl_draw();
+		break;
+	case GAMESTATE_GAMESAVE:
 		break;
 	case GAMESTATE_MISSION_BRIEF:
 		cl_game_state_missionbrief_draw();

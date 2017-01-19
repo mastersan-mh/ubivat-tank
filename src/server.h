@@ -17,14 +17,10 @@
 typedef struct
 {
 	gamestate_t state;
-	gamestate_t state_prev;
 
 	char * msg;
 	/* флаги состояния игры */
 	int flags;
-	/* игрок победил */
-	bool win;
-	bool show_menu;
 	bool paused;
 	int sound_playId;
 
@@ -60,21 +56,20 @@ typedef struct host_client_s
 extern void server_init();
 extern void server_done();
 
+extern int host_client_join(host_client_t * client);
 extern void host_clients_disconnect();
 
 extern int host_client_num_get();
 
+extern void host_setgamestate(gamestate_t state);
+
 extern host_client_t * host_client_get(int id);
 
-extern int host_client_spawn_id(int id);
-
-extern void host_client_unspawn_id(int id);
-
 extern void host_event_send_win();
-extern void host_event_send_imenu(menu_selector_t imenu);
+extern void host_event_cliententity_send(host_client_t * client);
 
-extern void server_store_clients_info();
-extern void server_restore_clients_info();
+extern void server_unjoin_clients();
+extern void server_restore_client_info(host_client_t * client);
 
 extern void server_start();
 extern void server_stop();

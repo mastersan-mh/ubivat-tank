@@ -56,7 +56,7 @@ static const entityinfo_t spawn_player_reginfo = {
 		.init = spawn_player_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle = ENTITY_FUNCTION_HANDLE_DEFAULT,
-		.client_spawn = spawn_player_spawn,
+		.client_join = spawn_player_spawn,
 		.client_store = NULL,
 		.client_restore = NULL
 };

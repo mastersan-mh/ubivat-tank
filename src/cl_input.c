@@ -13,7 +13,7 @@
 
 /* сравнение действий: true / false */
 #define ACTIONCMP(act1, act2) \
-	( act1 && act2 && !strncmp(act1, act2, CL_INPUT_ACTION_LEN) )
+		( act1 && act2 && !strncmp(act1, act2, CL_INPUT_ACTION_LEN) )
 
 typedef struct
 {
@@ -105,7 +105,7 @@ void input_done()
 }
 
 /*
- *
+ * state = true | false = pressed | released
  */
 void input_key_setState(int key, bool state)
 {
@@ -113,8 +113,6 @@ void input_key_setState(int key, bool state)
 	actionf_t func = NULL;
 	char * action;
 	keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);
-
-
 	cindex = hash_find_collision(keyhash, key);
 
 	if(cindex < 0)
@@ -123,33 +121,52 @@ void input_key_setState(int key, bool state)
 		keyhash->collision[cindex].key = key;
 	}
 
-
-	int clientId = 0;
-
 	input_actionsrc_t actionsrc = keyhash->collision[cindex].actionsrc;
 
 	if(state)
 	{
 		switch(actionsrc)
 		{
-		case INPUT_ACTIONSRC_STR:  action = keyhash->collision[cindex].action.str.press; break;
-		case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[cindex].action.func.press; break;
+			case INPUT_ACTIONSRC_STR:  action = keyhash->collision[cindex].action.str.press; break;
+			case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[cindex].action.func.press; break;
 		}
 	}
 	else
 	{
 		switch(actionsrc)
 		{
-		case INPUT_ACTIONSRC_STR : action = keyhash->collision[cindex].action.str.release; break;
-		case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[cindex].action.func.release; break;
+			case INPUT_ACTIONSRC_STR : action = keyhash->collision[cindex].action.str.release; break;
+			case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[cindex].action.func.release; break;
 		}
 	}
 
 	if(func)
 		func();
 
-	if(action)
-		client_event_control_send(clientId, action);
+	int clientId = keyhash->collision[cindex].clientId;
+
+	switch(cl_state.state)
+	{
+		case GAMESTATE_NOGAME:
+			break;
+		case GAMESTATE_INGAME:
+			if(action)
+				client_event_control_send(clientId, action);
+			break;
+		case GAMESTATE_GAMESAVE:
+			break;
+		case GAMESTATE_MISSION_BRIEF:
+			if(!state) break;
+			sound_play_start(SOUND_MENU_ENTER, 1);
+			client_event_nextgamestate_send(clientId);
+			client_event_join_send(clientId);
+			break;
+		case GAMESTATE_INTERMISSION:
+			if(!state) break;
+			client_event_nextgamestate_send(clientId);
+			sound_play_start(SOUND_MENU_ENTER, 1);
+			break;
+	}
 
 }
 
@@ -267,12 +284,12 @@ void input_key_unbind(int key)
 		input_key_t * tmp = malloc(newamount * sizeof(input_key_t));
 		switch(keyhash->collision[cindex].actionsrc)
 		{
-		case INPUT_ACTIONSRC_STR:
-			free(keyhash->collision[cindex].action.str.press);
-			free(keyhash->collision[cindex].action.str.release);
-			break;
-		case INPUT_ACTIONSRC_FUNC:
-			break;
+			case INPUT_ACTIONSRC_STR:
+				free(keyhash->collision[cindex].action.str.press);
+				free(keyhash->collision[cindex].action.str.release);
+				break;
+			case INPUT_ACTIONSRC_FUNC:
+				break;
 		}
 
 		size_t i;
@@ -304,12 +321,12 @@ void input_key_unbind_all()
 		{
 			switch(keyhash->collision[cindex].actionsrc)
 			{
-			case INPUT_ACTIONSRC_STR:
-				free(keyhash->collision[cindex].action.str.press);
-				free(keyhash->collision[cindex].action.str.release);
-				break;
-			case INPUT_ACTIONSRC_FUNC:
-				break;
+				case INPUT_ACTIONSRC_STR:
+					free(keyhash->collision[cindex].action.str.press);
+					free(keyhash->collision[cindex].action.str.release);
+					break;
+				case INPUT_ACTIONSRC_FUNC:
+					break;
 			}
 		}
 		free(keyhash->collision);
