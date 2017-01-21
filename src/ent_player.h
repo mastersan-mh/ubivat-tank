@@ -108,13 +108,13 @@ typedef struct
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
 
-void entity_player_init();
+extern void entity_player_init(void);
 
-void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
+extern void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
 
-void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius);
+extern void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius);
 
-void player_class_init(entity_t * player, player_t * pl);
+extern void player_class_init(entity_t * player, player_t * pl);
 
 
 #endif /* SRC_ENT_PLAYER_H_ */

@@ -10,6 +10,8 @@
 
 #include "types.h"
 
+#define MAP_FILENAME_SIZE (256)
+
 //флаг присутствия стены
 #define c_m_f_clip      0x10
 
@@ -139,14 +141,14 @@ extern map_t map;
 
 extern maplist_t * mapList;
 
-int map_error_get();
+extern int map_error_get(void);
 
 extern maplist_t * map_find(const char * name);
 
-void map_init();
+extern void map_init(void);
 
 
-void map_clip_find(
+extern void map_clip_find(
 	vec2_t * orig,
 	vec_t BOX,
 	char mask,
@@ -160,16 +162,16 @@ void map_clip_find(
 	bool * Rd
 );
 
-void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist);
-void map_clip_find_near_wall(vec2_t * orig, int dir, vec_t * dist, char * wall);
+extern void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist);
+extern void map_clip_find_near_wall(vec2_t * orig, int dir, vec_t * dist, char * wall);
 
 extern mapdata_entity_type_t map_file_class_get(int fd);
-int map_load(const char * mapname);
-void map_clear();
-void map_draw(camera_t * cam);
-void map_list_add(const char * map,const char * name);
-void map_list_removeall();
-void map_load_list();
+extern int map_load(const char * mapname);
+extern void map_clear(void);
+extern void map_draw(camera_t * cam);
+extern void map_list_add(const char * map,const char * name);
+extern void map_list_removeall(void);
+extern void map_load_list(void);
 
 
 #endif /* SRC_MAP_H_ */

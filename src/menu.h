@@ -8,9 +8,8 @@
 #ifndef SRC_MENU_H_
 #define SRC_MENU_H_
 
-#include <types.h>
-#include <game.h>
-
+#include <g_gamesave.h>
+#include "types.h"
 #include <SDL2/SDL.h>
 
 //меню

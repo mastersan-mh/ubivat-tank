@@ -93,7 +93,7 @@ bool buffer_isEmpty()
 	return buffer_start == buffer_end;
 }
 
-buffer_key_t buffer_dequeue_nowait()
+buffer_key_t buffer_dequeue_nowait(void)
 {
 	if(buffer_start == buffer_end) return SDL_SCANCODE_UNKNOWN;
 	buffer_key_t key = buffer[buffer_start];
@@ -132,7 +132,7 @@ static void menu_send_event(SDL_Event * event)
 	}
 }
 
-void menu_events_pump()
+void menu_events_pump(void)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
@@ -282,19 +282,14 @@ static int menu_game_new1P(void * ctx)
 	ret = cl_game_create(0);
 	if(ret)
 	{
-		game_msg_error(map_error_get());
-		return MENU_ABORT;
-	}
-	ret = map_load(cl_state.gamemap->map);
-	if(ret)
-	{
-		cl_game_abort();
-		game_msg_error(map_error_get());
+		game_halt("Error: Can not create game.");
 		return MENU_ABORT;
 	}
 
 	client_connect();
 	clients_initcams();
+
+	client_event_setgamemap_send(cl_state.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -308,20 +303,15 @@ static int menu_game_new2P(void * ctx)
 	ret = cl_game_create(GAMEFLAG_2PLAYERS);
 	if(ret)
 	{
-		game_msg_error(map_error_get());
-		return MENU_ABORT;
-	}
-	ret = map_load(cl_state.gamemap->map);
-	if(ret)
-	{
-		cl_game_abort();
-		game_msg_error(ret);
+		game_halt("Error: Can not create game.");
 		return MENU_ABORT;
 	}
 
 	client_connect();
 	client_connect();
 	clients_initcams();
+
+	client_event_setgamemap_send(cl_state.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -333,12 +323,11 @@ static int menu_game_new2P(void * ctx)
 static int menu_game_load(void * ctx)
 {
 	menu_game_load_ctx_t * __ctx = ctx;
-	int ret;
 	menu_key_t menukey = menu_key_get();
 	switch(__ctx->state)
 	{
 	case MENU_GAME_LOAD_INIT:
-		game_record_getsaves();
+		g_gamesave_cacheinfos();
 		__ctx->state = MENU_GAME_LOAD_SELECT;
 		break;
 	case MENU_GAME_LOAD_SELECT:
@@ -354,8 +343,11 @@ static int menu_game_load(void * ctx)
 			__ctx->state = MENU_GAME_LOAD_INIT;
 			if(cl_state.state != GAMESTATE_NOGAME)
 				return MENU_MAIN;
-			if(!game.saveslist[__ctx->menu].exist) break;
-			ret = game_record_load(__ctx->menu);
+			if(!gamesaves[__ctx->menu].exist)
+				break;
+			client_event_gamesave_load_send(__ctx->menu);
+			/*
+			 TODO: move this to server
 			if(!ret)
 				return MENU_MAIN;
 			if(2<=ret)
@@ -363,6 +355,7 @@ static int menu_game_load(void * ctx)
 				game_msg_error(ret+10);
 				return MENU_ABORT;
 			}
+			*/
 			return MENU_MAIN;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
@@ -388,15 +381,15 @@ static void menu_game_load_draw(const void * ctx)
 			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineM);
 		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineR);
 		font_color_set3i(COLOR_7);
-		if(!game.saveslist[irow].exist)
+		if(!gamesaves[irow].exist)
 		{
 			video_printf(97+23+4, 33+irow*15, "---===EMPTY===---");
 			continue;
 		}
-		video_printf(97+23+4, 33+irow*15, game.saveslist[irow].name);
+		video_printf(97+23+4, 33+irow*15, gamesaves[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
-		if(game.saveslist[irow].flags & GAMEFLAG_2PLAYERS)
+		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
 		{
 			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 		};
@@ -411,7 +404,7 @@ static int menu_game_save(void * ctx)
 	switch(__ctx->state)
 	{
 	case MENU_GAME_SAVE_INIT:
-		game_record_getsaves();
+		g_gamesave_cacheinfos();
 		__ctx->state = MENU_GAME_SAVE_SELECT;
 		break;
 	case MENU_GAME_SAVE_SELECT:
@@ -424,18 +417,15 @@ static int menu_game_save(void * ctx)
 		case RIGHT  :
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
-			__ctx->rec = game.saveslist[__ctx->menu];
-			game.saveslist[__ctx->menu].flags = cl_state.flags;
-			game.saveslist[__ctx->menu].exist = true;
+			__ctx->rec = gamesaves[__ctx->menu];
+			gamesaves[__ctx->menu].flags = cl_state.flags;
+			gamesaves[__ctx->menu].exist = true;
 			__ctx->state = MENU_GAME_SAVE_INPUT;
-			client_event_nextgamestate_send();
 			break;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_SAVE_INIT;
-
 			cl_state.show_menu = false;
-
 			client_event_nextgamestate_send();
 			return MENU_MAIN;
 		case SPACE  :break;
@@ -448,7 +438,7 @@ static int menu_game_save(void * ctx)
 		{
 		case SDL_SCANCODE_UNKNOWN: break;
 		case SDL_SCANCODE_ESCAPE:
-			game.saveslist[__ctx->menu] = __ctx->rec;
+			gamesaves[__ctx->menu] = __ctx->rec;
 			__ctx->state = MENU_GAME_SAVE_SELECT;
 			break;
 		case SDL_SCANCODE_RETURN:
@@ -456,18 +446,19 @@ static int menu_game_save(void * ctx)
 			__ctx->state = MENU_GAME_SAVE_SAVE;
 			break;
 		case SDL_SCANCODE_BACKSPACE:
-			l = strlen(game.saveslist[__ctx->menu].name);
-			if(0 < l) game.saveslist[__ctx->menu].name[l-1] = 0;
+			l = strlen(gamesaves[__ctx->menu].name);
+			if(0 < l) gamesaves[__ctx->menu].name[l-1] = 0;
 			break;
 		default :
 			ch = SDL_GetKeyFromScancode(scancode);
 			if(ch == 0)break;
-			l = strlen(game.saveslist[__ctx->menu].name);
-			if(ch < 0x80 && l <= 16) str_addch(game.saveslist[__ctx->menu].name, ch);
+			l = strlen(gamesaves[__ctx->menu].name);
+			if(ch < 0x80 && l <= 16)
+				str_addch(gamesaves[__ctx->menu].name, ch);
 		}
 		break;
 	case MENU_GAME_SAVE_SAVE:
-		game_record_save(__ctx->menu);
+		client_event_gamesave_save_send(__ctx->menu);
 		__ctx->state = MENU_GAME_SAVE_SELECT;
 		break;
 	}
@@ -496,15 +487,15 @@ static void menu_game_save_draw(const void * ctx)
 			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineM);
 		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineR);
 		font_color_set3i(COLOR_7);
-		if(!game.saveslist[irow].exist)
+		if(!gamesaves[irow].exist)
 		{
 			video_printf(97+23+4,33+irow*15, "---===EMPTY===---");
 			continue;
 		}
-		video_printf(97+23+4,33+irow*15, game.saveslist[irow].name);
+		video_printf(97+23+4,33+irow*15, gamesaves[irow].name);
 		//отображение статуса сохраненной игры
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
-		if(game.saveslist[irow].flags & GAMEFLAG_2PLAYERS)
+		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
 			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
 	}
 }
@@ -567,16 +558,22 @@ static void menu_custom_draw(const void * ctx)
 
 static int menu_custom_new1P(void * ctx)
 {
+
 	int ret;
 	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	ret = map_load(cl_state.custommap->map);
+	ret = cl_game_create(GAMEFLAG_CUSTOMGAME);
 	if(ret)
 	{
-		game_msg_error(ret);
+		game_halt("Error: Can not create game.");
 		return MENU_ABORT;
 	}
-	ret = cl_game_create(GAMEFLAG_CUSTOMGAME);
+
+	client_connect();
+	clients_initcams();
+
+	client_event_setgamemap_send(cl_state.custommap->map);
+
 	return MENU_MAIN;
 }
 
@@ -585,13 +582,19 @@ static int menu_custom_new2P(void * ctx)
 	int ret;
 	if(cl_state.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	ret = map_load(cl_state.custommap->map);
+	ret = cl_game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
 	if(ret)
 	{
-		game_msg_error(ret);
+		game_halt("Error: Can not create game.");
 		return MENU_ABORT;
 	}
-	ret = cl_game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
+
+	client_connect();
+	client_connect();
+	clients_initcams();
+
+	client_event_setgamemap_send(cl_state.custommap->map);
+
 	return MENU_MAIN;
 }
 

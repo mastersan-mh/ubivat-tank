@@ -49,7 +49,6 @@ typedef enum {
 #define FILENAME_CONFIG "/config.cfg"
 #define FILENAME_MAPSLIST "/maps.lst"
 #define FILENAME_PALETTE "/palette.pal"
-#define FILENAME_GAMESAVE_EXT "sav"
 //коды
 #define code_levelup "IAMSUPERTANK"
 #define code_health  "GIVEHEALTH"
@@ -58,14 +57,6 @@ typedef enum {
 #define code_all     "GIVEALL"
 //разрешенные для ввода символы
 #define chars_allowed "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
-
-//флаги состояния игры:
-//2 игрока
-#define GAMEFLAG_2PLAYERS  0x01
-//игра по выбору
-#define GAMEFLAG_CUSTOMGAME      0x02
-//флаги спавнпоинта
 
 
 //предметы

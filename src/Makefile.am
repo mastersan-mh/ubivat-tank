@@ -28,9 +28,9 @@ types.c \
 _gr2D.c \
 fonts.c \
 actions.c \
-cl_input.c \
-g_conf.c \
 game.c \
+g_conf.c \
+g_gamesave.c \
 img.c \
 main.c \
 map.c \
@@ -43,4 +43,5 @@ menu.c \
 server.c \
 sv_game.c \
 client.c \
+cl_input.c \
 cl_game.c

@@ -17,6 +17,6 @@ typedef struct
 	int items[__ITEM_NUM];
 } spawn_t;
 
-void entity_spawn_init();
+extern void entity_spawn_init(void);
 
 #endif /* SRC_ENT_SPAWN_H_ */

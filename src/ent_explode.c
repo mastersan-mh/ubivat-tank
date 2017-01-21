@@ -242,7 +242,7 @@ static const entityinfo_t explode_mine_reginfo = {
 		.entmodels = explode_big_models
 };
 
-void entity_explode_init()
+void entity_explode_init(void)
 {
 	entity_register(&explode_artillery_reginfo);
 	entity_register(&explode_missile_reginfo);

@@ -10,11 +10,11 @@
 
 #include "types.h"
 
-extern bool cl_game_quit_get();
-extern void cl_game_quit_set();
-extern void cl_game_draw();
-extern void cl_game_action_showmenu();
+extern bool cl_game_quit_get(void);
+extern void cl_game_quit_set(void);
+extern void cl_game_draw(void);
+extern void cl_game_action_showmenu(void);
 extern int cl_game_create(int flags);
-extern void cl_game_abort();
+extern void cl_game_abort(void);
 
 #endif /* SRC_CL_GAME_H_ */

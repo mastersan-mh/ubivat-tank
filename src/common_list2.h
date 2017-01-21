@@ -35,6 +35,11 @@
 #define LIST2_FOREACH(list, ent) \
 	for((ent) = (list); (ent) != NULL; (ent) = (ent)->next)
 
+/* проход по элементам без удаления элементов в обратном направлении*/
+#define LIST2_FOREACHR(list, ent) \
+	for( (ent) = (list); (ent) != NULL && (ent)->next != NULL ; (ent) = (ent)->next ) ; \
+	for( ; (ent) != NULL; (ent) = (ent)->prev )
+
 #define LIST2_FOREACH_I(list, ent, i) \
 	for((i) = 0, (ent) = (list); (ent) != NULL; (ent) = (ent)->next, (i)++)
 

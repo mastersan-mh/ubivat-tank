@@ -402,7 +402,7 @@ static const model_t model_flag_boss =
 		.frames = model_frames_common
 };
 
-void model_resources_register()
+void model_resources_register(void)
 {
 	model_register(&model_exit);
 	model_register(&model_bull_artillery);

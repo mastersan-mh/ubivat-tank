@@ -15,7 +15,7 @@
 #include "img.h"
 #include "server.h"
 
-#define ENTITY_NAME_LEN (63)
+#define ENTITY_NAME_SIZE (64)
 /*
  * цикл по объектам одного определённого типа
  */
@@ -48,7 +48,7 @@
 
 /* entity является объектом типа entity_name */
 #define ENTITY_IS(entity, entity_name) \
-		( strncmp( (entity)->info->name, (entity_name), ENTITY_NAME_LEN ) == 0 )
+		( strncmp( (entity)->info->name, (entity_name), ENTITY_NAME_SIZE ) == 0 )
 
 #define ENTITY_ALLOW_HANDLE_SET(ent, bool_value) \
 		(ent)->allow_handle = (bool_value)
@@ -181,13 +181,13 @@ extern void entity_register(const entityinfo_t * info);
 
 extern entity_t * entity_getfirst(const char * name);
 
-extern void entities_handle();
-extern entity_t * entries_client_join();
+extern void entities_handle(void);
+extern entity_t * entries_client_join(void);
 
 extern void entities_render(camera_t * cam);
 
 extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
-extern void entities_erase();
+extern void entities_erase(void);
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);

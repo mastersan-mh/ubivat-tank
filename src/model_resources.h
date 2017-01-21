@@ -21,6 +21,6 @@
 #define TANK_FPS (20)
 #define TANK_FRAMES_NUM (4)
 
-void model_resources_register();
+extern void model_resources_register(void);
 
 #endif /* SRC_MODEL_RESOURCES_H_ */

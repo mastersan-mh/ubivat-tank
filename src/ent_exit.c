@@ -41,7 +41,7 @@ static const entityinfo_t exit_reginfo = {
 		.entmodels = exit_models
 };
 
-void entity_exit_init()
+void entity_exit_init(void)
 {
 	entity_register(&exit_reginfo);
 }

@@ -37,11 +37,11 @@ typedef struct
 	modelframe_t * frames;
 } model_t;
 
-const model_t * model_get(const char * name);
+extern const model_t * model_get(const char * name);
 
-void model_register(const model_t * model);
+extern void model_register(const model_t * model);
 
-void model_render(
+extern void model_render(
 	const camera_t * cam,
 	vec2_t pos,
 	const model_t * model,

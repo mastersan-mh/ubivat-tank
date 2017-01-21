@@ -73,7 +73,10 @@ extern void client_event_join_send(void);
 extern void client_event_control_send(int clientId, const char * action_name);
 extern void client_event_gameabort_send(void);
 extern void client_event_nextgamestate_send(void);
+extern void client_event_gamesave_save_send(int isave);
+extern void client_event_gamesave_load_send(int isave);
+extern void client_event_setgamemap_send(const char * mapname);
 
-extern void client();
+extern void client(void);
 
 #endif /* SRC_CLIENT_H_ */

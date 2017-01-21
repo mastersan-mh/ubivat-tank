@@ -9,9 +9,10 @@
 #define SRC_G_EVENTS_H_
 
 #include "entity.h"
+#include "g_gamesave.h"
 
-#define GAME_EVENT_CONTROL_ACTION_LEN (63)
-#define GAME_HOSTEVENT_ENTNAME_LEN (63)
+#define GAME_EVENT_CONTROL_ACTION_SIZE (64)
+#define GAME_HOSTEVENT_ENTNAME_SIZE (64)
 
 typedef enum
 {
@@ -23,6 +24,9 @@ typedef enum
 	GCLIENTEVENT_SVCTRL_GAMEABORT,
 	/* перейти на следующее состояние, если допустимо */
 	GCLIENTEVENT_SVCTRL_NEXTGAMESTATE,
+	GCLIENTEVENT_SVCTRL_GAMESAVE_SAVE,
+	GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD,
+	GCLIENTEVENT_SVCTRL_SETGAMEMAP,
 } gclienteventtype_t;
 
 typedef enum
@@ -46,8 +50,16 @@ typedef struct
 	{
 		struct
 		{
-			char action[GAME_EVENT_CONTROL_ACTION_LEN + 1];
+			char action[GAME_EVENT_CONTROL_ACTION_SIZE];
 		} control;
+		struct
+		{
+			int isave;
+		} gamesave;
+		struct
+		{
+			char mapname[MAP_FILENAME_SIZE];
+		} setgamemap;
 	};
 
 } gclientevent_t;
@@ -72,7 +84,7 @@ typedef struct
 		} imenu;
 		struct
 		{
-			char entityname[GAME_HOSTEVENT_ENTNAME_LEN + 1];
+			char entityname[GAME_HOSTEVENT_ENTNAME_SIZE];
 			entity_t * entity;
 		} setplayerentity;
 	};

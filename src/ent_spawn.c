@@ -81,7 +81,7 @@ static const entityinfo_t spawn_boss_reginfo = {
 		.client_restore = NULL
 };
 
-void entity_spawn_init()
+void entity_spawn_init(void)
 {
 	entity_register(&spawn_player_reginfo);
 	entity_register(&spawn_enemy_reginfo);

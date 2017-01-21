@@ -304,7 +304,7 @@ static const entityinfo_t bull_mine_reginfo = {
 /**
  * регистрация
  */
-void entity_bull_init()
+void entity_bull_init(void)
 {
 	entity_register(&bull_artillery_reginfo);
 	entity_register(&bull_missile_reginfo);

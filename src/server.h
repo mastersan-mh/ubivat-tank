@@ -8,6 +8,7 @@
 #ifndef SRC_SERVER_H_
 #define SRC_SERVER_H_
 
+#include <g_gamesave.h>
 #include "game.h"
 #include "net.h"
 #include "map.h"
@@ -57,28 +58,28 @@ typedef struct host_client_s
 
 #include "entity.h"
 
-extern void server_init();
-extern void server_done();
+extern void server_init(void);
+extern void server_done(void);
 
 extern int host_client_join(host_client_t * client);
-extern void host_clients_disconnect();
+extern void host_clients_disconnect(void);
 
-extern int host_client_num_get();
+extern int host_client_num_get(void);
 
 extern void host_setgamestate(gamestate_t state);
 
 extern host_client_t * host_client_get(int id);
 
-extern void host_event_send_win();
+extern void host_event_send_win(void);
 extern void host_event_cliententity_send(host_client_t * client);
 extern void host_event_gamestate_send(host_client_t * client, gamestate_t state);
 
-extern void server_unjoin_clients();
+extern void server_unjoin_clients(void);
 extern void server_restore_client_info(host_client_t * client);
 
-extern void server_start();
-extern void server_stop();
+extern void server_start(int flags);
+extern void server_stop(void);
 
-extern void server();
+extern void server(void);
 
 #endif /* SRC_SERVER_H_ */

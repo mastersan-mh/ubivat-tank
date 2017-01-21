@@ -50,8 +50,7 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 	char buf[sizeof(gclientevent_t)];
 	memset(buf, 0, sizeof(buf));
 
-	buf[buflen] = event->type;
-	buflen++;
+	buf[buflen++] = event->type;
 
 	switch(event->type)
 	{
@@ -62,13 +61,26 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 		case GCLIENTEVENT_JOIN:
 			break;
 		case GCLIENTEVENT_CONTROL:
-			len = strnlen(event->control.action, GAME_EVENT_CONTROL_ACTION_LEN) + 1;
-			memcpy(&(buf[1]), event->control.action, len);
+			len = strnlen(event->control.action, GAME_EVENT_CONTROL_ACTION_SIZE - 1);
+			strncpy(&(buf[buflen]), event->control.action, len);
 			buflen += len;
+			buf[buflen++] = '\0';
 			break;
 		case GCLIENTEVENT_SVCTRL_GAMEABORT:
 			break;
 		case GCLIENTEVENT_SVCTRL_NEXTGAMESTATE:
+			break;
+		case GCLIENTEVENT_SVCTRL_GAMESAVE_SAVE:
+			buf[buflen++] = event->gamesave.isave;
+			break;
+		case GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD:
+			buf[buflen++] = event->gamesave.isave;
+			break;
+		case GCLIENTEVENT_SVCTRL_SETGAMEMAP:
+			len = strnlen(event->setgamemap.mapname, MAP_FILENAME_SIZE - 1);
+			strncpy(&(buf[buflen]), event->setgamemap.mapname, len);
+			buflen += len;
+			buf[buflen++] = '\0';
 			break;
 	}
 
@@ -96,7 +108,7 @@ void client_event_control_send(int clientId, const char * action_name)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_CONTROL;
-	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_LEN);
+	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_SIZE);
 
 	client_t * client;
 	int num, i;
@@ -121,6 +133,42 @@ void client_event_nextgamestate_send(void)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_NEXTGAMESTATE;
+	client_t * client;
+	LIST2_FOREACH(clients, client)
+	{
+		client_event_send(client, &event);
+	}
+}
+
+void client_event_gamesave_save_send(int isave)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_SVCTRL_GAMESAVE_SAVE;
+	event.gamesave.isave = isave;
+	client_t * client;
+	LIST2_FOREACH(clients, client)
+	{
+		client_event_send(client, &event);
+	}
+}
+
+void client_event_gamesave_load_send(int isave)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD;
+	event.gamesave.isave = isave;
+	client_t * client;
+	LIST2_FOREACH(clients, client)
+	{
+		client_event_send(client, &event);
+	}
+}
+
+void client_event_setgamemap_send(const char * mapname)
+{
+	gclientevent_t event;
+	event.type = GCLIENTEVENT_SVCTRL_SETGAMEMAP;
+	strncpy(event.setgamemap.mapname, mapname, MAP_FILENAME_SIZE);
 	client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
@@ -220,7 +268,7 @@ static const char * gamestate_to_str(gamestate_t state)
 /*
  * слушать хост, получать от него сообщения для клиентов
  */
-static void client_listen()
+static void client_listen(void)
 {
 	struct sockaddr addr;
 	socklen_t addr_len = 0;
@@ -243,37 +291,35 @@ static void client_listen()
 			buf = net_recv(client->ns, &buf_size, &addr, &addr_len);
 			if(!buf)
 				break;
+			ofs = 0;
 
 			switch(client->state)
 			{
 				case CLIENT_AWAITING_CONNECTION:
+
 					if(!buf)
 					{
 						if(time_current - client->time > CLIENT_TIMEOUT)
 						{
-
 							LIST2_FOREACHM_EXCLUDE(clients, client, erased);
-
 							client_delete(erased);
 						}
 						break;
 					}
 
 					client->time = time_current;
-					ofs = 0;
 					if(buf[ofs] == GHOSTEVENT_CONNECTION_ACCEPTED)
 					{
 						ofs++;
-						game_console_send("client: server accept connection to 0x%00000000x:%d.", client->ns->addr_in.sin_addr, ntohs(client->ns->addr_in.sin_port));
+						game_console_send("client: server accept connection at 0x%00000000x:%d.", client->ns->addr_in.sin_addr, ntohs(client->ns->addr_in.sin_port));
 						client->state = CLIENT_LISTEN;
 					}
 
 					break;
 				case CLIENT_LISTEN:
-					client->time = time_current;
 					if(!buf)
 						break;
-					ofs = 0;
+					client->time = time_current;
 					hevent.type = buf[ofs];
 					ofs++;
 					switch(hevent.type)
@@ -299,7 +345,7 @@ static void client_listen()
 							break;
 						case GHOSTEVENT_SETPLAYERENTITY:
 							entname = &buf[ofs];
-							ofs += GAME_HOSTEVENT_ENTNAME_LEN + 1;
+							ofs += GAME_HOSTEVENT_ENTNAME_SIZE;
 							entity_t * clientent;
 							memcpy(&clientent, &buf[ofs], sizeof(entity_t*));
 							bool local_client = true;
@@ -344,7 +390,7 @@ static void client_events_pump()
 	}
 }
 
-void client()
+void client(void)
 {
 
 	client_listen();

@@ -336,7 +336,7 @@ ENTITY_FUNCTION_HANDLE(boss_handle)
 /*
  * набор и проверка кодов (добавление 10.05.2006)
  */
-void player_checkcode()
+void player_checkcode(void)
 {
 	/*
 
@@ -974,7 +974,7 @@ static const entityinfo_t boss_reginfo = {
 		ENTITYINFO_ENTMODELS(tank_boss_models)
 };
 
-void entity_player_init()
+void entity_player_init(void)
 {
 	entity_register(&player_reginfo);
 	entity_register(&enemy_reginfo);

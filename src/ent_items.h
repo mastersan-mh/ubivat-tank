@@ -45,6 +45,6 @@ typedef struct
 
 itemtype_t items_enttype_to_itemtype(const char * entname);
 
-void entity_items_init();
+extern void entity_items_init(void);
 
 #endif /* SRC_ENT_ITEMS_H_ */

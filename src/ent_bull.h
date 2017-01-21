@@ -47,6 +47,6 @@ typedef struct
 
 extern bullinfo_t bullinfo_table[__BULL_NUM];
 
-void entity_bull_init();
+void entity_bull_init(void);
 
 #endif /* SRC_ENT_BULL_H_ */

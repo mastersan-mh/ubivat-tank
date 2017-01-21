@@ -171,7 +171,7 @@ static void entity_freemem(entity_t * entity)
 /**
  * @description удаление всех объектов
  */
-void entities_erase()
+void entities_erase(void)
 {
 	size_t i;
 	for(i = 0; i < entityregs_num; i++)
@@ -234,7 +234,7 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 	return false;
 }
 
-void entities_handle()
+void entities_handle(void)
 {
 	size_t ientreg;
 	for(ientreg = 0; ientreg < entityregs_num; ientreg++)
@@ -335,7 +335,7 @@ void entities_handle()
  * Как только обработчик объекта возвращает объект (не NULL),
  * этот возвращённый объект становится "телом" клиента.
  */
-entity_t * entries_client_join()
+entity_t * entries_client_join(void)
 {
 	size_t ientreg;
 	for(ientreg = 0; ientreg < entityregs_num; ientreg++)

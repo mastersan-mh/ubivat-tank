@@ -16,17 +16,17 @@
 
 extern client_t * clients;
 
-bool cl_game_quit_get()
+bool cl_game_quit_get(void)
 {
 	return cl_state.quit;
 }
 
-void cl_game_quit_set()
+void cl_game_quit_set(void)
 {
 	cl_state.quit = true;
 }
 
-void cl_game_action_showmenu()
+void cl_game_action_showmenu(void)
 {
 	cl_state.show_menu = true;
 }
@@ -46,7 +46,7 @@ int cl_game_create(int flags)
 	return 0;
 }
 
-void cl_game_abort()
+void cl_game_abort(void)
 {
 	client_event_gameabort_send();
 }
@@ -54,7 +54,7 @@ void cl_game_abort()
 /*
  * информация об уровне
  */
-static void cl_game_state_missionbrief_draw()
+static void cl_game_state_missionbrief_draw(void)
 {
 	gr2D_setimage0(0, 0, image_get(IMG_MENU_I_INTERLV));
 	font_color_set3i(COLOR_15);
@@ -69,7 +69,7 @@ static void cl_game_state_missionbrief_draw()
 /*
  * заставка между уровнями
  */
-static void cl_game_state_intermission_draw()
+static void cl_game_state_intermission_draw(void)
 {
 	static image_index_t list[] =
 	{
@@ -125,7 +125,7 @@ static void client_game_draw_cam(camera_t * cam, entity_t * player)
 	map_draw(cam);
 }
 
-static void cl_draw()
+static void cl_draw(void)
 {
 	client_t * client;
 
@@ -168,7 +168,7 @@ static void cl_draw()
 }
 
 
-void cl_game_draw()
+void cl_game_draw(void)
 {
 	switch(cl_state.state)
 	{

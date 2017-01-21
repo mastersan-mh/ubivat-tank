@@ -150,7 +150,7 @@ static const entityinfo_t item_ammo_mine_reginfo = {
 		.entmodels = item_ammo_mine_models
 };
 
-void entity_items_init()
+void entity_items_init(void)
 {
 	entity_register(&item_scores_reginfo);
 	entity_register(&item_health_reginfo);

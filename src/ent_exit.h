@@ -19,6 +19,6 @@ typedef struct
 
 #define ENT_EXIT(x) ((ent_exit_t *)(x)->data)
 
-void entity_exit_init();
+void entity_exit_init(void);
 
 #endif /* SRC_ENT_EXIT_H_ */

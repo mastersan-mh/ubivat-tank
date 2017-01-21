@@ -29,7 +29,7 @@ void sv_game_message_send(const char * mess)
 	sv_state.msg = (char*)mess;
 };
 
-int sv_game_is_custom_game()
+int sv_game_is_custom_game(void)
 {
 	return sv_state.flags & GAMEFLAG_CUSTOMGAME;
 }
@@ -37,12 +37,12 @@ int sv_game_is_custom_game()
 /*
  * первая карта
  */
-int sv_game_is_first_map()
+int sv_game_is_first_map(void)
 {
 	return sv_state.gamemap == mapList;
 }
 
-void sv_game_win()
+void sv_game_win(void)
 {
 	bool alive = true;
 	// проверим что все игроки живы
@@ -72,12 +72,12 @@ void sv_game_win()
 /*
  * главная процедура игры
  */
-void sv_game_gameTick()
+void sv_game_gameTick(void)
 {
 	entities_handle();
 }
 
-void sv_game_mainTick()
+void sv_game_mainTick(void)
 {
 	static gamestate_t state_prev = GAMESTATE_NOGAME;
 	if(state_prev != sv_state.state)
@@ -127,7 +127,7 @@ void sv_game_mainTick()
 /*
  * сообщения об ошибках
  */
-bool sv_game_nextmap()
+bool sv_game_nextmap(void)
 {
 	int ret;
 

@@ -37,8 +37,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
@@ -72,7 +70,7 @@ char * game_dir_home;
 char * game_dir_conf;
 char * game_dir_saves;
 
-void game_init()
+void game_init(void)
 {
 	char * home_dir = getenv("HOME");
 
@@ -178,7 +176,7 @@ void game_init()
 /*
  * подготовка к завершению игры
  */
-void game_done()
+void game_done(void)
 {
 	Z_free(game_dir_home);
 	Z_free(game_dir_conf);
@@ -200,7 +198,7 @@ void game_done()
 /*
  *
  */
-void game_main()
+void game_main(void)
 {
 
 	//sound_play_start(SOUND_FIRE1);
@@ -271,226 +269,14 @@ void game_main()
  * @return = 1 -файл не найден
  * @return = 2 -ошибка чтения файла
  */
-int game_pal_get()
+int game_pal_get(void)
 {
 	return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
-/**
- * @description чтение заголовка записи
- * @return true | false
- */
-static bool game_record_load_info(const char * savename, gamesave_descr_t * rec)
-{
-	int fd;
-	char * path = Z_malloc(strlen(game_dir_saves)+strlen(savename) + 1);
-	strcpy(path, game_dir_saves);
-	strcat(path, savename);
-	fd = open(path, O_RDONLY);
-	Z_free(path);
-	if(fd < 0) return false;
-	memset(rec, 0, sizeof(*rec));
-	game_savedata_header_t header;
-	ssize_t count = read(fd, &header, sizeof(header));
-	if(count != sizeof(header))
-	{
-		close(fd);
-		return false;
-	}
-	strncpy(rec->name, header.name, 15);
-	strncpy(rec->mapfilename, header.mapfilename, 15);
-	rec->flags = header.flags;
-	close(fd);
-	rec->exist = true;
-	return true;
-};
 
-static char * _make_gamesave_filename(char * filename, int i)
-{
-	sprintf(filename, "/ut_s%02d." FILENAME_GAMESAVE_EXT, i);
-	return filename;
-}
 
-/*
- * формируем листинг записей
- */
-void game_record_getsaves()
-{
-	int i;
-	char filename[16];
 
-	memset(game.saveslist, 0, sizeof(game.saveslist[0])*GAME_SAVESNUM);
-	for(i = 0; i < GAME_SAVESNUM; i++)
-	{
-		game_record_load_info(_make_gamesave_filename(filename, i), &(game.saveslist[i]));
-	};
-};
 
-/**
- * запись игрока
- * @return = true | false
- */
-static bool game_record_save_player(int fd, entity_t * player)
-{
-	write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
-	player_t * pl = player->data;
-	game_savedata_player_t savedata =
-	{
-		.fragstotal = pl->fragstotal,
-		.frags      = pl->frags,
-		.scores     = pl->items[ITEM_SCORES],
-		.health     = pl->items[ITEM_HEALTH],
-		.armor      = pl->items[ITEM_ARMOR],
-		.ammo1      = pl->items[ITEM_AMMO_ARTILLERY],
-		.ammo2      = pl->items[ITEM_AMMO_MISSILE],
-		.ammo3      = pl->items[ITEM_AMMO_MINE]
-	};
-	write(fd, &savedata, sizeof(savedata));
-	return true;
-};
-
-/**
- * чтение игрока
- * @return true | false
- */
-static bool game_record_load_player(int fd, entity_t * player)
-{
-	player_t * pl = player->data;
-	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
-	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER) return false;
-	game_savedata_player_t savedata;
-	ssize_t c = read(fd, &savedata, sizeof(savedata));
-	if(c != sizeof(savedata))return false;
-	pl->fragstotal         = savedata.fragstotal;
-	pl->frags              = savedata.frags;
-	pl->items[ITEM_SCORES] = savedata.scores;
-	pl->items[ITEM_HEALTH] = savedata.health;
-	pl->items[ITEM_ARMOR]  = savedata.armor;
-	pl->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
-	pl->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
-	pl->items[ITEM_AMMO_MINE]      = savedata.ammo3;
-	player_class_init(player, player->data);
-	return true;
-};
-
-/**
- * сохраниние записи
- * @return true| false
- */
-bool game_record_save(int isave)
-{
-	gamesave_descr_t * rec = &game.saveslist[isave];
-	int fd;
-	char filename[16];
-	_make_gamesave_filename(filename, isave);
-
-	check_directory(game_dir_saves);
-
-	char * path;
-	path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
-	strcpy(path, game_dir_saves);
-	strcat(path, filename);
-	strcpy(rec->mapfilename, map._file);
-	ssize_t count;
-	//int ret = unlink(path);
-	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-	Z_free(path);
-	if(fd <= 0)return false;
-
-	game_savedata_header_t header;
-	strncpy(header.name, rec->name, 15);
-	strncpy(header.mapfilename, rec->mapfilename, 15);
-	header.flags = rec->flags;
-	count = write(fd, &header, sizeof(header));
-	if(count != sizeof(header))
-	{
-		close(fd);
-		return false;
-	}
-
-	int i;
-	int num = host_client_num_get();
-	for(i = 0; i < num; i++)
-	{
-		game_record_save_player(fd, host_client_get(i)->entity);
-	}
-
-	close(fd);
-	return true;
-};
-/*
- * чтение сохранённой игры
- * @return = 0 - успешно
- * @return = 1 - запись отсутствует
- * @return = 2 - карта отсутствует в списке карт
- * @return = 3 - ошибка чтения карты
- */
-int game_record_load(int isave)
-{
-	gamesave_descr_t * rec = &game.saveslist[isave];
-	int ret;
-	int fd;
-
-	//закроем открытую карту
-	map_clear();
-
-	if(!rec->exist) return 1;
-	/*
-	if(!(rec->flags & GAMEFLAG_CUSTOMGAME))
-	{
-		game.gamemap = map_find(rec->mapfilename);
-		if(!game.gamemap) return 2;
-	};
-*/
-	char filename[16];
-	_make_gamesave_filename(filename, isave);
-	char * path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
-	strcpy(path, game_dir_saves);
-	strcat(path, filename);
-	fd = open(path, O_RDONLY);
-	Z_free(path);
-	if(fd <= 0)
-	{
-		game_halt("gamesave load error");
-		return -1;
-	}
-	game_savedata_header_t header;
-	ssize_t count = read(fd, &header, sizeof(header));
-	if(count != sizeof(header))
-	{
-		close(fd);
-		return false;
-	}
-	strncpy(rec->name, header.name, 15);
-	strncpy(rec->mapfilename, header.mapfilename, 15);
-	rec->flags = header.flags;
-
-	//прочитаем карту
-	ret = map_load(rec->mapfilename);
-	if(ret) return 3;
-
-	// создаем игру
-	ret = cl_game_create(rec->flags);
-	// спавним всех игроков
-
-	int player_num;
-	if(rec->flags & GAMEFLAG_2PLAYERS) player_num = 2;
-	else player_num = 1;
-
-	int i;
-	for(i = 0 ; i < player_num; i++)
-	{
-		client_connect();
-	}
-
-	clients_initcams();
-
-	for(i = 0; i < player_num; i++)
-	{
-		game_record_load_player(fd, host_client_get(i)->entity);
-	}
-	close(fd);
-	return 0;
-}
 
 void game_msg_error(int error)
 {

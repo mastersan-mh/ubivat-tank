@@ -23,39 +23,11 @@
 		"                       T A N K\n"\
 		"\n"
 
-#define GAME_SAVESNUM (8)
-
-typedef struct
-{
-	char name[16];
-	char mapfilename[16];
-	uint16_t flags;
-
-} ATTR_PACKED game_savedata_header_t;
-
-typedef struct
-{
-	uint32_t fragstotal;
-	uint32_t frags;
-	uint32_t scores;
-	int16_t health;
-	int16_t armor;
-	int16_t ammo1;
-	int16_t ammo2;
-	int16_t ammo3;
-} ATTR_PACKED game_savedata_player_t;
-
-//запись иры
-typedef struct
-{
-	bool exist;
-	//внутреннее имя записи
-	char name[16];
-	//имя файла карты
-	char mapfilename[16];
-	//флаги настройки игры
-	uint16_t flags;
-} gamesave_descr_t;
+/* флаги состояния игры */
+/* 2 игрока */
+#define GAMEFLAG_2PLAYERS   0x01
+/* игра по выбору */
+#define GAMEFLAG_CUSTOMGAME 0x02
 
 typedef enum gamestate_s
 {
@@ -96,8 +68,6 @@ typedef struct
 	item_img_t * m_i_lineR;
 	item_img_t * m_i_flagRUS;
 	item_img_t * m_i_flagUSA;
-	//список записей
-	gamesave_descr_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
 
 
@@ -123,18 +93,16 @@ extern char * game_dir_saves;
 extern int game_video_dfactor;
 extern int game_video_sfactor;
 
-void game_action_win();
+extern void game_init(void);
+extern void game_done(void);
+extern void game_main(void);
 
-void game_init();
-void game_done();
-void game_main();
-
-int game_pal_get();
-void game_record_getsaves();
-bool game_record_save(int isave);
-int game_record_load(int isave);
-int cl_game_create(int flags);
-void game_msg_error  (int error);
+extern int game_pal_get(void);
+extern void game_record_getsaves(void);
+extern bool game_record_save(int isave);
+extern int game_record_load(int isave);
+extern int cl_game_create(int flags);
+extern void game_msg_error(int error);
 
 
 void game_halt(const char *error, ...)

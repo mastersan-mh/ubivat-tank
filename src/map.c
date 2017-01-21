@@ -68,14 +68,12 @@ maplist_t * map_find(const char * name)
 	return NULL;
 }
 
-int map_error_get()
+int map_error_get(void)
 {
 	return map_error;
 }
 
-void map_clear();
-
-void map_init()
+void map_init(void)
 {
 	/* empty */
 }
@@ -526,7 +524,7 @@ int map_load(const char * mapname)
 /*
  * закрытие карты
  */
-void map_clear()
+void map_clear(void)
 {
 	if(!map.loaded)return;
 	Z_FREE(map._file);
@@ -654,7 +652,7 @@ void map_list_add(const char *map, const char * name)
 /*
  * удаление списка карт
  */
-void map_list_removeall()
+void map_list_removeall(void)
 {
 	maplist_t * mapEnt;
 	while(mapList)
@@ -670,7 +668,7 @@ void map_list_removeall()
 /*
  * чтение из файла списка карт
  */
-void map_load_list()
+void map_load_list(void)
 {
 	printf("Maps list loading: ");
 

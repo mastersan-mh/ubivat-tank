@@ -18,6 +18,6 @@ typedef struct
 
 #define ENT_MESSAGE(x) ((ent_message_t *)(x)->data)
 
-void entity_message_init();
+extern void entity_message_init(void);
 
 #endif /* SRC_ENT_MESSAGE_H_ */

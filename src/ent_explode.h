@@ -40,6 +40,6 @@ typedef struct
 
 extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
 
-void entity_explode_init();
+extern void entity_explode_init(void);
 
 #endif /* SRC_ENT_EXPLODE_H_ */

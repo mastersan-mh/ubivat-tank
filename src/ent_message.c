@@ -29,7 +29,7 @@ static const entityinfo_t message_reginfo = {
 		.client_restore = NULL
 };
 
-void entity_message_init()
+void entity_message_init(void)
 {
 	entity_register(&message_reginfo);
 }
