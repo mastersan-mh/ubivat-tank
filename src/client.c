@@ -113,6 +113,8 @@ void client_event_control_send(int clientId, const char * action_name)
 	client_t * client;
 	int num, i;
 	LIST2_FOREACH_I(clients, client, num);
+	if(clientId < 0 || clientId >= num)
+		return;
 	LIST2_LIST_TO_IENT(clients, client, i, num - 1 - clientId);
 
 	client_event_send(client, &event);
