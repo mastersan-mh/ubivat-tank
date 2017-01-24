@@ -11,6 +11,7 @@
 #include "net.h"
 #include "server.h"
 #include "game.h"
+#include "g_gamesave.h"
 #include "map.h"
 #include "sound.h"
 #include "menu.h"
@@ -29,6 +30,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
+#define SERVER_CLIENTSAVEENT_MAX 2
+
+server_clientsaveent_t server_clientsaveent[SERVER_CLIENTSAVEENT_MAX];
 
 server_state_t sv_state = {};
 
@@ -74,8 +80,10 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 			buflen += size;
 			break;
 		case GHOSTEVENT_GAMESTATE:
-			buf[buflen] = event->gamestate.state;
-			buflen++;
+			buf[buflen++] = event->gamestate.state;
+			break;
+		case GHOSTEVENT_GAMESAVE_LOADED:
+			buf[buflen++] = event->gamesave_loaded.flags;
 			break;
 	}
 
@@ -103,13 +111,26 @@ void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 	host_event_send(client, &hevent);
 }
 
+void host_event_gameload_loaded_send(int flags)
+{
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_GAMESAVE_LOADED;
+	hevent.gamesave_loaded.flags = flags;
+	host_client_t * client;
+	LIST2_FOREACH(hclients, client)
+	{
+		host_event_send(client, &hevent);
+	}
+}
+
+
 void host_setgamestate(gamestate_t state)
 {
 	//sv_state.state = state;
-	host_client_t * client;
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
 	hevent.gamestate.state = state;
+	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
 		host_event_send(client, &hevent);
@@ -129,17 +150,37 @@ static void server_client_info_store(host_client_t * client)
 	);
 }
 
+/*
+ * восстановление информации о entity клиента при переходе на следующий уровень и при чтении gamesave
+ */
 static void server_client_info_restore(host_client_t * client)
 {
-	if(!client->userstoredata)
-		return;
-	(*client->entity->info->client_restore)(
-		client->entity->data,
-		&(client->storedata),
-		client->userstoredata
-	);
-	Z_free(client->userstoredata);
-	client->userstoredata = NULL;
+	if(client->userstoredata)
+	{
+		(*client->entity->info->client_restore)(
+				client->entity->data,
+				&(client->storedata),
+				client->userstoredata
+		);
+		Z_free(client->userstoredata);
+		client->userstoredata = NULL;
+	}
+	size_t i;
+	for(i = 0; i < SERVER_CLIENTSAVEENT_MAX; i++)
+	{
+		if(!server_clientsaveent[i].valid)
+			continue;
+		/* восстановление сохранения */
+		(*client->entity->info->client_restore)(
+				client->entity->data,
+				&(server_clientsaveent[i].storedata),
+				&(server_clientsaveent[i].userstoredata)
+		);
+		server_clientsaveent[i].valid = false;
+		break;
+	}
+
+
 }
 
 static host_client_t * host_client_create(const net_socket_t * ns, bool main)
@@ -258,6 +299,12 @@ net_socket_t * host_ns = NULL;
 
 void server_start(int flags)
 {
+	size_t i;
+	for(i = 0; i < SERVER_CLIENTSAVEENT_MAX; i++)
+	{
+		server_clientsaveent[i].valid = false;
+	}
+
 	server_run = 1;
 	sv_state.flags = flags;
 	sv_state.state = GAMESTATE_MISSION_BRIEF;
@@ -275,11 +322,41 @@ void server_start(int flags)
 		game_halt("bind");
 	}
 
+	sv_state.allow_state_gamesave = true;
+
 }
 
 void server_stop(void)
 {
 	server_run = 0;
+}
+
+
+static int sv_gamesave_load(int isave)
+{
+	/* игра уже создана */
+	gamesave_load_context_t ctx;
+	if(g_gamesave_load_open(isave, &ctx, server_clientsaveent))
+		return -1;
+
+	//прочитаем карту
+	if(map_load(ctx.mapfilename))
+	{
+		game_console_send("Error: Could not load map \"%s\".", ctx.mapfilename);
+		//game_abort();
+
+		g_gamesave_load_close(&ctx);
+		return -1;
+	}
+
+	sv_state.flags = ctx.flags;
+
+	host_event_gameload_loaded_send(ctx.flags);
+
+	g_gamesave_load_close(&ctx);
+
+	sv_state.allow_state_gamesave = false;
+	return 0;
 }
 
 
@@ -441,7 +518,10 @@ static void server_listen(void)
 					case GAMESTATE_NOGAME:
 						break;
 					case GAMESTATE_MISSION_BRIEF:
-						sv_state.state = GAMESTATE_GAMESAVE;
+						if(sv_state.allow_state_gamesave)
+							sv_state.state = GAMESTATE_GAMESAVE;
+						else
+							sv_state.state = GAMESTATE_INGAME;
 						break;
 					case GAMESTATE_GAMESAVE:
 						sv_state.state = GAMESTATE_INGAME;
@@ -465,7 +545,7 @@ static void server_listen(void)
 			case GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD:
 			{
 				int isave = buf[ofs++];
-				g_gamesave_load(isave);
+				sv_gamesave_load(isave);
 				break;
 			}
 			case GCLIENTEVENT_SVCTRL_SETGAMEMAP:

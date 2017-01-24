@@ -9,10 +9,12 @@
 #define SRC_G_GAMESAVE_H_
 
 #define G_GAMESAVE_NAME_SIZE (16)
+#define G_GAMESAVE_MAPFILENAME_SIZE MAP_FILENAME_SIZE
 #define G_GAMESAVES_NUM (8)
 
 #include "types.h"
 #include "map.h"
+#include "server.h"
 
 typedef struct
 {
@@ -44,11 +46,27 @@ typedef struct
 	uint16_t flags;
 } gamesave_descr_t;
 
+/* чтение сохранённой иры */
+typedef struct
+{
+	int fd;
+	/* имя файла карты */
+	char mapfilename[G_GAMESAVE_MAPFILENAME_SIZE];
+	//флаги настройки игры
+	uint16_t flags;
+} gamesave_load_context_t;
+
 extern gamesave_descr_t gamesaves[G_GAMESAVES_NUM];
 
 extern void g_gamesave_cacheinfos(void);
 extern int g_gamesave_save(int isave);
-extern int g_gamesave_load(int isave);
+
+extern void g_gamesave_load_close(gamesave_load_context_t * ctx);
+extern void g_gamesave_load_read(gamesave_load_context_t * ctx);
+
+extern int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx, server_clientsaveent_t server_clientsaveent[]);
+
+//extern int g_gamesave_load(int isave);
 
 
 #endif /* SRC_G_GAMESAVE_H_ */

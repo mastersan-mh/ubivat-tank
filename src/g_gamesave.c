@@ -87,24 +87,24 @@ static int g_gamesave_save_player(int fd, entity_t * player)
  * чтение игрока
  * @return true | false
  */
-static int g_gamesave_load_player(int fd, entity_t * player)
+static int g_gamesave_load_player(int fd, server_clientsaveent_t * clientsaveent)
 {
-	player_t * pl = player->data;
 	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
 		return -1;
 	gamesave_data_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	pl->fragstotal         = savedata.fragstotal;
-	pl->frags              = savedata.frags;
-	pl->items[ITEM_SCORES] = savedata.scores;
-	pl->items[ITEM_HEALTH] = savedata.health;
-	pl->items[ITEM_ARMOR]  = savedata.armor;
-	pl->items[ITEM_AMMO_ARTILLERY] = savedata.ammo1;
-	pl->items[ITEM_AMMO_MISSILE]   = savedata.ammo2;
-	pl->items[ITEM_AMMO_MINE]      = savedata.ammo3;
-	player_class_init(player, player->data);
+	clientsaveent->storedata.fragstotal = savedata.fragstotal;
+	clientsaveent->storedata.frags      = savedata.frags;
+	clientsaveent->storedata.scores     = savedata.scores;
+	clientsaveent->userstoredata.item_SCORES = savedata.scores;
+	clientsaveent->userstoredata.item_HEALTH = savedata.health;
+	clientsaveent->userstoredata.item_ARMOR  = savedata.armor;
+	clientsaveent->userstoredata.item_AMMO_ARTILLERY = savedata.ammo1;
+	clientsaveent->userstoredata.item_AMMO_MISSILE   = savedata.ammo2;
+	clientsaveent->userstoredata.item_AMMO_MINE      = savedata.ammo3;
+	clientsaveent->valid = true;
 	return 0;
 };
 
@@ -168,6 +168,15 @@ int g_gamesave_save(int isave)
 	return 0;
 };
 
+
+void g_gamesave_load_close(gamesave_load_context_t * ctx)
+{
+	if(ctx->fd >= 0)
+	{
+		close(ctx->fd);
+	}
+}
+
 /*
  * чтение сохранённой игры
  * @return = 0 - успешно
@@ -175,18 +184,17 @@ int g_gamesave_save(int isave)
  * @return = 2 - карта отсутствует в списке карт
  * @return = 3 - ошибка чтения карты
  */
-int g_gamesave_load(int isave)
+int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx, server_clientsaveent_t server_clientsaveent[])
 {
+	ctx->fd = -1;
 	gamesave_descr_t * gamesave = &gamesaves[isave];
-	int ret;
-	int fd;
 
 	//закроем открытую карту
 	map_clear();
 
 	if(!gamesave->exist)
 		return -1;
-	/*
+/*
 	if(!(rec->flags & GAMEFLAG_CUSTOMGAME))
 	{
 		game.gamemap = map_find(rec->mapfilename);
@@ -198,45 +206,33 @@ int g_gamesave_load(int isave)
 	char * path = Z_malloc(strlen(game_dir_saves) + strlen(filename) + 1);
 	strcpy(path, game_dir_saves);
 	strcat(path, filename);
-	fd = open(path, O_RDONLY);
+	ctx->fd = open(path, O_RDONLY);
 	Z_free(path);
-	if(fd <= 0)
+	if(ctx->fd <= 0)
 	{
 		game_halt("gamesave load error");
 		return -1;
 	}
+
 	gamesave_data_header_t header;
-	ssize_t count = read(fd, &header, sizeof(header));
+	ssize_t count = read(ctx->fd, &header, sizeof(header));
 	if(count != sizeof(header))
 	{
-		close(fd);
-		return false;
+		g_gamesave_load_close(ctx);
+		return -1;
 	}
-	strncpy(gamesave->name, header.name, 15);
-	gamesave->flags = header.flags;
 
-	//прочитаем карту
-	ret = map_load(header.mapfilename);
-	if(ret) return 3;
-
-	// создаем игру
-	ret = cl_game_create(gamesave->flags);
-	// спавним всех игроков
-
-	int player_num;
-	if(gamesave->flags & GAMEFLAG_2PLAYERS)
-		player_num = 2;
-	else
-		player_num = 1;
+	strncpy(ctx->mapfilename, header.mapfilename, G_GAMESAVE_MAPFILENAME_SIZE);
+	ctx->flags = header.flags;
 
 
-	host_client_t * client;
-	LIST2_FOREACHR(hclients, client)
+	int player_num = (ctx->flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+
+	int i;
+	for(i = 0; i < player_num; i++)
 	{
-		g_gamesave_load_player(fd, client->entity);
+		g_gamesave_load_player(ctx->fd, &server_clientsaveent[i]);
 	}
-
-	close(fd);
 	return 0;
-}
 
+}

@@ -355,6 +355,14 @@ static void client_listen(void)
 							}
 
 							break;
+						case GHOSTEVENT_GAMESAVE_LOADED:
+							cl_state.flags = buf[ofs];
+							if(cl_state.flags & GAMEFLAG_2PLAYERS)
+							{
+								client_connect();
+								clients_initcams();
+							}
+							break;
 					}
 
 					break;

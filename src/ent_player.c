@@ -201,6 +201,9 @@ static void player_restore(void * thisdata, const client_storedata_t * storedata
 		userstoredata,
 		sizeof(int) * __ITEM_NUM
 	);
+
+	//TODO: player_class_init(player, player->data);
+
 }
 
 

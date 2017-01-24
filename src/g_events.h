@@ -35,6 +35,7 @@ typedef enum
 	GHOSTEVENT_CONNECTION_CLOSE,
 	GHOSTEVENT_GAMESTATE,
 	GHOSTEVENT_SETPLAYERENTITY,
+	GHOSTEVENT_GAMESAVE_LOADED,
 } ghosteventtype_t;
 /*
 #define CLIENT_MSG_CONNECT  0x01
@@ -87,6 +88,10 @@ typedef struct
 			char entityname[GAME_HOSTEVENT_ENTNAME_SIZE];
 			entity_t * entity;
 		} setplayerentity;
+		struct
+		{
+			int flags;
+		} gamesave_loaded;
 	};
 } ghostevent_t;
 

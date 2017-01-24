@@ -345,7 +345,23 @@ static int menu_game_load(void * ctx)
 				return MENU_MAIN;
 			if(!gamesaves[__ctx->menu].exist)
 				break;
-			client_event_gamesave_load_send(__ctx->menu);
+
+			{
+
+				int ret;
+				ret = cl_game_create(0);
+				if(ret)
+				{
+					game_halt("Error: Can not create game.");
+					return MENU_ABORT;
+				}
+
+				client_connect();
+				clients_initcams();
+
+				client_event_gamesave_load_send(__ctx->menu);
+
+			}
 			/*
 			 TODO: move this to server
 			if(!ret)

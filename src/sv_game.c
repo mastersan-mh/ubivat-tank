@@ -106,6 +106,7 @@ void sv_game_mainTick(void)
 					sound_play_stop(sv_state.sound_playId);
 					sv_state.sound_playId = 0;
 				}
+				sv_state.allow_state_gamesave = true;
 			}
 			sv_game_gameTick();
 			break;

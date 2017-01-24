@@ -8,11 +8,32 @@
 #ifndef SRC_SERVER_H_
 #define SRC_SERVER_H_
 
-#include <g_gamesave.h>
 #include "game.h"
 #include "net.h"
 #include "map.h"
-#include "menu.h"
+
+/* gamesave client-ent info */
+typedef struct server_clientsaveent_s
+{
+	bool valid;
+	struct
+	{
+		int fragstotal;
+		int frags;
+		int level;
+		int scores;
+	} storedata;
+	struct
+	{
+		int item_SCORES;
+		int item_HEALTH;
+		int item_ARMOR;
+		int item_AMMO_ARTILLERY;
+		int item_AMMO_MISSILE;
+		int item_AMMO_MINE;
+	} userstoredata;
+} server_clientsaveent_t;
+
 
 //состояние игры
 typedef struct
@@ -27,6 +48,10 @@ typedef struct
 
 	maplist_t * gamemap;
 	maplist_t * custommap;
+/* Разрешить переход на состояние сохранения игры.
+   Если игра была только что прочитана, её не нужно сохранять */
+	bool allow_state_gamesave;
+
 
 } server_state_t;
 
