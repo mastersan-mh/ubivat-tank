@@ -164,7 +164,7 @@ typedef struct entityinfo_s
 	entity_t * (*client_join)(const entity_t * this);
 
 	void * (*client_store)(struct client_storedata_s * storedata, const void * thisdata);
-	void (*client_restore)(void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
+	void (*client_restore)(entity_t * this, void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
 
 	/* массив действий, допустимых для entity */
 	unsigned int actions_num;

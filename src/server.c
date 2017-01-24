@@ -108,6 +108,7 @@ void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 	sv_state.state = state;
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
+	hevent.gamestate.state = state;
 	host_event_send(client, &hevent);
 }
 
@@ -158,6 +159,7 @@ static void server_client_info_restore(host_client_t * client)
 	if(client->userstoredata)
 	{
 		(*client->entity->info->client_restore)(
+				client->entity,
 				client->entity->data,
 				&(client->storedata),
 				client->userstoredata
@@ -172,6 +174,7 @@ static void server_client_info_restore(host_client_t * client)
 			continue;
 		/* восстановление сохранения */
 		(*client->entity->info->client_restore)(
+				client->entity,
 				client->entity->data,
 				&(server_clientsaveent[i].storedata),
 				&(server_clientsaveent[i].userstoredata)

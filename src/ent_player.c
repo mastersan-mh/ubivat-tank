@@ -190,7 +190,7 @@ static void * player_store(client_storedata_t * storedata, const void * thisdata
 	return usersoredata;
 }
 
-static void player_restore(void * thisdata, const client_storedata_t * storedata, const void * userstoredata)
+static void player_restore(entity_t * this, void * thisdata, const client_storedata_t * storedata, const void * userstoredata)
 {
 	((player_t *)thisdata)->fragstotal         = storedata->fragstotal;
 	((player_t *)thisdata)->frags              = storedata->frags;
@@ -202,8 +202,7 @@ static void player_restore(void * thisdata, const client_storedata_t * storedata
 		sizeof(int) * __ITEM_NUM
 	);
 
-	//TODO: player_class_init(player, player->data);
-
+	player_class_init(this, thisdata);
 }
 
 

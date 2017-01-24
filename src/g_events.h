@@ -9,6 +9,7 @@
 #define SRC_G_EVENTS_H_
 
 #include "entity.h"
+#include "game.h"
 #include "g_gamesave.h"
 
 #define GAME_EVENT_CONTROL_ACTION_SIZE (64)
@@ -77,7 +78,7 @@ typedef struct
 		} accepted;
 		struct
 		{
-			uint8_t state;
+			gamestate_t state;
 		} gamestate;
 		struct
 		{

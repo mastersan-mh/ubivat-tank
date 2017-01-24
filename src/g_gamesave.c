@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 extern host_client_t * hclients;
+extern server_state_t sv_state;
 
 /* список записей */
 gamesave_descr_t gamesaves[G_GAMESAVES_NUM];
@@ -150,6 +151,7 @@ int g_gamesave_save(int isave)
 	gamesave_data_header_t header;
 	strncpy(header.name, gamesave->name, G_GAMESAVE_NAME_SIZE);
 	strncpy(header.mapfilename, map._file, MAP_FILENAME_SIZE);
+	gamesave->flags = sv_state.flags;
 	header.flags = gamesave->flags;
 	count = write(fd, &header, sizeof(header));
 	if(count != sizeof(header))

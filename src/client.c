@@ -259,9 +259,9 @@ static const char * gamestate_to_str(gamestate_t state)
 	static const char *list[] =
 	{
 			"GAMESTATE_NOGAME",
-			"GAMESTATE_INGAME",
-			"GAMESTATE_GAMESAVE",
 			"GAMESTATE_MISSION_BRIEF",
+			"GAMESTATE_GAMESAVE",
+			"GAMESTATE_INGAME",
 			"GAMESTATE_INTERMISSION",
 	};
 	return list[state];
@@ -322,8 +322,8 @@ static void client_listen(void)
 					if(!buf)
 						break;
 					client->time = time_current;
-					hevent.type = buf[ofs];
-					ofs++;
+					hevent.type = buf[ofs++];
+
 					switch(hevent.type)
 					{
 						case GHOSTEVENT_CONNECTION_ACCEPTED:

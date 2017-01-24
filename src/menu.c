@@ -434,7 +434,6 @@ static int menu_game_save(void * ctx)
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->rec = gamesaves[__ctx->menu];
-			gamesaves[__ctx->menu].flags = cl_state.flags;
 			gamesaves[__ctx->menu].exist = true;
 			__ctx->state = MENU_GAME_SAVE_INPUT;
 			break;
