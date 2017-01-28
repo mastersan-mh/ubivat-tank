@@ -14,6 +14,7 @@
 #include "model.h"
 #include "img.h"
 #include "server.h"
+#include "common_bstree.h"
 
 #define ENTITY_NAME_SIZE (64)
 /*
@@ -62,6 +63,10 @@
 #define ENTITY_UNSPAWN(ent) \
 		(ent)->spawned = false
 
+#define ENTITYINFO_VARS(xvars) \
+		.vars_num = ARRAYSIZE(xvars), \
+		.vars = xvars
+
 #define ENTITYINFO_ACTIONS(xactions) \
 		.actions_num = ARRAYSIZE(xactions), \
 		.actions = xactions
@@ -78,6 +83,28 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
+typedef int64_t entity_int_t;
+typedef float entity_float_t;
+
+/* тип переменной entity */
+typedef enum
+{
+	ENTITYVARTYPE_INTEGER,
+	ENTITYVARTYPE_FLOAT
+} entityvartype_t;
+
+/* переменная entity */
+typedef struct entityvardata_s
+{
+	size_t index; /* номер переменной в списке entityvardata_t.vars */
+	entityvartype_t type;
+	union
+	{
+		entity_int_t i64;
+		entity_float_t f;
+	} value;
+} entityvardata_t;
+
 /*
  * список объектов одного типа, у которых
  * .erased == false и allow_handle == true
@@ -88,6 +115,8 @@ typedef struct entity_s
 	struct entity_s * next;
 	/* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
 	struct entity_s * parent;
+	/* переменные */
+	node_t * vars; /* entityvardata_t */
 	/* удалить объект */
 	bool erase;
 	//позиция
@@ -134,7 +163,7 @@ typedef struct
 	const ent_modelaction_t * actions;
 } entmodel_t;
 
-/* структура для проигрывания кардов моделей, связанных с объектом */
+/* структура для проигрывания кадров моделей, связанных с объектом */
 typedef struct ent_modelplayer_s
 {
 	const model_t * model;
@@ -143,6 +172,15 @@ typedef struct ent_modelplayer_s
 	/* номер кадра */
 	float frame;
 } ent_modelplayer_t;
+
+/* описатель дополнительной переменной entity, используются в handler, передаются клиенту */
+typedef struct
+{
+	/* имя переменной */
+	char * name;
+	/* тип переменной */
+	entityvartype_t type;
+} entityvarinfo_t;
 
 typedef struct entityaction_s
 {
@@ -166,6 +204,10 @@ typedef struct entityinfo_s
 	void * (*client_store)(struct client_storedata_s * storedata, const void * thisdata);
 	void (*client_restore)(entity_t * this, void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
 
+	/* массив дополнительных переменных */
+	unsigned int vars_num;
+	entityvarinfo_t * vars;
+
 	/* массив действий, допустимых для entity */
 	unsigned int actions_num;
 	entityaction_t * actions;
@@ -188,6 +230,26 @@ extern void entities_render(camera_t * cam);
 
 extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
 extern void entities_erase(void);
+
+extern entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varname, entityvartype_t vartype);
+
+#define ENTITY_VARIABLE_INTEGER(entity, varname) \
+	entity_vardata_get((entity), (varname), ENTITYVARTYPE_INTEGER)->value.i64
+#define ENTITY_VARIABLE_FLOAT(entity, varname) \
+	entity_vardata_get((entity), (varname), ENTITYVARTYPE_FLOAT)->value.f
+
+extern int entity_var_get(entity_t * entity, const char * varname, entityvartype_t vartype, void * value);
+extern int entity_var_set(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value);
+extern int entity_var_add(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value);
+
+extern entity_int_t entity_var_int_get(entity_t * entity, const char * varname);
+extern entity_float_t entity_var_float_get(entity_t * entity, const char * varname);
+
+extern int entity_var_int_set(entity_t * entity, const char * varname, entity_int_t value);
+extern int entity_var_float_set(entity_t * entity, const char * varname, entity_float_t value);
+extern int entity_var_int_add(entity_t * entity, const char * varname, entity_int_t value);
+extern int entity_var_float_add(entity_t * entity, const char * varname, entity_float_t value);
+
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);

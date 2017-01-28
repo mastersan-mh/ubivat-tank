@@ -178,7 +178,6 @@ static void * player_store(client_storedata_t * storedata, const void * thisdata
 {
 	storedata->fragstotal = ((player_t *)thisdata)->fragstotal;
 	storedata->frags      = ((player_t *)thisdata)->frags;
-	storedata->level      = ((player_t *)thisdata)->level;
 	storedata->scores     = ((player_t *)thisdata)->items[ITEM_SCORES];
 
 	void * usersoredata = Z_malloc(sizeof(int) * __ITEM_NUM);
@@ -194,7 +193,6 @@ static void player_restore(entity_t * this, void * thisdata, const client_stored
 {
 	((player_t *)thisdata)->fragstotal         = storedata->fragstotal;
 	((player_t *)thisdata)->frags              = storedata->frags;
-	((player_t *)thisdata)->level              = storedata->level;
 	((player_t *)thisdata)->items[ITEM_SCORES] = storedata->scores;
 	memcpy(
 		((player_t *)thisdata)->items,
@@ -251,6 +249,13 @@ ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(this, t
 ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(this, thisdata, true , WEAP_MINE); }
 ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(this, thisdata, false, WEAP_MINE); }
 ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
+
+
+static entityvarinfo_t player_vars[] =
+{
+		{ "fragstotal", ENTITYVARTYPE_INTEGER}, /* фрагов за пройденые карты */
+		{ "frags", ENTITYVARTYPE_INTEGER}, /* фрагов за карту */
+};
 
 static entityaction_t player_actions[] =
 {
@@ -873,24 +878,30 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 			pl->items[ITEM_ARMOR] = armor;
 		if(pl->items[ITEM_HEALTH] <= 0)
 		{
-			entity_t * eplayer = explode->parent;
-			player_t * pl = eplayer->data;
-			if(!self)
+			entity_t * killer = explode->parent;
+			if(killer)
 			{
-
-				//атакующему добавим очки
-				pl->items[ITEM_SCORES] += c_score_pertank;
-				pl->fragstotal++;
-				pl->frags++;
+				player_t * pl = killer->data;
+				if(!self)
+				{
+					//атакующему добавим очки
+					pl->items[ITEM_SCORES] += c_score_pertank;
+					ENTITY_VARIABLE_INTEGER(killer, "fragstotal")++;
+					ENTITY_VARIABLE_INTEGER(killer, "frags")++;
+					pl->fragstotal++;
+					pl->frags++;
+				}
+				else
+				{
+					//атакующий умер от своей пули
+					pl->items[ITEM_SCORES] = 0;
+					ENTITY_VARIABLE_INTEGER(killer, "fragstotal")--;
+					ENTITY_VARIABLE_INTEGER(killer, "frags")--;
+					pl->fragstotal--;
+					pl->frags--;
+				}
+				player_class_init(killer, pl);
 			}
-			else
-			{
-				//атакующий умер от своей пули
-				pl->items[ITEM_SCORES] = 0;
-				pl->fragstotal--;
-				pl->frags--;
-			}
-			player_class_init(eplayer, pl);
 		}
 	}
 }
@@ -950,6 +961,7 @@ static const entityinfo_t player_reginfo = {
 		.handle = player_handle,
 		.client_store = player_store,
 		.client_restore = player_restore,
+		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ACTIONS(player_actions),
 		ENTITYINFO_ENTMODELS(tank_player_models)
 };
@@ -962,6 +974,7 @@ static const entityinfo_t enemy_reginfo = {
 		.handle   = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_enemy_models)
 };
 
@@ -973,6 +986,7 @@ static const entityinfo_t boss_reginfo = {
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_boss_models)
 };
 

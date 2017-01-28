@@ -92,7 +92,10 @@ static void cl_game_state_intermission_draw(void)
 
 	font_color_set3i(COLOR_15);
 	video_printf(48 + 8 * 00, refy      , "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-
+/*
+	client_t * client;
+	LIST2_FOREACHR(clients, client)
+*/
 	for(i = 0; i < num; i++)
 	{
 		host_client_t * client = host_client_get(i);

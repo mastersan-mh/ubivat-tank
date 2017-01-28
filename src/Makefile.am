@@ -18,6 +18,8 @@ ent_weap.c \
 ent_items.c \
 ent_player.c \
 ent_player_think.c \
+common_bstree.c \
+common_hash.c \
 Z_mem.c \
 system.c \
 net.c \

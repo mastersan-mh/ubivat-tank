@@ -48,9 +48,6 @@ void model_register(const model_t * model)
 		return;
 	}
 
-	game_console_send("Model registration: \"%s\".", model->name);
-
-
 	if(model_get(model->name) != NULL)
 	{
 			game_console_send("Model registration failed: duplicate name \"%s\"", model->name);
@@ -72,6 +69,7 @@ void model_register(const model_t * model)
 	}
 	models[models_num] = model;
 	models_num++;
+	game_console_send("Model registered: \"%s\".", model->name);
 }
 
 void model_render(

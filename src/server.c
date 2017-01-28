@@ -15,6 +15,7 @@
 #include "map.h"
 #include "sound.h"
 #include "menu.h"
+#include "entity.h"
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -149,6 +150,18 @@ static void server_client_info_store(host_client_t * client)
 		&(client->storedata),
 		client->entity->data
 	);
+
+	entity_t * entity = client->entity;
+	size_t vars_num = entity->info->vars_num;
+	entityvarinfo_t * vars = entity->info->vars;
+
+	client->vardata = Z_calloc(vars_num, sizeof(entityvardata_t));
+	size_t i;
+	for(i = 0; i < vars_num; i++)
+	{
+		client->vardata[i] = *entity_vardata_get(entity, vars[i].name, -1);
+	}
+
 }
 
 /*
@@ -156,6 +169,7 @@ static void server_client_info_store(host_client_t * client)
  */
 static void server_client_info_restore(host_client_t * client)
 {
+	size_t i;
 	if(client->userstoredata)
 	{
 		(*client->entity->info->client_restore)(
@@ -167,7 +181,17 @@ static void server_client_info_restore(host_client_t * client)
 		Z_free(client->userstoredata);
 		client->userstoredata = NULL;
 	}
-	size_t i;
+
+	entity_t * entity = client->entity;
+	size_t vars_num = entity->info->vars_num;
+	entityvarinfo_t * vars = entity->info->vars;
+	for(i = 0; i < vars_num; i++)
+	{
+		*entity_vardata_get(entity, vars[i].name, -1) = client->vardata[i];
+	}
+	Z_free(client->vardata);
+
+
 	for(i = 0; i < SERVER_CLIENTSAVEENT_MAX; i++)
 	{
 		if(!server_clientsaveent[i].valid)

@@ -61,8 +61,8 @@ typedef struct client_storedata_s
 	int fragstotal;
 	//фрагов на карте
 	int frags;
-	int level;
 	int scores;
+	int level;
 } client_storedata_t;
 
 typedef struct host_client_s
@@ -73,6 +73,10 @@ typedef struct host_client_s
 	struct entity_s * entity;
 	client_storedata_t storedata;
 	void * userstoredata;
+
+	/* сохраняемые переменные */
+	struct entityvardata_s * vardata;
+
 	/* адрес клиента */
 	net_socket_t * ns;
 	/* клиент является главным, может управлять сервером.

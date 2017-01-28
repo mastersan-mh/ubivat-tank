@@ -9,6 +9,7 @@
 #include "entity.h"
 #include "model.h"
 #include "common_list2.h"
+#include "common_hash.h"
 
 typedef struct
 {
@@ -38,6 +39,7 @@ entity_registered_t * entityinfo_get(const char * name)
 
 void entity_register(const entityinfo_t * info)
 {
+	ssize_t i;
 	entity_registered_t * tmp;
 	if(info == NULL)
 	{
@@ -51,9 +53,6 @@ void entity_register(const entityinfo_t * info)
 		return;
 	}
 
-	game_console_send("Entity registration: \"%s\".", info->name);
-
-
 	if(entityinfo_get(info->name) != NULL)
 	{
 		game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
@@ -65,6 +64,26 @@ void entity_register(const entityinfo_t * info)
 
 	if(info->datasize == 0 && info->init != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
+
+	{
+		/* проверка переменных */
+		nodeId_t * nodeIds = calloc(info->vars_num, sizeof(nodeId_t));
+		for(i = 0; i < info->vars_num; i++)
+		{
+			nodeIds[i] = HASH32(info->vars[i].name);
+			ssize_t j;
+			for(j = 0; j < i; j++)
+			{
+				if(nodeIds[i] == nodeIds[j])
+				{
+					game_console_send("Entity registration failed: entity \"%s\" duplicate variable name \"%s\".", info->name, info->vars[i].name);
+					free(nodeIds);
+					return;
+				}
+			}
+		}
+		free(nodeIds);
+	}
 
 	if(entityregs_size < entityregs_num + 1)
 	{
@@ -80,6 +99,9 @@ void entity_register(const entityinfo_t * info)
 	entityregs[entityregs_num].entities = NULL;
 	entityregs[entityregs_num].entities_erased = NULL;
 	entityregs_num++;
+
+	game_console_send("Entity registered: \"%s\".", info->name);
+
 }
 
 /**
@@ -98,7 +120,7 @@ int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
  */
 entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
 {
-	int i;
+	size_t i;
 	entity_registered_t * entityinfo_reg = entityinfo_get(name);
 	if(!entityinfo_reg)
 	{
@@ -118,6 +140,24 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 
 	const entityinfo_t * entityinfo = entityinfo_reg->info;
 	entity->info = entityinfo;
+
+	{
+		/* сформировать переменные объекта */
+		entityvarinfo_t * evars = entityinfo->vars;
+		for(i = 0; i < entityinfo->vars_num; i++)
+		{
+			entityvardata_t * vardata = Z_malloc(sizeof(entityvardata_t));
+			vardata->index = i;
+			vardata->type = entityinfo->vars[i].type;
+			switch(vardata->type)
+			{
+				case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
+				case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
+			}
+			tree_node_insert(&entity->vars, HASH32(evars[i].name), vardata);
+
+		}
+	}
 
 	LIST2_PUSH(entityinfo_reg->entities, entity);
 
@@ -165,6 +205,12 @@ static void entity_freemem(entity_t * entity)
 			Z_free(entity->data);
 	}
 	Z_free(entity->modelplayers);
+
+	void vardata_delete(void * data)
+	{
+		free(data);
+	}
+	tree_delete(entity->vars, vardata_delete);
 	Z_free(entity);
 }
 
@@ -194,6 +240,112 @@ void entities_erase(void)
 		}
 
 	}
+}
+
+/*
+ * получить данные переменной
+ */
+entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varname, entityvartype_t vartype)
+{
+	static const char * list[] =
+	{
+			"INTEGER",
+			"FLOAT",
+	};
+	node_t * node = tree_node_find(entity->vars, HASH32(varname));
+	if(!node)
+	{
+		game_console_send("Error: Entity \"%s\" has no variable \"%s\"", entity->info->name, varname);
+		return NULL;
+	}
+	entityvardata_t * vardata = node->data;
+	if( (int)vartype >= 0 && vardata->type != vartype )
+	{
+		game_console_send("Warning: Entity \"%s\" variable \"%s\" has type %s, but used as %s.", entity->info->name, varname, list[vardata->type], list[vartype]);
+	}
+	return vardata;
+}
+
+/*
+ * чтение значения переменной
+ */
+int entity_var_get(entity_t * entity, const char * varname, entityvartype_t vartype, void * value)
+{
+	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
+	if(!vardata)
+		return -1;
+	switch(vartype)
+	{
+		case ENTITYVARTYPE_INTEGER: *((entity_int_t *)value)   = vardata->value.i64; break;
+		case ENTITYVARTYPE_FLOAT  : *((entity_float_t *)value) = vardata->value.f; break;
+	}
+	return 0;
+}
+
+/*
+ * задать значение переменной
+ */
+int entity_var_set(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value)
+{
+	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
+	if(!vardata)
+		return -1;
+	switch(vardata->type)
+	{
+		case ENTITYVARTYPE_INTEGER: vardata->value.i64 = *((entity_int_t *)value); break;
+		case ENTITYVARTYPE_FLOAT  : vardata->value.f   = *((entity_float_t *)value); break;
+	}
+	return 0;
+}
+
+/*
+ * увеличить значение переменной на value
+ */
+int entity_var_add(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value)
+{
+	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
+	if(!vardata)
+		return -1;
+	switch(vardata->type)
+	{
+		case ENTITYVARTYPE_INTEGER: vardata->value.i64 += *((entity_int_t *)value); break;
+		case ENTITYVARTYPE_FLOAT  : vardata->value.f   += *((entity_float_t *)value); break;
+	}
+	return 0;
+}
+
+entity_int_t entity_var_int_get(entity_t * entity, const char * varname)
+{
+	entity_int_t value;
+	entity_var_get(entity, varname, ENTITYVARTYPE_INTEGER, &value);
+	return value;
+}
+
+entity_float_t entity_var_float_get(entity_t * entity, const char * varname)
+{
+	entity_float_t value;
+	entity_var_get(entity, varname, ENTITYVARTYPE_FLOAT, &value);
+	return value;
+}
+
+int entity_var_int_set(entity_t * entity, const char * varname, entity_int_t value)
+{
+	return entity_var_set(entity, varname, ENTITYVARTYPE_INTEGER, &value);
+}
+
+int entity_var_float_set(entity_t * entity, const char * varname, entity_float_t value)
+{
+	return entity_var_set(entity, varname, ENTITYVARTYPE_FLOAT, &value);
+}
+
+int entity_var_int_add(entity_t * entity, const char * varname, entity_int_t value)
+{
+	return entity_var_add(entity, varname, ENTITYVARTYPE_INTEGER, &value);
+}
+
+int entity_var_float_add(entity_t * entity, const char * varname, entity_float_t value)
+{
+	return entity_var_add(entity, varname, ENTITYVARTYPE_FLOAT, &value);
 }
 
 /**

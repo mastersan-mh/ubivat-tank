@@ -81,16 +81,19 @@ typedef struct
 
 typedef struct
 {
-	int level;
-	int items[__ITEM_NUM];
-
 	//фрагов за пройденые карты
 	long fragstotal;
+
 	//фрагов на карте
 	long frags;
+	int level;
+
+	int items[__ITEM_NUM];
 
 	//для управляемой ракеты
 	struct entity_s * bull;
+
+
 	//передвижения
 	move_t move;
 	bool attack;
