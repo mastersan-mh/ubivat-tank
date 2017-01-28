@@ -109,6 +109,8 @@ typedef struct entity_s
 	bool erase;
 	//позиция
 	vec2_t pos;
+	/* объект живой */
+	bool alive;
 	/* направление взгляда/движения */
 	direction_t dir;
 	/* объект показывать и обрабатывать */

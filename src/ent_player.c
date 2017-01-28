@@ -47,35 +47,35 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
 	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
-		pl->items[ITEM_HEALTH] = sp->items[ITEM_HEALTH];
+		ENTITY_VARIABLE_INTEGER(player, "item_health") = sp->items[ITEM_HEALTH];
 	else
 	{
 		if( !ENTITY_IS(player, "player") )
-			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
 		else
 		{
 			if(sv_game_is_custom_game())
-				pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+				ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
 			else
 			{
 				//по уровням
 				if(sv_game_is_first_map()) // первая карта
-					pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
 				else // не первая карта
-					if(pl->items[ITEM_HEALTH] <= 0)
-						pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
+					if(ENTITY_VARIABLE_INTEGER(player, "item_health") <= 0)
+						ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
 			}
 		}
 	}
 	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
-		pl->items[ITEM_ARMOR] = sp->items[ITEM_ARMOR];
+		ENTITY_VARIABLE_INTEGER(player, "item_armor") = sp->items[ITEM_ARMOR];
 	else
 	{
 		if( ENTITY_IS(player, "player") )
-			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+			ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
 		else
 			if(sv_game_is_custom_game())
-				pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+				ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
 	};
 	ENTITY_VARIABLE_INTEGER(player, "frags") = 0;
 	pl->bull          = NULL;
@@ -175,25 +175,8 @@ static ENTITY_FUNCTION_SPAWN(player_spawn)
 
 static ENTITY_FUNCTION_HANDLE(player_handle);
 
-static void * player_store(const void * thisdata)
-{
-	void * usersoredata = Z_malloc(sizeof(int) * ITEM_NUM);
-	memcpy(
-		usersoredata,
-		((player_t *)thisdata)->items,
-		sizeof(int) * ITEM_NUM
-	);
-	return usersoredata;
-}
-
 static void player_restore(entity_t * this, void * thisdata, const void * userstoredata)
 {
-	memcpy(
-		((player_t *)thisdata)->items,
-		userstoredata,
-		sizeof(int) * ITEM_NUM
-	);
-
 	player_class_init(this, thisdata);
 }
 
@@ -247,10 +230,18 @@ ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 static entityvarinfo_t player_vars[] =
 {
-		{ "fragstotal", ENTITYVARTYPE_INTEGER}, /* фрагов за пройденые карты */
-		{ "frags"     , ENTITYVARTYPE_INTEGER}, /* фрагов за карту */
-		{ "scores"    , ENTITYVARTYPE_INTEGER}, /* набрано очков */
-		{ "level"     , ENTITYVARTYPE_INTEGER}, /* уровень */
+		{ "fragstotal", ENTITYVARTYPE_INTEGER }, /* фрагов за пройденые карты */
+		{ "frags"     , ENTITYVARTYPE_INTEGER }, /* фрагов за карту */
+		{ "scores"    , ENTITYVARTYPE_INTEGER }, /* набрано очков */
+		{ "level"     , ENTITYVARTYPE_INTEGER }, /* уровень игрока */
+
+		{ "item_health"        , ENTITYVARTYPE_INTEGER },
+		{ "item_armor"         , ENTITYVARTYPE_INTEGER },
+		{ "item_ammo_artillery", ENTITYVARTYPE_INTEGER },
+		{ "item_ammo_missile"  , ENTITYVARTYPE_INTEGER },
+		{ "item_ammo_mine"     , ENTITYVARTYPE_INTEGER },
+
+
 
 };
 
@@ -280,11 +271,11 @@ ENTITY_FUNCTION_INIT(player_init)
 	player_t * pl = thisdata;
 
 #if defined(_DEBUG_PLAYERMAXLEVEL)
-	for( int i = 0; i < ITEM_NUM; i++)
-	{
-		pl->items[i] = 50;
-	}
 	ENTITY_VARIABLE_INTEGER(this, "scores") = 9000;
+	ENTITY_VARIABLE_INTEGER(this, "item_health") = 100;
+	ENTITY_VARIABLE_INTEGER(this, "item_armor")  = 100;
+	ENTITY_VARIABLE_INTEGER(this, "item_ammo_missile") = 100;
+	ENTITY_VARIABLE_INTEGER(this, "item_ammo_mine")    = 100;
 #endif
 
 	player_spawn_init(this, pl, parent);// parent = spawn
@@ -442,7 +433,7 @@ void player_checkcode(void)
 	*/
 }
 
-void check_value_int(int * val, int min, int max)
+void coerce_value_int(int * val, int min, int max)
 {
 	if(*val > max) *val = max;
 	else if(*val < min) *val = min;
@@ -463,8 +454,6 @@ static void player_influence_exit(entity_t * actor, entity_t * exposed)
 
 static void player_pickup_item_scores(entity_t * player, entity_t * entity)
 {
-	player_t * pl = player->data;
-
 	item_t * item = entity->data;
 	if(!item->exist)
 		return;
@@ -478,16 +467,24 @@ static void player_pickup_item_scores(entity_t * player, entity_t * entity)
 	player_class_init(player, player->data);
 	if(scores / ITEM_SCOREPERCLASS >= 5)
 	{
-		if(pl->items[ITEM_HEALTH] < playerinfo->items[ITEM_HEALTH])
-			pl->items[ITEM_HEALTH] = playerinfo->items[ITEM_HEALTH];
-		if(pl->items[ITEM_ARMOR] < playerinfo->items[ITEM_ARMOR])
-			pl->items[ITEM_ARMOR] = playerinfo->items[ITEM_ARMOR];
+		if(ENTITY_VARIABLE_INTEGER(player, "item_health") < playerinfo->items[ITEM_HEALTH])
+			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
+		if(ENTITY_VARIABLE_INTEGER(player, "item_armor") < playerinfo->items[ITEM_ARMOR])
+			ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
 	}
 }
 
 static void player_influence_item(entity_t * player, entity_t * entity)
 {
-	player_t * pl = player->data;
+	static const char *list[] =
+	{
+			"scores",
+			"item_health",
+			"item_armor",
+			"item_ammo_artillery",
+			"item_ammo_missile",
+			"item_ammo_mine",
+	};
 
 	itemtype_t itemtype = items_enttype_to_itemtype(entity->info->name);
 	if((int) itemtype < 0)
@@ -504,13 +501,15 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 			playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
 			playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
 			(
-			((pl->items[itemtype] < playerinfo->items[itemtype]) || item->amount < 0)
+			((ENTITY_VARIABLE_INTEGER(player, list[itemtype]) < playerinfo->items[itemtype]) || item->amount < 0)
 			)
 	)
 	{
 		item->exist = false;
-		pl->items[itemtype] += item->amount;
-		check_value_int(&pl->items[itemtype], 0, playerinfo->items[itemtype]);
+		int itemamount = (ENTITY_VARIABLE_INTEGER(player, list[itemtype]) += item->amount);
+
+		coerce_value_int(&itemamount, 0, playerinfo->items[itemtype]);
+		ENTITY_VARIABLE_INTEGER(player, list[itemtype]) = itemamount;
 	};
 }
 
@@ -529,9 +528,9 @@ bool inbox(entity_t * entity, entity_t * player)
  */
 static void player_pickup(entity_t * player)
 {
-	player_t * pl = player->data;
 
-	if(pl->items[ITEM_HEALTH] <= 0) return;
+	if(!player->alive)
+		return;
 
 	entity_t * entity;
 
@@ -622,7 +621,9 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
-	if(pl->items[ITEM_HEALTH] <= 0)
+	player->alive = ( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 );
+
+	if(!player->alive)
 	{
 		state = STATE_DEAD;
 	}
@@ -672,9 +673,9 @@ static void player_handle_common(entity_t * player, player_t * pl)
 
 				if(!ENTITY_IS(player, "player"))
 					ENTITY_ALLOW_DRAW_SET(player, false);
-				pl->items[ITEM_ARMOR] = 0;
-				pl->items[ITEM_AMMO_MISSILE] = 0;
-				pl->items[ITEM_AMMO_MINE] = 0;
+				ENTITY_VARIABLE_INTEGER(player, "item_armor") = 0;
+				ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") = 0;
+				ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") = 0;
 			};
 			if(ENTITY_IS(player, "boss"))
 				sv_game_win();
@@ -682,7 +683,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	}
 
 
-	if(pl->items[ITEM_HEALTH] > 0)
+	if(player->alive)
 	{
 		//игрок жив
 		if(pl->bull)
@@ -756,13 +757,23 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	else
 	{
 		//игрок атакует
-		if(pl->items[ITEM_HEALTH] > 0)
+		if(player->alive)
 		{
 			if(pl->reloadtime_d > 0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
 			else
 			{
 				if(!pl->bull)
 				{
+					static const char *list[] =
+					{
+							"scores",
+							"item_health",
+							"item_armor",
+							"item_ammo_artillery",
+							"item_ammo_missile",
+							"item_ammo_mine",
+					};
+
 					int item;
 					switch(pl->weap)
 					{
@@ -775,7 +786,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 					//если не стреляем управляемой ракетой
 					if(
 							(playerinfo->items[item] == ITEM_AMOUNT_INF)||            //если пуль бесконечно много
-							(pl->items[item] > 0)
+							(ENTITY_VARIABLE_INTEGER(player, list[item]) > 0)
 					)
 					{
 						// пули не кончились
@@ -806,9 +817,9 @@ static void player_handle_common(entity_t * player, player_t * pl)
 						};
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
-								(strcmp(player->info->name, "player") == 0)    // игрок не монстр(у монстров пули не кончаются)
+								ENTITY_IS(player, "player")    // игрок не монстр(у монстров пули не кончаются)
 						)
-							pl->items[item]--;
+							ENTITY_VARIABLE_INTEGER(player, list[item])--;
 					}
 				}
 			}
@@ -836,16 +847,28 @@ void player_class_init(entity_t * player, player_t * pl)
 	int i;
 	for(i = 0; i < ITEM_NUM; i++)
 	{
-		if(playerinfo->items[i] == ITEM_AMOUNT_NA)
-			pl->items[i] = playerinfo->items[i];
-		else if(playerinfo->items[i] == ITEM_AMOUNT_INF)
-			pl->items[i] = playerinfo->items[i];
+		static const char *list[] =
+		{
+				"scores",
+				"item_health",
+				"item_armor",
+				"item_ammo_artillery",
+				"item_ammo_missile",
+				"item_ammo_mine",
+		};
+
+		if(
+				playerinfo->items[i] == ITEM_AMOUNT_NA ||
+				playerinfo->items[i] == ITEM_AMOUNT_INF
+		)
+			ENTITY_VARIABLE_INTEGER(player, list[i]) = playerinfo->items[i];
 		else
 		{
-			if( pl->items[i] < 0 ) pl->items[i] = 0;
+			if( playerinfo->items[i] < 0 )
+				ENTITY_VARIABLE_INTEGER(player, list[i]) = 0;
 			if( !ENTITY_IS(player, "player") )
 			{
-				pl->items[i] = playerinfo->items[i];
+				ENTITY_VARIABLE_INTEGER(player, list[i]) = playerinfo->items[i];
 			}
 		}
 	}
@@ -859,8 +882,6 @@ void player_class_init(entity_t * player, player_t * pl)
  */
 void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius)
 {
-	player_t * pl = player->data;
-
 	int damage_full;
 	int armor;
 
@@ -868,7 +889,7 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 	explode_t * expl = explode->data;
 	explodeinfo_t * explode_info = &explodeinfo_table[expl->type];
 
-	if( pl->items[ITEM_HEALTH] > 0 && radius <= explode_info->radius )
+	if( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 && radius <= explode_info->radius )
 	{
 		if(self)
 			damage_full = explode_info->selfdamage*(1-radius/explode_info->radius);
@@ -878,16 +899,16 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
 		int damage_armor = damage_full*2/3;
 		int damage_health = damage_full - damage_armor;
 
-		armor = pl->items[ITEM_ARMOR] - damage_armor;
-		pl->items[ITEM_HEALTH] = pl->items[ITEM_HEALTH] - damage_health;
+		armor = ENTITY_VARIABLE_INTEGER(player, "item_armor") - damage_armor;
+		ENTITY_VARIABLE_INTEGER(player, "item_health") -= damage_health;
 		if(armor < 0)
 		{
-			pl->items[ITEM_HEALTH] = pl->items[ITEM_HEALTH] + armor;
-			pl->items[ITEM_ARMOR] = 0;
+			ENTITY_VARIABLE_INTEGER(player, "item_health") += armor;
+			ENTITY_VARIABLE_INTEGER(player, "item_armor") = 0;
 		}
 		else
-			pl->items[ITEM_ARMOR] = armor;
-		if(pl->items[ITEM_HEALTH] <= 0)
+			ENTITY_VARIABLE_INTEGER(player, "item_armor") = armor;
+		if(ENTITY_VARIABLE_INTEGER(player, "item_health") <= 0)
 		{
 			entity_t * killer = explode->parent;
 			if(killer)
@@ -924,8 +945,6 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, float ra
  */
 static void player_ui_draw(camera_t * cam, entity_t * player)
 {
-	player_t * pl = player->data;
-
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
@@ -938,8 +957,8 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	ui_drawimage(cam, 16 * 0     , ref_y, game.i_health);
 	ui_drawimage(cam, 16 * 6     , ref_y, game.i_armor);
 
-	ui_printf(cam, 16 * 0 + 16, ref_y, "%d", pl->items[ITEM_HEALTH]);
-	ui_printf(cam, 16 * 6 + 16, ref_y, "%d", pl->items[ITEM_ARMOR]);
+	ui_printf(cam, 16 * 0 + 16, ref_y, "%d", ENTITY_VARIABLE_INTEGER(player, "item_health"));
+	ui_printf(cam, 16 * 6 + 16, ref_y, "%d", ENTITY_VARIABLE_INTEGER(player, "item_armor"));
 	ui_printf(cam, 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
 	ui_printf(cam, 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
 
@@ -951,11 +970,11 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	ui_drawimage(cam, 16 * 8, ref_y, image_get( wtable[2].icon ));
 
 	ui_printf(cam, 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
-	if(pl->items[ITEM_AMMO_MISSILE] >= 0)
-		ui_printf(cam, 16 * 6 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MISSILE]);
-	if(pl->items[ITEM_AMMO_MINE] >= 0)
-		ui_printf(cam, 16 * 8 + 16, ref_y + 4, "%d", pl->items[ITEM_AMMO_MINE]);
-	ui_printf(cam, 16 * 0 + 16, ref_y +  4, "%d", ENTITY_VARIABLE_INTEGER(player, "scores"));
+	if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") >= 0)
+		ui_printf(cam, 16 * 6 + 16, ref_y + 4, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile"));
+	if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") >= 0)
+		ui_printf(cam, 16 * 8 + 16, ref_y + 4, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine"));
+	ui_printf(cam, 16 * 0 + 16, ref_y +  4, "%ld", ENTITY_VARIABLE_INTEGER(player, "scores"));
 
 }
 
@@ -968,7 +987,7 @@ static const entityinfo_t player_reginfo = {
 		.done = player_done,
 		.spawn = player_spawn,
 		.handle = player_handle,
-		.client_store = player_store,
+		.client_store = NULL,
 		.client_restore = player_restore,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ACTIONS(player_actions),

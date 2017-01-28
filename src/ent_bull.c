@@ -28,11 +28,9 @@ static int checkdamage(entity_t * player, entity_t * bull)
 {
 	bullinfo_t * bullinfo = &bullinfo_table[((bull_t*)bull->data)->type];
 
-	player_t * pl = player->data;
-
 	if(
 			bull->parent != player && //попали не в себя
-			0 < pl->items[ITEM_HEALTH] &&
+			0 < player->alive &&
 			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
 			(bull->pos.x - bullinfo->bodybox / 2 <= player->pos.x + c_p_MDL_box / 2)&&
 			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&

@@ -141,9 +141,10 @@ void host_setgamestate(gamestate_t state)
  */
 static void server_client_info_store(host_client_t * client)
 {
-	client->userstoredata = client->entity->info->client_store(
-		client->entity->data
-	);
+	if(client->entity->info->client_store)
+		client->userstoredata = (*client->entity->info->client_store)(
+			client->entity->data
+		);
 
 	entity_t * entity = client->entity;
 	size_t vars_num = entity->info->vars_num;

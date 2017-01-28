@@ -2,8 +2,6 @@
 #include "cl_game.h"
 #include "game.h"
 #include "cl_input.h"
-#include "ent_player.h"
-
 
 #include <string.h>
 #include <stdio.h>

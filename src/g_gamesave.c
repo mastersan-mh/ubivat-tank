@@ -11,7 +11,6 @@
 #include "types.h"
 #include "server.h"
 #include "client.h"
-#include "ent_player.h"
 
 #include <fcntl.h>
 #include <g_gamesave.h>
@@ -68,17 +67,16 @@ static int g_gamesave_cacheinfo(const char * savename, gamesave_descr_t * rec)
 static int g_gamesave_save_player(int fd, entity_t * player)
 {
 	write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
-	player_t * pl = player->data;
 	gamesave_data_player_t savedata =
 	{
 		.fragstotal = ENTITY_VARIABLE_INTEGER(player, "fragstotal"),
 		.frags      = ENTITY_VARIABLE_INTEGER(player, "frags"),
 		.scores     = ENTITY_VARIABLE_INTEGER(player, "scores"),
-		.health     = pl->items[ITEM_HEALTH],
-		.armor      = pl->items[ITEM_ARMOR],
-		.ammo1      = pl->items[ITEM_AMMO_ARTILLERY],
-		.ammo2      = pl->items[ITEM_AMMO_MISSILE],
-		.ammo3      = pl->items[ITEM_AMMO_MINE]
+		.health     = ENTITY_VARIABLE_INTEGER(player, "item_health"),
+		.armor      = ENTITY_VARIABLE_INTEGER(player, "item_armor"),
+		.ammo1      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_artillery"),
+		.ammo2      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile"),
+		.ammo3      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine")
 	};
 	write(fd, &savedata, sizeof(savedata));
 	return 0;

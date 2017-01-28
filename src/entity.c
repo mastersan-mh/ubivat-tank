@@ -135,6 +135,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 	entity->pos.x = x;
 	entity->pos.y = y;
 	entity->dir   = dir;
+	entity->alive = true;
 	entity->allow_handle = true;
 	entity->allow_draw = true;
 

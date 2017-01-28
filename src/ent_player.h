@@ -86,11 +86,8 @@ typedef struct
 
 typedef struct
 {
-	int items[ITEM_NUM];
-
 	//для управляемой ракеты
 	struct entity_s * bull;
-
 
 	//передвижения
 	move_t move;

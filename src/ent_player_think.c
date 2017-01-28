@@ -257,7 +257,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				(wall & 0x0F) == MAP_WALL_water  ||
 				(wall       ) == c_m_f_clip
 		){
-			if(pl->items[ITEM_AMMO_MINE] > 0)
+			if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
 			{
 				//выбираем наугад ракету или мину
 				pl->brain.weap = 1+xrand(2);
@@ -272,7 +272,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 			}
 			else
 			{
-				if(pl->items[ITEM_AMMO_MISSILE] > 0)
+				if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 					pl->brain.weap = WEAP_MISSILE;
 				else
 					pl->brain.weap = WEAP_ARTILLERY;
@@ -294,7 +294,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				{
 					if((wall & 0x0F) == MAP_WALL_w1)
 					{                            //слабая броня
-						if(pl->items[ITEM_AMMO_MINE] > 0)
+						if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
 						{
 							pl->brain.weap = 1+xrand(2);                             //выбираем наугад ракету или мину
 							pl->brain.attack = true;
@@ -308,7 +308,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 						}
 						else
 						{
-							if(pl->items[ITEM_AMMO_MISSILE] > 0)
+							if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 								pl->brain.weap = WEAP_MISSILE;
 							else
 								pl->brain.weap = WEAP_ARTILLERY;
@@ -342,7 +342,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 					(wall       ) == c_m_f_clip
 			)
 			{
-				if(pl->items[ITEM_AMMO_MINE] > 0)
+				if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
 				{
 					pl->brain.weap = 1+xrand(2);                               //выбираем наугад ракету или мину
 					if(pl->brain.weap == WEAP_MINE)
@@ -353,7 +353,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				}
 				else
 				{
-					if(pl->items[ITEM_AMMO_MISSILE] > 0)
+					if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 						pl->brain.weap = WEAP_MISSILE;
 					else
 						pl->brain.weap = WEAP_ARTILLERY;
@@ -370,7 +370,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 					}
 					else {
 						if((wall & 0x0F)==MAP_WALL_w1) {                           //слабая броня
-							if(pl->items[ITEM_AMMO_MINE] > 0)
+							if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
 							{
 								pl->brain.weap = 1+xrand(2);                            //выбираем наугад ракету или мину
 								if(pl->brain.weap == WEAP_MINE)
@@ -383,7 +383,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 							}
 							else
 							{
-								if(pl->items[ITEM_AMMO_MISSILE] > 0)
+								if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 									pl->brain.weap = WEAP_MISSILE;
 								else
 									pl->brain.weap = WEAP_ARTILLERY;
@@ -401,7 +401,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		}
 		else
 		{
-			if(pl->items[ITEM_AMMO_MISSILE] > 0)
+			if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 			{
 				map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 				if(
@@ -480,7 +480,7 @@ void think_enemy(entity_t * player)
 	player_t * pl = player->data;
 	if(debug_noAI)
 		return;
-	if(pl->items[ITEM_HEALTH] > 0)
+	if(player->alive)
 	{
 		ctrl_AI_checkdanger(player);
 		if(!pl->brain.danger)
@@ -488,9 +488,8 @@ void think_enemy(entity_t * player)
 			entity_t * target = entity_get_random("player");
 			if(!target)
 				return;
-			player_t * enemy_pl = target->data;
 
-			if(enemy_pl->items[ITEM_HEALTH] <= 0)
+			if(!target->alive)
 				pl->attack = false;
 			else
 			{

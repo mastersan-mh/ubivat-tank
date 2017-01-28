@@ -9,7 +9,6 @@
 #include "server.h"
 #include "sv_game.h"
 #include "sound.h"
-#include "ent_player.h"
 #include "common_list2.h"
 
 extern host_client_t * hclients;
@@ -49,23 +48,15 @@ void sv_game_win(void)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		if( ((player_t *)client->entity->data)->items[ITEM_HEALTH] < 0 )
+		if( !client->entity->alive )
+		{
 			alive = false;
+			break;
+		}
 	}
 	if( alive )
 	{
-		if(sv_state.flags & GAMEFLAG_CUSTOMGAME)
-		{
-			//игра по выбору
-			sv_game_abort();
-		}
-		else
-		{
-			server_unjoin_clients();
-			//игра по уровням
-			if(sv_game_nextmap() == true)
-				sv_state.state = GAMESTATE_INTERMISSION;
-		}
+		sv_state.state = GAMESTATE_INTERMISSION;
 	}
 }
 
@@ -80,10 +71,6 @@ void sv_game_gameTick(void)
 void sv_game_mainTick(void)
 {
 	static gamestate_t state_prev = GAMESTATE_NOGAME;
-	if(state_prev != sv_state.state)
-	{
-		host_setgamestate(sv_state.state);
-	}
 	switch(sv_state.state)
 	{
 		case GAMESTATE_NOGAME:
@@ -113,11 +100,32 @@ void sv_game_mainTick(void)
 		case GAMESTATE_INTERMISSION:
 			if(state_prev != sv_state.state)
 			{
+
+				if(sv_state.flags & GAMEFLAG_CUSTOMGAME)
+				{
+					//игра по выбору
+					sv_game_abort();
+				}
+				else
+				{
+					server_unjoin_clients();
+
+					//игра по уровням
+					if(sv_game_nextmap() == true)
+					{
+						//sv_state.state = GAMESTATE_INTERMISSION;
+					}
+				}
+
 				sound_play_stop(sv_state.sound_playId);
 				if(!sv_state.sound_playId)
 					sv_state.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
 			}
 			break;
+	}
+	if(state_prev != sv_state.state)
+	{
+		host_setgamestate(sv_state.state);
 	}
 	state_prev = sv_state.state;
 
@@ -134,8 +142,6 @@ bool sv_game_nextmap(void)
 
 	//закроем карту
 	map_clear();
-	sv_state.state = GAMESTATE_MISSION_BRIEF;
-
 
 	sv_state.gamemap = sv_state.gamemap->next;
 	if(!sv_state.gamemap)
