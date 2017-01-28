@@ -99,15 +99,15 @@ static void cl_game_state_intermission_draw(void)
 	for(i = 0; i < num; i++)
 	{
 		host_client_t * client = host_client_get(i);
-		item_img_t * img = image_get(list[client->storedata.level]);
+		long level = sv_client_storedvars_get(client, "level")->value.i64;
+		item_img_t * img = image_get(list[level]);
 		gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
 		font_color_set3i(COLOR_15);
-		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%d" , client->storedata.scores);
-		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", client->storedata.frags);
-		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", client->storedata.fragstotal);
+		video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", sv_client_storedvars_get(client, "scores")->value.i64);
+		video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", sv_client_storedvars_get(client, "frags")->value.i64);
+		video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", sv_client_storedvars_get(client, "fragstotal")->value.i64);
 	}
 }
-
 
 static void client_game_draw_cam(camera_t * cam, entity_t * player)
 {

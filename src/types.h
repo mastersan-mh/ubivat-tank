@@ -34,6 +34,24 @@ typedef enum {
 }bool;
 #endif
 
+/* тип переменной entity */
+typedef enum
+{
+	ENTITYVARTYPE_INTEGER,
+	ENTITYVARTYPE_FLOAT
+} entityvartype_t;
+
+typedef int64_t entity_int_t;
+typedef float entity_float_t;
+
+/* значение переменной */
+typedef union
+{
+	entity_int_t i64;
+	entity_float_t f;
+} entityvarvalue_t;
+
+
 //директория файлов игры
 #define BASEDIR         UTANKBASEDIR"/base"
 //директория карт
@@ -69,13 +87,6 @@ typedef enum {
 #define c_o_MDL_box     16
 //позиция изображения
 #define c_o_MDL_pos     (-8)
-//оружия
-//очки
-//очки за 1 убитый танк
-#define c_score_pertank 5
-//макс. кол-во очков
-#define c_score_max     2000000
-//игрок
 //body box
 #define c_p_MDL_box     16
 //позиция изображения

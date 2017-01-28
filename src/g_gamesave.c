@@ -71,9 +71,9 @@ static int g_gamesave_save_player(int fd, entity_t * player)
 	player_t * pl = player->data;
 	gamesave_data_player_t savedata =
 	{
-		.fragstotal = pl->fragstotal,
-		.frags      = pl->frags,
-		.scores     = pl->items[ITEM_SCORES],
+		.fragstotal = ENTITY_VARIABLE_INTEGER(player, "fragstotal"),
+		.frags      = ENTITY_VARIABLE_INTEGER(player, "frags"),
+		.scores     = ENTITY_VARIABLE_INTEGER(player, "scores"),
 		.health     = pl->items[ITEM_HEALTH],
 		.armor      = pl->items[ITEM_ARMOR],
 		.ammo1      = pl->items[ITEM_AMMO_ARTILLERY],
@@ -88,7 +88,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
  * чтение игрока
  * @return true | false
  */
-static int g_gamesave_load_player(int fd, server_clientsaveent_t * clientsaveent)
+static int g_gamesave_load_player(int fd, host_client_t * client)
 {
 	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
@@ -96,16 +96,16 @@ static int g_gamesave_load_player(int fd, server_clientsaveent_t * clientsaveent
 	gamesave_data_player_t savedata;
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
-	clientsaveent->storedata.fragstotal = savedata.fragstotal;
-	clientsaveent->storedata.frags      = savedata.frags;
-	clientsaveent->storedata.scores     = savedata.scores;
-	clientsaveent->userstoredata.item_SCORES = savedata.scores;
-	clientsaveent->userstoredata.item_HEALTH = savedata.health;
-	clientsaveent->userstoredata.item_ARMOR  = savedata.armor;
-	clientsaveent->userstoredata.item_AMMO_ARTILLERY = savedata.ammo1;
-	clientsaveent->userstoredata.item_AMMO_MISSILE   = savedata.ammo2;
-	clientsaveent->userstoredata.item_AMMO_MINE      = savedata.ammo3;
-	clientsaveent->valid = true;
+
+	sv_client_storedvars_get(client, "fragstotal")->value.i64  = savedata.fragstotal;
+	sv_client_storedvars_get(client, "frags")->value.i64       = savedata.frags;
+	sv_client_storedvars_get(client, "scores")->value.i64      = savedata.scores;
+	sv_client_storedvars_get(client, "item_health")->value.i64         = savedata.health;
+	sv_client_storedvars_get(client, "item_armor")->value.i64          = savedata.armor;
+	sv_client_storedvars_get(client, "item_ammo_artillery")->value.i64 = savedata.ammo1;
+	sv_client_storedvars_get(client, "item_ammo_missile")->value.i64   = savedata.ammo2;
+	sv_client_storedvars_get(client, "item_ammo_mine")->value.i64      = savedata.ammo3;
+
 	return 0;
 };
 
@@ -186,7 +186,7 @@ void g_gamesave_load_close(gamesave_load_context_t * ctx)
  * @return = 2 - карта отсутствует в списке карт
  * @return = 3 - ошибка чтения карты
  */
-int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx, server_clientsaveent_t server_clientsaveent[])
+int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
 {
 	ctx->fd = -1;
 	gamesave_descr_t * gamesave = &gamesaves[isave];
@@ -231,9 +231,16 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx, server_client
 	int player_num = (ctx->flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
 
 	int i;
+	host_client_t * client;
+	LIST2_FOREACH(hclients, client)
+	{
+		if(client->next == NULL)
+			break;
+	}
 	for(i = 0; i < player_num; i++)
 	{
-		g_gamesave_load_player(ctx->fd, &server_clientsaveent[i]);
+		g_gamesave_load_player(ctx->fd, client);
+		client = client->prev;
 	}
 	return 0;
 

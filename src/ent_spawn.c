@@ -14,7 +14,7 @@
 static void spawn_common_init(entity_t * this, void * thisdata, const entity_t * parent, const spawn_t * args)
 {
 	size_t i;
-	for(i = 0; i < __ITEM_NUM; i++)
+	for(i = 0; i < ITEM_NUM; i++)
 		((spawn_t *)thisdata)->items[i] = args->items[i];
 }
 

@@ -14,7 +14,7 @@
  */
 typedef struct
 {
-	int items[__ITEM_NUM];
+	int items[ITEM_NUM];
 } spawn_t;
 
 extern void entity_spawn_init(void);

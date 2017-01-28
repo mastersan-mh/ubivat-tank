@@ -17,6 +17,8 @@
 #include "common_bstree.h"
 
 #define ENTITY_NAME_SIZE (64)
+#define ENTITY_VARNAME_SIZE (64)
+
 /*
  * цикл по объектам одного определённого типа
  */
@@ -83,26 +85,12 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-typedef int64_t entity_int_t;
-typedef float entity_float_t;
-
-/* тип переменной entity */
-typedef enum
-{
-	ENTITYVARTYPE_INTEGER,
-	ENTITYVARTYPE_FLOAT
-} entityvartype_t;
-
 /* переменная entity */
 typedef struct entityvardata_s
 {
 	size_t index; /* номер переменной в списке entityvardata_t.vars */
 	entityvartype_t type;
-	union
-	{
-		entity_int_t i64;
-		entity_float_t f;
-	} value;
+	entityvarvalue_t value;
 } entityvardata_t;
 
 /*
@@ -201,8 +189,8 @@ typedef struct entityinfo_s
 
 	entity_t * (*client_join)(const entity_t * this);
 
-	void * (*client_store)(struct client_storedata_s * storedata, const void * thisdata);
-	void (*client_restore)(entity_t * this, void * thisdata, const struct client_storedata_s * storedata, const void * userstoredata);
+	void * (*client_store)(const void * thisdata);
+	void (*client_restore)(entity_t * this, void * thisdata, const void * userstoredata);
 
 	/* массив дополнительных переменных */
 	unsigned int vars_num;

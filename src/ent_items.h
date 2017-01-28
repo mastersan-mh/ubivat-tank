@@ -11,8 +11,9 @@
 #include "types.h"
 #include "entity.h"
 
-// предмет не используется
+/* предмет не используется */
 #define ITEM_AMOUNT_NA  (0)
+/* бесконечно */
 #define ITEM_AMOUNT_INF (-1)
 
 //сколько очков нужно набрать для повышения уровня танка
@@ -26,8 +27,8 @@ typedef enum
 	ITEM_AMMO_ARTILLERY,
 	ITEM_AMMO_MISSILE,
 	ITEM_AMMO_MINE,
-	__ITEM_NUM
-}itemtype_t;
+	ITEM_NUM
+} itemtype_t;
 
 /*
  * предметы

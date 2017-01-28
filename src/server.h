@@ -12,29 +12,6 @@
 #include "net.h"
 #include "map.h"
 
-/* gamesave client-ent info */
-typedef struct server_clientsaveent_s
-{
-	bool valid;
-	struct
-	{
-		int fragstotal;
-		int frags;
-		int level;
-		int scores;
-	} storedata;
-	struct
-	{
-		int item_SCORES;
-		int item_HEALTH;
-		int item_ARMOR;
-		int item_AMMO_ARTILLERY;
-		int item_AMMO_MISSILE;
-		int item_AMMO_MINE;
-	} userstoredata;
-} server_clientsaveent_t;
-
-
 //состояние игры
 typedef struct
 {
@@ -55,15 +32,14 @@ typedef struct
 
 } server_state_t;
 
-typedef struct client_storedata_s
+#define _ENTITY_VARNAME_SIZE (64)
+
+typedef struct
 {
-	//фрагов за пройденые карты
-	int fragstotal;
-	//фрагов на карте
-	int frags;
-	int scores;
-	int level;
-} client_storedata_t;
+	char varname[_ENTITY_VARNAME_SIZE];
+	entityvartype_t type;
+	entityvarvalue_t value;
+} host_clientvardata_t;
 
 typedef struct host_client_s
 {
@@ -71,11 +47,11 @@ typedef struct host_client_s
 	struct host_client_s * next;
 
 	struct entity_s * entity;
-	client_storedata_t storedata;
 	void * userstoredata;
 
 	/* сохраняемые переменные */
-	struct entityvardata_s * vardata;
+	size_t varsdata_num;
+	host_clientvardata_t * varsdata;
 
 	/* адрес клиента */
 	net_socket_t * ns;
@@ -105,6 +81,8 @@ extern void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 
 extern void server_unjoin_clients(void);
 extern void server_restore_client_info(host_client_t * client);
+
+extern host_clientvardata_t * sv_client_storedvars_get(host_client_t * client, const char * varname);
 
 extern void server_start(int flags);
 extern void server_stop(void);

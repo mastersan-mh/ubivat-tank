@@ -64,7 +64,7 @@ extern int g_gamesave_save(int isave);
 extern void g_gamesave_load_close(gamesave_load_context_t * ctx);
 extern void g_gamesave_load_read(gamesave_load_context_t * ctx);
 
-extern int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx, server_clientsaveent_t server_clientsaveent[]);
+extern int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx);
 
 //extern int g_gamesave_load(int isave);
 

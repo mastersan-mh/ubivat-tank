@@ -46,6 +46,11 @@
 /* торможение: м/с^2 */
 #define PLAYER_DECEL       (0.05f * MPS2_TO_PIXPS2)
 
+//очки
+//очки за 1 убитый танк
+#define PLAYER_SCORES_PER_ENEMY 5
+//макс. кол-во очков
+#define PLAYER_SCORES_MAX     2000000
 
 enum
 {
@@ -60,7 +65,7 @@ enum
 
 typedef struct
 {
-	int items[__ITEM_NUM];
+	int items[ITEM_NUM];
 	vec_t speed;
 	char * modelname;
 } playerinfo_t;
@@ -81,14 +86,7 @@ typedef struct
 
 typedef struct
 {
-	//фрагов за пройденые карты
-	long fragstotal;
-
-	//фрагов на карте
-	long frags;
-	int level;
-
-	int items[__ITEM_NUM];
+	int items[ITEM_NUM];
 
 	//для управляемой ракеты
 	struct entity_s * bull;

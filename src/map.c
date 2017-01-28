@@ -4,8 +4,6 @@
  * by Master San
  */
 
-#include "ent_spawn.h"
-
 #include "entity.h"
 #include "video.h"
 #include "game.h"
@@ -78,38 +76,63 @@ void map_init(void)
 	/* empty */
 }
 
-
 /*
  * добавление объекта
  */
 static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entity_t * data)
 {
+
+/* предмет не используется */
+#define ITEM_AMOUNT_NA  (0)
+/* бесконечно */
+#define ITEM_AMOUNT_INF (-1)
+
+	enum
+	{
+		MAP_SPAWN_ITEM_SCORES,
+		MAP_SPAWN_ITEM_HEALTH,
+		MAP_SPAWN_ITEM_ARMOR,
+		MAP_SPAWN_ITEM_AMMO_ARTILLERY,
+		MAP_SPAWN_ITEM_AMMO_MISSILE,
+		MAP_SPAWN_ITEM_AMMO_MINE,
+		MAP_SPAWN_ITEM_NUM
+	};
+
+	/*
+	 * точка респавнинга
+	 * структура должна быть такая-же как и spawn_t в ent_spawn.h
+	 */
+	typedef struct
+	{
+		int items[MAP_SPAWN_ITEM_NUM];
+	} map_spawn_t;
+
 #define BUFSIZE 2048
 	static char buf[BUFSIZE];
 	int i;
 	int value_int;
-	spawn_t spawn;
+	map_spawn_t spawn;
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
-		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
-		spawn.items[ITEM_SCORES] = data->spawn.scores;
-		spawn.items[ITEM_HEALTH] = data->spawn.health;
-		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
+		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
+		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
 		entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
-		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
-		spawn.items[ITEM_SCORES] = data->spawn.scores;
-		spawn.items[ITEM_HEALTH] = data->spawn.health;
-		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
+		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
+		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
 		entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
-		for(i = 0; i < __ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
-		spawn.items[ITEM_SCORES] = data->spawn.scores;
-		spawn.items[ITEM_HEALTH] = data->spawn.health;
-		spawn.items[ITEM_ARMOR]  = data->spawn.armor;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
+		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
+		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
 		entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
