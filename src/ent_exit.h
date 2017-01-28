@@ -1,6 +1,8 @@
 /*
  * ent_exit.h
  *
+ * Выход с карты
+ *
  *  Created on: 9 дек. 2016 г.
  *      Author: mastersan
  */

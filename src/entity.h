@@ -182,6 +182,11 @@ typedef struct entityinfo_s
 {
 	char * name;
 	size_t datasize;
+
+	/* массив дополнительных переменных */
+	unsigned int vars_num;
+	entityvarinfo_t * vars;
+
 	void (*init)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
 	void (*done)(entity_t * this, void * thisdata);
 
@@ -193,10 +198,6 @@ typedef struct entityinfo_s
 
 	void * (*client_store)(const void * thisdata);
 	void (*client_restore)(entity_t * this, void * thisdata, const void * userstoredata);
-
-	/* массив дополнительных переменных */
-	unsigned int vars_num;
-	entityvarinfo_t * vars;
 
 	/* массив действий, допустимых для entity */
 	unsigned int actions_num;

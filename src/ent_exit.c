@@ -35,12 +35,12 @@ static void exit_entity_done(entity_t * this, void * thisdata)
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
 		.datasize = 0,
+		ENTITYINFO_VARS(exit_vars),
 		.init = exit_entity_init,
 		.done = exit_entity_done,
 		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_VARS(exit_vars),
 		ENTITYINFO_ENTMODELS(exit_models)
 };
 

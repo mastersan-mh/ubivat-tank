@@ -170,6 +170,15 @@ static void cl_draw(void)
 		cl_state.msg = NULL;
 	};
 
+	extern server_state_t sv_state;
+
+	if(sv_state.msg)
+	{
+		font_color_set3i(COLOR_1);
+		video_printf_wide(96, 84, 128, sv_state.msg);
+		sv_state.msg = NULL;
+	};
+
 
 }
 

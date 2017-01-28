@@ -439,7 +439,7 @@ void coerce_value_int(int * val, int min, int max)
 static void player_influence_message(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	sv_game_message_send(ENT_MESSAGE(exposed)->message);
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "message"));
 }
 
 static void player_influence_exit(entity_t * actor, entity_t * exposed)
@@ -980,13 +980,13 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
+		ENTITYINFO_VARS(player_vars),
 		.init = player_init,
 		.done = player_done,
 		.spawn = player_spawn,
 		.handle = player_handle,
 		.client_store = NULL,
 		.client_restore = player_restore,
-		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ACTIONS(player_actions),
 		ENTITYINFO_ENTMODELS(tank_player_models)
 };
@@ -994,24 +994,24 @@ static const entityinfo_t player_reginfo = {
 static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
+		ENTITYINFO_VARS(player_vars),
 		.init = enemy_init,
 		.done = enemy_done,
 		.handle   = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_enemy_models)
 };
 
 static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
+		ENTITYINFO_VARS(player_vars),
 		.init = boss_init,
 		.done = boss_done,
 		.handle   = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_boss_models)
 };
 

@@ -9,19 +9,24 @@
 #include "game.h"
 #include "ent_message.h"
 
+static entityvarinfo_t message_vars[] =
+{
+		{ "message", ENTITYVARTYPE_STRING }
+};
+
 static ENTITY_FUNCTION_INIT(message_init)
 {
-	((ent_message_t *)thisdata)->message = Z_strdup((char *)args);
+	ENTITY_VARIABLE_STRING(this, "message") = ENTITY_VARIABLE_STRING_DUP((char *)args);
 }
 
 static void message_done(entity_t * this, void * thisdata)
 {
-	Z_free( ((ent_message_t *) thisdata)->message );
 }
 
 static const entityinfo_t message_reginfo = {
 		.name = "message",
-		.datasize = sizeof(ent_message_t),
+		.datasize = 0,
+		ENTITYINFO_VARS(message_vars),
 		.init = message_init,
 		.done = message_done,
 		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
