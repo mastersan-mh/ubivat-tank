@@ -71,12 +71,19 @@ void sv_game_gameTick(void)
 void sv_game_mainTick(void)
 {
 	static gamestate_t state_prev = GAMESTATE_NOGAME;
+	bool statechanged = false;
+	if(state_prev != sv_state.state)
+	{
+		host_setgamestate(sv_state.state);
+		state_prev = sv_state.state;
+		statechanged = true;
+	}
 	switch(sv_state.state)
 	{
 		case GAMESTATE_NOGAME:
 			break;
 		case GAMESTATE_MISSION_BRIEF:
-			if(state_prev != sv_state.state)
+			if(statechanged)
 			{
 				sound_play_stop(sv_state.sound_playId);
 				if(!sv_state.sound_playId)
@@ -86,7 +93,7 @@ void sv_game_mainTick(void)
 		case GAMESTATE_GAMESAVE:
 			break;
 		case GAMESTATE_INGAME:
-			if(state_prev != sv_state.state)
+			if(statechanged)
 			{
 				if(sv_state.sound_playId)
 				{
@@ -98,9 +105,8 @@ void sv_game_mainTick(void)
 			sv_game_gameTick();
 			break;
 		case GAMESTATE_INTERMISSION:
-			if(state_prev != sv_state.state)
+			if(statechanged)
 			{
-
 				if(sv_state.flags & GAMEFLAG_CUSTOMGAME)
 				{
 					//игра по выбору
@@ -123,11 +129,6 @@ void sv_game_mainTick(void)
 			}
 			break;
 	}
-	if(state_prev != sv_state.state)
-	{
-		host_setgamestate(sv_state.state);
-	}
-	state_prev = sv_state.state;
 
 }
 

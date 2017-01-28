@@ -61,10 +61,10 @@ void entity_register(const entityinfo_t * info)
 
 	if(info->datasize != 0 && info->init == NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .entityinit == NULL.", info->name);
-
+/*
 	if(info->datasize == 0 && info->init != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
-
+*/
 	{
 		/* проверка переменных */
 		nodeId_t * nodeIds = calloc(info->vars_num, sizeof(nodeId_t));
@@ -154,6 +154,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 			{
 				case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
 				case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
+				case ENTITYVARTYPE_STRING   : vardata->value.string = NULL; break;
 			}
 			tree_node_insert(&entity->vars, HASH32(evars[i].name), vardata);
 
@@ -209,7 +210,16 @@ static void entity_freemem(entity_t * entity)
 
 	void vardata_delete(void * data)
 	{
-		free(data);
+		entityvardata_t * vardata = data;
+		switch(vardata->type)
+		{
+			case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
+			case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
+			case ENTITYVARTYPE_STRING   :
+				ENTITY_VARIABLE_STRING_ERASE(vardata->value.string);
+				break;
+		}
+		Z_free(data);
 	}
 	tree_delete(entity->vars, vardata_delete);
 	Z_free(entity);
@@ -252,6 +262,7 @@ entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varna
 	{
 			"INTEGER",
 			"FLOAT",
+			"STRING",
 	};
 	node_t * node = tree_node_find(entity->vars, HASH32(varname));
 	if(!node)
@@ -265,88 +276,6 @@ entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varna
 		game_console_send("Warning: Entity \"%s\" variable \"%s\" has type %s, but used as %s.", entity->info->name, varname, list[vardata->type], list[vartype]);
 	}
 	return vardata;
-}
-
-/*
- * чтение значения переменной
- */
-int entity_var_get(entity_t * entity, const char * varname, entityvartype_t vartype, void * value)
-{
-	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
-	if(!vardata)
-		return -1;
-	switch(vartype)
-	{
-		case ENTITYVARTYPE_INTEGER: *((entity_int_t *)value)   = vardata->value.i64; break;
-		case ENTITYVARTYPE_FLOAT  : *((entity_float_t *)value) = vardata->value.f; break;
-	}
-	return 0;
-}
-
-/*
- * задать значение переменной
- */
-int entity_var_set(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value)
-{
-	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
-	if(!vardata)
-		return -1;
-	switch(vardata->type)
-	{
-		case ENTITYVARTYPE_INTEGER: vardata->value.i64 = *((entity_int_t *)value); break;
-		case ENTITYVARTYPE_FLOAT  : vardata->value.f   = *((entity_float_t *)value); break;
-	}
-	return 0;
-}
-
-/*
- * увеличить значение переменной на value
- */
-int entity_var_add(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value)
-{
-	entityvardata_t * vardata = entity_vardata_get(entity, varname, vartype);
-	if(!vardata)
-		return -1;
-	switch(vardata->type)
-	{
-		case ENTITYVARTYPE_INTEGER: vardata->value.i64 += *((entity_int_t *)value); break;
-		case ENTITYVARTYPE_FLOAT  : vardata->value.f   += *((entity_float_t *)value); break;
-	}
-	return 0;
-}
-
-entity_int_t entity_var_int_get(entity_t * entity, const char * varname)
-{
-	entity_int_t value;
-	entity_var_get(entity, varname, ENTITYVARTYPE_INTEGER, &value);
-	return value;
-}
-
-entity_float_t entity_var_float_get(entity_t * entity, const char * varname)
-{
-	entity_float_t value;
-	entity_var_get(entity, varname, ENTITYVARTYPE_FLOAT, &value);
-	return value;
-}
-
-int entity_var_int_set(entity_t * entity, const char * varname, entity_int_t value)
-{
-	return entity_var_set(entity, varname, ENTITYVARTYPE_INTEGER, &value);
-}
-
-int entity_var_float_set(entity_t * entity, const char * varname, entity_float_t value)
-{
-	return entity_var_set(entity, varname, ENTITYVARTYPE_FLOAT, &value);
-}
-
-int entity_var_int_add(entity_t * entity, const char * varname, entity_int_t value)
-{
-	return entity_var_add(entity, varname, ENTITYVARTYPE_INTEGER, &value);
-}
-
-int entity_var_float_add(entity_t * entity, const char * varname, entity_float_t value)
-{
-	return entity_var_add(entity, varname, ENTITYVARTYPE_FLOAT, &value);
 }
 
 /**

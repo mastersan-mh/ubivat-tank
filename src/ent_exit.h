@@ -8,17 +8,6 @@
 #ifndef SRC_ENT_EXIT_H_
 #define SRC_ENT_EXIT_H_
 
-/**
- * сообщение
- */
-typedef struct
-{
-	//сообщение
-	char * message;
-} ent_exit_t;
-
-#define ENT_EXIT(x) ((ent_exit_t *)(x)->data)
-
 void entity_exit_init(void);
 
 #endif /* SRC_ENT_EXIT_H_ */

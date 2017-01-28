@@ -240,9 +240,6 @@ static entityvarinfo_t player_vars[] =
 		{ "item_ammo_artillery", ENTITYVARTYPE_INTEGER },
 		{ "item_ammo_missile"  , ENTITYVARTYPE_INTEGER },
 		{ "item_ammo_mine"     , ENTITYVARTYPE_INTEGER },
-
-
-
 };
 
 static entityaction_t player_actions[] =
@@ -448,7 +445,7 @@ static void player_influence_message(entity_t * actor, entity_t * exposed)
 static void player_influence_exit(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	sv_game_message_send(ENT_EXIT(exposed)->message);
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "message"));
 	sv_game_win();
 }
 

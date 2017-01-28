@@ -227,19 +227,12 @@ extern entityvardata_t * entity_vardata_get(const entity_t * entity, const char 
 	entity_vardata_get((entity), (varname), ENTITYVARTYPE_INTEGER)->value.i64
 #define ENTITY_VARIABLE_FLOAT(entity, varname) \
 	entity_vardata_get((entity), (varname), ENTITYVARTYPE_FLOAT)->value.f
-
-extern int entity_var_get(entity_t * entity, const char * varname, entityvartype_t vartype, void * value);
-extern int entity_var_set(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value);
-extern int entity_var_add(entity_t * entity, const char * varname, entityvartype_t vartype, const void * value);
-
-extern entity_int_t entity_var_int_get(entity_t * entity, const char * varname);
-extern entity_float_t entity_var_float_get(entity_t * entity, const char * varname);
-
-extern int entity_var_int_set(entity_t * entity, const char * varname, entity_int_t value);
-extern int entity_var_float_set(entity_t * entity, const char * varname, entity_float_t value);
-extern int entity_var_int_add(entity_t * entity, const char * varname, entity_int_t value);
-extern int entity_var_float_add(entity_t * entity, const char * varname, entity_float_t value);
-
+#define ENTITY_VARIABLE_STRING(entity, varname) \
+	entity_vardata_get((entity), (varname), ENTITYVARTYPE_STRING)->value.string
+#define ENTITY_VARIABLE_STRING_DUP(text) \
+	Z_strdup((text))
+#define ENTITY_VARIABLE_STRING_ERASE(text) \
+	do { Z_free((text)); (text) = NULL; } while(0)
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);

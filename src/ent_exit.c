@@ -9,6 +9,11 @@
 #include "entity.h"
 #include "model.h"
 
+static entityvarinfo_t exit_vars[] =
+{
+		{ "message", ENTITYVARTYPE_STRING }
+};
+
 static entmodel_t exit_models[] =
 {
 		{
@@ -20,25 +25,23 @@ static entmodel_t exit_models[] =
 
 static ENTITY_FUNCTION_INIT(exit_entity_init)
 {
-	ent_exit_t * ent_exit = thisdata;
-	ent_exit->message = Z_strdup((char *)args);
+	ENTITY_VARIABLE_STRING(this, "message") = ENTITY_VARIABLE_STRING_DUP((char *)args);
 }
 
 static void exit_entity_done(entity_t * this, void * thisdata)
 {
-	Z_free( ((ent_exit_t *)thisdata)->message );
 }
 
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
-		.datasize = sizeof(ent_exit_t),
+		.datasize = 0,
 		.init = exit_entity_init,
 		.done = exit_entity_done,
 		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = exit_models
+		ENTITYINFO_VARS(exit_vars),
+		ENTITYINFO_ENTMODELS(exit_models)
 };
 
 void entity_exit_init(void)
