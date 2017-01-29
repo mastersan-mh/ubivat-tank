@@ -94,7 +94,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
-		entity = entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
 		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
 		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
@@ -102,7 +102,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
-		entity = entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
 		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
 		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
@@ -110,7 +110,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
-		entity = entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
 		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
 		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
@@ -118,33 +118,33 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
-		entity = entity_new("item_health", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("item_health", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
-		entity = entity_new("item_armor", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("item_armor", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
-		entity = entity_new("item_scores", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("item_scores", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
-		entity = entity_new("item_ammo_missile", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("item_ammo_missile", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
-		entity = entity_new("item_ammo_mine", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("item_ammo_mine", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
-		entity = entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
-		entity = entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		entity = entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL);
 		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
 		break;
 	default: ;

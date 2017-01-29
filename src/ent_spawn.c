@@ -25,12 +25,12 @@ static ENTITY_FUNCTION_INIT(spawn_player_init)
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
-	entity_new("enemy", this->pos.x, this->pos.y, this->dir, this, NULL);
+	entity_new("enemy", this->pos.x, this->pos.y, this->dir, this);
 }
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
-	entity_new("boss", this->pos.x, this->pos.y, this->dir, this, NULL);
+	entity_new("boss", this->pos.x, this->pos.y, this->dir, this);
 }
 
 static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
@@ -42,8 +42,7 @@ static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
 		spawn->pos.x,
 		spawn->pos.y,
 		spawn->dir,
-		spawn,
-		NULL
+		spawn
 	);
 	return player;
 }

@@ -118,7 +118,7 @@ int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
 /**
  * @description добавление объекта
  */
-entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args)
+entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent)
 {
 	size_t i;
 	entity_registered_t * entityinfo_reg = entityinfo_get(name);
@@ -179,7 +179,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 	else
 		entity->data = Z_malloc(entityinfo->datasize);
 	if(entityinfo->init)
-		entityinfo->init(entity, entity->data, parent, args);
+		entityinfo->init(entity, entity->data, parent);
 
 	if(entityinfo->spawn == NULL)
 	{

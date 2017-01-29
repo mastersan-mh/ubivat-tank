@@ -124,10 +124,6 @@ entmodel_t bull_artillery_models[] =
 		}
 };
 
-static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
-{
-}
-
 static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
@@ -143,8 +139,7 @@ static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			this->parent,
-			NULL
+			this->parent
 		);
 		ENTITY_ERASE(this);
 	}
@@ -153,7 +148,7 @@ static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = 0,
-		.init = bull_artillery_entity_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
@@ -205,8 +200,7 @@ static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			this->parent,
-			NULL
+			this->parent
 		);
 
 		ENTITY_ERASE(this);
@@ -228,8 +222,6 @@ static const entityinfo_t bull_missile_reginfo = {
 /**
  * bull_mine
  */
-
-
 static const ent_modelaction_t bull_mine_modelactions[] =
 {
 		{
@@ -267,8 +259,7 @@ static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 			this->pos.x,
 			this->pos.y,
 			this->dir,
-			this->parent,
-			NULL
+			this->parent
 		);
 		ENTITY_ERASE(this);
 	}

@@ -26,7 +26,7 @@
 	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
 
 #define ENTITY_FUNCTION_INIT(x) \
-	void x (entity_t * this, void * thisdata, const entity_t * parent, const void * args)
+	void x (entity_t * this, void * thisdata, const entity_t * parent)
 
 #define ENTITY_FUNCTION_DONE(x) \
 	void x (entity_t * this, void * thisdata)
@@ -182,7 +182,7 @@ typedef struct entityinfo_s
 	unsigned int vars_num;
 	entityvarinfo_t * vars;
 
-	void (*init)(entity_t * this, void * thisdata, const entity_t * parent, const void * args);
+	void (*init)(entity_t * this, void * thisdata, const entity_t * parent);
 	void (*done)(entity_t * this, void * thisdata);
 
 	void (*spawn)(entity_t * this, void * thisdata);
@@ -214,7 +214,7 @@ extern entity_t * entries_client_join(void);
 
 extern void entities_render(camera_t * cam);
 
-extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent, const void * args);
+extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent);
 extern void entities_erase(void);
 
 extern entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varname, entityvartype_t vartype);

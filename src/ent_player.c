@@ -678,8 +678,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 					player->pos.x,
 					player->pos.y,
 					player->dir,
-					player,
-					NULL
+					player
 				);
 				ENTITY_UNSPAWN(player);
 
@@ -814,8 +813,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 							player->pos.x,
 							player->pos.y,
 							dir,
-							player,
-							NULL
+							player
 						);
 						sound_play_start(weaponinfo->sound_index, 1);
 
