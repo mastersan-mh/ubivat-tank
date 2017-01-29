@@ -14,6 +14,7 @@
 #include "ent_items.h"
 #include "ent_player_think.h"
 #include "ent_weap.h"
+#include "ent_explode.h"
 
 /*
 	pix/s -> m/s -> km/h

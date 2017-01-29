@@ -365,14 +365,14 @@ static void __audio_callback(void * userdata, Uint8 * stream, int len)
 {
 	//frame size
 	unsigned int factor;
-	unsigned int RequestedFrames;
+	//unsigned int RequestedFrames;
 
 	factor = snd_renderbuffer->format.channels * snd_renderbuffer->format.width;
 
 	if ((unsigned int)len % factor != 0)
 		game_halt("SDL sound: invalid buffer length passed to Buffer_Callback (%d bytes)\n", len);
 
-	RequestedFrames = (unsigned int)len / factor;
+	//RequestedFrames = (unsigned int)len / factor;
 
 	// http://forum.vingrad.ru/forum/topic-74562.html
 	// http://www.muzoborudovanie.ru/equip/studio/seq/cubase5/mixing.php

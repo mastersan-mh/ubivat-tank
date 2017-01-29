@@ -21,6 +21,35 @@
 
 static bool debug_noAI = false;
 
+static explodetype_t weapontype_to_explodetype(weapontype_t weapontype)
+{
+	switch(weapontype)
+	{
+		case WEAP_ARTILLERY: return EXPLODE_ARTILLERY;
+		case WEAP_MISSILE  : return EXPLODE_MISSILE;
+		case WEAP_MINE     : return EXPLODE_MINE;
+		default: ;
+	}
+	return EXPLODE_ARTILLERY;
+}
+
+static explodetype_t bullentity_to_explodetype(entity_t * bull)
+{
+	if(ENTITY_IS(bull, "bull_artillery"))
+	{
+		return EXPLODE_ARTILLERY;
+	}
+	if(ENTITY_IS(bull, "bull_missile"))
+	{
+		return EXPLODE_MISSILE;
+	}
+	if(ENTITY_IS(bull, "bull_mine"))
+	{
+		return EXPLODE_MINE;
+	}
+	return EXPLODE_ARTILLERY;
+}
+
 /*
  * инициализация AI
  */

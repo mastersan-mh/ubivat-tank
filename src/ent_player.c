@@ -748,7 +748,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 							"item_ammo_mine",
 					};
 
-					int item;
+					size_t item;
 					switch(pl->weap)
 					{
 					case WEAP_ARTILLERY: item = ITEM_AMMO_ARTILLERY; break;
@@ -757,7 +757,6 @@ static void player_handle_common(entity_t * player, player_t * pl)
 					default: item = ITEM_AMMO_ARTILLERY;
 					}
 
-					//если не стреляем управляемой ракетой
 					if(
 							(playerinfo->items[item] == ITEM_AMOUNT_INF)||            //если пуль бесконечно много
 							(ENTITY_VARIABLE_INTEGER(player, list[item]) > 0)
@@ -766,33 +765,22 @@ static void player_handle_common(entity_t * player, player_t * pl)
 						// пули не кончились
 						pl->reloadtime_d = c_p_WEAP_reloadtime;
 						//создаем пулю
+						weaponinfo_t * weaponinfo = &weaponinfo_table[pl->weap];
 						direction_t dir;
 						if(pl->weap != WEAP_MINE)
 							dir = player->dir;
 						else
 							dir = entity_direction_invert(player->dir);
-
 						entity_new(
-							weapontype_to_bullentity(pl->weap),
+							weaponinfo->entityname,
 							player->pos.x,
 							player->pos.y,
 							dir,
 							player,
 							NULL
-							);
-						switch(pl->weap)
-						{
-						case WEAP_ARTILLERY:
-							sound_play_start(SOUND_WEAPON_ARTILLERY_1, 1);
-							break;
-						case WEAP_MISSILE:
-							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
-							break;
-						case WEAP_MINE:
-							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
-							break;
-						default: ;
-						};
+						);
+						sound_play_start(weaponinfo->sound_index, 1);
+
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и
 								ENTITY_IS(player, "player")    // игрок не монстр(у монстров пули не кончаются)
@@ -941,9 +929,9 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	/* вторая строка */
 	ref_y += 16;
 	//gr2D_setimage1(cam->x + 16 * 0, ref_y, image_get( list[pl->level] ), 0, 0, c_p_MDL_box,c_p_MDL_box);
-	ui_drawimage(cam, 16 * 4, ref_y, image_get( wtable[0].icon ));
-	ui_drawimage(cam, 16 * 6, ref_y, image_get( wtable[1].icon ));
-	ui_drawimage(cam, 16 * 8, ref_y, image_get( wtable[2].icon ));
+	ui_drawimage(cam, 16 * 4, ref_y, image_get( weaponinfo_table[0].icon ));
+	ui_drawimage(cam, 16 * 6, ref_y, image_get( weaponinfo_table[1].icon ));
+	ui_drawimage(cam, 16 * 8, ref_y, image_get( weaponinfo_table[2].icon ));
 
 	ui_printf(cam, 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
 	if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") >= 0)
