@@ -62,6 +62,7 @@ itemtype_t items_enttype_to_itemtype(const char * entname)
 			"item_scores" , /* ITEM_SCORES */
 			"item_health" , /* ITEM_HEALTH */
 			"item_armor"  , /* ITEM_ARMOR */
+			"item_ammo_artillery", /* ITEM_AMMO_ARTILLERY */
 			"item_ammo_missile", /* ITEM_AMMO_MISSILE */
 			"item_ammo_mine"     /* ITEM_AMMO_MINE */
 	};

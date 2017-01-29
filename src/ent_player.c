@@ -497,17 +497,18 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
+	int itemamount;
+
 	if(
 			playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
 			playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
 			(
-			((ENTITY_VARIABLE_INTEGER(player, list[itemtype]) < playerinfo->items[itemtype]) || item->amount < 0)
+			( (itemamount = (ENTITY_VARIABLE_INTEGER(player, list[itemtype])) < playerinfo->items[itemtype]) || item->amount < 0)
 			)
 	)
 	{
 		item->exist = false;
-		int itemamount = (ENTITY_VARIABLE_INTEGER(player, list[itemtype]) += item->amount);
-
+		itemamount += item->amount;
 		coerce_value_int(&itemamount, 0, playerinfo->items[itemtype]);
 		ENTITY_VARIABLE_INTEGER(player, list[itemtype]) = itemamount;
 	};
