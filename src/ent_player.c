@@ -262,6 +262,7 @@ static entityaction_t player_actions[] =
 };
 
 static void player_handle_common(entity_t * player, player_t * pl);
+static void player_pickup(entity_t * player);
 
 ENTITY_FUNCTION_INIT(player_init)
 {
@@ -289,6 +290,8 @@ ENTITY_FUNCTION_DONE(player_done)
 ENTITY_FUNCTION_HANDLE(player_handle)
 {
 	player_handle_common(this, thisdata);
+	//подбираем предметы
+	player_pickup(this);
 }
 
 ENTITY_FUNCTION_INIT(enemy_init)
@@ -691,7 +694,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			}
 			pl->move.speed = 0;
 		}
-		entity_move(player, player->dir, c_p_MDL_box, pl->move.speed);
+		entity_move(player, player->dir, c_p_MDL_box, pl->move.speed, true);
 
 		vec_t speed_s = playerinfo->speed / 4;
 
@@ -706,8 +709,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			Sorig = player->pos;
 			Sorig.x = Sorig.x+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
-			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, c_p_MDL_box, speed_s);//strafe left
-			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, c_p_MDL_box, speed_s);//strafe right
+			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, c_p_MDL_box, speed_s, true);//strafe left
+			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, c_p_MDL_box, speed_s, true);//strafe right
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
@@ -717,8 +720,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			Sorig = player->pos;
 			Sorig.y = Sorig.y+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
-			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , c_p_MDL_box, speed_s);//strafe up
-			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, c_p_MDL_box, speed_s);//strafe down
+			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , c_p_MDL_box, speed_s, true);//strafe up
+			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, c_p_MDL_box, speed_s, true);//strafe down
 			break;
 		}
 	}
@@ -792,8 +795,6 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		}
 	}
 	if(pl->reloadtime_d < 0) pl->reloadtime_d = 0;
-	//подбираем предметы
-	player_pickup(player);
 }
 
 /*
@@ -964,7 +965,7 @@ static const entityinfo_t enemy_reginfo = {
 		ENTITYINFO_VARS(player_vars),
 		.init = enemy_init,
 		.done = enemy_done,
-		.handle   = enemy_handle,
+		.handle = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(tank_enemy_models)
@@ -976,7 +977,7 @@ static const entityinfo_t boss_reginfo = {
 		ENTITYINFO_VARS(player_vars),
 		.init = boss_init,
 		.done = boss_done,
-		.handle   = boss_handle,
+		.handle = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(tank_boss_models)

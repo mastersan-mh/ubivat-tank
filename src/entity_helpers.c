@@ -49,16 +49,20 @@ direction_t entity_direction_invert(direction_t dir)
 /*
  * передвижение игрока
  */
-void entity_move(entity_t * this, direction_t dir, vec_t bodybox, vec_t speed)
+void entity_move(entity_t * this, direction_t dir, vec_t bodybox, vec_t speed, bool check_clip)
 {
 	vec2_t * pos = &this->pos;
 	vec_t dway = speed * dtimed1000;
 	vec_t halfbox = bodybox/2;
 	vec_t dist;
 
-	/* найдем препятствия */
-	map_clip_find_near(pos, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
-	if(dist < dway + halfbox) dway = dist - halfbox;
+	if(check_clip) /* FIXME: костыль */
+	{
+		/* найдем препятствия */
+		map_clip_find_near(pos, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
+		if(dist < dway + halfbox)
+			dway = dist - halfbox;
+	}
 
 	switch(dir)
 	{

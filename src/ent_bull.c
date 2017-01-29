@@ -67,7 +67,7 @@ static bool checkdamage(entity_t * player, entity_t * bull, const bullinfo_t * b
  */
 static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 {
-	entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed);
+	entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed, false);
 
 	//предельное расстояние пройдено
 	if(bullinfo->range > -1 && this->stat_traveled_distance > bullinfo->range)

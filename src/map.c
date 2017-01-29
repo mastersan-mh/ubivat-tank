@@ -248,29 +248,29 @@ void map_clip_find(
 		int y_sub_hbox_add_count_8 = VEC_TRUNC((y_sub_hbox_add_count)/8);
 
 		if(
-				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8] & mask) != 0)) *Ul = true;
+				MAP_WALL_CLIPPED( map.map[y_add_hbox_8][x_sub_hbox_add_count_8] ) &&
+				(          mask & map.map[y_add_hbox_8][x_sub_hbox_add_count_8] )    ) *Ul = true;
 		if(
-				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & mask) != 0)) *Ur = true;
+				( map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & mask )) *Ur = true;
 		if(
-				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & mask) != 0)) *Dl = true;
+				( map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & mask )) *Dl = true;
 		if(
-				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & mask) != 0)) *Dr = true;
+				( map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & mask )) *Dr = true;
 		if(
-				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & mask) != 0)) *Lu = true;
+				( map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & mask )) *Lu = true;
 		if(
-				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & mask) != 0)) *Ld = true;
+				( map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & mask )) *Ld = true;
 		if(
-				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & mask) != 0)) *Ru = true;
+				( map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & mask )) *Ru = true;
 		if(
-				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & MAP_WALL_CLIP) != 0) &&
-				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & mask) != 0)) *Rd = true;
+				( map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
+				( map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & mask )) *Rd = true;
 		count++;
 	}
 }
@@ -282,7 +282,7 @@ void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, ve
 	char wall;
 	float c;
 	box = box/2;
-	*dist = box/2;
+	vec_t d = box/2;
 	int mapx;
 	int mapy;
 	switch(dir)
@@ -291,57 +291,64 @@ void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, ve
 		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * 8;
 		do
 		{
-			(*dist)++;
+			d++;
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)VEC_TRUNC((orig->y+(*dist))/8)][(int)VEC_TRUNC((orig->x+c   )/8)];
+				mapy = VEC_TRUNC((orig->y + d) / 8);
+				mapx = VEC_TRUNC((orig->x + c) / 8);
+				wall = map.map[mapy][mapx];
 				c++;
 			}while (!((+box<=c)||((wall & mask) != 0)));
-		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
+		}while(!((DISTmax<=d)||((wall & mask) != 0)));
 		break;
 	case DIR_DOWN:
 		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY*8;
 		do
 		{
-			(*dist)++;
+			d++;
 			c = -box+1;
 			do
 			{
-				mapy = VEC_TRUNC((orig->y-(*dist))/8);
-				mapx = VEC_TRUNC((orig->x+c   )/8);
+				mapy = VEC_TRUNC((orig->y - d) / 8);
+				mapx = VEC_TRUNC((orig->x + c) / 8);
 				wall = map.map[mapy][mapx];
 				c++;
 			}while(!((+box<=c)||((wall & mask) != 0)));
-		}while(!((DISTmax<=(*dist))||((wall & mask) != 0)));
+		}while(!((DISTmax<=d)||((wall & mask) != 0)));
 		break;
 	case DIR_LEFT:
 		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
 		do
 		{
-			(*dist)++;
+			d++;
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)VEC_TRUNC((orig->y+c   )/8)][(int)VEC_TRUNC((orig->x-(*dist))/8)];
+				mapy = VEC_TRUNC((orig->y + c) / 8);
+				mapx = VEC_TRUNC((orig->x - d) / 8);
+				wall = map.map[mapy][mapx];
 				c++;
 			}while(!( (+box<=c)||((wall & mask) != 0)));
-		}while(!( (DISTmax<=(*dist))||((wall & mask) != 0)));
+		}while(!( (DISTmax<=d)||((wall & mask) != 0)));
 		break;
 	case DIR_RIGHT:
 		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
 		do
 		{
-			(*dist)++;
+			d++;
 			c = -box+1;
 			do
 			{
-				wall = map.map[(int)VEC_TRUNC((orig->y+c   )/8)][(int)VEC_TRUNC((orig->x+(*dist))/8)];
+				mapy = VEC_TRUNC((orig->y + c) / 8);
+				mapx = VEC_TRUNC((orig->x + d) / 8);
+				wall = map.map[mapy][mapx];
 				c++;
 			}while(!( (+box<=c)||((wall & mask) != 0)));
-		}while(!( (DISTmax*8<=(*dist)) || (wall & mask ) ));
+		}while(!( (DISTmax*8<=d) || (wall & mask ) ));
 		break;
 	}
+	*dist = d;
 }
 /*
  * вычисление расстояния до ближайшей стены и определение стены
