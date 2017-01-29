@@ -54,7 +54,7 @@ static void explode_detonate(entity_t * this)
 						case MAP_WALL_brick:
 							map.map[y8][x8] = 0;
 							break;
-						case MAP_WALL_w1   :
+						case MAP_WALL_W1   :
 							if( explode->type == EXPLODE_MISSILE || explode->type == EXPLODE_MINE )
 								map.map[y8][x8] = 0;
 							break;

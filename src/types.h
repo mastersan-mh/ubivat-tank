@@ -34,6 +34,14 @@ typedef enum {
 }bool;
 #endif
 
+typedef enum direction_e
+{
+	DIR_UP,
+	DIR_DOWN,
+	DIR_LEFT,
+	DIR_RIGHT
+} direction_t;
+
 /* тип переменной entity */
 typedef enum
 {
@@ -120,8 +128,6 @@ typedef struct
 extern char * c_strTITLE;
 extern char * c_strCORP;
 extern coloredtext_t c_about[];
-
-extern bool debug_noAI;
 
 bool checkchar(char chr);
 

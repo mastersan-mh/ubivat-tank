@@ -576,28 +576,6 @@ static void player_pickup(entity_t * player)
 }
 
 /*
- * передвижение игрока
- */
-static void player_move(entity_t * player, int dir, vec_t * speed)
-{
-	vec2_t * pos = &player->pos;
-	vec_t dway = (*speed) * dtimed1000;
-	vec_t halfbox = c_p_MDL_box/2;
-	vec_t dist;
-
-	map_clip_find_near(pos, c_p_MDL_box, dir, 0xF0, c_p_MDL_box, &dist);//найдем препятствия
-	if(dist < dway + halfbox) dway = dist - halfbox;
-
-	switch(dir)
-	{
-	case DIR_UP   : pos->y += dway; break;
-	case DIR_DOWN : pos->y -= dway; break;
-	case DIR_LEFT : pos->x -= dway; break;
-	case DIR_RIGHT: pos->x += dway; break;
-	}
-}
-
-/*
  * обработка игрока
  */
 static void player_handle_common(entity_t * player, player_t * pl)
@@ -613,7 +591,6 @@ static void player_handle_common(entity_t * player, player_t * pl)
 	int state = STATE_IDLE;
 	vec2_t Sorig;
 	vec_t L,R,U,D;
-	vec_t speed_s;
 
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
@@ -714,9 +691,9 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			}
 			pl->move.speed = 0;
 		}
-		player_move(player, player->dir, &pl->move.speed);
+		entity_move(player, player->dir, c_p_MDL_box, pl->move.speed);
 
-		speed_s = playerinfo->speed / 4;
+		vec_t speed_s = playerinfo->speed / 4;
 
 		//стрейф
 		switch(player->dir)
@@ -725,23 +702,23 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		case DIR_DOWN:
 			Sorig = player->pos;
 			Sorig.x = Sorig.x-c_p_MDL_box/4;
-			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->dir,0xF0,c_p_MDL_box/2+2, &L);
+			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &L);
 			Sorig = player->pos;
 			Sorig.x = Sorig.x+c_p_MDL_box/4;
-			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->dir,0xF0,c_p_MDL_box/2+2, &R);
-			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) player_move(player,DIR_LEFT, &speed_s);//strafe left
-			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) player_move(player,DIR_RIGHT, &speed_s);//strafe right
+			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
+			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, c_p_MDL_box, speed_s);//strafe left
+			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, c_p_MDL_box, speed_s);//strafe right
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
 			Sorig = player->pos;
 			Sorig.y = Sorig.y-c_p_MDL_box/4;
-			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->dir,0xF0,c_p_MDL_box/2+2, &D);
+			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &D);
 			Sorig = player->pos;
 			Sorig.y = Sorig.y+c_p_MDL_box/4;
-			map_clip_find_near(&Sorig,c_p_MDL_box/2,player->dir,0xF0,c_p_MDL_box/2+2, &U);
-			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) player_move(player,DIR_UP, &speed_s);//strafe up
-			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) player_move(player,DIR_DOWN, &speed_s);//strafe down
+			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
+			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , c_p_MDL_box, speed_s);//strafe up
+			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, c_p_MDL_box, speed_s);//strafe down
 			break;
 		}
 	}

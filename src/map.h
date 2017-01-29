@@ -13,17 +13,17 @@
 #define MAP_FILENAME_SIZE (256)
 
 //флаг присутствия стены
-#define c_m_f_clip      0x10
+#define MAP_WALL_CLIP      0x10
 
 /* присутствует зажим */
-#define MAP_WALL_CLIPPED(wall) ((wall) & c_m_f_clip)
+#define MAP_WALL_CLIPPED(wall) ((wall) & MAP_WALL_CLIP)
 
 #define MAP_WALL_TEXTURE(wall) ((wall) & 0x0F)
 
 //броня0
 #define MAP_WALL_W0        0x01
 //броня1
-#define MAP_WALL_w1        0x02
+#define MAP_WALL_W1        0x02
 //кирпич
 #define MAP_WALL_brick     0x04
 //вода
@@ -162,8 +162,8 @@ extern void map_clip_find(
 	bool * Rd
 );
 
-extern void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist);
-extern void map_clip_find_near_wall(vec2_t * orig, int dir, vec_t * dist, char * wall);
+extern void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist);
+extern void map_clip_find_near_wall(vec2_t * orig, direction_t dir, vec_t * dist, char * wall);
 
 extern mapdata_entity_type_t map_file_class_get(int fd);
 extern int map_load(const char * mapname);

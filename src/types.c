@@ -30,9 +30,6 @@ coloredtext_t c_about[] = {
 		{}
 };
 
-bool debug_noAI = true;
-
-
 /**
  * @description проверка допустимости ввода символа (добавление 10.05.2006)
  * @param[in] chr - символ

@@ -77,14 +77,6 @@
 		.entmodels_num = ARRAYSIZE(xentmodels), \
 		.entmodels = xentmodels
 
-typedef enum direction_e
-{
-	DIR_UP,
-	DIR_DOWN,
-	DIR_LEFT,
-	DIR_RIGHT
-} direction_t;
-
 /* переменная entity */
 typedef struct entityvardata_s
 {

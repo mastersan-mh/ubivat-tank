@@ -7,6 +7,7 @@
 
 #include "game.h"
 #include "entity.h"
+#include "entity_helpers.h"
 #include "model.h"
 #include "sound.h"
 #include "ent_bull.h"
@@ -42,95 +43,70 @@ static int checkdamage(entity_t * player, entity_t * bull)
 /*
  * поведение пули
  */
-void bull_common_handle(entity_t * this)
+void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 {
+
+	vec_t dist = entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed);
+
+	bool make_explode = false;
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
-	entity_t * entity;
 	bull_t * bull = this->data;
-
-	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
-
-	vec_t s = bullinfo->speed * dtimed1000;
-
-	switch(this->dir)
+	//подсчитываем пройденный путь
+	bull->delta_s = bull->delta_s + VEC_ABS(dist);
+	//предельное расстояние пройдено
+	if(bullinfo->range > -1 && bull->delta_s > bullinfo->range)
 	{
-	case DIR_UP   : this->pos.y = this->pos.y + s; break;
-	case DIR_DOWN : this->pos.y = this->pos.y - s; break;
-	case DIR_LEFT : this->pos.x = this->pos.x - s; break;
-	case DIR_RIGHT: this->pos.x = this->pos.x + s; break;
-	};
-
-	bull->delta_s = bull->delta_s + VEC_ABS(s);                                //подсчитываем пройденный путь
-	if(
-			bullinfo->range > -1 && bull->delta_s > bullinfo->range
-	)
-	{//предельное расстояние пройдено
-
-		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
-		/* следим за взрывом */
-		entity = entity_new(
-			entity_explodetype_to_mobjtype(explodetype),
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent,
-			NULL
-		);
-		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(this->parent)->bull = entity;
-		ENTITY_ERASE(this);
-		return;
+		make_explode = true;
+		goto end;
 	}
 
-
-	//предел на расстояние не превышен
-	map_clip_find(                                                     //найдем препятствия
+	//найдем препятствия
+	map_clip_find(
 		&this->pos,
 		bullinfo->bodybox,
-		MAP_WALL_W0 | MAP_WALL_w1 | MAP_WALL_brick,
+		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 	);
 	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
 	{
-		//пуля попала в стену
-		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
-		entity = entity_new(
-			entity_explodetype_to_mobjtype(explodetype),
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent,
-			NULL
-		);
-		if(bull->type == BULL_MISSILE)
-			ENT_PLAYER(this->parent)->bull = entity;
-
-		ENTITY_ERASE(this);
-		return;
+		make_explode = true;
+		goto end;
 	}
 
-	bool flag = false;
-	int i;
-	for(i = 0; i < 3; i++)
+	entity_t * entity;
+	ENTITIES_FOREACH("player", entity)
 	{
-	//пуля не попала в стену
-		entity_t * player;
-		switch(i)
+		if(checkdamage(entity, this))
 		{
-		case 0: player = entity_getfirst("player"); break;
-		case 1: player = entity_getfirst("enemy"); break;
-		case 2: player = entity_getfirst("boss"); break;
+			//попадание в игрока, создать взрыв
+			make_explode = true;
+			goto end;
 		}
-		while(player && !flag)
-		{                               //проверим на попадание в игрока
-			flag = checkdamage(player, this);
-			player = player->next;
-		};
 	}
 
-	if(flag)
+	ENTITIES_FOREACH("enemy", entity)
 	{
-		//попадание в игрока
+		if(checkdamage(entity, this))
+		{
+			//попадание в игрока, создать взрыв
+			make_explode = true;
+			goto end;
+		}
+	}
+
+	ENTITIES_FOREACH("boss", entity)
+	{
+		if(checkdamage(entity, this))
+		{
+			//попадание в игрока, создать взрыв
+			make_explode = true;
+			goto end;
+		}
+	}
+
+	end:
+	if(make_explode)
+	{
 		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
 		entity = entity_new(
 			entity_explodetype_to_mobjtype(explodetype),
@@ -140,11 +116,13 @@ void bull_common_handle(entity_t * this)
 			this->parent,
 			NULL
 		);
+		/* следим за взрывом */
 		if(bull->type == BULL_MISSILE)
 			ENT_PLAYER(this->parent)->bull = entity;
 		ENTITY_ERASE(this);
-		return;
 	}
+
+
 }
 
 static void bull_common_modelaction_startplay(entity_t * this, unsigned int imodel, char * actionname)
@@ -189,7 +167,9 @@ static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
 
 static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
-	bull_common_handle(this);
+	bull_t * bull = this->data;
+	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_artillery_reginfo = {
@@ -236,7 +216,9 @@ static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 {
-	bull_common_handle(this);
+	bull_t * bull = this->data;
+	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_missile_reginfo = {
@@ -284,7 +266,9 @@ static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 
 static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 {
-	bull_common_handle(this);
+	bull_t * bull = this->data;
+	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_mine_reginfo = {

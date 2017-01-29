@@ -4,6 +4,7 @@
  * by Master San
  */
 
+#include "map.h"
 #include "entity.h"
 #include "video.h"
 #include "game.h"
@@ -247,36 +248,36 @@ void map_clip_find(
 		int y_sub_hbox_add_count_8 = VEC_TRUNC((y_sub_hbox_add_count)/8);
 
 		if(
-				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8]& 0xF0) != 0) &&
-				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8]& mask) != 0)) *Ul = true;
+				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_add_hbox_8][x_sub_hbox_add_count_8] & mask) != 0)) *Ul = true;
 		if(
-				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8]& 0xF0) != 0) &&
-				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8]& mask) != 0)) *Ur = true;
+				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & mask) != 0)) *Ur = true;
 		if(
-				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8]& 0xF0) != 0) &&
-				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8]& mask) != 0)) *Dl = true;
+				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & mask) != 0)) *Dl = true;
 		if(
-				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8]& 0xF0) != 0) &&
-				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8]& mask) != 0)) *Dr = true;
+				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & mask) != 0)) *Dr = true;
 		if(
-				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8]& 0xF0) != 0) &&
-				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8]& mask) != 0)) *Lu = true;
+				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & mask) != 0)) *Lu = true;
 		if(
-				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8]& 0xF0) != 0) &&
-				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8]& mask) != 0)) *Ld = true;
+				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & mask) != 0)) *Ld = true;
 		if(
-				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8]& 0xF0) != 0) &&
-				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8]& mask) != 0)) *Ru = true;
+				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & mask) != 0)) *Ru = true;
 		if(
-				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8]& 0xF0) != 0) &&
-				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8]& mask) != 0)) *Rd = true;
+				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & MAP_WALL_CLIP) != 0) &&
+				((map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & mask) != 0)) *Rd = true;
 		count++;
 	}
 }
 /*
  * вычисление расстояния до ближайшей стены
  */
-void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DISTmax, vec_t * dist)
+void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist)
 {
 	char wall;
 	float c;
@@ -345,38 +346,38 @@ void map_clip_find_near(vec2_t * orig, vec_t box, int dir, char mask, vec_t DIST
 /*
  * вычисление расстояния до ближайшей стены и определение стены
  */
-void map_clip_find_near_wall(vec2_t * orig, int dir, float * dist, char * wall)
+void map_clip_find_near_wall(vec2_t * orig, direction_t dir, vec_t * dist, char * wall)
 {
 	*dist = 0;
 	switch(dir)
 	{
-	case 0:
+	case DIR_UP:
 		do
 		{
 			*wall = map.map[(int)VEC_TRUNC((orig->y+(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
 			(*dist)++;
-		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
-	case 1:
+	case DIR_DOWN:
 		do
 		{
 			*wall = map.map[(int)VEC_TRUNC((orig->y-(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
 			(*dist)++;
-		}while(!( (MAP_SY*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
-	case 2:
+	case DIR_LEFT:
 		do
 		{
 			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x-(*dist))/8)];
 			(*dist)++;
-		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
-	case 3:
+	case DIR_RIGHT:
 		do
 		{
 			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x+(*dist))/8)];
 			(*dist)++;
-		}while(!( (MAP_SX*8<=(*dist))||((*wall & 0xF0) != 0)));
+		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
 	}
 }
@@ -632,7 +633,7 @@ void map_draw(camera_t * cam)
 			switch(MAP_WALL_TEXTURE(map.map[y][x]))
 			{
 				case MAP_WALL_W0   : img = image_get(IMG_WALL_W0); break;
-				case MAP_WALL_w1   : img = image_get(IMG_WALL_W1); break;
+				case MAP_WALL_W1   : img = image_get(IMG_WALL_W1); break;
 				case MAP_WALL_brick: img = image_get(IMG_WALL_BRICK); break;
 				case MAP_WALL_water  : img = game.w_water[xrand(3)]; break;
 			}
