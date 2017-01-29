@@ -8,6 +8,8 @@
 #ifndef SRC_SOUND_H_
 #define SRC_SOUND_H_
 
+#include "types.h"
+
 typedef enum
 {
 	SOUND_NULL = -1,

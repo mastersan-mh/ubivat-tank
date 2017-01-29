@@ -858,21 +858,19 @@ void player_class_init(entity_t * player, player_t * pl)
 /*
  * вычисление повреждения наносимого игроку
  */
-void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius)
+void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius, const explodeinfo_t * explodeinfo)
 {
 	int damage_full;
 	int armor;
 
 	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
-	explode_t * expl = explode->data;
-	explodeinfo_t * explode_info = &explodeinfo_table[expl->type];
 
-	if( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 && radius <= explode_info->radius )
+	if( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 && radius <= explodeinfo->radius )
 	{
 		if(self)
-			damage_full = explode_info->selfdamage*(1-radius/explode_info->radius);
+			damage_full = explodeinfo->selfdamage * (1-radius/explodeinfo->radius);
 		else
-			damage_full = explode_info->damage    *(1-radius/explode_info->radius);
+			damage_full = explodeinfo->damage     * (1-radius/explodeinfo->radius);
 
 		int damage_armor = damage_full*2/3;
 		int damage_health = damage_full - damage_armor;

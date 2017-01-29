@@ -110,7 +110,7 @@ extern void entity_player_init(void);
 
 extern void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
 
-extern void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius);
+extern void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius, const explodeinfo_t * explodeinfo);
 
 extern void player_class_init(entity_t * player, player_t * pl);
 

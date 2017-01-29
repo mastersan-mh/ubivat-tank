@@ -38,7 +38,7 @@ static const entityinfo_t exit_reginfo = {
 		ENTITYINFO_VARS(exit_vars),
 		.init = exit_entity_init,
 		.done = exit_entity_done,
-		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(exit_models)

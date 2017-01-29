@@ -1,6 +1,8 @@
 /*
  * ent_explode.h
  *
+ * Взрыв
+ *
  *  Created on: 29 нояб. 2016 г.
  *      Author: mastersan
  */
@@ -9,13 +11,14 @@
 #define SRC_ENT_EXPLODE_H_
 
 #include "vec.h"
+#include "sound.h"
 
 typedef enum
 {
 	EXPLODE_ARTILLERY,
 	EXPLODE_MISSILE,
 	EXPLODE_MINE,
-	__EXPLODE_NUM
+	EXPLODE_NUM
 } explodetype_t;
 
 typedef struct
@@ -26,19 +29,12 @@ typedef struct
 	int selfdamage;
 	//радиус действия
 	vec_t radius;
+	/* маска тексур стен, которые можно разрушить взрывом */
+	char wall;
+	sound_index_t soundIndex;
 } explodeinfo_t;
 
-/*
- * взрыв
- */
-typedef struct
-{
-	explodetype_t type;
-} explode_t;
-
-#define ENT_EXPLODE(x) ((explode_t *)(x)->data)
-
-extern explodeinfo_t explodeinfo_table[__EXPLODE_NUM];
+extern explodeinfo_t explodeinfo_table[EXPLODE_NUM];
 
 extern void entity_explode_init(void);
 

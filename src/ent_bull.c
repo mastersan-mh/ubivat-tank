@@ -61,23 +61,20 @@ static bool checkdamage(entity_t * player, entity_t * bull, const bullinfo_t * b
 }
 
 /*
- * поведение пули
+ * обработка пули
+ * @return true  = сдетонировала
+ * @return false = полёт продолжается
  */
-void bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
+static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 {
-
 	entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed);
 
-	bool make_explode = false;
-	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	//предельное расстояние пройдено
 	if(bullinfo->range > -1 && this->stat_traveled_distance > bullinfo->range)
-	{
-		make_explode = true;
-		goto end;
-	}
+		return true;
 
 	//найдем препятствия
+	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	map_clip_find(
 		&this->pos,
 		bullinfo->bodybox,
@@ -85,59 +82,27 @@ void bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 	);
 	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
-	{
-		make_explode = true;
-		goto end;
-	}
+		return true;
 
 	entity_t * entity;
 	ENTITIES_FOREACH("player", entity)
 	{
 		if(checkdamage(entity, this, bullinfo))
-		{
-			//попадание в игрока, создать взрыв
-			make_explode = true;
-			goto end;
-		}
+			return true;
 	}
 
 	ENTITIES_FOREACH("enemy", entity)
 	{
 		if(checkdamage(entity, this, bullinfo))
-		{
-			//попадание в игрока, создать взрыв
-			make_explode = true;
-			goto end;
-		}
+			return true;
 	}
 
 	ENTITIES_FOREACH("boss", entity)
 	{
 		if(checkdamage(entity, this, bullinfo))
-		{
-			//попадание в игрока, создать взрыв
-			make_explode = true;
-			goto end;
-		}
+			return true;
 	}
-
-	end:
-	if(make_explode)
-	{
-		explodetype_t explodetype = bullentity_to_explodetype(this);
-		entity = entity_new(
-			explodetype_to_explodeentity(explodetype),
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent,
-			NULL
-		);
-		/* следим за взрывом */
-		if(ENTITY_IS(this, "bull_missile"))
-			ENT_PLAYER(this->parent)->bull = entity;
-		ENTITY_ERASE(this);
-	}
+	return false;
 }
 
 static void bull_common_modelaction_startplay(entity_t * this, unsigned int imodel, char * actionname)
@@ -166,14 +131,30 @@ static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
 static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
-	bull_common_handle(this, bullinfo);
+	bool detonate = bull_common_handle(this, bullinfo);
+	if(detonate)
+	{
+		/*
+		explodetype_t explodetype = bullentity_to_explodetype(this);
+		explodetype_to_explodeentity(explodetype),
+		*/
+		entity_new(
+			"explode_artillery",
+			this->pos.x,
+			this->pos.y,
+			this->dir,
+			this->parent,
+			NULL
+		);
+		ENTITY_ERASE(this);
+	}
 }
 
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = 0,
 		.init = bull_artillery_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -215,14 +196,28 @@ static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 {
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
-	bull_common_handle(this, bullinfo);
+	bool detonate = bull_common_handle(this, bullinfo);
+	if(detonate)
+	{
+		ENT_PLAYER(this->parent)->bull =
+		entity_new(
+			"explode_missile",
+			this->pos.x,
+			this->pos.y,
+			this->dir,
+			this->parent,
+			NULL
+		);
+
+		ENTITY_ERASE(this);
+	}
 }
 
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = 0,
 		.init = bull_missile_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
 		.handle = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
@@ -264,14 +259,26 @@ static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 {
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
-	bull_common_handle(this, bullinfo);
+	bool detonate = bull_common_handle(this, bullinfo);
+	if(detonate)
+	{
+		entity_new(
+			"explode_mine",
+			this->pos.x,
+			this->pos.y,
+			this->dir,
+			this->parent,
+			NULL
+		);
+		ENTITY_ERASE(this);
+	}
 }
 
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = 0,
 		.init = bull_mine_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,

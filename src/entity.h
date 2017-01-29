@@ -40,8 +40,7 @@
 #define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
 	entity_t * x (const entity_t * this)
 
-#define ENTITY_FUNCTION_DONE_DEFAULT NULL
-#define ENTITY_FUNCTION_HANDLE_DEFAULT NULL
+#define ENTITY_FUNCTION_NONE NULL
 
 #define ENTITY_FUNCTION_ACTION(x) \
 	void x (entity_t * this, void * thisdata, const char * action)

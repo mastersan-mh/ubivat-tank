@@ -29,7 +29,7 @@ static const entityinfo_t message_reginfo = {
 		ENTITYINFO_VARS(message_vars),
 		.init = message_init,
 		.done = message_done,
-		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL
 };

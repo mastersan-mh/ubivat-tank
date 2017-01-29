@@ -14,24 +14,19 @@
 #include "sound.h"
 
 //оружия
-explodeinfo_t explodeinfo_table[__EXPLODE_NUM] =
+explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
 {
-		{  15,   7,  7},
-		{ 100,  50, 11},
-		{ 200, 100, 11}
+		{  15,   7,  7, MAP_WALL_brick               , SOUND_EXPLODE_ARTILLERY},
+		{ 100,  50, 11, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_MISSILE  },
+		{ 200, 100, 11, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_GRENADE  }
 };
 
-
-static void explode_detonate(entity_t * this)
+static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
 {
-	explode_t * explode = this->data;
-
 	vec_t r;
 	vec_t dx, dy;
 	bool self;
 	int ix,iy;
-
-	explodeinfo_t * explodeinfo = &explodeinfo_table[explode->type];
 
 	//проверка попаданий в стены
 	for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
@@ -46,23 +41,8 @@ static void explode_detonate(entity_t * this)
 			)
 			{
 				char wall = map.map[y8][x8];
-
-				if(MAP_WALL_CLIPPED(wall)) /* присутствует зажим */
-				{
-					switch(MAP_WALL_TEXTURE(wall))
-					{
-						case MAP_WALL_brick:
-							map.map[y8][x8] = 0;
-							break;
-						case MAP_WALL_W1   :
-							if( explode->type == EXPLODE_MISSILE || explode->type == EXPLODE_MINE )
-								map.map[y8][x8] = 0;
-							break;
-						case MAP_WALL_W0   :
-						case MAP_WALL_water  :
-							break;
-					}
-				}
+				if(MAP_WALL_CLIPPED(wall) && ( MAP_WALL_TEXTURE(wall) & explodeinfo->wall ) )
+					map.map[y8][x8] = 0;
 			}
 		}
 	}
@@ -79,34 +59,30 @@ static void explode_detonate(entity_t * this)
 	for(i = 0; i < 3; i++)
 	{
 	//пуля не попала в стену
-		entity_t * player;
-		player = entity_getfirst(list[i]);
-		while(player)
+		entity_t * attacked;
+		ENTITIES_FOREACH(list[i], attacked)
 		{
-				dx = player->pos.x - this->pos.x;
-				dy = player->pos.y - this->pos.y;
-				if(
-						(VEC_ABS(dx) <= c_p_MDL_box/2) &&
-						(VEC_ABS(dy) <= c_p_MDL_box/2)
-				)
-					r = 0;
-				else
-				{
-					r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
-				};
-				if(r <= explodeinfo->radius)
-				{
-					//r = dx < dy ? dx : dy;
-					//взрывом задели себя или товарища по команде(не для монстров)
-					self = ( this->parent == player ) && ( strcmp(player->info->name, "player") == 0 );
-					player_getdamage(player, this, self, r);
-				}
-			player = player->next;
+			dx = attacked->pos.x - this->pos.x;
+			dy = attacked->pos.y - this->pos.y;
+			if(
+					(VEC_ABS(dx) <= c_p_MDL_box/2) &&
+					(VEC_ABS(dy) <= c_p_MDL_box/2)
+			)
+				r = 0;
+			else
+			{
+				r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
+			}
+			if(r <= explodeinfo->radius)
+			{
+				//r = dx < dy ? dx : dy;
+				//взрывом задели себя или товарища по команде(не для монстров)
+				self = ( this->parent == attacked ) && ENTITY_IS(attacked, "player") ;
+				player_getdamage(attacked, this, self, r, explodeinfo);
+			}
 		}
 
 	}
-
-
 
 }
 
@@ -114,7 +90,6 @@ static void explode_common_modelaction_endframef(entity_t * this, unsigned int i
 {
 	if(this->parent)
 	{
-
 		if(ENT_PLAYER(this->parent)->bull == this)
 		{
 			ENT_PLAYER(this->parent)->bull = NULL;
@@ -173,73 +148,63 @@ static entmodel_t explode_big_models[] =
 		}
 };
 
-static void explode_common_init(entity_t * this, explode_t * explode, const entity_t * parent, explodetype_t type)
+static void explode_common_init(entity_t * this, explodetype_t type)
 {
-	static sound_index_t sound_list[] =
-	{
-			SOUND_EXPLODE_ARTILLERY,
-			SOUND_EXPLODE_MISSILE,
-			SOUND_EXPLODE_GRENADE
-	};
+	const explodeinfo_t * explodeinfo = &explodeinfo_table[type];
 
-	explode->type  = type;
-
-	sound_play_start(sound_list[type], 1);
+	sound_play_start(explodeinfo->soundIndex, 1);
 	entity_model_play_start(this, 0, "explode");
 
-	explode_detonate(this);
+	explode_detonate(this, explodeinfo);
 
 }
 
 static ENTITY_FUNCTION_INIT(explode_artillery_entity_init)
 {
-	explode_common_init(this, thisdata, parent, EXPLODE_ARTILLERY);
+	explode_common_init(this, EXPLODE_ARTILLERY);
 }
 
 static ENTITY_FUNCTION_INIT(explode_missile_entity_init)
 {
-	explode_common_init(this, thisdata,  parent, EXPLODE_MISSILE);
+	explode_common_init(this, EXPLODE_MISSILE);
 }
 
 static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
 {
-	explode_common_init(this,  thisdata, parent, EXPLODE_MINE);
+	explode_common_init(this, EXPLODE_MINE);
 }
 
 static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
-		.datasize = sizeof(explode_t),
+		.datasize = 0,
 		.init = explode_artillery_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
-		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = explode_small_models
+		ENTITYINFO_ENTMODELS(explode_small_models)
 };
 
 static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
-		.datasize = sizeof(explode_t),
+		.datasize = 0,
 		.init = explode_missile_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
-		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = explode_big_models
+		ENTITYINFO_ENTMODELS(explode_big_models)
 };
 
 static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
-		.datasize = sizeof(explode_t),
+		.datasize = 0,
 		.init = explode_mine_entity_init,
-		.done = ENTITY_FUNCTION_DONE_DEFAULT,
-		.handle   = ENTITY_FUNCTION_HANDLE_DEFAULT,
+		.done = ENTITY_FUNCTION_NONE,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = explode_big_models
+		ENTITYINFO_ENTMODELS(explode_big_models)
 };
 
 void entity_explode_init(void)
