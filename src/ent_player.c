@@ -35,48 +35,63 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 {
 	if(!spawn)
 		game_halt("Error: Player spawn is NULL, can not create player.");
-	spawn_t * sp = spawn->data;
 
-	player->pos.x = spawn->pos.x;
-	player->pos.y = spawn->pos.y;
+	player->pos = spawn->pos;
 
-	if(0 <= sp->items[ITEM_SCORES] && sp->items[ITEM_SCORES] <= PLAYER_SCORES_MAX)
-		ENTITY_VARIABLE_INTEGER(player, "scores") = sp->items[ITEM_SCORES];
+	entity_int_t spawn_scores = ENTITY_VARIABLE_INTEGER(spawn, "item_scores");
+	if(0 <= spawn_scores && spawn_scores <= PLAYER_SCORES_MAX)
+		ENTITY_VARIABLE_INTEGER(player, "scores") = spawn_scores;
+
 	player_class_init(player, pl);
+
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
-	if(0 <= sp->items[ITEM_HEALTH] && sp->items[ITEM_HEALTH] <= playerinfo->items[ITEM_HEALTH])
-		ENTITY_VARIABLE_INTEGER(player, "item_health") = sp->items[ITEM_HEALTH];
-	else
+	static const struct {
+	char * spawnvarname;
+	char * playervarname;
+	player_invitemtype_t item;
+	}
+	spawn_itemvars[] =
 	{
-		if( !ENTITY_IS(player, "player") )
-			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
-		else
+			{ "item_health"        , "item_health"      , ITEM_HEALTH},
+			{ "item_armor"         , "item_armor"       , ITEM_ARMOR},
+			{ "item_ammo_missile"  , "item_ammo_missile", ITEM_AMMO_MISSILE},
+			{ "item_ammo_mine"     , "item_ammo_mine"   , ITEM_AMMO_MINE},
+	};
+
+#define SPAWNVAR(i) ENTITY_VARIABLE_INTEGER(spawn, spawn_itemvars[i].spawnvarname)
+#define PLAYERVAR(i) ENTITY_VARIABLE_INTEGER(player, spawn_itemvars[i].playervarname)
+#define PLAYERINFOVAR(i) playerinfo->items[spawn_itemvars[i].item]
+/* инициализация инвентаря */
+	size_t i;
+	for(i = 0; i < ARRAYSIZE(spawn_itemvars); i++)
+	{
+		entity_int_t spawn_value = SPAWNVAR(i);
+		if( spawn_value > PLAYERINFOVAR(i) )
+			spawn_value = PLAYERINFOVAR(i);
+		else if(spawn_value <=0)
 		{
-			if(sv_game_is_custom_game())
-				ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
+			if( !ENTITY_IS(player, "player") ) /* враг/босс */
+				spawn_value = PLAYERINFOVAR(i);
 			else
 			{
-				//по уровням
-				if(sv_game_is_first_map()) // первая карта
-					ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
-				else // не первая карта
-					if(ENTITY_VARIABLE_INTEGER(player, "item_health") <= 0)
-						ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
+				/* игрок-человек */
+				if(sv_game_is_custom_game())
+					spawn_value = PLAYERINFOVAR(i);
+				else
+				{
+					//по уровням
+					if(sv_game_is_first_map()) // первая карта
+						spawn_value = PLAYERINFOVAR(i);
+					else // не первая карта
+						spawn_value = PLAYERVAR(i);
+				}
 			}
 		}
+		PLAYERVAR(i) = spawn_value;
 	}
-	if(0 <= sp->items[ITEM_ARMOR] && sp->items[ITEM_ARMOR] <= playerinfo->items[ITEM_ARMOR] )
-		ENTITY_VARIABLE_INTEGER(player, "item_armor") = sp->items[ITEM_ARMOR];
-	else
-	{
-		if( ENTITY_IS(player, "player") )
-			ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
-		else
-			if(sv_game_is_custom_game())
-				ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
-	};
+
 	ENTITY_VARIABLE_INTEGER(player, "frags") = 0;
 	pl->bull          = NULL;
 	pl->move.speed    = 0;
@@ -90,12 +105,12 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
 		/* SCORES                 , HEALTH, ARMOR,  AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE,     speed,            modelname */
-		{ { ITEM_SCOREPERCLASS * 1,    100,     0, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, "tank1"},
-		{ { ITEM_SCOREPERCLASS * 2,    100,    50, ITEM_AMOUNT_INF, ITEM_AMOUNT_NA, ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, "tank2"},
-		{ { ITEM_SCOREPERCLASS * 3,    100,   100, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, "tank3"},
-		{ { ITEM_SCOREPERCLASS * 4,    200,   150, ITEM_AMOUNT_INF, 50            , ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, "tank4"},
-		{ { ITEM_SCOREPERCLASS * 5,    200,   200, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"},
-		{ { ITEM_SCOREPERCLASS * 6,   5000,  5000, ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank6"}  /* BOSS */
+		{ { PLAYER_SCOREPERCLASS * 1,    100,     0, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, "tank1"},
+		{ { PLAYER_SCOREPERCLASS * 2,    100,    50, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, "tank2"},
+		{ { PLAYER_SCOREPERCLASS * 3,    100,   100, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, "tank3"},
+		{ { PLAYER_SCOREPERCLASS * 4,    200,   150, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, "tank4"},
+		{ { PLAYER_SCOREPERCLASS * 5,    200,   200, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"},
+		{ { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank6"}  /* BOSS */
 };
 
 #define tank_common_modelaction_endframef entity_model_play_start
@@ -452,20 +467,20 @@ static void player_influence_exit(entity_t * actor, entity_t * exposed)
 	sv_game_win();
 }
 
-static void player_pickup_item_scores(entity_t * player, entity_t * entity)
+static void player_pickup_item_scores(entity_t * player, entity_t * item)
 {
-	item_t * item = entity->data;
-	if(!item->exist)
+	if(!ENTITY_IS_SPAWNED(item))
 		return;
+
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
+	ENTITY_UNSPAWN(item);
 
-	item->exist = false;
-	entity_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += item->amount );
+	entity_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
 
 	player_class_init(player, player->data);
-	if(scores / ITEM_SCOREPERCLASS >= 5)
+	if(scores / PLAYER_SCOREPERCLASS >= 5)
 	{
 		if(ENTITY_VARIABLE_INTEGER(player, "item_health") < playerinfo->items[ITEM_HEALTH])
 			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
@@ -474,8 +489,32 @@ static void player_pickup_item_scores(entity_t * player, entity_t * entity)
 	}
 }
 
-static void player_influence_item(entity_t * player, entity_t * entity)
+player_invitemtype_t player_entity_to_itemtype(const entity_t * entity)
 {
+	static const char *entitynames[] =
+	{
+			"item_scores",
+			"item_health",
+			"item_armor" ,
+			"item_ammo_artillery",
+			"item_ammo_missile",
+			"item_ammo_mine"
+	};
+	size_t i;
+	for(i = 0; i < ARRAYSIZE(entitynames); i++)
+	{
+		if(ENTITY_IS(entity, entitynames[i]))
+			return i;
+	}
+	game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity->info->name);
+	return -1;
+}
+
+static void player_influence_item(entity_t * player, entity_t * item)
+{
+	if(!ENTITY_IS_SPAWNED(item))
+		return;
+
 	static const char *list[] =
 	{
 			"scores",
@@ -486,32 +525,27 @@ static void player_influence_item(entity_t * player, entity_t * entity)
 			"item_ammo_mine",
 	};
 
-	itemtype_t itemtype = items_enttype_to_itemtype(entity->info->name);
-	if((int) itemtype < 0)
-	{
-		game_halt("player_items_get(): invalid itemtype = %d\n", itemtype);
-	}
-	item_t * item = entity->data;
-	if(!item->exist)
-		return;
+	player_invitemtype_t invitemtype = player_entity_to_itemtype(item);
+
 	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
-	int itemamount;
+	int itemamount = ENTITY_VARIABLE_INTEGER(item, "amount");
+	int player_itemamount;
 
 	if(
-			playerinfo->items[itemtype] != ITEM_AMOUNT_INF &&
-			playerinfo->items[itemtype] != ITEM_AMOUNT_NA &&
+			playerinfo->items[invitemtype] > 0 &&
 			(
-			( (itemamount = (ENTITY_VARIABLE_INTEGER(player, list[itemtype])) < playerinfo->items[itemtype]) || item->amount < 0)
+					( (player_itemamount = ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) ) < playerinfo->items[invitemtype] ) ||
+					itemamount < 0
 			)
 	)
 	{
-		item->exist = false;
-		itemamount += item->amount;
-		coerce_value_int(&itemamount, 0, playerinfo->items[itemtype]);
-		ENTITY_VARIABLE_INTEGER(player, list[itemtype]) = itemamount;
-	};
+		ENTITY_UNSPAWN(item);
+		player_itemamount += itemamount;
+		coerce_value_int(&player_itemamount, 0, playerinfo->items[invitemtype]);
+		ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) = player_itemamount;
+	}
 }
 
 bool inbox(entity_t * entity, entity_t * player)
@@ -762,7 +796,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 					}
 
 					if(
-							(playerinfo->items[item] == ITEM_AMOUNT_INF)||            //если пуль бесконечно много
+							(playerinfo->items[item] == PLAYER_ITEM_AMOUNT_INF)||            //если пуль бесконечно много
 							(ENTITY_VARIABLE_INTEGER(player, list[item]) > 0)
 					)
 					{
@@ -803,7 +837,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
  */
 void player_class_init(entity_t * player, player_t * pl)
 {
-	int level = ENTITY_VARIABLE_INTEGER(player, "scores") / ITEM_SCOREPERCLASS;
+	int level = ENTITY_VARIABLE_INTEGER(player, "scores") / PLAYER_SCOREPERCLASS;
 	if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
 	if( ENTITY_IS(player, "boss") )
 		level = PLAYER_LEVEL_BOSS;
@@ -812,7 +846,7 @@ void player_class_init(entity_t * player, player_t * pl)
 
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
-	int i;
+	size_t i;
 	for(i = 0; i < ITEM_NUM; i++)
 	{
 		static const char *list[] =
@@ -826,8 +860,8 @@ void player_class_init(entity_t * player, player_t * pl)
 		};
 
 		if(
-				playerinfo->items[i] == ITEM_AMOUNT_NA ||
-				playerinfo->items[i] == ITEM_AMOUNT_INF
+				playerinfo->items[i] == PLAYER_ITEM_AMOUNT_NA ||
+				playerinfo->items[i] == PLAYER_ITEM_AMOUNT_INF
 		)
 			ENTITY_VARIABLE_INTEGER(player, list[i]) = playerinfo->items[i];
 		else

@@ -150,12 +150,12 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 		{
 			entityvardata_t * vardata = Z_malloc(sizeof(entityvardata_t));
 			vardata->index = i;
-			vardata->type = entityinfo->vars[i].type;
+			vardata->type = evars[i].type;
 			switch(vardata->type)
 			{
 				case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
 				case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
-				case ENTITYVARTYPE_STRING   : vardata->value.string = NULL; break;
+				case ENTITYVARTYPE_STRING : vardata->value.string = NULL; break;
 			}
 			tree_node_insert(&entity->vars, HASH32(evars[i].name), vardata);
 

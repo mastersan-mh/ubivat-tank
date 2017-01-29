@@ -47,9 +47,16 @@
 /* торможение: м/с^2 */
 #define PLAYER_DECEL       (0.05f * MPS2_TO_PIXPS2)
 
+/* предмет не используется */
+#define PLAYER_ITEM_AMOUNT_NA  (0)
+/* бесконечно */
+#define PLAYER_ITEM_AMOUNT_INF (-1)
+
 //очки
 //очки за 1 убитый танк
 #define PLAYER_SCORES_PER_ENEMY 5
+//сколько очков нужно набрать для повышения уровня танка
+#define PLAYER_SCOREPERCLASS 200
 //макс. кол-во очков
 #define PLAYER_SCORES_MAX     2000000
 
@@ -63,6 +70,18 @@ enum
 	PLAYER_LEVEL_BOSS,
 	__PLAYER_LEVEL_NUM
 };
+
+/* инвентарь */
+typedef enum
+{
+	ITEM_SCORES,
+	ITEM_HEALTH,
+	ITEM_ARMOR,
+	ITEM_AMMO_ARTILLERY,
+	ITEM_AMMO_MISSILE,
+	ITEM_AMMO_MINE,
+	ITEM_NUM
+} player_invitemtype_t;
 
 typedef struct
 {

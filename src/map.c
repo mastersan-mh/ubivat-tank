@@ -84,9 +84,9 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 {
 
 /* предмет не используется */
-#define ITEM_AMOUNT_NA  (0)
+#define PLAYER_ITEM_AMOUNT_NA  (0)
 /* бесконечно */
-#define ITEM_AMOUNT_INF (-1)
+#define PLAYER_ITEM_AMOUNT_INF (-1)
 
 	enum
 	{
@@ -116,21 +116,21 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
 		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
 		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
 		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
 		entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
 		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
 		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
 		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
 		entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = ITEM_AMOUNT_NA;
+		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
 		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
 		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
 		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
