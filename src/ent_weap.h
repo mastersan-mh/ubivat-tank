@@ -36,9 +36,10 @@ typedef struct
 
 extern weaponinfo_t wtable[__WEAP_NUM];
 
-bulltype_t entity_weapon_type_to_bull_type(weapontype_t type);
-explodetype_t entity_bull_type_to_explode_type(bulltype_t bull_type);
-const char * entity_bulltype_to_mobj(bulltype_t bulltype);
-const char * entity_explodetype_to_mobjtype(explodetype_t type);
+extern explodetype_t weapontype_to_explodetype(weapontype_t weapontype);
+
+extern const char * weapontype_to_bullentity(weapontype_t weapontype);
+extern explodetype_t bullentity_to_explodetype(entity_t * bull);
+const char * explodetype_to_explodeentity(explodetype_t type);
 
 #endif /* SRC_ENT_WEAP_H_ */

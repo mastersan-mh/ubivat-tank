@@ -4,6 +4,7 @@
  * by Master San
  */
 
+#include "entity.h"
 #include "ent_weap.h"
 #include "ent_player.h"
 
@@ -20,32 +21,19 @@ weaponinfo_t wtable[__WEAP_NUM] =
 		{ "Mine"     , IMG_WEAPON_MINE      }
 };
 
-
-bulltype_t entity_weapon_type_to_bull_type(weapontype_t type)
+explodetype_t weapontype_to_explodetype(weapontype_t weapontype)
 {
-	switch(type)
+	switch(weapontype)
 	{
-	case WEAP_ARTILLERY: return EXPLODE_ARTILLERY;
-	case WEAP_MISSILE  : return EXPLODE_MISSILE;
-	case WEAP_MINE     : return EXPLODE_MINE;
-	default: ;
+		case WEAP_ARTILLERY: return EXPLODE_ARTILLERY;
+		case WEAP_MISSILE  : return EXPLODE_MISSILE;
+		case WEAP_MINE     : return EXPLODE_MINE;
+		default: ;
 	}
 	return EXPLODE_ARTILLERY;
 }
 
-explodetype_t entity_bull_type_to_explode_type(bulltype_t bulltype)
-{
-	switch(bulltype)
-	{
-	case BULL_ARTILLERY: return EXPLODE_ARTILLERY;
-	case BULL_MISSILE  : return EXPLODE_MISSILE;
-	case BULL_MINE     : return EXPLODE_MINE;
-	default: ;
-	}
-	return EXPLODE_ARTILLERY;
-}
-
-const char * entity_bulltype_to_mobj(bulltype_t type)
+const char * weapontype_to_bullentity(weapontype_t weapontype)
 {
 	static const char *list[] =
 	{
@@ -53,10 +41,27 @@ const char * entity_bulltype_to_mobj(bulltype_t type)
 			"bull_missile",
 			"bull_mine"
 	};
-	return list[type];
+	return list[weapontype];
 }
 
-const char * entity_explodetype_to_mobjtype(explodetype_t type)
+explodetype_t bullentity_to_explodetype(entity_t * bull)
+{
+	if(ENTITY_IS(bull, "bull_artillery"))
+	{
+		return EXPLODE_ARTILLERY;
+	}
+	if(ENTITY_IS(bull, "bull_missile"))
+	{
+		return EXPLODE_MISSILE;
+	}
+	if(ENTITY_IS(bull, "bull_mine"))
+	{
+		return EXPLODE_MINE;
+	}
+	return EXPLODE_ARTILLERY;
+}
+
+const char * explodetype_to_explodeentity(explodetype_t type)
 {
 	static const char *list[] =
 	{

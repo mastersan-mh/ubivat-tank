@@ -76,8 +76,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			if(dangerous->parent == player)
 				continue;
 
-			explodeinfo_t * explodeinfo = &explodeinfo_table[entity_bull_type_to_explode_type(ENT_BULL(dangerous)->type)];
-			bullinfo_t * bullinfo = &bullinfo_table[ENT_BULL(dangerous)->type];
+			explodeinfo_t * explodeinfo = &explodeinfo_table[bullentity_to_explodetype(dangerous)];
 
 			//верхняя ближайшая стена
 			map_clip_find_near(&player->pos, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
@@ -98,7 +97,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			)
 			{
 				if(
-						(dangerous->dir == DIR_UP || bullinfo->speed < 0) &&
+						(dangerous->dir == DIR_UP) &&
 						(VEC_ABS(player->pos.y-dangerous->pos.y)<Ddist) &&
 						(dangerous->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
 				)
@@ -118,7 +117,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 				else
 				{
 					if(
-							(dangerous->dir == DIR_DOWN ||  bullinfo->speed < 0) &&
+							(dangerous->dir == DIR_DOWN) &&
 							(VEC_ABS(player->pos.y-dangerous->pos.y)<Udist) &&
 							(player->pos.y+c_p_MDL_box/2 < dangerous->pos.y - explodeinfo->radius)
 					)
@@ -144,7 +143,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 				)
 				{
 					if (
-							(dangerous->dir == DIR_LEFT || bullinfo->speed < 0)&&
+							(dangerous->dir == DIR_LEFT)&&
 							(VEC_ABS(player->pos.x-dangerous->pos.x)<Rdist)&&
 							(player->pos.x+c_p_MDL_box/2 < dangerous->pos.x- explodeinfo->radius)
 					)
@@ -164,7 +163,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 					else
 					{
 						if(
-								(dangerous->dir == DIR_RIGHT || bullinfo->speed < 0) &&
+								(dangerous->dir == DIR_RIGHT) &&
 								(VEC_ABS(player->pos.x - dangerous->pos.x)<Ldist) &&
 								(dangerous->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
 						)
@@ -193,6 +192,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 		//player->move.go = false;
 	}
 }
+
 /*
  * атака
  */
@@ -201,9 +201,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	player_t * pl = player->data;
 
 	explodeinfo_t * explodeinfo = &explodeinfo_table[
-													entity_weapon_type_to_bull_type(
-														entity_weapon_type_to_bull_type(pl->brain.weap)
-													)
+													weapontype_to_explodetype(pl->brain.weap)
 													];
 
 	float dist;
@@ -264,10 +262,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				if(pl->brain.weap == WEAP_MINE)
 				{
 					//мина
-					if(player->dir == DIR_DOWN)
-						player->dir = DIR_UP;
-					else
-						player->dir = DIR_DOWN;
+					player->dir = entity_direction_invert(player->dir);
 				}
 			}
 			else
@@ -299,11 +294,8 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 							pl->brain.weap = 1+xrand(2);                             //выбираем наугад ракету или мину
 							pl->brain.attack = true;
 							if(pl->brain.weap == WEAP_MINE)
-							{                           //мина
-								if(player->dir == DIR_DOWN)
-									player->dir = DIR_UP;
-								else
-									player->dir = DIR_DOWN;
+							{ //мина
+								player->dir = entity_direction_invert(player->dir);
 							}
 						}
 						else
@@ -331,7 +323,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		)
 		{
 			if(target->pos.x<player->pos.x) player->dir = DIR_LEFT;
-			else                                      player->dir = DIR_RIGHT;
+			else                            player->dir = DIR_RIGHT;
 			map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 			if(
 					//противник в прямой видимости
@@ -345,8 +337,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 					pl->brain.weap = 1+xrand(2);                               //выбираем наугад ракету или мину
 					if(pl->brain.weap == WEAP_MINE)
 					{                             //мина
-						if(player->dir == DIR_LEFT) player->dir = DIR_RIGHT;
-						else                        player->dir = DIR_LEFT;
+						player->dir = entity_direction_invert(player->dir);
 					};
 				}
 				else
@@ -373,10 +364,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 								pl->brain.weap = 1+xrand(2);                            //выбираем наугад ракету или мину
 								if(pl->brain.weap == WEAP_MINE)
 								{ //мина
-									if(player->dir == DIR_LEFT)
-										player->dir = DIR_RIGHT;
-									else
-										player->dir = DIR_LEFT;
+									player->dir = entity_direction_invert(player->dir);
 								}
 							}
 							else

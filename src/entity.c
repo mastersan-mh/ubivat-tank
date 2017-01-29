@@ -138,6 +138,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 	entity->alive = true;
 	entity->allow_handle = true;
 	entity->allow_draw = true;
+	entity->stat_traveled_distance = 0.0f;
 
 	const entityinfo_t * entityinfo = entityinfo_reg->info;
 	entity->info = entityinfo;

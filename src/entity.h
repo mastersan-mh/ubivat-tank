@@ -118,6 +118,10 @@ typedef struct entity_s
 	 */
 	bool spawned;
 
+	/* статистика */
+	/* пройденое расстояние */
+	vec_t stat_traveled_distance;
+
 	const struct entityinfo_s * info;
 	/* структура для проигрывания кардов моделей, связанных с объектом */
 	struct ent_modelplayer_s * modelplayers;

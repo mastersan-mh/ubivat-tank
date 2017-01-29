@@ -765,14 +765,18 @@ static void player_handle_common(entity_t * player, player_t * pl)
 					{
 						// пули не кончились
 						pl->reloadtime_d = c_p_WEAP_reloadtime;
-						bulltype_t bulltype = entity_weapon_type_to_bull_type(pl->weap);
-
 						//создаем пулю
+						direction_t dir;
+						if(pl->weap != WEAP_MINE)
+							dir = player->dir;
+						else
+							dir = entity_direction_invert(player->dir);
+
 						entity_new(
-							entity_bulltype_to_mobj(bulltype),
+							weapontype_to_bullentity(pl->weap),
 							player->pos.x,
 							player->pos.y,
-							player->dir,
+							dir,
 							player,
 							NULL
 							);

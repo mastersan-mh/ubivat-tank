@@ -15,20 +15,40 @@
 #include "ent_player.h"
 #include "ent_weap.h"
 
-bullinfo_t bullinfo_table[__BULL_NUM] =
+typedef enum
+{
+	BULL_ARTILLERY,
+	BULL_MISSILE,
+	BULL_MINE,
+	BULL_NUM
+} bulltype_t;
+
+typedef struct
+{
+	//повреждение
+	int damage;
+	//повреждение
+	int selfdamage;
+	//дальность
+	vec_t range;
+	//начальная скорость пули
+	vec_t speed;
+	//bodybox
+	vec_t bodybox;
+} bullinfo_t;
+
+static const bullinfo_t bullinfo_table[BULL_NUM] =
 {
 		{ 15,   7,  -1,  75, 2 },
 		{100,  50,  -1,  80, 8 },
-		{200, 100, 100, -80, 8 }
+		{200, 100, 100,  80, 8 }
 };
 
 /*
  * проверка на попадание в игрока
  */
-static int checkdamage(entity_t * player, entity_t * bull)
+static bool checkdamage(entity_t * player, entity_t * bull, const bullinfo_t * bullinfo)
 {
-	bullinfo_t * bullinfo = &bullinfo_table[((bull_t*)bull->data)->type];
-
 	if(
 			bull->parent != player && //попали не в себя
 			0 < player->alive &&
@@ -43,18 +63,15 @@ static int checkdamage(entity_t * player, entity_t * bull)
 /*
  * поведение пули
  */
-void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
+void bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 {
 
-	vec_t dist = entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed);
+	entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed);
 
 	bool make_explode = false;
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
-	bull_t * bull = this->data;
-	//подсчитываем пройденный путь
-	bull->delta_s = bull->delta_s + VEC_ABS(dist);
 	//предельное расстояние пройдено
-	if(bullinfo->range > -1 && bull->delta_s > bullinfo->range)
+	if(bullinfo->range > -1 && this->stat_traveled_distance > bullinfo->range)
 	{
 		make_explode = true;
 		goto end;
@@ -76,7 +93,7 @@ void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 	entity_t * entity;
 	ENTITIES_FOREACH("player", entity)
 	{
-		if(checkdamage(entity, this))
+		if(checkdamage(entity, this, bullinfo))
 		{
 			//попадание в игрока, создать взрыв
 			make_explode = true;
@@ -86,7 +103,7 @@ void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 
 	ENTITIES_FOREACH("enemy", entity)
 	{
-		if(checkdamage(entity, this))
+		if(checkdamage(entity, this, bullinfo))
 		{
 			//попадание в игрока, создать взрыв
 			make_explode = true;
@@ -96,7 +113,7 @@ void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 
 	ENTITIES_FOREACH("boss", entity)
 	{
-		if(checkdamage(entity, this))
+		if(checkdamage(entity, this, bullinfo))
 		{
 			//попадание в игрока, создать взрыв
 			make_explode = true;
@@ -107,9 +124,9 @@ void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 	end:
 	if(make_explode)
 	{
-		explodetype_t explodetype = entity_bull_type_to_explode_type(bull->type);
+		explodetype_t explodetype = bullentity_to_explodetype(this);
 		entity = entity_new(
-			entity_explodetype_to_mobjtype(explodetype),
+			explodetype_to_explodeentity(explodetype),
 			this->pos.x,
 			this->pos.y,
 			this->dir,
@@ -117,33 +134,15 @@ void bull_common_handle(entity_t * this, bullinfo_t * bullinfo)
 			NULL
 		);
 		/* следим за взрывом */
-		if(bull->type == BULL_MISSILE)
+		if(ENTITY_IS(this, "bull_missile"))
 			ENT_PLAYER(this->parent)->bull = entity;
 		ENTITY_ERASE(this);
 	}
-
-
 }
 
 static void bull_common_modelaction_startplay(entity_t * this, unsigned int imodel, char * actionname)
 {
 	entity_model_play_start(this, imodel, actionname);
-}
-
-/**
- * @description содание пули
- */
-static void bull_common_init(entity_t * this, void * thisdata, const entity_t * parent, bulltype_t bulltype)
-{
-	bull_t * bull = thisdata;
-	bull->type = bulltype;
-	bull->delta_s = 0;
-
-	if(bulltype != BULL_ARTILLERY)
-		bull_common_modelaction_startplay(this, 0, "fly");
-
-	if(bulltype == BULL_MISSILE)
-		((player_t *)parent->data)->bull = this;
 }
 
 /*
@@ -162,19 +161,17 @@ entmodel_t bull_artillery_models[] =
 
 static ENTITY_FUNCTION_INIT(bull_artillery_entity_init)
 {
-	bull_common_init(this, thisdata, parent, BULL_ARTILLERY);
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
-	bull_t * bull = this->data;
-	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
 	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
-		.datasize = sizeof(bull_t),
+		.datasize = 0,
 		.init = bull_artillery_entity_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_artillery_handle,
@@ -211,19 +208,19 @@ static entmodel_t bull_missile_models[] =
 
 static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 {
-	bull_common_init(this, thisdata, parent, BULL_MISSILE);
+	bull_common_modelaction_startplay(this, 0, "fly");
+	((player_t *)parent->data)->bull = this;
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 {
-	bull_t * bull = this->data;
-	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
 	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
-		.datasize = sizeof(bull_t),
+		.datasize = 0,
 		.init = bull_missile_entity_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle = bull_missile_handle,
@@ -261,19 +258,18 @@ static entmodel_t bull_mine_models[] =
 
 static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 {
-	bull_common_init(this, thisdata, parent, BULL_MINE);
+	bull_common_modelaction_startplay(this, 0, "fly");
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 {
-	bull_t * bull = this->data;
-	bullinfo_t * bullinfo = &bullinfo_table[bull->type];
+	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
 	bull_common_handle(this, bullinfo);
 }
 
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
-		.datasize = sizeof(bull_t),
+		.datasize = 0,
 		.init = bull_mine_entity_init,
 		.done = ENTITY_FUNCTION_DONE_DEFAULT,
 		.handle   = bull_mine_handle,
