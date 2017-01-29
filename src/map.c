@@ -88,85 +88,68 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 /* бесконечно */
 #define PLAYER_ITEM_AMOUNT_INF (-1)
 
-	enum
-	{
-		MAP_SPAWN_ITEM_SCORES,
-		MAP_SPAWN_ITEM_HEALTH,
-		MAP_SPAWN_ITEM_ARMOR,
-		MAP_SPAWN_ITEM_AMMO_ARTILLERY,
-		MAP_SPAWN_ITEM_AMMO_MISSILE,
-		MAP_SPAWN_ITEM_AMMO_MINE,
-		MAP_SPAWN_ITEM_NUM
-	};
-
-	/*
-	 * точка респавнинга
-	 * структура должна быть такая-же как и spawn_t в ent_spawn.h
-	 */
-	typedef struct
-	{
-		int items[MAP_SPAWN_ITEM_NUM];
-	} map_spawn_t;
-
-#define BUFSIZE 2048
-	static char buf[BUFSIZE];
-	int i;
-	int value_int;
-	map_spawn_t spawn;
+#define STRBUFSIZE 2048
+	static char strbuf[STRBUFSIZE];
+	entity_t * entity;
 	switch(mapdata_mobj_type)
 	{
 	case MAPDATA_MOBJ_SPAWN_PLAYER:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
-		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
-		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
-		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity = entity_new("spawn_player", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
+		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
+		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_missile") = PLAYER_ITEM_AMOUNT_NA;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_SPAWN_ENEMY:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
-		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
-		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
-		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity = entity_new("spawn_enemy", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
+		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
+		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_missile") = PLAYER_ITEM_AMOUNT_NA;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_SPAWN_BOSS:
-		for(i = 0; i < MAP_SPAWN_ITEM_NUM; i++) spawn.items[i] = PLAYER_ITEM_AMOUNT_NA;
-		spawn.items[MAP_SPAWN_ITEM_SCORES] = data->spawn.scores;
-		spawn.items[MAP_SPAWN_ITEM_HEALTH] = data->spawn.health;
-		spawn.items[MAP_SPAWN_ITEM_ARMOR]  = data->spawn.armor;
-		entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL, &spawn);
+		entity = entity_new("spawn_boss", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "item_scores") = data->spawn.scores;
+		ENTITY_VARIABLE_INTEGER(entity, "item_health") = data->spawn.health;
+		ENTITY_VARIABLE_INTEGER(entity, "item_armor")  = data->spawn.armor;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_missile") = PLAYER_ITEM_AMOUNT_NA;
+		ENTITY_VARIABLE_INTEGER(entity, "item_ammo_mine")    = PLAYER_ITEM_AMOUNT_NA;
 		break;
 	case MAPDATA_MOBJ_ITEM_HEALTH :
-		value_int = data->item.amount;
-		entity_new("item_health", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity = entity_new("item_health", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_ARMOR:
-		value_int = data->item.amount;
-		entity_new("item_armor", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity = entity_new("item_armor", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_STAR:
-		value_int = data->item.amount;
-		entity_new("item_scores", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity = entity_new("item_scores", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_ROCKET:
-		value_int = data->item.amount;
-		entity_new("item_ammo_missile", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity = entity_new("item_ammo_missile", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_ITEM_MINE:
-		value_int = data->item.amount;
-		entity_new("item_ammo_mine", data->pos.x, data->pos.y, DIR_UP, NULL, &value_int);
+		entity = entity_new("item_ammo_mine", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_INTEGER(entity, "amount") = data->item.amount;
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
-		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
+		entity = entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
-		strn_cpp866_to_utf8(buf, BUFSIZE - 1, data->obj.message);
-		entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL, buf);
+		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
+		entity = entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL, NULL);
+		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
 		break;
 	default: ;
 	}
-#undef BUFSIZE
+#undef STRBUFSIZE
 }
 
 
@@ -480,8 +463,8 @@ int map_load(const char * mapname)
 			map_error = (err); \
 			return -1; \
 		}while(0);
-#define BUFSIZE 2048
-	static char buf[BUFSIZE];
+#define STRBUFSIZE 2048
+	static char buf[STRBUFSIZE];
 	int fd;
 	int ret;
 	char *path;
@@ -512,11 +495,11 @@ int map_load(const char * mapname)
 	if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
 	//название карты
-	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.name);
+	len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.name);
 	map.name = Z_strndup(buf, len);
 
 	//краткое описание
-	len = strn_cpp866_to_utf8(buf, BUFSIZE - 1, header.brief);
+	len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.brief);
 	map.brief = Z_strndup(buf, len);
 
 	//чтение карты

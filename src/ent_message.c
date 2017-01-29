@@ -6,29 +6,19 @@
  */
 
 #include "entity.h"
-#include "game.h"
 #include "ent_message.h"
 
 static entityvarinfo_t message_vars[] =
 {
-		{ "message", ENTITYVARTYPE_STRING }
+		{ "text", ENTITYVARTYPE_STRING }
 };
-
-static ENTITY_FUNCTION_INIT(message_init)
-{
-	ENTITY_VARIABLE_STRING(this, "message") = ENTITY_VARIABLE_STRING_DUP((char *)args);
-}
-
-static void message_done(entity_t * this, void * thisdata)
-{
-}
 
 static const entityinfo_t message_reginfo = {
 		.name = "message",
 		.datasize = 0,
 		ENTITYINFO_VARS(message_vars),
-		.init = message_init,
-		.done = message_done,
+		.init = ENTITY_FUNCTION_NONE,
+		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL

@@ -59,23 +59,13 @@ static entmodel_t item_ammo_mine_models[] =
 		}
 };
 
-static ENTITY_FUNCTION_INIT(item_init)
-{
-	ENTITY_VARIABLE_INTEGER(this, "amount") = *((int*)args);
-}
-
-static ENTITY_FUNCTION_HANDLE(item_handle)
-{
-	ENTITY_UNSPAWN(this);
-}
-
 static const entityinfo_t item_scores_reginfo = {
 		.name = "item_scores",
 		.datasize = 0,
 		ENTITYINFO_VARS(item_vars),
-		.init = item_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle = item_handle,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(item_scores_models)
@@ -85,9 +75,9 @@ static const entityinfo_t item_health_reginfo = {
 		.name = "item_health",
 		.datasize = 0,
 		ENTITYINFO_VARS(item_vars),
-		.init = item_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle   = item_handle,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(item_health_models)
@@ -97,9 +87,9 @@ static const entityinfo_t item_armor_reginfo = {
 		.name = "item_armor",
 		.datasize = 0,
 		ENTITYINFO_VARS(item_vars),
-		.init = item_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle   = item_handle,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(item_armor_models)
@@ -109,9 +99,9 @@ static const entityinfo_t item_ammo_missile_reginfo = {
 		.name = "item_ammo_missile",
 		.datasize = 0,
 		ENTITYINFO_VARS(item_vars),
-		.init = item_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle   = item_handle,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(item_ammo_missile_models)
@@ -121,9 +111,9 @@ static const entityinfo_t item_ammo_mine_reginfo = {
 		.name = "item_ammo_mine",
 		.datasize = 0,
 		ENTITYINFO_VARS(item_vars),
-		.init = item_init,
+		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle   = item_handle,
+		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
 		ENTITYINFO_ENTMODELS(item_ammo_mine_models)

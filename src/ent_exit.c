@@ -11,7 +11,7 @@
 
 static entityvarinfo_t exit_vars[] =
 {
-		{ "message", ENTITYVARTYPE_STRING }
+		{ "text", ENTITYVARTYPE_STRING }
 };
 
 static entmodel_t exit_models[] =
@@ -23,21 +23,12 @@ static entmodel_t exit_models[] =
 		}
 };
 
-static ENTITY_FUNCTION_INIT(exit_entity_init)
-{
-	ENTITY_VARIABLE_STRING(this, "message") = ENTITY_VARIABLE_STRING_DUP((char *)args);
-}
-
-static void exit_entity_done(entity_t * this, void * thisdata)
-{
-}
-
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
 		.datasize = 0,
 		ENTITYINFO_VARS(exit_vars),
-		.init = exit_entity_init,
-		.done = exit_entity_done,
+		.init = ENTITY_FUNCTION_NONE,
+		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,

@@ -457,13 +457,13 @@ void coerce_value_int(int * val, int min, int max)
 static void player_influence_message(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "message"));
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
 }
 
 static void player_influence_exit(entity_t * actor, entity_t * exposed)
 {
 	//отправим сообщение игроку
-	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "message"));
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
 	sv_game_win();
 }
 
