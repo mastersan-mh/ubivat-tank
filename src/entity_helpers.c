@@ -49,10 +49,11 @@ direction_t entity_direction_invert(direction_t dir)
 /*
  * передвижение игрока
  */
-void entity_move(entity_t * this, direction_t dir, vec_t bodybox, vec_t speed, bool check_clip)
+void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
 {
 	vec2_t * pos = &this->pos;
 	vec_t dway = speed * dtimed1000;
+	vec_t bodybox = this->info->bodybox;
 	vec_t halfbox = bodybox/2;
 	vec_t dist;
 

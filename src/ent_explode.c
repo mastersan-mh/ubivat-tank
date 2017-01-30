@@ -16,9 +16,9 @@
 //оружия
 explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
 {
-		{  15,   7,  7, MAP_WALL_brick               , SOUND_EXPLODE_ARTILLERY},
-		{ 100,  50, 11, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_MISSILE  },
-		{ 200, 100, 11, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_GRENADE  }
+		{  15,   7, MAP_WALL_brick               , SOUND_EXPLODE_ARTILLERY},
+		{ 100,  50, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_MISSILE  },
+		{ 200, 100, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_GRENADE  }
 };
 
 static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
@@ -28,10 +28,12 @@ static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
 	bool self;
 	int ix,iy;
 
+	vec_t halfbox = this->info->bodybox * 0.5f;
+
 	//проверка попаданий в стены
-	for(iy = -explodeinfo->radius; iy <= explodeinfo->radius; iy++)
+	for(iy = -halfbox; iy <= halfbox; iy++)
 	{
-		for(ix = -explodeinfo->radius; ix <= explodeinfo->radius; ix++)
+		for(ix = -halfbox; ix <= halfbox; ix++)
 		{
 			int x8 = VEC_TRUNC((this->pos.x + ix) / 8);
 			int y8 = VEC_TRUNC((this->pos.y + iy) / 8);
@@ -73,7 +75,7 @@ static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
 			{
 				r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
 			}
-			if(r <= explodeinfo->radius)
+			if(r <= this->info->bodybox * 0.5f)
 			{
 				//r = dx < dy ? dx : dy;
 				//взрывом задели себя или товарища по команде(не для монстров)
@@ -112,7 +114,7 @@ static const ent_modelaction_t explode_small_modelactions[] =
 		}
 };
 
-static entmodel_t explode_small_models[] =
+static entitymodel_t explode_small_models[] =
 {
 		{
 				.modelname = "explode_small",
@@ -137,7 +139,7 @@ static const ent_modelaction_t explode_big_modelactions[] =
 		}
 };
 
-static entmodel_t explode_big_models[] =
+static entitymodel_t explode_big_models[] =
 {
 		{
 				.modelname = "explode_big",
@@ -177,34 +179,37 @@ static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
 static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
 		.datasize = 0,
+		.bodybox = 7.0f * 2.0f,
+		ENTITYINFO_ENTMODELS(explode_small_models),
 		.init = explode_artillery_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(explode_small_models)
 };
 
 static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
 		.datasize = 0,
+		.bodybox = 11.0f * 2.0f,
+		ENTITYINFO_ENTMODELS(explode_big_models),
 		.init = explode_missile_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(explode_big_models)
 };
 
 static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
 		.datasize = 0,
+		.bodybox = 11.0f * 2.0f,
+		ENTITYINFO_ENTMODELS(explode_big_models),
 		.init = explode_mine_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(explode_big_models)
 };
 
 void entity_explode_init(void)

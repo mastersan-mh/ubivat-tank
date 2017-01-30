@@ -105,7 +105,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			if(dangerous->parent == player)
 				continue;
 
-			explodeinfo_t * explodeinfo = &explodeinfo_table[bullentity_to_explodetype(dangerous)];
+			vec_t radius = dangerous->info->bodybox * 0.5f;
 
 			//верхняя ближайшая стена
 			map_clip_find_near(&player->pos, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
@@ -115,20 +115,20 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			map_clip_find_near(&player->pos, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
 			//правая ближайшая стена
 			map_clip_find_near(&player->pos, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
-			Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (dangerous->pos.y + explodeinfo->radius);
-			Dd = (dangerous->pos.y - explodeinfo->radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
-			Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (dangerous->pos.x + explodeinfo->radius);
-			Ld = (dangerous->pos.x - explodeinfo->radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
+			Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (dangerous->pos.y + radius);
+			Dd = (dangerous->pos.y - radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
+			Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (dangerous->pos.x + radius);
+			Ld = (dangerous->pos.x - radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
 			if(
-					(player->pos.x-c_p_MDL_box/2 <= dangerous->pos.x+ explodeinfo->radius)&&
-					(dangerous->pos.x- explodeinfo->radius <= player->pos.x+c_p_MDL_box/2)&&
+					(player->pos.x-c_p_MDL_box/2 <= dangerous->pos.x+ radius)&&
+					(dangerous->pos.x- radius <= player->pos.x+c_p_MDL_box/2)&&
 					(VEC_ABS(player->pos.y-dangerous->pos.y) < 128)
 			)
 			{
 				if(
 						(dangerous->dir == DIR_UP) &&
 						(VEC_ABS(player->pos.y-dangerous->pos.y)<Ddist) &&
-						(dangerous->pos.y + explodeinfo->radius < player->pos.y-c_p_MDL_box/2)
+						(dangerous->pos.y + radius < player->pos.y-c_p_MDL_box/2)
 				)
 				{
 					danger = true;
@@ -148,7 +148,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 					if(
 							(dangerous->dir == DIR_DOWN) &&
 							(VEC_ABS(player->pos.y-dangerous->pos.y)<Udist) &&
-							(player->pos.y+c_p_MDL_box/2 < dangerous->pos.y - explodeinfo->radius)
+							(player->pos.y+c_p_MDL_box/2 < dangerous->pos.y - radius)
 					)
 					{
 						danger = true;
@@ -166,15 +166,15 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			}
 			else {
 				if(
-						(player->pos.y - c_p_MDL_box/2 <= dangerous->pos.y + explodeinfo->radius) &&
-						(dangerous->pos.y - explodeinfo->radius <= player->pos.y + c_p_MDL_box/2) &&
+						(player->pos.y - c_p_MDL_box/2 <= dangerous->pos.y + radius) &&
+						(dangerous->pos.y - radius <= player->pos.y + c_p_MDL_box/2) &&
 						(VEC_ABS(player->pos.x - dangerous->pos.x) < 128)
 				)
 				{
 					if (
 							(dangerous->dir == DIR_LEFT)&&
 							(VEC_ABS(player->pos.x-dangerous->pos.x)<Rdist)&&
-							(player->pos.x+c_p_MDL_box/2 < dangerous->pos.x- explodeinfo->radius)
+							(player->pos.x+c_p_MDL_box/2 < dangerous->pos.x- radius)
 					)
 					{
 						danger = true;
@@ -194,7 +194,7 @@ static void ctrl_AI_checkdanger(entity_t * player)
 						if(
 								(dangerous->dir == DIR_RIGHT) &&
 								(VEC_ABS(player->pos.x - dangerous->pos.x)<Ldist) &&
-								(dangerous->pos.x + explodeinfo->radius < player->pos.x - c_p_MDL_box / 2)
+								(dangerous->pos.x + radius < player->pos.x - c_p_MDL_box / 2)
 						)
 						{
 							danger = true;
@@ -229,12 +229,18 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 {
 	player_t * pl = player->data;
 
-	explodeinfo_t * explodeinfo = &explodeinfo_table[
-													weapontype_to_explodetype(pl->brain.weap)
-													];
-
 	float dist;
 	char wall;
+
+	static char *list[] =
+	{
+			"explode_artillery",
+			"explode_missile",
+			"explode_mine",
+	};
+	const entityinfo_t * explode_entityinfo = entityinfo_get(list[weapontype_to_explodetype(pl->brain.weap)]);
+	vec_t radius = explode_entityinfo->bodybox * 0.5f;
+
 	if( pl->bull && pl->brain.target )
 	{
 		if(
@@ -339,7 +345,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 				}
 			}
 			if(
-					(dist-c_p_MDL_box/2 < explodeinfo->radius)&&
+					(dist-c_p_MDL_box/2 < radius)&&
 					(wall == (MAP_WALL_W0 | MAP_WALL_CLIP) || wall == (MAP_WALL_W1 | MAP_WALL_CLIP))
 			) pl->brain.attack = false;
 		}
@@ -408,7 +414,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 					}
 				}
 				if(
-						(dist-c_p_MDL_box/2 < explodeinfo->radius) &&
+						(dist-c_p_MDL_box/2 < radius) &&
 						((wall==MAP_WALL_W0+MAP_WALL_CLIP) || (wall==MAP_WALL_W1+MAP_WALL_CLIP))
 				)
 					pl->brain.attack = false;
@@ -420,7 +426,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 			{
 				map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
 				if(
-						(dist-c_p_MDL_box/2<explodeinfo_table[1].radius) &&
+						(dist-c_p_MDL_box/2 < radius) &&
 						((wall==MAP_WALL_W0+MAP_WALL_CLIP) || (wall==MAP_WALL_W1+MAP_WALL_CLIP))
 				)
 					pl->brain.attack = false;

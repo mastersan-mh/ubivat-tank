@@ -146,7 +146,7 @@ typedef struct
 	const unsigned int actions_num;
 	/* действия */
 	const ent_modelaction_t * actions;
-} entmodel_t;
+} entitymodel_t;
 
 /* структура для проигрывания кадров моделей, связанных с объектом */
 typedef struct ent_modelplayer_s
@@ -178,9 +178,17 @@ typedef struct entityinfo_s
 	char * name;
 	size_t datasize;
 
+	/* для простоты все объекты квадратные */
+	vec_t bodybox;
+
 	/* массив дополнительных переменных */
 	unsigned int vars_num;
 	entityvarinfo_t * vars;
+
+	/* размер массива моделей */
+	unsigned int entmodels_num;
+	/* массив моделей, связанных с объектом*/
+	entitymodel_t * entmodels;
 
 	void (*init)(entity_t * this, void * thisdata, const entity_t * parent);
 	void (*done)(entity_t * this, void * thisdata);
@@ -198,13 +206,10 @@ typedef struct entityinfo_s
 	unsigned int actions_num;
 	entityaction_t * actions;
 
-	/* размер массива моделей */
-	unsigned int entmodels_num;
-	/* массив моделей, связанных с объектом*/
-	entmodel_t * entmodels;
 
 }entityinfo_t;
 
+extern const entityinfo_t * entityinfo_get(const char * name);
 extern void entity_register(const entityinfo_t * info);
 
 extern entity_t * entity_getfirst(const char * name);

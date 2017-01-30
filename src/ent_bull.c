@@ -33,29 +33,29 @@ typedef struct
 	vec_t range;
 	//начальная скорость пули
 	vec_t speed;
-	//bodybox
-	vec_t bodybox;
 } bullinfo_t;
 
 static const bullinfo_t bullinfo_table[BULL_NUM] =
 {
-		{ 15,   7,  -1,  75, 2 },
-		{100,  50,  -1,  80, 8 },
-		{200, 100, 100,  80, 8 }
+		{ 15,   7,  -1,  75 },
+		{100,  50,  -1,  80 },
+		{200, 100, 100,  80 }
 };
 
 /*
  * проверка на попадание в игрока
  */
-static bool checkdamage(entity_t * player, entity_t * bull, const bullinfo_t * bullinfo)
+static bool checkdamage(entity_t * player, entity_t * bull)
 {
+	vec_t bullbox = bull->info->bodybox;
+	vec_t halfbullbox = bullbox * 0.5f;
 	if(
 			bull->parent != player && //попали не в себя
 			0 < player->alive &&
-			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + bullinfo->bodybox / 2)&&
-			(bull->pos.x - bullinfo->bodybox / 2 <= player->pos.x + c_p_MDL_box / 2)&&
-			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + bullinfo->bodybox / 2)&&
-			(bull->pos.y - bullinfo->bodybox / 2 <= player->pos.y + c_p_MDL_box / 2)
+			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + halfbullbox)&&
+			(bull->pos.x - halfbullbox <= player->pos.x + c_p_MDL_box / 2)&&
+			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + halfbullbox)&&
+			(bull->pos.y - halfbullbox <= player->pos.y + c_p_MDL_box / 2)
 	) return true;
 	return false;
 }
@@ -67,7 +67,7 @@ static bool checkdamage(entity_t * player, entity_t * bull, const bullinfo_t * b
  */
 static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 {
-	entity_move(this, this->dir, bullinfo->bodybox, bullinfo->speed, false);
+	entity_move(this, this->dir, bullinfo->speed, false);
 
 	//предельное расстояние пройдено
 	if(bullinfo->range > -1 && this->stat_traveled_distance > bullinfo->range)
@@ -77,7 +77,7 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	map_clip_find(
 		&this->pos,
-		bullinfo->bodybox,
+		this->info->bodybox,
 		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 	);
@@ -87,19 +87,19 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	entity_t * entity;
 	ENTITIES_FOREACH("player", entity)
 	{
-		if(checkdamage(entity, this, bullinfo))
+		if(checkdamage(entity, this))
 			return true;
 	}
 
 	ENTITIES_FOREACH("enemy", entity)
 	{
-		if(checkdamage(entity, this, bullinfo))
+		if(checkdamage(entity, this))
 			return true;
 	}
 
 	ENTITIES_FOREACH("boss", entity)
 	{
-		if(checkdamage(entity, this, bullinfo))
+		if(checkdamage(entity, this))
 			return true;
 	}
 	return false;
@@ -113,7 +113,7 @@ static void bull_common_modelaction_startplay(entity_t * this, unsigned int imod
 /*
  * bull_artillery
  */
-entmodel_t bull_artillery_models[] =
+entitymodel_t bull_artillery_models[] =
 {
 		{
 				.modelname = "bull_artillery",
@@ -148,13 +148,13 @@ static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = 0,
+		.bodybox = 2.0f,
+		ENTITYINFO_ENTMODELS(bull_artillery_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = bull_artillery_models
 };
 
 /**
@@ -171,7 +171,7 @@ static const ent_modelaction_t bull_missile_modelactions[] =
 		}
 };
 
-static entmodel_t bull_missile_models[] =
+static entitymodel_t bull_missile_models[] =
 {
 		{
 				.modelname = "bull_missile",
@@ -210,13 +210,13 @@ static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = 0,
+		.bodybox = 8.0f,
+		ENTITYINFO_ENTMODELS(bull_missile_models),
 		.init = bull_missile_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = bull_missile_models
 };
 
 /**
@@ -232,7 +232,7 @@ static const ent_modelaction_t bull_mine_modelactions[] =
 		}
 };
 
-static entmodel_t bull_mine_models[] =
+static entitymodel_t bull_mine_models[] =
 {
 		{
 				.modelname = "bull_mine",
@@ -268,13 +268,13 @@ static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = 0,
+		.bodybox = 8.0f,
+		ENTITYINFO_ENTMODELS(bull_mine_models),
 		.init = bull_mine_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		.entmodels_num = 1,
-		.entmodels = bull_mine_models
 };
 
 /**

@@ -27,8 +27,6 @@ typedef struct
 	int damage;
 	//повреждение
 	int selfdamage;
-	//радиус действия
-	vec_t radius;
 	/* маска тексур стен, которые можно разрушить взрывом */
 	char wall;
 	sound_index_t soundIndex;

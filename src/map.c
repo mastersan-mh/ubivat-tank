@@ -265,70 +265,72 @@ void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, ve
 	char wall;
 	float c;
 	box = box/2;
-	vec_t d = box/2;
 	int mapx;
 	int mapy;
+	vec_t ox = orig->x;
+	vec_t oy = orig->y;
+	vec_t d = box/2;
 	switch(dir)
 	{
 	case DIR_UP:
+		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * MAP_WALLBLOCKSIZE;
+		do
+		{
+			c = -box+1;
+			d++;
+			do
+			{
+				mapy = VEC_TRUNC((oy + d) / MAP_WALLBLOCKSIZE);
+				mapx = VEC_TRUNC((ox + c) / MAP_WALLBLOCKSIZE);
+				wall = map.map[mapy][mapx];
+				c++;
+			}while (! ( (box     <= c) || (wall & mask) ) );
+		}while     (! ( (DISTmax <= d) || (wall & mask) ) );
+		break;
+	case DIR_DOWN:
 		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * 8;
 		do
 		{
-			d++;
 			c = -box+1;
+			d++;
 			do
 			{
-				mapy = VEC_TRUNC((orig->y + d) / 8);
-				mapx = VEC_TRUNC((orig->x + c) / 8);
+				mapy = VEC_TRUNC((oy - d) / MAP_WALLBLOCKSIZE);
+				mapx = VEC_TRUNC((ox + c) / MAP_WALLBLOCKSIZE);
 				wall = map.map[mapy][mapx];
 				c++;
-			}while (!((+box<=c)||((wall & mask) != 0)));
-		}while(!((DISTmax<=d)||((wall & mask) != 0)));
-		break;
-	case DIR_DOWN:
-		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY*8;
-		do
-		{
-			d++;
-			c = -box+1;
-			do
-			{
-				mapy = VEC_TRUNC((orig->y - d) / 8);
-				mapx = VEC_TRUNC((orig->x + c) / 8);
-				wall = map.map[mapy][mapx];
-				c++;
-			}while(!((+box<=c)||((wall & mask) != 0)));
-		}while(!((DISTmax<=d)||((wall & mask) != 0)));
+			}while(! ( (box     <= c) || (wall & mask) ) );
+		}while    (! ( (DISTmax <= d) || (wall & mask) ) );
 		break;
 	case DIR_LEFT:
-		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
+		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX * MAP_WALLBLOCKSIZE;
 		do
 		{
-			d++;
 			c = -box+1;
+			d++;
 			do
 			{
-				mapy = VEC_TRUNC((orig->y + c) / 8);
-				mapx = VEC_TRUNC((orig->x - d) / 8);
+				mapy = VEC_TRUNC((oy + c) / 8);
+				mapx = VEC_TRUNC((ox - d) / 8);
 				wall = map.map[mapy][mapx];
 				c++;
-			}while(!( (+box<=c)||((wall & mask) != 0)));
-		}while(!( (DISTmax<=d)||((wall & mask) != 0)));
+			}while(! ( (box     <= c) || (wall & mask) ) );
+		}while    (! ( (DISTmax <= d) || (wall & mask) ) );
 		break;
 	case DIR_RIGHT:
-		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX*8;
+		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX * MAP_WALLBLOCKSIZE;
 		do
 		{
-			d++;
 			c = -box+1;
+			d++;
 			do
 			{
-				mapy = VEC_TRUNC((orig->y + c) / 8);
-				mapx = VEC_TRUNC((orig->x + d) / 8);
+				mapy = VEC_TRUNC((oy + c) / MAP_WALLBLOCKSIZE);
+				mapx = VEC_TRUNC((ox + d) / MAP_WALLBLOCKSIZE);
 				wall = map.map[mapy][mapx];
 				c++;
-			}while(!( (+box<=c)||((wall & mask) != 0)));
-		}while(!( (DISTmax*8<=d) || (wall & mask ) ));
+			}while(!( (box     <= c) || (wall & mask) ) );
+		}while    (!( (DISTmax <= d) || (wall & mask) ) );
 		break;
 	}
 	*dist = d;

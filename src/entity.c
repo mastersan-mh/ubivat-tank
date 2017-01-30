@@ -26,15 +26,29 @@ static entity_registered_t * entityregs = NULL;
 static size_t entityregs_size = 0;
 static size_t entityregs_num = 0;
 
-entity_registered_t * entityinfo_get(const char * name)
+/*
+ *  получить регистрационную информацию объекта
+ */
+static entity_registered_t * entityregisteredinfo_get(const char * name)
 {
 	size_t i;
 	for(i = 0; i < entityregs_num; i++)
 	{
-		if(!strncmp(entityregs[i].info->name, name, 64))
+		if(!strncmp(entityregs[i].info->name, name, ENTITY_NAME_SIZE))
 			return &entityregs[i];
 	}
 	return NULL;
+}
+
+/*
+ *  получить информацию по типу объекта
+ */
+const entityinfo_t * entityinfo_get(const char * name)
+{
+	const entity_registered_t * entity_registered = entityregisteredinfo_get(name);
+	if(entity_registered == NULL)
+		return NULL;
+	return entity_registered->info;
 }
 
 void entity_register(const entityinfo_t * info)
@@ -53,7 +67,7 @@ void entity_register(const entityinfo_t * info)
 		return;
 	}
 
-	if(entityinfo_get(info->name) != NULL)
+	if(entityregisteredinfo_get(info->name) != NULL)
 	{
 		game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
 		return;
@@ -65,6 +79,10 @@ void entity_register(const entityinfo_t * info)
 	if(info->datasize == 0 && info->init != NULL)
 		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
 */
+
+	if(info->bodybox <= 0.0f)
+		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .bodybox <= 0.0f.", info->name);
+
 	{
 		/* проверка переменных */
 		nodeId_t * nodeIds = calloc(info->vars_num, sizeof(nodeId_t));
@@ -127,7 +145,7 @@ int entity_model_set(entity_t * entity, unsigned int imodel, const char * modeln
 entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent)
 {
 	size_t i;
-	entity_registered_t * entityinfo_reg = entityinfo_get(name);
+	entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
 	if(!entityinfo_reg)
 	{
 		game_console_send("Error: Cannot create unknown entity \"%s\".", name);
@@ -448,7 +466,7 @@ static const ent_modelaction_t * entity_reginfo_action_get(const entityinfo_t * 
 {
 	if(info->entmodels == NULL)
 		return NULL;
-	entmodel_t * entmodel = &info->entmodels[imodel];
+	entitymodel_t * entmodel = &info->entmodels[imodel];
 	if(entmodel == NULL)
 		return NULL;
 	int i;
@@ -535,7 +553,7 @@ void entity_model_play_pause_all(entity_t * entity)
  */
 entity_t * entity_getfirst(const char * name)
 {
-	entity_registered_t * entinfo = entityinfo_get(name);
+	entity_registered_t * entinfo = entityregisteredinfo_get(name);
 	if(entinfo == NULL)
 	{
 		game_console_send("Error: Unknown entity \"%s\".", name);
@@ -559,7 +577,7 @@ static void ent_models_render(
 
 	vec2_t pos = entity->pos;
 	const struct entityinfo_s * info = entity->info;
-	entmodel_t * ent_models = info->entmodels;
+	entitymodel_t * ent_models = info->entmodels;
 	size_t models_num = info->entmodels_num;
 
 
@@ -569,7 +587,7 @@ static void ent_models_render(
 
 	for( i = 0; i < models_num; i++ )
 	{
-		entmodel_t * ent_model = &ent_models[i];
+		entitymodel_t * ent_model = &ent_models[i];
 		ent_modelplayer_t * modelplayer = &entity->modelplayers[i];
 		if(!modelplayer)
 		{

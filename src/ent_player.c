@@ -135,7 +135,7 @@ static const ent_modelaction_t tank_modelactions[] =
 		}
 };
 
-static entmodel_t tank_player_models[] =
+static entitymodel_t tank_player_models[] =
 {
 		{
 				.modelname = "tank1",
@@ -153,7 +153,7 @@ static entmodel_t tank_player_models[] =
 		}
 };
 
-static entmodel_t tank_enemy_models[] =
+static entitymodel_t tank_enemy_models[] =
 {
 		{
 				.modelname = "tank1",
@@ -171,7 +171,7 @@ static entmodel_t tank_enemy_models[] =
 		}
 };
 
-static entmodel_t tank_boss_models[] =
+static entitymodel_t tank_boss_models[] =
 {
 		{
 				.modelname = "tank1",
@@ -738,7 +738,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			}
 			pl->move.speed = 0;
 		}
-		entity_move(player, player->dir, c_p_MDL_box, pl->move.speed, true);
+		entity_move(player, player->dir, pl->move.speed, true);
 
 		vec_t speed_s = playerinfo->speed / 4;
 
@@ -753,8 +753,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			Sorig = player->pos;
 			Sorig.x = Sorig.x+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
-			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, c_p_MDL_box, speed_s, true);//strafe left
-			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, c_p_MDL_box, speed_s, true);//strafe right
+			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
+			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, speed_s, true);//strafe right
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
@@ -764,8 +764,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			Sorig = player->pos;
 			Sorig.y = Sorig.y+c_p_MDL_box/4;
 			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
-			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , c_p_MDL_box, speed_s, true);//strafe up
-			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, c_p_MDL_box, speed_s, true);//strafe down
+			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , speed_s, true);//strafe up
+			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, speed_s, true);//strafe down
 			break;
 		}
 	}
@@ -890,19 +890,21 @@ void player_class_init(entity_t * player, player_t * pl)
 /*
  * вычисление повреждения наносимого игроку
  */
-void player_getdamage(entity_t * player, entity_t * explode, bool self, float radius, const explodeinfo_t * explodeinfo)
+void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo)
 {
 	int damage_full;
 	int armor;
 
+	vec_t radius = explode->info->bodybox * 0.5f;
+
 	//weapon_info_t * weapinfo = &wtable[explode->explode.type];
 
-	if( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 && radius <= explodeinfo->radius )
+	if( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 && distance <= radius )
 	{
 		if(self)
-			damage_full = explodeinfo->selfdamage * (1-radius/explodeinfo->radius);
+			damage_full = explodeinfo->selfdamage * (1-distance/radius);
 		else
-			damage_full = explodeinfo->damage     * (1-radius/explodeinfo->radius);
+			damage_full = explodeinfo->damage     * (1-distance/radius);
 
 		int damage_armor = damage_full*2/3;
 		int damage_health = damage_full - damage_armor;
@@ -991,7 +993,9 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
+		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
+		ENTITYINFO_ENTMODELS(tank_player_models),
 		.init = player_init,
 		.done = player_done,
 		.spawn = player_spawn,
@@ -999,31 +1003,32 @@ static const entityinfo_t player_reginfo = {
 		.client_store = NULL,
 		.client_restore = player_restore,
 		ENTITYINFO_ACTIONS(player_actions),
-		ENTITYINFO_ENTMODELS(tank_player_models)
 };
 
 static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
+		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
+		ENTITYINFO_ENTMODELS(tank_enemy_models),
 		.init = enemy_init,
 		.done = enemy_done,
 		.handle = enemy_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(tank_enemy_models)
 };
 
 static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
+		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
+		ENTITYINFO_ENTMODELS(tank_boss_models),
 		.init = boss_init,
 		.done = boss_done,
 		.handle = boss_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
-		ENTITYINFO_ENTMODELS(tank_boss_models)
 };
 
 void entity_player_init(void)
