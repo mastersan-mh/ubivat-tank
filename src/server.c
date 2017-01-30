@@ -201,6 +201,7 @@ static void server_client_info_restore(host_client_t * client)
 			}
 		}
 		Z_free(client->varsdata);
+		client->varsdata_num = 0;
 	}
 
 }
@@ -514,8 +515,10 @@ static void server_listen(void)
 									if(sv_state.flags & GAMEFLAG_2PLAYERS)
 									{
 										game_console_send("server: spawn client.");
-										info->spawn(ent, ent->data);
+										server_client_info_restore(client);
+										(*info->spawn)(ent, ent->data);
 										ent->spawned = true;
+										ent->alive = true;
 									}
 								}
 							}

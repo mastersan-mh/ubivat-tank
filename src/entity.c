@@ -107,11 +107,17 @@ void entity_register(const entityinfo_t * info)
 /**
  * @description установить модель на entity
  */
-int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname)
+int entity_model_set(entity_t * entity, unsigned int imodel, const char * modelname)
 {
-	if(imodel >= entity->info->entmodels_num) return -1;
-	entity->modelplayers[imodel].model = model_get(modelname);
-	entity->modelplayers[imodel].frame = 0;
+	if(imodel >= entity->info->entmodels_num)
+		return -1;
+	const model_t * model = model_get(modelname);
+	if(!model)
+	{
+		game_console_send("Error: Entity model set: No model \"%s\"", modelname);
+	}
+	entity->modelplayers[imodel].model = model;
+	entity->modelplayers[imodel].frame = 0.0f;
 	return 0;
 }
 
@@ -559,13 +565,17 @@ static void ent_models_render(
 
 	if(!ent_models) return;
 
-	int i;
+	size_t i;
 
 	for( i = 0; i < models_num; i++ )
 	{
 		entmodel_t * ent_model = &ent_models[i];
 		ent_modelplayer_t * modelplayer = &entity->modelplayers[i];
-
+		if(!modelplayer)
+		{
+			game_console_send("Error: entity \"%s\", imodel %d, modelplayer == NULL.", info->name, (int)i);
+			continue;
+		}
 		int frame = VEC_TRUNC(modelplayer->frame);
 		direction_t dir = entity->dir;
 		model_render(

@@ -83,6 +83,12 @@ void model_render(
 )
 {
 
+	if(!model)
+	{
+		game_console_send("Error: No entity model.");
+		return;
+	}
+
 	if(iframe >= model->frames_num)
 	{
 		game_console_send("Model %s: iframe = %d is greater than or equal to frames_num = %d.", model->name, iframe, model->frames_num);

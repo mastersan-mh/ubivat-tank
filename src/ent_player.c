@@ -48,9 +48,9 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
 	static const struct {
-	char * spawnvarname;
-	char * playervarname;
-	player_invitemtype_t item;
+		char * spawnvarname;
+		char * playervarname;
+		player_invitemtype_t item;
 	}
 	spawn_itemvars[] =
 	{
@@ -63,6 +63,16 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 #define SPAWNVAR(i) ENTITY_VARIABLE_INTEGER(spawn, spawn_itemvars[i].spawnvarname)
 #define PLAYERVAR(i) ENTITY_VARIABLE_INTEGER(player, spawn_itemvars[i].playervarname)
 #define PLAYERINFOVAR(i) playerinfo->items[spawn_itemvars[i].item]
+
+	entity_int_t player_health = ENTITY_VARIABLE_INTEGER(player, "item_health");
+	if(player_health < 0)
+	{
+		player_health = ENTITY_VARIABLE_INTEGER(spawn, "item_health");
+		if(player_health < 0)
+			player_health = PLAYERINFOVAR(0);
+		ENTITY_VARIABLE_INTEGER(player, "item_health") = player_health;
+	}
+
 /* инициализация инвентаря */
 	size_t i;
 	for(i = 0; i < ARRAYSIZE(spawn_itemvars); i++)
@@ -93,12 +103,12 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	}
 
 	ENTITY_VARIABLE_INTEGER(player, "frags") = 0;
-	pl->bull          = NULL;
-	pl->move.speed    = 0;
-	pl->move.go       = false;
-	pl->attack        = false;
-	pl->reloadtime_d  = 0;
-	pl->soundId_move  = 0;
+	pl->bull         = NULL;
+	pl->move.speed   = 0;
+	pl->move.go      = false;
+	pl->attack       = false;
+	pl->reloadtime_d = 0;
+	pl->soundId_move = 0;
 };
 
 
@@ -110,7 +120,7 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 		{ { PLAYER_SCOREPERCLASS * 3,    100,   100, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, "tank3"},
 		{ { PLAYER_SCOREPERCLASS * 4,    200,   150, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, "tank4"},
 		{ { PLAYER_SCOREPERCLASS * 5,    200,   200, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"},
-		{ { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank6"}  /* BOSS */
+		{ { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"}  /* BOSS */
 };
 
 #define tank_common_modelaction_endframef entity_model_play_start

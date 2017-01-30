@@ -234,6 +234,6 @@ extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);
 extern void entity_model_play_pause_all(entity_t * entity);
 
-extern int entity_model_set(entity_t * entity, unsigned int imodel, char * modelname);
+extern int entity_model_set(entity_t * entity, unsigned int imodel, const char * modelname);
 
 #endif /* SRC_ENTITY_H_ */
