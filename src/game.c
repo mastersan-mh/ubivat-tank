@@ -24,14 +24,7 @@
 #include "actions.h"
 
 // entities
-#include "ent_spawn.h"
-#include "ent_bull.h"
-#include "ent_explode.h"
-#include "ent_message.h"
-#include "ent_exit.h"
-#include "ent_items.h"
-#include "ent_player.h"
-#include "ent_weap.h"
+#include "entities_includes.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -163,13 +156,7 @@ void game_init(void)
 
 	model_resources_register();
 
-	entity_bull_init();
-	entity_explode_init();
-	entity_spawn_init();
-	entity_player_init();
-	entity_message_init();
-	entity_exit_init();
-	entity_items_init();
+#include "entities_init.h"
 
 }
 

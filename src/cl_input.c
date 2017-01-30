@@ -111,7 +111,7 @@ void input_key_setState(int key, bool state)
 {
 	ssize_t cindex;
 	actionf_t func = NULL;
-	char * action;
+	char * action = NULL;
 	keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);
 	cindex = hash_find_collision(keyhash, key);
 
