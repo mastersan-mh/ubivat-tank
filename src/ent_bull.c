@@ -42,22 +42,47 @@ static const bullinfo_t bullinfo_table[BULL_NUM] =
 		{200, 100, 100,  80 }
 };
 
-/*
- * проверка на попадание в игрока
- */
-static bool checkdamage(entity_t * player, entity_t * bull)
+static void bull_artillery_detonate(entity_t * this, entity_t * that)
 {
-	vec_t bullbox = bull->info->bodybox;
-	vec_t halfbullbox = bullbox * 0.5f;
-	if(
-			bull->parent != player && //попали не в себя
-			0 < player->alive &&
-			(player->pos.x - c_p_MDL_box / 2 <= bull->pos.x + halfbullbox)&&
-			(bull->pos.x - halfbullbox <= player->pos.x + c_p_MDL_box / 2)&&
-			(player->pos.y - c_p_MDL_box / 2 <= bull->pos.y + halfbullbox)&&
-			(bull->pos.y - halfbullbox <= player->pos.y + c_p_MDL_box / 2)
-	) return true;
-	return false;
+	if(that && this->parent == that)
+		return;
+	entity_new(
+		"explode_artillery",
+		this->pos.x,
+		this->pos.y,
+		this->dir,
+		this->parent
+	);
+	ENTITY_ERASE(this);
+}
+
+static void bull_missile_detonate(entity_t * this, entity_t * that)
+{
+	if(that && this->parent == that)
+		return;
+	ENT_PLAYER(this->parent)->bull =
+	entity_new(
+		"explode_missile",
+		this->pos.x,
+		this->pos.y,
+		this->dir,
+		this->parent
+	);
+	ENTITY_ERASE(this);
+}
+
+static void bull_mine_detonate(entity_t * this, entity_t * that)
+{
+	if(that && this->parent == that)
+		return;
+	entity_new(
+		"explode_mine",
+		this->pos.x,
+		this->pos.y,
+		this->dir,
+		this->parent
+	);
+	ENTITY_ERASE(this);
 }
 
 /*
@@ -83,25 +108,6 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	);
 	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
 		return true;
-
-	entity_t * entity;
-	ENTITIES_FOREACH("player", entity)
-	{
-		if(checkdamage(entity, this))
-			return true;
-	}
-
-	ENTITIES_FOREACH("enemy", entity)
-	{
-		if(checkdamage(entity, this))
-			return true;
-	}
-
-	ENTITIES_FOREACH("boss", entity)
-	{
-		if(checkdamage(entity, this))
-			return true;
-	}
 	return false;
 }
 
@@ -129,21 +135,20 @@ static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
 	bool detonate = bull_common_handle(this, bullinfo);
 	if(detonate)
-	{
-		/*
-		explodetype_t explodetype = bullentity_to_explodetype(this);
-		explodetype_to_explodeentity(explodetype),
-		*/
-		entity_new(
-			"explode_artillery",
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent
-		);
-		ENTITY_ERASE(this);
-	}
+		bull_artillery_detonate(this, NULL);
 }
+
+ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
+{
+	bull_artillery_detonate(this, that);
+}
+
+entitytouch_t bull_artillery_touchs[] =
+{
+		{ "player", bull_artillery_touch },
+		{ "enemy" , bull_artillery_touch },
+		{ "boss"  , bull_artillery_touch }
+};
 
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
@@ -155,6 +160,7 @@ static const entityinfo_t bull_artillery_reginfo = {
 		.handle   = bull_artillery_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		ENTITYINFO_TOUCHS(bull_artillery_touchs)
 };
 
 /**
@@ -193,19 +199,20 @@ static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
 	bool detonate = bull_common_handle(this, bullinfo);
 	if(detonate)
-	{
-		ENT_PLAYER(this->parent)->bull =
-		entity_new(
-			"explode_missile",
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent
-		);
-
-		ENTITY_ERASE(this);
-	}
+		bull_missile_detonate(this, NULL);
 }
+
+ENTITY_FUNCTION_TOUCH(bull_missile_touch)
+{
+	bull_missile_detonate(this, that);
+}
+
+entitytouch_t bull_missile_touchs[] =
+{
+		{ "player", bull_missile_touch },
+		{ "enemy" , bull_missile_touch },
+		{ "boss"  , bull_missile_touch }
+};
 
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
@@ -217,6 +224,7 @@ static const entityinfo_t bull_missile_reginfo = {
 		.handle = bull_missile_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		ENTITYINFO_TOUCHS(bull_missile_touchs)
 };
 
 /**
@@ -253,17 +261,20 @@ static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
 	bool detonate = bull_common_handle(this, bullinfo);
 	if(detonate)
-	{
-		entity_new(
-			"explode_mine",
-			this->pos.x,
-			this->pos.y,
-			this->dir,
-			this->parent
-		);
-		ENTITY_ERASE(this);
-	}
+		bull_mine_detonate(this, NULL);
 }
+
+ENTITY_FUNCTION_TOUCH(bull_mine_touch)
+{
+	bull_mine_detonate(this, that);
+}
+
+entitytouch_t bull_mine_touchs[] =
+{
+		{ "player", bull_mine_touch },
+		{ "enemy" , bull_mine_touch },
+		{ "boss"  , bull_mine_touch }
+};
 
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
@@ -272,9 +283,10 @@ static const entityinfo_t bull_mine_reginfo = {
 		ENTITYINFO_ENTMODELS(bull_mine_models),
 		.init = bull_mine_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
-		.handle   = bull_mine_handle,
+		.handle = bull_mine_handle,
 		.client_store = NULL,
 		.client_restore = NULL,
+		ENTITYINFO_TOUCHS(bull_mine_touchs)
 };
 
 /**

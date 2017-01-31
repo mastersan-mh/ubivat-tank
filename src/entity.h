@@ -25,6 +25,9 @@
 #define ENTITIES_FOREACH(entity_name, entity) \
 	for(entity = entity_getfirst(entity_name); entity; entity = entity->next)
 
+#define ENTITY_FUNCTION_TOUCH(x) \
+	void x (struct entity_s * this, struct entity_s * that)
+
 #define ENTITY_FUNCTION_INIT(x) \
 	void x (entity_t * this, void * thisdata, const entity_t * parent)
 
@@ -68,6 +71,10 @@
 		.vars_num = ARRAYSIZE(xvars), \
 		.vars = xvars
 
+#define ENTITYINFO_TOUCHS(xtouchs) \
+		.entitytouchs_num = ARRAYSIZE(xtouchs), \
+		.entitytouchs = xtouchs
+
 #define ENTITYINFO_ACTIONS(xactions) \
 		.actions_num = ARRAYSIZE(xactions), \
 		.actions = xactions
@@ -102,10 +109,10 @@ typedef struct entity_s
 	vec2_t pos;
 	/* направление взгляда/движения */
 	direction_t dir;
-	/* объект живой. влияет на победу игроков. */
-	bool alive;
 	/* объект показывать и обрабатывать */
 	bool allow_handle;
+	/* объект живой. влияет на победу игроков и на взаимодействие (touch). */
+	bool alive;
 	/* объект разрешено показывать. влияет только на рендер. */
 	bool allow_draw;
 	/*
@@ -167,6 +174,13 @@ typedef struct
 	entityvartype_t type;
 } entityvarinfo_t;
 
+typedef struct
+{
+	const char * entityname;
+	void (*touch)(struct entity_s * this, struct entity_s * that);
+} entitytouch_t;
+
+
 typedef struct entityaction_s
 {
 	char * action;
@@ -182,11 +196,11 @@ typedef struct entityinfo_s
 	vec_t bodybox;
 
 	/* массив дополнительных переменных */
-	unsigned int vars_num;
+	size_t vars_num;
 	entityvarinfo_t * vars;
 
 	/* размер массива моделей */
-	unsigned int entmodels_num;
+	size_t entmodels_num;
 	/* массив моделей, связанных с объектом*/
 	entitymodel_t * entmodels;
 
@@ -197,6 +211,10 @@ typedef struct entityinfo_s
 
 	void (*handle)(entity_t * this, void * thisdata);
 
+	/* соприкосновения объекта с другими объектами */
+	size_t entitytouchs_num;
+	entitytouch_t * entitytouchs;
+
 	entity_t * (*client_join)(const entity_t * this);
 
 	void * (*client_store)(const void * thisdata);
@@ -205,7 +223,6 @@ typedef struct entityinfo_s
 	/* массив действий, допустимых для entity */
 	unsigned int actions_num;
 	entityaction_t * actions;
-
 
 }entityinfo_t;
 

@@ -28,6 +28,33 @@
 #include "sound.h"
 #include "client.h"
 
+void coerce_value_int(int * val, int min, int max)
+{
+	if(*val > max) *val = max;
+	else if(*val < min) *val = min;
+}
+
+player_invitemtype_t player_entity_to_itemtype(const entity_t * entity)
+{
+	static const char *entitynames[] =
+	{
+			"item_scores",
+			"item_health",
+			"item_armor" ,
+			"item_ammo_artillery",
+			"item_ammo_missile",
+			"item_ammo_mine"
+	};
+	size_t i;
+	for(i = 0; i < ARRAYSIZE(entitynames); i++)
+	{
+		if(ENTITY_IS(entity, entitynames[i]))
+			return i;
+	}
+	game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity->info->name);
+	return -1;
+}
+
 /*
  * инициализируем игрока при спавне
  */
@@ -215,6 +242,77 @@ static ENTITY_FUNCTION_DONE(boss_done);
 static ENTITY_FUNCTION_HANDLE(boss_handle);
 
 
+/*
+ * touchs
+ */
+static void player_touch_message(entity_t * actor, entity_t * exposed)
+{
+	//отправим сообщение игроку
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
+}
+
+static void player_touch_exit(entity_t * actor, entity_t * exposed)
+{
+	//отправим сообщение игроку
+	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
+	sv_game_win();
+}
+
+static void player_touch_item_scores(entity_t * player, entity_t * item)
+{
+	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	playerinfo_t *playerinfo = &playerinfo_table[level];
+
+	ENTITY_UNSPAWN(item);
+
+	entity_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
+
+	player_class_init(player, player->data);
+	if(scores / PLAYER_SCOREPERCLASS >= 5)
+	{
+		if(ENTITY_VARIABLE_INTEGER(player, "item_health") < playerinfo->items[ITEM_HEALTH])
+			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
+		if(ENTITY_VARIABLE_INTEGER(player, "item_armor") < playerinfo->items[ITEM_ARMOR])
+			ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
+	}
+}
+
+
+static void player_touch_item(entity_t * player, entity_t * item)
+{
+	static const char *list[] =
+	{
+			"scores",
+			"item_health",
+			"item_armor",
+			"item_ammo_artillery",
+			"item_ammo_missile",
+			"item_ammo_mine",
+	};
+
+	player_invitemtype_t invitemtype = player_entity_to_itemtype(item);
+
+	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	playerinfo_t *playerinfo = &playerinfo_table[level];
+
+	int itemamount = ENTITY_VARIABLE_INTEGER(item, "amount");
+	int player_itemamount;
+
+	if(
+			playerinfo->items[invitemtype] > 0 &&
+			(
+					( (player_itemamount = ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) ) < playerinfo->items[invitemtype] ) ||
+					itemamount < 0
+			)
+	)
+	{
+		ENTITY_UNSPAWN(item);
+		player_itemamount += itemamount;
+		coerce_value_int(&player_itemamount, 0, playerinfo->items[invitemtype]);
+		ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) = player_itemamount;
+	}
+}
+
 static void player_action_move(entity_t * this, player_t * pl, direction_t dir, bool go)
 {
 	if(go)
@@ -267,6 +365,17 @@ static entityvarinfo_t player_vars[] =
 		{ "item_ammo_mine"     , ENTITYVARTYPE_INTEGER },
 };
 
+static entitytouch_t player_touchs[] =
+{
+		{ "item_scores", player_touch_item_scores },
+		{ "item_health", player_touch_item        },
+		{ "item_armor"       , player_touch_item },
+		{ "item_ammo_missile", player_touch_item },
+		{ "item_ammo_mine"   , player_touch_item },
+		{ "message", player_touch_message },
+		{ "exit"   , player_touch_exit    },
+};
+
 static entityaction_t player_actions[] =
 {
 		{"+move_north", player_action_move_north_on },
@@ -287,7 +396,6 @@ static entityaction_t player_actions[] =
 };
 
 static void player_handle_common(entity_t * player, player_t * pl);
-static void player_pickup(entity_t * player);
 
 ENTITY_FUNCTION_INIT(player_init)
 {
@@ -315,8 +423,6 @@ ENTITY_FUNCTION_DONE(player_done)
 ENTITY_FUNCTION_HANDLE(player_handle)
 {
 	player_handle_common(this, thisdata);
-	//подбираем предметы
-	player_pickup(this);
 }
 
 ENTITY_FUNCTION_INIT(enemy_init)
@@ -456,171 +562,6 @@ void player_checkcode(void)
 		}
 	}
 	*/
-}
-
-void coerce_value_int(int * val, int min, int max)
-{
-	if(*val > max) *val = max;
-	else if(*val < min) *val = min;
-}
-
-static void player_influence_message(entity_t * actor, entity_t * exposed)
-{
-	//отправим сообщение игроку
-	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
-}
-
-static void player_influence_exit(entity_t * actor, entity_t * exposed)
-{
-	//отправим сообщение игроку
-	sv_game_message_send(ENTITY_VARIABLE_STRING(exposed, "text"));
-	sv_game_win();
-}
-
-static void player_pickup_item_scores(entity_t * player, entity_t * item)
-{
-	if(!ENTITY_IS_SPAWNED(item))
-		return;
-
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
-	playerinfo_t *playerinfo = &playerinfo_table[level];
-
-	ENTITY_UNSPAWN(item);
-
-	entity_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
-
-	player_class_init(player, player->data);
-	if(scores / PLAYER_SCOREPERCLASS >= 5)
-	{
-		if(ENTITY_VARIABLE_INTEGER(player, "item_health") < playerinfo->items[ITEM_HEALTH])
-			ENTITY_VARIABLE_INTEGER(player, "item_health") = playerinfo->items[ITEM_HEALTH];
-		if(ENTITY_VARIABLE_INTEGER(player, "item_armor") < playerinfo->items[ITEM_ARMOR])
-			ENTITY_VARIABLE_INTEGER(player, "item_armor") = playerinfo->items[ITEM_ARMOR];
-	}
-}
-
-player_invitemtype_t player_entity_to_itemtype(const entity_t * entity)
-{
-	static const char *entitynames[] =
-	{
-			"item_scores",
-			"item_health",
-			"item_armor" ,
-			"item_ammo_artillery",
-			"item_ammo_missile",
-			"item_ammo_mine"
-	};
-	size_t i;
-	for(i = 0; i < ARRAYSIZE(entitynames); i++)
-	{
-		if(ENTITY_IS(entity, entitynames[i]))
-			return i;
-	}
-	game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity->info->name);
-	return -1;
-}
-
-static void player_influence_item(entity_t * player, entity_t * item)
-{
-	if(!ENTITY_IS_SPAWNED(item))
-		return;
-
-	static const char *list[] =
-	{
-			"scores",
-			"item_health",
-			"item_armor",
-			"item_ammo_artillery",
-			"item_ammo_missile",
-			"item_ammo_mine",
-	};
-
-	player_invitemtype_t invitemtype = player_entity_to_itemtype(item);
-
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
-	playerinfo_t *playerinfo = &playerinfo_table[level];
-
-	int itemamount = ENTITY_VARIABLE_INTEGER(item, "amount");
-	int player_itemamount;
-
-	if(
-			playerinfo->items[invitemtype] > 0 &&
-			(
-					( (player_itemamount = ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) ) < playerinfo->items[invitemtype] ) ||
-					itemamount < 0
-			)
-	)
-	{
-		ENTITY_UNSPAWN(item);
-		player_itemamount += itemamount;
-		coerce_value_int(&player_itemamount, 0, playerinfo->items[invitemtype]);
-		ENTITY_VARIABLE_INTEGER(player, list[invitemtype]) = player_itemamount;
-	}
-}
-
-bool inbox(entity_t * entity, entity_t * player)
-{
-	return
-			( entity->pos.x - c_item_MDL_box / 2 <= player->pos.x + c_p_MDL_box    / 2 ) &&
-			( player->pos.x - c_p_MDL_box    / 2 <= entity->pos.x + c_item_MDL_box / 2 ) &&
-			( entity->pos.y - c_item_MDL_box / 2 <= player->pos.y + c_p_MDL_box    / 2 ) &&
-			( player->pos.y - c_p_MDL_box    / 2 <= entity->pos.y + c_item_MDL_box / 2 )
-			;
-}
-
-/*
- * подбирание предметов игроком
- */
-static void player_pickup(entity_t * player)
-{
-
-	if(!player->alive)
-		return;
-
-	entity_t * entity;
-
-	ENTITIES_FOREACH("item_scores", entity)
-	{
-		if( inbox(entity, player) )
-			player_pickup_item_scores(player, entity);
-	}
-
-	ENTITIES_FOREACH("item_health", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_item(player, entity);
-	}
-
-	ENTITIES_FOREACH("item_armor", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_item(player, entity);
-	}
-
-	ENTITIES_FOREACH("item_ammo_missile", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_item(player, entity);
-	}
-
-	ENTITIES_FOREACH("item_ammo_mine", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_item(player, entity);
-	}
-
-	ENTITIES_FOREACH("message", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_message(player, entity);
-	}
-
-	ENTITIES_FOREACH("exit", entity)
-	{
-		if( inbox(entity, player) )
-			player_influence_exit(player, entity);
-	}
-
 }
 
 /*
@@ -1002,6 +943,7 @@ static const entityinfo_t player_reginfo = {
 		.handle = player_handle,
 		.client_store = NULL,
 		.client_restore = player_restore,
+		ENTITYINFO_TOUCHS(player_touchs),
 		ENTITYINFO_ACTIONS(player_actions),
 };
 

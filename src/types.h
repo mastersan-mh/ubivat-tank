@@ -87,24 +87,12 @@ typedef union
 #define chars_allowed "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 
-//предметы
-//размер предмета
-#define c_item_MDL_box     16
-//позиция изображения
-#define c_i_MDL_pos     (-8)
-//объекты
-//размер объекта
-#define c_o_MDL_box     16
-//позиция изображения
-#define c_o_MDL_pos     (-8)
 //body box
 #define c_p_MDL_box     16
-//позиция изображения
-#define c_p_MDL_pos     (-8)
 //время на перезарядку, мс
 #define c_p_WEAP_reloadtime 1000
 //время "думания" бота, мс
-#define c_BOT_time      1500
+#define BOT_THINK_TIME      1500
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 

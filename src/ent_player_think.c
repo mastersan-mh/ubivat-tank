@@ -59,7 +59,7 @@ void ctrl_AI_init(think_t * thiker)
 	thiker->Fdanger = 0;
 	thiker->attack  = false;
 	thiker->target  = NULL;
-	thiker->count   = xrand(c_BOT_time*2);
+	thiker->count   = xrand(BOT_THINK_TIME*2);
 };
 /*
  * удаление AI
@@ -465,7 +465,7 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 	}
 	else
 	{
-		if(c_BOT_time+xrand(c_BOT_time)<pl->brain.count)
+		if(BOT_THINK_TIME+xrand(BOT_THINK_TIME)<pl->brain.count)
 		{
 			if(VEC_ABS(player->pos.x-target->pos.x)>VEC_ABS(player->pos.y-target->pos.y))
 			{
@@ -491,7 +491,7 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 		}
 	}
 	pl->brain.count += dtime;
-	if(c_BOT_time * 2 < pl->brain.count) pl->brain.count = 0;
+	if(BOT_THINK_TIME * 2 < pl->brain.count) pl->brain.count = 0;
 }
 
 /*

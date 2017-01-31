@@ -21,12 +21,10 @@ explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
 		{ 200, 100, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_GRENADE  }
 };
 
-static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
+static void explode_common_destroy_walls(entity_t * this, const explodeinfo_t * explodeinfo)
 {
-	vec_t r;
-	vec_t dx, dy;
-	bool self;
-	int ix,iy;
+	vec_t ix;
+	vec_t iy;
 
 	vec_t halfbox = this->info->bodybox * 0.5f;
 
@@ -48,42 +46,33 @@ static void explode_detonate(entity_t * this, const explodeinfo_t * explodeinfo)
 			}
 		}
 	}
-	//проверка попаданий в игрока
+}
 
-	static char *list[] =
+static void explode_touch_common(entity_t * this, entity_t * that, const explodeinfo_t * explodeinfo)
+{
+	vec_t r;
+	vec_t dx, dy;
+	bool self;
+
+	vec_t that_halfbox = this->info->bodybox * 0.5f;
+
+	dx = that->pos.x - this->pos.x;
+	dy = that->pos.y - this->pos.y;
+	if(
+			(VEC_ABS(dx) <= that_halfbox) &&
+			(VEC_ABS(dy) <= that_halfbox)
+	)
+		r = 0;
+	else
 	{
-		"player",
-		"enemy",
-		"boss"
-	};
-
-	int i;
-	for(i = 0; i < 3; i++)
+		r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(that_halfbox) + VEC_SQRT(that_halfbox))/2;
+	}
+	if(r <= this->info->bodybox * 0.5f)
 	{
-	//пуля не попала в стену
-		entity_t * attacked;
-		ENTITIES_FOREACH(list[i], attacked)
-		{
-			dx = attacked->pos.x - this->pos.x;
-			dy = attacked->pos.y - this->pos.y;
-			if(
-					(VEC_ABS(dx) <= c_p_MDL_box/2) &&
-					(VEC_ABS(dy) <= c_p_MDL_box/2)
-			)
-				r = 0;
-			else
-			{
-				r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(c_p_MDL_box/2) + VEC_SQRT(c_p_MDL_box/2))/2;
-			}
-			if(r <= this->info->bodybox * 0.5f)
-			{
-				//r = dx < dy ? dx : dy;
-				//взрывом задели себя или товарища по команде(не для монстров)
-				self = ( this->parent == attacked ) && ENTITY_IS(attacked, "player") ;
-				player_getdamage(attacked, this, self, r, explodeinfo);
-			}
-		}
-
+		//r = dx < dy ? dx : dy;
+		//взрывом задели себя или товарища по команде(не для монстров)
+		self = ( this->parent == that ) && ENTITY_IS(that, "player") ;
+		player_getdamage(that, this, self, r, explodeinfo);
 	}
 
 }
@@ -150,30 +139,45 @@ static entitymodel_t explode_big_models[] =
 		}
 };
 
-static void explode_common_init(entity_t * this, explodetype_t type)
+static void explode_detonate(entity_t * this, explodetype_t type)
 {
 	const explodeinfo_t * explodeinfo = &explodeinfo_table[type];
 
 	sound_play_start(explodeinfo->soundIndex, 1);
 	entity_model_play_start(this, 0, "explode");
 
-	explode_detonate(this, explodeinfo);
+	explode_common_destroy_walls(this, explodeinfo);
+	//проверка попаданий в игрока
+	entity_t * attacked;
+
+	ENTITIES_FOREACH("player", attacked)
+	{
+		explode_touch_common(this, attacked, explodeinfo);
+	}
+	ENTITIES_FOREACH("enemy", attacked)
+	{
+		explode_touch_common(this, attacked, explodeinfo);
+	}
+	ENTITIES_FOREACH("boss", attacked)
+	{
+		explode_touch_common(this, attacked, explodeinfo);
+	}
 
 }
 
 static ENTITY_FUNCTION_INIT(explode_artillery_entity_init)
 {
-	explode_common_init(this, EXPLODE_ARTILLERY);
+	explode_detonate(this, EXPLODE_ARTILLERY);
 }
 
 static ENTITY_FUNCTION_INIT(explode_missile_entity_init)
 {
-	explode_common_init(this, EXPLODE_MISSILE);
+	explode_detonate(this, EXPLODE_MISSILE);
 }
 
 static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
 {
-	explode_common_init(this, EXPLODE_MINE);
+	explode_detonate(this, EXPLODE_MINE);
 }
 
 static const entityinfo_t explode_artillery_reginfo = {

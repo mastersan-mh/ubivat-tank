@@ -341,6 +341,18 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 	return false;
 }
 
+static bool is_touched(entity_t * this, entity_t * that)
+{
+	vec_t this_halfbox = this->info->bodybox * 0.5;
+	vec_t that_halfbox = that->info->bodybox * 0.5;
+	return
+			( this->pos.x - this_halfbox <= that->pos.x + that_halfbox ) &&
+			( that->pos.x - that_halfbox <= this->pos.x + this_halfbox ) &&
+			( this->pos.y - this_halfbox <= that->pos.y + that_halfbox ) &&
+			( that->pos.y - that_halfbox <= this->pos.y + this_halfbox )
+			;
+}
+
 void entities_handle(void)
 {
 	size_t ientreg;
@@ -396,6 +408,53 @@ void entities_handle(void)
 				entity = entity->next;
 				continue;
 			}
+
+			/* touchs */
+			if(
+					entity->allow_handle &&
+					entity->alive &&
+					entity->spawned
+			)
+			{
+				size_t i;
+				entitytouch_t * entitytouchs = info->entitytouchs;
+				for(i = 0; i < info->entitytouchs_num; i++)
+				{
+					entity_registered_t * entityreg = entityregisteredinfo_get(entitytouchs[i].entityname);
+
+
+					const entityinfo_t * thatinfo = entityreg->info;
+					if(!thatinfo)
+					{
+						game_console_send("Error: Entity \"%s\" can not touch unknown entities \"%s\".",
+							info->name, entitytouchs[i].entityname);
+						break;
+					}
+
+					if(entitytouchs[i].touch)
+					{
+						entity_t * that;
+						for(that = entityreg->entities; that; that = that->next)
+						{
+							if(
+									that->allow_handle &&
+									that->alive &&
+									that->spawned &&
+									!that->erase &&
+									is_touched(entity, that)
+							)
+								entitytouchs[i].touch(entity, that);
+						}
+					}
+				}
+
+				if(entity->erase)
+				{
+					entity = entity->next;
+					continue;
+				}
+			}
+
 			int ientmodel;
 			for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
 			{
