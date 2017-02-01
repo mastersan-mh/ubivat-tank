@@ -62,7 +62,7 @@ menu_about_ctx_t menu_about_ctx = {};
 
 static void _menu_dec(const int menu_amount, int * menu)
 {
-	sound_play_start(SOUND_MENU_MOVE, 1);
+	sound_play_start(NULL, 0, SOUND_MENU_MOVE, 1);
 	if((*menu) <= 0)
 	{
 		*menu = menu_amount - 1;
@@ -73,7 +73,7 @@ static void _menu_dec(const int menu_amount, int * menu)
 
 static void _menu_inc(const int menu_amount, int * menu)
 {
-	sound_play_start(SOUND_MENU_MOVE, 1);
+	sound_play_start(NULL, 0, SOUND_MENU_MOVE, 1);
 	if((*menu) >= menu_amount - 1)
 	{
 		*menu = 0;
@@ -190,12 +190,12 @@ static int menu_main(void * ctx)
 	case LEFT   : break;
 	case RIGHT  : break;
 	case ENTER  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		if(cl_state.state == GAMESTATE_NOGAME && __ctx->menu == 4)
 			return MENU_MAIN;
 		return menus[__ctx->menu];
 	case LEAVE  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		if(cl_state.state != GAMESTATE_NOGAME)
 			cl_state.show_menu = false;
 		break;
@@ -251,10 +251,10 @@ static int menu_game(void * ctx)
 	case LEFT   : break;
 	case RIGHT  : break;
 	case ENTER  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return menus[__ctx->menu];
 	case LEAVE  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
 	case SPACE: break;
 	}
@@ -339,7 +339,7 @@ static int menu_game_load(void * ctx)
 		case LEFT   : break;
 		case RIGHT  : break;
 		case ENTER  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_LOAD_INIT;
 			if(cl_state.state != GAMESTATE_NOGAME)
 				return MENU_MAIN;
@@ -374,7 +374,7 @@ static int menu_game_load(void * ctx)
 			*/
 			return MENU_MAIN;
 		case LEAVE  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			return MENU_GAME;
 		case SPACE  : break;
 		}
@@ -432,13 +432,13 @@ static int menu_game_save(void * ctx)
 		case LEFT   :
 		case RIGHT  :
 		case ENTER  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			__ctx->rec = gamesaves[__ctx->menu];
 			gamesaves[__ctx->menu].exist = true;
 			__ctx->state = MENU_GAME_SAVE_INPUT;
 			break;
 		case LEAVE  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_GAME_SAVE_INIT;
 			cl_state.show_menu = false;
 			client_event_nextgamestate_send();
@@ -545,10 +545,10 @@ static int menu_custom(void * ctx)
 		}
 		break;
 	case ENTER  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return menus[__ctx->menu];
 	case LEAVE  :
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
 	case SPACE: break;
 	}
@@ -652,10 +652,10 @@ static int menu_options(void * ctx)
 		case LEFT   : _menu_dec(2, &__ctx->column);break;
 		case RIGHT  : _menu_inc(2, &__ctx->column);break;
 		case ENTER  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_OPTIONS_WAIT_KEY;break;
 		case LEAVE  :
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			gconf_rebind_all();
 			gconf_save();
 			__ctx->state = MENU_OPTIONS_SELECT;
@@ -724,7 +724,7 @@ static int menu_about(void * ctx)
 {
 	if(menu_key_get() == LEAVE)
 	{
-		sound_play_start(SOUND_MENU_ENTER, 1);
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
 	}
 	return MENU_ABOUT;

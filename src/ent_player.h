@@ -118,7 +118,6 @@ typedef struct
 
 	// мозг
 	think_t brain;
-	int soundId_move;
 } player_t;
 
 #define ENT_PLAYER(entity) ((player_t *) (entity)->data)

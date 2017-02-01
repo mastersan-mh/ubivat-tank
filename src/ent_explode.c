@@ -143,7 +143,7 @@ static void explode_detonate(entity_t * this, explodetype_t type)
 {
 	const explodeinfo_t * explodeinfo = &explodeinfo_table[type];
 
-	sound_play_start(explodeinfo->soundIndex, 1);
+	sound_play_start(NULL, 0, explodeinfo->soundIndex, 1);
 	entity_model_play_start(this, 0, "explode");
 
 	explode_common_destroy_walls(this, explodeinfo);

@@ -135,7 +135,6 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	pl->move.go      = false;
 	pl->attack       = false;
 	pl->reloadtime_d = 0;
-	pl->soundId_move = 0;
 };
 
 
@@ -416,7 +415,7 @@ ENTITY_FUNCTION_INIT(player_init)
 ENTITY_FUNCTION_DONE(player_done)
 {
 	player_t * pl = thisdata;
-	sound_play_stop(pl->soundId_move);
+	sound_play_stop(this, -1);
 	ctrl_AI_done(&(pl->brain));
 }
 
@@ -569,6 +568,8 @@ void player_checkcode(void)
  */
 static void player_handle_common(entity_t * player, player_t * pl)
 {
+#define PLAYER_SOUND_MOVE 0
+#define PLAYER_SOUND_ATTACK 1
 	enum
 	{
 		STATE_IDLE,
@@ -615,11 +616,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		case STATE_RUN: break;
 		case STATE_DEAD:
 
-			if(pl->soundId_move)
-			{
-				sound_play_stop(pl->soundId_move);
-				pl->soundId_move = 0;
-			}
+			sound_play_stop(player, -1);
 
 			//если игрок мертв
 			if(ENTITY_IS_SPAWNED(player))
@@ -658,10 +655,9 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			//игрок едет
 			pl->move.speed += PLAYER_ACCEL * dtime;
 			if(pl->move.speed > playerinfo->speed) pl->move.speed = playerinfo->speed;
-
-			if(!pl->soundId_move)
+			if(!sound_started(player, PLAYER_SOUND_MOVE))
 			{
-				pl->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
+				sound_play_start(player, PLAYER_SOUND_MOVE, SOUND_PLAYER_TANKMOVE, -1);
 			}
 
 		}
@@ -672,11 +668,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		};
 		if(pl->move.speed < 0)
 		{
-			if(pl->soundId_move)
-			{
-				sound_play_stop(pl->soundId_move);
-				pl->soundId_move = 0;
-			}
+			sound_play_stop(player, PLAYER_SOUND_MOVE);
 			pl->move.speed = 0;
 		}
 		entity_move(player, player->dir, pl->move.speed, true);
@@ -766,7 +758,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 							dir,
 							player
 						);
-						sound_play_start(weaponinfo->sound_index, 1);
+						sound_play_start(player, PLAYER_SOUND_ATTACK, weaponinfo->sound_index, 1);
 
 						if(
 								playerinfo->items[item] > 0 && //если пули у оружия не бесконечны и

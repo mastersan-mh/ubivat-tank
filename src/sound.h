@@ -57,9 +57,11 @@ extern void sound_done();
 extern void sound_precache();
 extern void sound_precache_free();
 
-extern int sound_play_start(sound_index_t sound_index, int loops);
-extern void sound_play_pause(int playId, bool pause);
-extern void sound_play_stop(int playId);
+extern void sound_play_start(const void * owner, int sub, sound_index_t sound_index, int loops);
+extern void sound_play_pause(const void * owner, int sub, bool pause);
+extern void sound_play_stop(const void * owner, int sub);
+extern int sound_started(const void * owner, int sub);
+
 extern void sound_play_stop_all();
 
 #endif /* SRC_SOUND_H_ */

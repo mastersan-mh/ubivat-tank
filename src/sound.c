@@ -74,6 +74,9 @@ typedef struct
 	// remaining length of the sample we have to play
 	int32_t len;
 	int loops;
+
+	const void * owner;
+	int sub;
 }sound_play_t;
 
 #define SOUND_MIX_AMOUNT 32
@@ -403,11 +406,13 @@ static void __buffer_free(snd_renderbuffer_t * buf)
  * @return = 0 - неудачно
  * @return = идентификатор экземпляра
  */
-int sound_play_start(sound_index_t sound_index, int loops)
+void sound_play_start(const void * owner, int sub, sound_index_t sound_index, int loops)
 {
-	if(!loops) return 0;
+	if(!loops)
+		return;
 	sound_data_t * sound = &sound_table[sound_index];
-	if(!sound->buffer)return -1;
+	if(!sound->buffer)
+		return;
 	size_t i;
 	for(i = 0; i< SOUND_MIX_AMOUNT; i++)
 	{
@@ -420,31 +425,59 @@ int sound_play_start(sound_index_t sound_index, int loops)
 			sound_play->loops = loops;
 			sound_play->paused = false;
 			sound_play->play = true;
-			return i+1;
+			sound_play->owner = owner;
+			sound_play->sub = sub;
+			break;
 		}
 	}
-	return 0;
+}
+
+#define MATCH_CONDITION(xsound_play, xowner, xsub) \
+		( ((xsound_play)->owner == (xowner)) && ((xsub) < 0 || (xsound_play)->sub == (xsub)) )
+
+/**
+ * приостановить / возобновить воспроизведение звука
+ */
+extern void sound_play_pause(const void * owner, int sub, bool pause)
+{
+	size_t i;
+	for(i = 0; i < SOUND_MIX_AMOUNT; i++)
+	{
+		sound_play_t * sound_play = &sound_plays[i];
+		if(!sound_play->play)
+			continue;
+		if(MATCH_CONDITION(sound_play, owner, sub))
+			sound_play->paused = pause;
+	}
 }
 
 /**
  * приостановить / возобновить воспроизведение звука
  */
-void sound_play_pause(int playId, bool pause)
+void sound_play_stop(const void * owner, int sub)
 {
-	if(playId <= 0)return;
-	sound_play_t * sound_play = &sound_plays[playId - 1];
-	if(!sound_play->play) return;
-	sound_play->paused = pause;
+	size_t i;
+	for(i = 0; i < SOUND_MIX_AMOUNT; i++)
+	{
+		sound_play_t * sound_play = &sound_plays[i];
+		if(MATCH_CONDITION(sound_play, owner, sub))
+			sound_play->play = false;
+	}
 }
 
-/**
- * приостановить / возобновить воспроизведение звука
- */
-void sound_play_stop(int playId)
+extern int sound_started(const void * owner, int sub)
 {
-	if(playId <= 0)return;
-	sound_play_t * sound_play = &sound_plays[playId - 1];
-	sound_play->play = false;
+	size_t i;
+	for(i = 0; i < SOUND_MIX_AMOUNT; i++)
+	{
+		sound_play_t * sound_play = &sound_plays[i];
+		if(MATCH_CONDITION(sound_play, owner, sub))
+		{
+			if(sound_play->play)
+				return true;
+		}
+	}
+	return false;
 }
 
 /**

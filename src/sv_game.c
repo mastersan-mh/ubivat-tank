@@ -68,6 +68,8 @@ void sv_game_gameTick(void)
 	entities_handle();
 }
 
+#define GAME_SOUND_MENU 10
+
 void sv_game_mainTick(void)
 {
 	static gamestate_t state_prev = GAMESTATE_NOGAME;
@@ -85,9 +87,9 @@ void sv_game_mainTick(void)
 		case GAMESTATE_MISSION_BRIEF:
 			if(statechanged)
 			{
-				sound_play_stop(sv_state.sound_playId);
-				if(!sv_state.sound_playId)
-					sv_state.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
+				if(sound_started(NULL, GAME_SOUND_MENU))
+					sound_play_stop(NULL, GAME_SOUND_MENU);
+				sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
 			}
 			break;
 		case GAMESTATE_GAMESAVE:
@@ -95,11 +97,7 @@ void sv_game_mainTick(void)
 		case GAMESTATE_INGAME:
 			if(statechanged)
 			{
-				if(sv_state.sound_playId)
-				{
-					sound_play_stop(sv_state.sound_playId);
-					sv_state.sound_playId = 0;
-				}
+				sound_play_stop(NULL, GAME_SOUND_MENU);
 				sv_state.allow_state_gamesave = true;
 			}
 			sv_game_gameTick();
@@ -123,9 +121,9 @@ void sv_game_mainTick(void)
 					}
 				}
 
-				sound_play_stop(sv_state.sound_playId);
-				if(!sv_state.sound_playId)
-					sv_state.sound_playId = sound_play_start(SOUND_MUSIC1, -1);
+				if(sound_started(NULL, GAME_SOUND_MENU))
+					sound_play_stop(NULL, GAME_SOUND_MENU);
+				sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
 			}
 			break;
 	}

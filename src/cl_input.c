@@ -151,7 +151,7 @@ void input_key_setState(int key, bool state)
 			break;
 		case GAMESTATE_MISSION_BRIEF:
 			if(!state) break;
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			client_event_nextgamestate_send();
 			client_event_join_send();
 			break;
@@ -164,7 +164,7 @@ void input_key_setState(int key, bool state)
 		case GAMESTATE_INTERMISSION:
 			if(!state) break;
 			client_event_nextgamestate_send();
-			sound_play_start(SOUND_MENU_ENTER, 1);
+			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			break;
 	}
 

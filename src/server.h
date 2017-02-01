@@ -21,7 +21,6 @@ typedef struct
 	/* флаги состояния игры */
 	int flags;
 	bool paused;
-	int sound_playId;
 
 	maplist_t * gamemap;
 	maplist_t * custommap;
