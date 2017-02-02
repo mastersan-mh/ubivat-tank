@@ -17,9 +17,9 @@ typedef struct
 	vec_t y;
 }vec2_t;
 
-#define VEC_ABS(x) fabsf((x))
-#define VEC_SQRT(x) sqrtf((x))
-#define VEC_TRUNC(x) truncf((x))
-#define VEC_ROUND(x) roundf((x))
+#define VEC_ABS(x)   ( (vec_t)fabsf((x)) )
+#define VEC_SQRT(x)  ( (vec_t)sqrtf((x)) )
+#define VEC_TRUNC(x) ( (vec_t)truncf((x)) )
+#define VEC_ROUND(x) ( (vec_t)roundf((x)) )
 
 #endif /* SRC_VEC_H_ */
