@@ -11,7 +11,7 @@
 
 static entityvarinfo_t item_vars[] =
 {
-		{ "amount", ENTITYVARTYPE_INTEGER }
+		{ "amount", VARTYPE_INTEGER }
 };
 
 static entitymodel_t item_scores_models[] =

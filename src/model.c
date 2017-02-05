@@ -77,7 +77,7 @@ void model_render(
 	vec2_t pos,
 	const model_t * model,
 	vec_t modelscale,
-	vec2_t translation,
+	const vec2_t translation,
 	float angle, /* degrees*/
 	unsigned int iframe
 )
@@ -97,8 +97,8 @@ void model_render(
 
 	item_img_t * texture = image_get(model->itexture);
 
-	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos.x - cam->pos.x) + translation.x ) * VIDEO_SCALE;
-	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos.y - cam->pos.y) + translation.y ) * VIDEO_SCALE;
+	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos[0] - cam->origin[0]) + translation[0] ) * VIDEO_SCALE;
+	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos[1] - cam->origin[1]) + translation[1] ) * VIDEO_SCALE;
 
 	vec_t modelscale_x = modelscale * VIDEO_SCALE;
 	vec_t modelscale_y = modelscale * VIDEO_SCALE;
@@ -125,12 +125,12 @@ void model_render(
 			modelframe_t * frame = &model->frames[iframe];
 
 			glTexCoord2f(
-				frame->texcoord[v].x,
-				frame->texcoord[v].y
+				frame->texcoord[v][0],
+				frame->texcoord[v][1]
 			);
 			glVertex2f(
-				model->vertexes[v].x * modelscale_x,
-				model->vertexes[v].y * modelscale_y
+				model->vertexes[v][0] * modelscale_x,
+				model->vertexes[v][1] * modelscale_y
 			);
 		}
 	}

@@ -46,7 +46,7 @@ extern void model_render(
 	vec2_t pos,
 	const model_t * model,
 	vec_t modelscale,
-	vec2_t translation,
+	const vec2_t translation,
 	float angle, /* degrees*/
 	unsigned int iframe
 );

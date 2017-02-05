@@ -95,15 +95,16 @@ static int g_gamesave_load_player(int fd, host_client_t * client)
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
 
-	sv_client_storedvars_get(client, "fragstotal")->value.i64  = savedata.fragstotal;
-	sv_client_storedvars_get(client, "frags")->value.i64       = savedata.frags;
-	sv_client_storedvars_get(client, "scores")->value.i64      = savedata.scores;
-	sv_client_storedvars_get(client, "item_health")->value.i64         = savedata.health;
-	sv_client_storedvars_get(client, "item_armor")->value.i64          = savedata.armor;
-	sv_client_storedvars_get(client, "item_ammo_artillery")->value.i64 = savedata.ammo1;
-	sv_client_storedvars_get(client, "item_ammo_missile")->value.i64   = savedata.ammo2;
-	sv_client_storedvars_get(client, "item_ammo_mine")->value.i64      = savedata.ammo3;
+	server_client_vardata_get(client, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
+	server_client_vardata_get(client, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
+	server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
+	server_client_vardata_get(client, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
+	server_client_vardata_get(client, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
+	server_client_vardata_get(client, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
+	server_client_vardata_get(client, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
+	server_client_vardata_get(client, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
 
+	vars_dump(client->vars, "==== LOADED:");
 	return 0;
 };
 

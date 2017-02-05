@@ -12,11 +12,11 @@
 
 static entityvarinfo_t spawn_player_vars[] =
 {
-		{ "item_scores", ENTITYVARTYPE_INTEGER },
-		{ "item_health", ENTITYVARTYPE_INTEGER },
-		{ "item_armor" , ENTITYVARTYPE_INTEGER },
-		{ "item_ammo_missile", ENTITYVARTYPE_INTEGER },
-		{ "item_ammo_mine"   , ENTITYVARTYPE_INTEGER },
+		{ "item_scores", VARTYPE_INTEGER },
+		{ "item_health", VARTYPE_INTEGER },
+		{ "item_armor" , VARTYPE_INTEGER },
+		{ "item_ammo_missile", VARTYPE_INTEGER },
+		{ "item_ammo_mine"   , VARTYPE_INTEGER },
 };
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
@@ -25,12 +25,12 @@ static ENTITY_FUNCTION_INIT(spawn_player_init)
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
-	entity_new("enemy", this->pos.x, this->pos.y, this->dir, this);
+	entity_new("enemy", this->origin[0], this->origin[1], this->dir, this);
 }
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
-	entity_new("boss", this->pos.x, this->pos.y, this->dir, this);
+	entity_new("boss", this->origin[0], this->origin[1], this->dir, this);
 }
 
 static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
@@ -39,8 +39,8 @@ static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
 
 	entity_t * player = entity_new(
 		"player",
-		spawn->pos.x,
-		spawn->pos.y,
+		spawn->origin[0],
+		spawn->origin[1],
 		spawn->dir,
 		spawn
 	);

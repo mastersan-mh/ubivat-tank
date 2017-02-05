@@ -42,26 +42,6 @@ typedef enum direction_e
 	DIR_RIGHT
 } direction_t;
 
-/* тип переменной entity */
-typedef enum
-{
-	ENTITYVARTYPE_INTEGER,
-	ENTITYVARTYPE_FLOAT,
-	ENTITYVARTYPE_STRING
-} entityvartype_t;
-
-typedef int64_t entity_int_t;
-typedef float entity_float_t;
-typedef char entity_char_t;
-/* значение переменной */
-typedef union
-{
-	entity_int_t i64;
-	entity_float_t f;
-	entity_char_t *string;
-} entityvarvalue_t;
-
-
 //директория файлов игры
 #define BASEDIR         UTANKBASEDIR"/base"
 //директория карт
@@ -102,7 +82,7 @@ typedef void (*actionf_t)();
 typedef struct
 {
 	//координаты
-	vec2_t pos;
+	vec2_t origin;
 	//позиция на экране
 	float x;
 	float y;

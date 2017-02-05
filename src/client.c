@@ -231,8 +231,7 @@ void clients_initcams(void)
 	float x = border;
 	LIST2_FOREACH(clients, client)
 	{
-		client->cam.pos.x = 0;
-		client->cam.pos.y = 0;
+		VEC2_CLEAR(client->cam.origin);
 
 		client->cam.x     = x;
 		client->cam.y     = 0;

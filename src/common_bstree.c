@@ -64,7 +64,7 @@ node_t * tree_node_insert(node_t ** root, nodeId_t nodeId, void * data)
 	return node;
 }
 
-void tree_delete(node_t * root, void (*data_delete_cb)(void * data))
+void tree_delete(node_t * root, void (*data_delete_cb)(void * nodedata))
 {
 	if(!root)
 		return;
@@ -89,3 +89,13 @@ node_t * tree_node_find(const node_t * root, nodeId_t nodeId)
 	return (node_t*)root;
 }
 
+void tree_foreach(node_t * root, void (*action_cb)(void * nodedata, void * args), void * args)
+{
+	if(!root)
+		return;
+	if(!action_cb)
+		return;
+	tree_foreach(root->l, action_cb, args);
+	tree_foreach(root->r, action_cb, args);
+	(*action_cb)(root->data, args);
+}

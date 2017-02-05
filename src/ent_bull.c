@@ -48,8 +48,8 @@ static void bull_artillery_detonate(entity_t * this, entity_t * that)
 		return;
 	entity_new(
 		"explode_artillery",
-		this->pos.x,
-		this->pos.y,
+		this->origin[0],
+		this->origin[1],
 		this->dir,
 		this->parent
 	);
@@ -63,8 +63,8 @@ static void bull_missile_detonate(entity_t * this, entity_t * that)
 	ENT_PLAYER(this->parent)->bull =
 	entity_new(
 		"explode_missile",
-		this->pos.x,
-		this->pos.y,
+		this->origin[0],
+		this->origin[1],
 		this->dir,
 		this->parent
 	);
@@ -77,8 +77,8 @@ static void bull_mine_detonate(entity_t * this, entity_t * that)
 		return;
 	entity_new(
 		"explode_mine",
-		this->pos.x,
-		this->pos.y,
+		this->origin[0],
+		this->origin[1],
 		this->dir,
 		this->parent
 	);
@@ -101,7 +101,7 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	//найдем препятствия
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	map_clip_find(
-		&this->pos,
+		&this->origin,
 		this->info->bodybox,
 		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
@@ -153,6 +153,7 @@ entitytouch_t bull_artillery_touchs[] =
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
 		.datasize = 0,
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 2.0f,
 		ENTITYINFO_ENTMODELS(bull_artillery_models),
 		.init = ENTITY_FUNCTION_NONE,
@@ -217,6 +218,7 @@ entitytouch_t bull_missile_touchs[] =
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
 		.datasize = 0,
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 8.0f,
 		ENTITYINFO_ENTMODELS(bull_missile_models),
 		.init = bull_missile_entity_init,
@@ -279,6 +281,7 @@ entitytouch_t bull_mine_touchs[] =
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
 		.datasize = 0,
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 8.0f,
 		ENTITYINFO_ENTMODELS(bull_mine_models),
 		.init = bull_mine_entity_init,

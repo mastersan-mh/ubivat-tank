@@ -10,6 +10,7 @@
 #include "model.h"
 #include "common_list2.h"
 #include "common_hash.h"
+#include "vars.h"
 
 typedef struct
 {
@@ -156,8 +157,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 
 	entity->parent = (entity_t*)parent;
 	entity->erase = false;
-	entity->pos.x = x;
-	entity->pos.y = y;
+	VEC2_SET(entity->origin, x, y);
 	entity->dir   = dir;
 	entity->alive = true;
 	entity->allow_handle = true;
@@ -172,17 +172,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
 		entityvarinfo_t * evars = entityinfo->vars;
 		for(i = 0; i < entityinfo->vars_num; i++)
 		{
-			entityvardata_t * vardata = Z_malloc(sizeof(entityvardata_t));
-			vardata->index = i;
-			vardata->type = evars[i].type;
-			switch(vardata->type)
-			{
-				case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
-				case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
-				case ENTITYVARTYPE_STRING : vardata->value.string = NULL; break;
-			}
-			tree_node_insert(&entity->vars, HASH32(evars[i].name), vardata);
-
+			var_create(&entity->vars, evars[i].name, evars[i].type);
 		}
 	}
 
@@ -233,20 +223,7 @@ static void entity_freemem(entity_t * entity)
 	}
 	Z_free(entity->modelplayers);
 
-	void vardata_delete(void * data)
-	{
-		entityvardata_t * vardata = data;
-		switch(vardata->type)
-		{
-			case ENTITYVARTYPE_INTEGER: vardata->value.i64 = 0; break;
-			case ENTITYVARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
-			case ENTITYVARTYPE_STRING   :
-				ENTITY_VARIABLE_STRING_ERASE(vardata->value.string);
-				break;
-		}
-		Z_free(data);
-	}
-	tree_delete(entity->vars, vardata_delete);
+	vars_delete(&entity->vars);
 	Z_free(entity);
 }
 
@@ -281,7 +258,7 @@ void entities_erase(void)
 /*
  * получить данные переменной
  */
-entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varname, entityvartype_t vartype)
+vardata_t * entity_vardata_get(const entity_t * entity, const char * varname, vartype_t vartype)
 {
 	static const char * list[] =
 	{
@@ -289,13 +266,13 @@ entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varna
 			"FLOAT",
 			"STRING",
 	};
-	node_t * node = tree_node_find(entity->vars, HASH32(varname));
+	var_t * node = var_find(entity->vars, varname);
 	if(!node)
 	{
 		game_console_send("Error: Entity \"%s\" has no variable \"%s\"", entity->info->name, varname);
 		return NULL;
 	}
-	entityvardata_t * vardata = node->data;
+	vardata_t * vardata = node->data;
 	if( (int)vartype >= 0 && vardata->type != vartype )
 	{
 		game_console_send("Warning: Entity \"%s\" variable \"%s\" has type %s, but used as %s.", entity->info->name, varname, list[vardata->type], list[vartype]);
@@ -346,11 +323,137 @@ static bool is_touched(entity_t * this, entity_t * that)
 	vec_t this_halfbox = this->info->bodybox * 0.5;
 	vec_t that_halfbox = that->info->bodybox * 0.5;
 	return
-			( this->pos.x - this_halfbox <= that->pos.x + that_halfbox ) &&
-			( that->pos.x - that_halfbox <= this->pos.x + this_halfbox ) &&
-			( this->pos.y - this_halfbox <= that->pos.y + that_halfbox ) &&
-			( that->pos.y - that_halfbox <= this->pos.y + this_halfbox )
+			( this->origin[0] - this_halfbox <= that->origin[0] + that_halfbox ) &&
+			( that->origin[0] - that_halfbox <= this->origin[0] + this_halfbox ) &&
+			( this->origin[1] - this_halfbox <= that->origin[1] + that_halfbox ) &&
+			( that->origin[1] - that_halfbox <= this->origin[1] + this_halfbox )
 			;
+}
+
+/**
+ * touchs
+ */
+static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
+{
+	if(
+			!entity->allow_handle ||
+			!entity->alive ||
+			!entity->spawned
+	)
+		return;
+
+	size_t i;
+	entitytouch_t * entitytouchs = info->entitytouchs;
+	for(i = 0; i < info->entitytouchs_num; i++)
+	{
+		entity_registered_t * entityreg = entityregisteredinfo_get(entitytouchs[i].entityname);
+
+
+		const entityinfo_t * thatinfo = entityreg->info;
+		if(!thatinfo)
+		{
+			game_console_send("Error: Entity \"%s\" can not touch unknown entities \"%s\".",
+				info->name, entitytouchs[i].entityname);
+			break;
+		}
+
+		if(entitytouchs[i].touch)
+		{
+			entity_t * that;
+			for(that = entityreg->entities; that; that = that->next)
+			{
+				if(
+						that->allow_handle &&
+						that->alive &&
+						that->spawned &&
+						!that->erase &&
+						is_touched(entity, that)
+				)
+					entitytouchs[i].touch(entity, that);
+			}
+		}
+	}
+}
+
+/**
+ * проигрывание кадров моделей
+ */
+static void P_entity_modelplay(const entityinfo_t * info, entity_t * entity)
+{
+
+	size_t ientmodel;
+	for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
+	{
+
+		if(
+				entity->modelplayers[ientmodel].model != NULL &&
+				entity->modelplayers[ientmodel].model->frames > 0 &&
+				entity->modelplayers[ientmodel].model->fps > 0 &&
+				entity->modelplayers[ientmodel].action != NULL
+		)
+		{
+
+			bool end = model_nextframe(
+				&entity->modelplayers[ientmodel].frame,
+				entity->modelplayers[ientmodel].model->fps,
+				entity->modelplayers[ientmodel].action->startframe,
+				entity->modelplayers[ientmodel].action->endframe
+			);
+			if(end)
+			{
+				const ent_modelaction_t * action = entity->modelplayers[ientmodel].action;
+				if(action != NULL && action->endframef != NULL)
+				{
+					entity->modelplayers[ientmodel].action = NULL;
+					action->endframef(
+						entity,
+						ientmodel,
+						action->name
+					);
+				}
+			}
+
+		}
+
+	}
+}
+
+/*
+ * передвижение игрока
+ */
+static void P_entity_move(const entityinfo_t * info, entity_t * entity)
+{
+	if(!(info->flags | ENTITYFLAG_SOLIDWALL))
+		return;
+
+/*
+	vec2_t * orig = &entity->origin;
+*/
+	/*
+	vec2_t * orig_prev = &entity->origin_prev;
+	vec_t halfbox = info->bodybox/2;
+	vec_t dist;
+	*/
+/*
+	direction_t dir;
+	bool check_clip = false;
+	if(check_clip)  FIXME: костыль
+	{
+		// * найдем препятствия *
+		map_clip_find_near(orig, info->bodybox, dir, MAP_WALL_CLIP, info->bodybox, &dist);
+		if(dist < dway + halfbox)
+			dway = dist - halfbox;
+	}
+	switch(dir)
+	{
+	case DIR_UP   : orig->y += dway; break;
+	case DIR_DOWN : orig->y -= dway; break;
+	case DIR_LEFT : orig->x -= dway; break;
+	case DIR_RIGHT: orig->x += dway; break;
+	}
+	//подсчитываем пройденный путь
+	entity->stat_traveled_distance += VEC_ABS(dway);
+	*/
 }
 
 void entities_handle(void)
@@ -398,100 +501,22 @@ void entities_handle(void)
 				continue;
 			}
 
+			VEC2_COPY(entity->origin, entity->origin_prev);
 			if(info->handle != NULL)
 			{
 				(*info->handle)(entity, entity->data);
 			}
 
-			if(entity->erase)
-			{
-				entity = entity->next;
-				continue;
-			}
+			if(!entity->erase)
+				P_entity_touchs(info, entity);
 
-			/* touchs */
-			if(
-					entity->allow_handle &&
-					entity->alive &&
-					entity->spawned
-			)
-			{
-				size_t i;
-				entitytouch_t * entitytouchs = info->entitytouchs;
-				for(i = 0; i < info->entitytouchs_num; i++)
-				{
-					entity_registered_t * entityreg = entityregisteredinfo_get(entitytouchs[i].entityname);
+			if(!entity->erase)
+				P_entity_move(info, entity);
 
+			if(!entity->erase)
+				P_entity_modelplay(info, entity);
 
-					const entityinfo_t * thatinfo = entityreg->info;
-					if(!thatinfo)
-					{
-						game_console_send("Error: Entity \"%s\" can not touch unknown entities \"%s\".",
-							info->name, entitytouchs[i].entityname);
-						break;
-					}
-
-					if(entitytouchs[i].touch)
-					{
-						entity_t * that;
-						for(that = entityreg->entities; that; that = that->next)
-						{
-							if(
-									that->allow_handle &&
-									that->alive &&
-									that->spawned &&
-									!that->erase &&
-									is_touched(entity, that)
-							)
-								entitytouchs[i].touch(entity, that);
-						}
-					}
-				}
-
-				if(entity->erase)
-				{
-					entity = entity->next;
-					continue;
-				}
-			}
-
-			int ientmodel;
-			for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
-			{
-
-				if(
-						entity->modelplayers[ientmodel].model != NULL &&
-						entity->modelplayers[ientmodel].model->frames > 0 &&
-						entity->modelplayers[ientmodel].model->fps > 0 &&
-						entity->modelplayers[ientmodel].action != NULL
-				)
-				{
-
-					bool end = model_nextframe(
-						&entity->modelplayers[ientmodel].frame,
-						entity->modelplayers[ientmodel].model->fps,
-						entity->modelplayers[ientmodel].action->startframe,
-						entity->modelplayers[ientmodel].action->endframe
-					);
-					if(end)
-					{
-						const ent_modelaction_t * action = entity->modelplayers[ientmodel].action;
-						if(action != NULL && action->endframef != NULL)
-						{
-							entity->modelplayers[ientmodel].action = NULL;
-							action->endframef(
-								entity,
-								ientmodel,
-								action->name
-							);
-						}
-					}
-
-				}
-
-			}
 			entity = entity->next;
-
 		}
 	}
 }
@@ -634,7 +659,7 @@ static void ent_models_render(
 			90.0f,  /* E */
 	};
 
-	vec2_t pos = entity->pos;
+	vec2_t * pos = &entity->origin;
 	const struct entityinfo_s * info = entity->info;
 	entitymodel_t * ent_models = info->entmodels;
 	size_t models_num = info->entmodels_num;
@@ -657,7 +682,7 @@ static void ent_models_render(
 		direction_t dir = entity->dir;
 		model_render(
 			cam,
-			pos,
+			*pos,
 			modelplayer->model,
 			ent_model->modelscale,
 			ent_model->translation,
@@ -696,10 +721,10 @@ void entities_render(camera_t * cam)
 
 			if(
 					entity->allow_draw &&
-					( cam->pos.x  - cam_sx_half  <= entity->pos.x + viewbox_half ) &&
-					( entity->pos.x - viewbox_half <= cam->pos.x  + cam_sx_half  ) &&
-					( cam->pos.y  - cam_sy_half  <= entity->pos.y + viewbox_half ) &&
-					( entity->pos.y - viewbox_half <= cam->pos.y  + cam_sy_half  )
+					( cam->origin[0]    - cam_sx_half  <= entity->origin[0] + viewbox_half ) &&
+					( entity->origin[0] - viewbox_half <= cam->origin[0]    + cam_sx_half  ) &&
+					( cam->origin[1]    - cam_sy_half  <= entity->origin[1] + viewbox_half ) &&
+					( entity->origin[1] - viewbox_half <= cam->origin[1]    + cam_sy_half  )
 			)
 			{
 				ent_models_render(cam, entity);

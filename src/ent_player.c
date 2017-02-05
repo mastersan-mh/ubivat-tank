@@ -26,7 +26,6 @@
 #include "server.h"
 #include "sv_game.h"
 #include "sound.h"
-#include "client.h"
 
 void coerce_value_int(int * val, int min, int max)
 {
@@ -63,15 +62,15 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	if(!spawn)
 		game_halt("Error: Player spawn is NULL, can not create player.");
 
-	player->pos = spawn->pos;
+	VEC2_COPY(spawn->origin, player->origin);
 
-	entity_int_t spawn_scores = ENTITY_VARIABLE_INTEGER(spawn, "item_scores");
+	var_int_t spawn_scores = ENTITY_VARIABLE_INTEGER(spawn, "item_scores");
 	if(0 <= spawn_scores && spawn_scores <= PLAYER_SCORES_MAX)
 		ENTITY_VARIABLE_INTEGER(player, "scores") = spawn_scores;
 
 	player_class_init(player, pl);
 
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t * playerinfo = &playerinfo_table[level];
 
 	static const struct {
@@ -91,7 +90,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 #define PLAYERVAR(i) ENTITY_VARIABLE_INTEGER(player, spawn_itemvars[i].playervarname)
 #define PLAYERINFOVAR(i) playerinfo->items[spawn_itemvars[i].item]
 
-	entity_int_t player_health = ENTITY_VARIABLE_INTEGER(player, "item_health");
+	var_int_t player_health = ENTITY_VARIABLE_INTEGER(player, "item_health");
 	if(player_health < 0)
 	{
 		player_health = ENTITY_VARIABLE_INTEGER(spawn, "item_health");
@@ -104,7 +103,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
 	size_t i;
 	for(i = 0; i < ARRAYSIZE(spawn_itemvars); i++)
 	{
-		entity_int_t spawn_value = SPAWNVAR(i);
+		var_int_t spawn_value = SPAWNVAR(i);
 		if( spawn_value > PLAYERINFOVAR(i) )
 			spawn_value = PLAYERINFOVAR(i);
 		else if(spawn_value <=0)
@@ -259,12 +258,12 @@ static void player_touch_exit(entity_t * actor, entity_t * exposed)
 
 static void player_touch_item_scores(entity_t * player, entity_t * item)
 {
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
 	ENTITY_UNSPAWN(item);
 
-	entity_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
+	var_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
 
 	player_class_init(player, player->data);
 	if(scores / PLAYER_SCOREPERCLASS >= 5)
@@ -291,7 +290,7 @@ static void player_touch_item(entity_t * player, entity_t * item)
 
 	player_invitemtype_t invitemtype = player_entity_to_itemtype(item);
 
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
 	int itemamount = ENTITY_VARIABLE_INTEGER(item, "amount");
@@ -352,16 +351,16 @@ ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 static entityvarinfo_t player_vars[] =
 {
-		{ "fragstotal", ENTITYVARTYPE_INTEGER }, /* фрагов за пройденые карты */
-		{ "frags"     , ENTITYVARTYPE_INTEGER }, /* фрагов за карту */
-		{ "scores"    , ENTITYVARTYPE_INTEGER }, /* набрано очков */
-		{ "level"     , ENTITYVARTYPE_INTEGER }, /* уровень игрока */
+		{ "fragstotal", VARTYPE_INTEGER }, /* фрагов за пройденые карты */
+		{ "frags"     , VARTYPE_INTEGER }, /* фрагов за карту */
+		{ "scores"    , VARTYPE_INTEGER }, /* набрано очков */
+		{ "level"     , VARTYPE_INTEGER }, /* уровень игрока */
 
-		{ "item_health"        , ENTITYVARTYPE_INTEGER },
-		{ "item_armor"         , ENTITYVARTYPE_INTEGER },
-		{ "item_ammo_artillery", ENTITYVARTYPE_INTEGER },
-		{ "item_ammo_missile"  , ENTITYVARTYPE_INTEGER },
-		{ "item_ammo_mine"     , ENTITYVARTYPE_INTEGER },
+		{ "item_health"        , VARTYPE_INTEGER },
+		{ "item_armor"         , VARTYPE_INTEGER },
+		{ "item_ammo_artillery", VARTYPE_INTEGER },
+		{ "item_ammo_missile"  , VARTYPE_INTEGER },
+		{ "item_ammo_mine"     , VARTYPE_INTEGER },
 };
 
 static entitytouch_t player_touchs[] =
@@ -579,10 +578,10 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		STATE_DEAD
 	};
 	int state = STATE_IDLE;
-	vec2_t Sorig;
+	vec2_t * Sorig;
 	vec_t L,R,U,D;
 
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
 	player->alive = ( ENTITY_VARIABLE_INTEGER(player, "item_health") > 0 );
@@ -623,8 +622,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 			{
 				entity_new(
 					"explode_missile",
-					player->pos.x,
-					player->pos.y,
+					player->origin[0],
+					player->origin[1],
 					player->dir,
 					player
 				);
@@ -680,23 +679,23 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		{
 		case DIR_UP:
 		case DIR_DOWN:
-			Sorig = player->pos;
-			Sorig.x = Sorig.x-c_p_MDL_box/4;
-			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &L);
-			Sorig = player->pos;
-			Sorig.x = Sorig.x+c_p_MDL_box/4;
-			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
+			Sorig = &player->origin;
+			(*Sorig)[0] = (*Sorig)[0] - c_p_MDL_box/4;
+			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &L);
+			Sorig = &player->origin;
+			(*Sorig)[0] = (*Sorig)[0] + c_p_MDL_box/4;
+			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
 			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
 			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, speed_s, true);//strafe right
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
-			Sorig = player->pos;
-			Sorig.y = Sorig.y-c_p_MDL_box/4;
-			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &D);
-			Sorig = player->pos;
-			Sorig.y = Sorig.y+c_p_MDL_box/4;
-			map_clip_find_near(&Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
+			Sorig = &player->origin;
+			(*Sorig)[1] = (*Sorig)[1] - c_p_MDL_box/4;
+			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &D);
+			Sorig = &player->origin;
+			(*Sorig)[1] = (*Sorig)[1] + c_p_MDL_box/4;
+			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
 			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , speed_s, true);//strafe up
 			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, speed_s, true);//strafe down
 			break;
@@ -753,8 +752,8 @@ static void player_handle_common(entity_t * player, player_t * pl)
 							dir = entity_direction_invert(player->dir);
 						entity_new(
 							weaponinfo->entityname,
-							player->pos.x,
-							player->pos.y,
+							player->origin[0],
+							player->origin[1],
 							dir,
 							player
 						);
@@ -888,7 +887,7 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t di
  */
 static void player_ui_draw(camera_t * cam, entity_t * player)
 {
-	entity_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
+	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
 	int ref_y = VIDEO_SCREEN_H - 16 * 2;
@@ -926,6 +925,7 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_player_models),
@@ -942,6 +942,7 @@ static const entityinfo_t player_reginfo = {
 static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_enemy_models),
@@ -955,6 +956,7 @@ static const entityinfo_t enemy_reginfo = {
 static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
+		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = c_p_MDL_box,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_boss_models),

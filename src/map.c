@@ -140,12 +140,12 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
 	case MAPDATA_MOBJ_OBJ_EXIT:
 		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
 		entity = entity_new("exit", data->pos.x, data->pos.y, DIR_UP, NULL);
-		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
+		ENTITY_VARIABLE_STRING(entity, "text") = VARIABLE_STRING_DUP(strbuf);
 		break;
 	case MAPDATA_MOBJ_OBJ_MESS:
 		strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
 		entity = entity_new("message", data->pos.x, data->pos.y, DIR_UP, NULL);
-		ENTITY_VARIABLE_STRING(entity, "text") = ENTITY_VARIABLE_STRING_DUP(strbuf);
+		ENTITY_VARIABLE_STRING(entity, "text") = VARIABLE_STRING_DUP(strbuf);
 		break;
 	default: ;
 	}
@@ -174,8 +174,8 @@ void map_clip_find(
 {
 
 	if(
-			orig->x < 0 || MAP_SX * MAP_WALLBLOCKSIZE < orig->x ||
-			orig->y < 0 || MAP_SY * MAP_WALLBLOCKSIZE < orig->y
+			(*orig)[0] < 0 || MAP_SX * MAP_WALLBLOCKSIZE < (*orig)[0] ||
+			(*orig)[1] < 0 || MAP_SY * MAP_WALLBLOCKSIZE < (*orig)[1]
 	)
 	{
 		*Ul = true; *Ur = true;
@@ -192,11 +192,11 @@ void map_clip_find(
 
 	vec_t hbox = bodybox/2;
 
-	vec_t x_add_hbox = orig->x + hbox;
-	vec_t x_sub_hbox = orig->x - hbox;
+	vec_t x_add_hbox = (*orig)[0] + hbox;
+	vec_t x_sub_hbox = (*orig)[0] - hbox;
 
-	vec_t y_add_hbox = orig->y + hbox;
-	vec_t y_sub_hbox = orig->y - hbox;
+	vec_t y_add_hbox = (*orig)[1] + hbox;
+	vec_t y_sub_hbox = (*orig)[1] - hbox;
 
 	int x_add_hbox_8 = VEC_TRUNC(x_add_hbox/8);
 	int x_sub_hbox_8 = VEC_TRUNC(x_sub_hbox/8);
@@ -267,8 +267,8 @@ void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, ve
 	box = box/2;
 	int mapx;
 	int mapy;
-	vec_t ox = orig->x;
-	vec_t oy = orig->y;
+	vec_t ox = (*orig)[0];
+	vec_t oy = (*orig)[1];
 	vec_t d = box/2;
 	switch(dir)
 	{
@@ -346,28 +346,28 @@ void map_clip_find_near_wall(vec2_t * orig, direction_t dir, vec_t * dist, char 
 	case DIR_UP:
 		do
 		{
-			*wall = map.map[(int)VEC_TRUNC((orig->y+(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
+			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]+(*dist))/8)][(int)VEC_TRUNC(((*orig)[0]     )/8)];
 			(*dist)++;
 		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
 	case DIR_DOWN:
 		do
 		{
-			*wall = map.map[(int)VEC_TRUNC((orig->y-(*dist))/8)][(int)VEC_TRUNC((orig->x     )/8)];
+			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]-(*dist))/8)][(int)VEC_TRUNC(((*orig)[0]     )/8)];
 			(*dist)++;
 		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
 	case DIR_LEFT:
 		do
 		{
-			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x-(*dist))/8)];
+			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]     )/8)][(int)VEC_TRUNC(((*orig)[0]-(*dist))/8)];
 			(*dist)++;
 		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
 	case DIR_RIGHT:
 		do
 		{
-			*wall = map.map[(int)VEC_TRUNC((orig->y     )/8)][(int)VEC_TRUNC((orig->x+(*dist))/8)];
+			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]     )/8)][(int)VEC_TRUNC(((*orig)[0]+(*dist))/8)];
 			(*dist)++;
 		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
 		break;
@@ -566,8 +566,8 @@ static void map_wall_render(
 	float translation_y = 0.0f;
 	float modelscale = 1.0f;
 
-	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos_x - cam->pos.x) + translation_x ) * VIDEO_SCALE;
-	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos_y - cam->pos.y) + translation_y ) * VIDEO_SCALE;
+	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos_x - cam->origin[0]) + translation_x ) * VIDEO_SCALE;
+	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos_y - cam->origin[1]) + translation_y ) * VIDEO_SCALE;
 
 	vec_t modelscale_x = modelscale * VIDEO_SCALE;
 	vec_t modelscale_y = modelscale * VIDEO_SCALE;
@@ -608,9 +608,9 @@ void map_draw(camera_t * cam)
 	int x0,x1;
 	int y0,y1;
 
-	x0 = VEC_TRUNC((cam->pos.x-(cam->sx / 2))/8);
+	x0 = VEC_TRUNC((cam->origin[0]-(cam->sx / 2))/8);
 	if(x0 < 0) x0 = 0;
-	y0 = VEC_TRUNC((cam->pos.y-(cam->sy / 2))/8);
+	y0 = VEC_TRUNC((cam->origin[1]-(cam->sy / 2))/8);
 	if(y0 < 0) y0 = 0;
 	x1 = x0 + (cam->sx / 8) + 1;
 	if(MAP_SX < x1) x1 = MAP_SX;

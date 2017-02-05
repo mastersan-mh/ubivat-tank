@@ -108,27 +108,27 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			vec_t radius = dangerous->info->bodybox * 0.5f;
 
 			//верхняя ближайшая стена
-			map_clip_find_near(&player->pos, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
+			map_clip_find_near(&player->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
 			//нижняя ближайшая стена
-			map_clip_find_near(&player->pos, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
+			map_clip_find_near(&player->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
 			//левая ближайшая стена
-			map_clip_find_near(&player->pos, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
+			map_clip_find_near(&player->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
 			//правая ближайшая стена
-			map_clip_find_near(&player->pos, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
-			Ud = (player->pos.y + Udist - c_p_MDL_box/2) - (dangerous->pos.y + radius);
-			Dd = (dangerous->pos.y - radius) - (player->pos.y-Ddist + c_p_MDL_box / 2);
-			Rd = (player->pos.x + Rdist - c_p_MDL_box/2) - (dangerous->pos.x + radius);
-			Ld = (dangerous->pos.x - radius) - (player->pos.x - Ldist + c_p_MDL_box / 2);
+			map_clip_find_near(&player->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
+			Ud = (player->origin[1] + Udist - c_p_MDL_box/2) - (dangerous->origin[1] + radius);
+			Dd = (dangerous->origin[1] - radius) - (player->origin[1]-Ddist + c_p_MDL_box / 2);
+			Rd = (player->origin[0] + Rdist - c_p_MDL_box/2) - (dangerous->origin[0] + radius);
+			Ld = (dangerous->origin[0] - radius) - (player->origin[0] - Ldist + c_p_MDL_box / 2);
 			if(
-					(player->pos.x-c_p_MDL_box/2 <= dangerous->pos.x+ radius)&&
-					(dangerous->pos.x- radius <= player->pos.x+c_p_MDL_box/2)&&
-					(VEC_ABS(player->pos.y-dangerous->pos.y) < 128)
+					(player->origin[0] - c_p_MDL_box/2 <= dangerous->origin[0] + radius)&&
+					(dangerous->origin[0] - radius <= player->origin[0] + c_p_MDL_box/2)&&
+					(VEC_ABS(player->origin[1]-dangerous->origin[1]) < 128)
 			)
 			{
 				if(
 						(dangerous->dir == DIR_UP) &&
-						(VEC_ABS(player->pos.y-dangerous->pos.y)<Ddist) &&
-						(dangerous->pos.y + radius < player->pos.y-c_p_MDL_box/2)
+						(VEC_ABS(player->origin[1]-dangerous->origin[1])<Ddist) &&
+						(dangerous->origin[1] + radius < player->origin[1]-c_p_MDL_box/2)
 				)
 				{
 					danger = true;
@@ -147,8 +147,8 @@ static void ctrl_AI_checkdanger(entity_t * player)
 				{
 					if(
 							(dangerous->dir == DIR_DOWN) &&
-							(VEC_ABS(player->pos.y-dangerous->pos.y)<Udist) &&
-							(player->pos.y+c_p_MDL_box/2 < dangerous->pos.y - radius)
+							(VEC_ABS(player->origin[1]-dangerous->origin[1])<Udist) &&
+							(player->origin[1]+c_p_MDL_box/2 < dangerous->origin[1] - radius)
 					)
 					{
 						danger = true;
@@ -166,15 +166,15 @@ static void ctrl_AI_checkdanger(entity_t * player)
 			}
 			else {
 				if(
-						(player->pos.y - c_p_MDL_box/2 <= dangerous->pos.y + radius) &&
-						(dangerous->pos.y - radius <= player->pos.y + c_p_MDL_box/2) &&
-						(VEC_ABS(player->pos.x - dangerous->pos.x) < 128)
+						(player->origin[1] - c_p_MDL_box/2 <= dangerous->origin[1] + radius) &&
+						(dangerous->origin[1] - radius <= player->origin[1] + c_p_MDL_box/2) &&
+						(VEC_ABS(player->origin[0] - dangerous->origin[0]) < 128)
 				)
 				{
 					if (
 							(dangerous->dir == DIR_LEFT)&&
-							(VEC_ABS(player->pos.x-dangerous->pos.x)<Rdist)&&
-							(player->pos.x+c_p_MDL_box/2 < dangerous->pos.x- radius)
+							(VEC_ABS(player->origin[0]-dangerous->origin[0])<Rdist)&&
+							(player->origin[0]+c_p_MDL_box/2 < dangerous->origin[0]- radius)
 					)
 					{
 						danger = true;
@@ -193,8 +193,8 @@ static void ctrl_AI_checkdanger(entity_t * player)
 					{
 						if(
 								(dangerous->dir == DIR_RIGHT) &&
-								(VEC_ABS(player->pos.x - dangerous->pos.x)<Ldist) &&
-								(dangerous->pos.x + radius < player->pos.x - c_p_MDL_box / 2)
+								(VEC_ABS(player->origin[0] - dangerous->origin[0])<Ldist) &&
+								(dangerous->origin[0] + radius < player->origin[0] - c_p_MDL_box / 2)
 						)
 						{
 							danger = true;
@@ -244,18 +244,18 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	if( pl->bull && pl->brain.target )
 	{
 		if(
-				VEC_ABS(pl->bull->pos.y - pl->brain.target->pos.y) <
-				VEC_ABS(pl->bull->pos.x - pl->brain.target->pos.x)
+				VEC_ABS(pl->bull->origin[1] - pl->brain.target->origin[1]) <
+				VEC_ABS(pl->bull->origin[0] - pl->brain.target->origin[0])
 		)
 		{
-			if(pl->bull->pos.x < pl->brain.target->pos.x)
+			if(pl->bull->origin[0] < pl->brain.target->origin[0])
 				player->dir = DIR_RIGHT;
 			else
 				player->dir = DIR_LEFT;
 		}
 		else
 		{
-			if(pl->bull->pos.y < pl->brain.target->pos.y)
+			if(pl->bull->origin[1] < pl->brain.target->origin[1])
 				player->dir = DIR_UP;
 			else
 				player->dir = DIR_DOWN;
@@ -264,8 +264,8 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 	if
 	(
-			VEC_ABS(player->pos.x - target->pos.x) > 160.0 ||
-			VEC_ABS(player->pos.y - target->pos.y) > 100.0
+			VEC_ABS(player->origin[0] - target->origin[0]) > 160.0 ||
+			VEC_ABS(player->origin[1] - target->origin[1]) > 100.0
 	)
 	{
 		pl->attack = false;
@@ -275,18 +275,18 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	if(0 < pl->reloadtime_d) return;
 	pl->brain.target = NULL;
 	if(
-			(player->pos.x-c_p_MDL_box/2<target->pos.x) &&
-			(target->pos.x<player->pos.x+c_p_MDL_box/2)
+			(player->origin[0]-c_p_MDL_box/2<target->origin[0]) &&
+			(target->origin[0]<player->origin[0]+c_p_MDL_box/2)
 	)
 	{
-		if(target->pos.y < player->pos.y)
+		if(target->origin[1] < player->origin[1])
 			player->dir = DIR_DOWN;
 		else
 			player->dir = DIR_UP;
-		map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
+		map_clip_find_near_wall(&player->origin, player->dir, &dist, &wall);
 		if(
 				//противник в прямой видимости
-				(VEC_ABS(player->pos.y - target->pos.y) < dist - c_p_MDL_box/2) ||
+				(VEC_ABS(player->origin[1] - target->origin[1]) < dist - c_p_MDL_box/2) ||
 				!MAP_WALL_CLIPPED(wall) ||
 				MAP_WALL_TEXTURE(wall) == MAP_WALL_water
 		){
@@ -353,16 +353,16 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	else
 	{
 		if(
-				(player->pos.y - c_p_MDL_box/2 < target->pos.y)&&
-				(target->pos.y < player->pos.y + c_p_MDL_box/2)
+				(player->origin[1] - c_p_MDL_box/2 < target->origin[1])&&
+				(target->origin[1] < player->origin[1] + c_p_MDL_box/2)
 		)
 		{
-			if(target->pos.x<player->pos.x) player->dir = DIR_LEFT;
+			if(target->origin[0]<player->origin[0]) player->dir = DIR_LEFT;
 			else                            player->dir = DIR_RIGHT;
-			map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
+			map_clip_find_near_wall(&player->origin, player->dir, &dist, &wall);
 			if(
 					//противник в прямой видимости
-					(VEC_ABS(player->pos.x - target->pos.x) < dist - c_p_MDL_box/2)||
+					(VEC_ABS(player->origin[0] - target->origin[0]) < dist - c_p_MDL_box/2)||
 					!MAP_WALL_CLIPPED(wall) ||
 					MAP_WALL_TEXTURE(wall) == MAP_WALL_water
 			)
@@ -424,7 +424,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		{
 			if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
 			{
-				map_clip_find_near_wall(&player->pos, player->dir, &dist, &wall);
+				map_clip_find_near_wall(&player->origin, player->dir, &dist, &wall);
 				if(
 						(dist-c_p_MDL_box/2 < radius) &&
 						((wall==MAP_WALL_W0+MAP_WALL_CLIP) || (wall==MAP_WALL_W1+MAP_WALL_CLIP))
@@ -452,8 +452,8 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 	player_t * pl = player->data;
 
 	if(
-			(160<VEC_ABS(player->pos.x-target->pos.x))||
-			(100<VEC_ABS(player->pos.y-target->pos.y))
+			(160<VEC_ABS(player->origin[0]-target->origin[0]))||
+			(100<VEC_ABS(player->origin[1]-target->origin[1]))
 	)
 	{
 		pl->attack = false;
@@ -467,23 +467,23 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 	{
 		if(BOT_THINK_TIME+xrand(BOT_THINK_TIME)<pl->brain.count)
 		{
-			if(VEC_ABS(player->pos.x-target->pos.x)>VEC_ABS(player->pos.y-target->pos.y))
+			if(VEC_ABS(player->origin[0]-target->origin[0])>VEC_ABS(player->origin[1]-target->origin[1]))
 			{
-				if(player->pos.x<target->pos.x)
+				if(player->origin[0]<target->origin[0])
 					player->dir = DIR_RIGHT;
 				else
 					player->dir = DIR_LEFT;
 			}
 			else
 			{
-				if(player->pos.y < target->pos.y)
+				if(player->origin[1] < target->origin[1])
 					player->dir = DIR_UP;
 				else
 					player->dir = DIR_DOWN;
 			}
 			if(
-					(VEC_ABS(player->pos.x-target->pos.x) < c_BOT_dist)&&
-					(VEC_ABS(player->pos.y-target->pos.y) < c_BOT_dist)
+					(VEC_ABS(player->origin[0]-target->origin[0]) < c_BOT_dist)&&
+					(VEC_ABS(player->origin[1]-target->origin[1]) < c_BOT_dist)
 			)
 				pl->move.go = false;
 			else

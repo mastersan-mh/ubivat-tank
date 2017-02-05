@@ -51,7 +51,7 @@ direction_t entity_direction_invert(direction_t dir)
  */
 void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
 {
-	vec2_t * pos = &this->pos;
+	vec2_t * pos = &this->origin;
 	vec_t dway = speed * dtimed1000;
 	vec_t bodybox = this->info->bodybox;
 	vec_t halfbox = bodybox/2;
@@ -67,10 +67,10 @@ void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
 
 	switch(dir)
 	{
-	case DIR_UP   : pos->y += dway; break;
-	case DIR_DOWN : pos->y -= dway; break;
-	case DIR_LEFT : pos->x -= dway; break;
-	case DIR_RIGHT: pos->x += dway; break;
+	case DIR_UP   : (*pos)[1] += dway; break;
+	case DIR_DOWN : (*pos)[1] -= dway; break;
+	case DIR_LEFT : (*pos)[0] -= dway; break;
+	case DIR_RIGHT: (*pos)[0] += dway; break;
 	}
 	//подсчитываем пройденный путь
 	this->stat_traveled_distance += VEC_ABS(dway);

@@ -33,8 +33,8 @@ static void explode_common_destroy_walls(entity_t * this, const explodeinfo_t * 
 	{
 		for(ix = -halfbox; ix <= halfbox; ix++)
 		{
-			int x8 = VEC_TRUNC((this->pos.x + ix) / 8);
-			int y8 = VEC_TRUNC((this->pos.y + iy) / 8);
+			int x8 = VEC_TRUNC((this->origin[0] + ix) / 8);
+			int y8 = VEC_TRUNC((this->origin[1] + iy) / 8);
 			if(
 					0 <= x8 && x8 < MAP_SX &&
 					0 <= y8 && y8 < MAP_SY
@@ -51,21 +51,19 @@ static void explode_common_destroy_walls(entity_t * this, const explodeinfo_t * 
 static void explode_touch_common(entity_t * this, entity_t * that, const explodeinfo_t * explodeinfo)
 {
 	vec_t r;
-	vec_t dx, dy;
+	vec2_t d;
 	bool self;
 
 	vec_t that_halfbox = this->info->bodybox * 0.5f;
-
-	dx = that->pos.x - this->pos.x;
-	dy = that->pos.y - this->pos.y;
+	VEC2_SUB(that->origin, this->origin, d);
 	if(
-			(VEC_ABS(dx) <= that_halfbox) &&
-			(VEC_ABS(dy) <= that_halfbox)
+			(VEC_ABS(d[0]) <= that_halfbox) &&
+			(VEC_ABS(d[1]) <= that_halfbox)
 	)
 		r = 0;
 	else
 	{
-		r = VEC_SQRT(dx * dx + dy * dy) - VEC_SQRT(sqrf(that_halfbox) + VEC_SQRT(that_halfbox))/2;
+		r = VEC_SQRT(DOT_PRODUCT2(d, d)) - VEC_SQRT(sqrf(that_halfbox) + VEC_SQRT(that_halfbox))/2;
 	}
 	if(r <= this->info->bodybox * 0.5f)
 	{

@@ -21,6 +21,7 @@ ent_player_think.c \
 common_bstree.c \
 common_hash.c \
 Z_mem.c \
+vars.c \
 system.c \
 net.c \
 video.c \

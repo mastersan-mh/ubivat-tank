@@ -25,5 +25,6 @@ typedef struct node_s
 extern node_t * tree_node_insert(node_t ** root, nodeId_t nodeId, void * data);
 extern void tree_delete(node_t * root, void (*data_delete_cb)(void * data));
 extern node_t * tree_node_find(const node_t * root, nodeId_t nodeId);
+extern void tree_foreach(node_t * root, void (*action_cb)(void * nodedata, void * args), void * args);
 
 #endif /* SRC_COMMON_BSTREE_H_ */

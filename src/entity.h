@@ -15,9 +15,9 @@
 #include "img.h"
 #include "server.h"
 #include "common_bstree.h"
+#include "vars.h"
 
 #define ENTITY_NAME_SIZE (64)
-#define ENTITY_VARNAME_SIZE (64)
 
 /*
  * цикл по объектам одного определённого типа
@@ -83,13 +83,11 @@
 		.entmodels_num = ARRAYSIZE(xentmodels), \
 		.entmodels = xentmodels
 
-/* переменная entity */
-typedef struct entityvardata_s
+enum
 {
-	size_t index; /* номер переменной в списке entityvardata_t.vars */
-	entityvartype_t type;
-	entityvarvalue_t value;
-} entityvardata_t;
+	ENTITYFLAG_SOLIDWALL   = 0x01
+//	ENTITYFLAG_SOLIDENTITY = 0x02
+};
 
 /*
  * список объектов одного типа, у которых
@@ -102,11 +100,12 @@ typedef struct entity_s
 	/* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
 	struct entity_s * parent;
 	/* переменные */
-	node_t * vars; /* entityvardata_t */
+	var_t * vars; /* vardata_t */
 	/* удалить объект */
 	bool erase;
 	//позиция
-	vec2_t pos;
+	vec2_t origin_prev;
+	vec2_t origin;
 	/* направление взгляда/движения */
 	direction_t dir;
 	/* объект показывать и обрабатывать */
@@ -171,7 +170,7 @@ typedef struct
 	/* имя переменной */
 	char * name;
 	/* тип переменной */
-	entityvartype_t type;
+	vartype_t type;
 } entityvarinfo_t;
 
 typedef struct
@@ -192,6 +191,8 @@ typedef struct entityinfo_s
 	char * name;
 	size_t datasize;
 
+	/* entity flags */
+	int flags;
 	/* для простоты все объекты квадратные */
 	vec_t bodybox;
 
@@ -239,18 +240,14 @@ extern void entities_render(camera_t * cam);
 extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent);
 extern void entities_erase(void);
 
-extern entityvardata_t * entity_vardata_get(const entity_t * entity, const char * varname, entityvartype_t vartype);
+extern vardata_t * entity_vardata_get(const entity_t * entity, const char * varname, vartype_t vartype);
 
 #define ENTITY_VARIABLE_INTEGER(entity, varname) \
-	entity_vardata_get((entity), (varname), ENTITYVARTYPE_INTEGER)->value.i64
+	entity_vardata_get((entity), (varname), VARTYPE_INTEGER)->value.i64
 #define ENTITY_VARIABLE_FLOAT(entity, varname) \
-	entity_vardata_get((entity), (varname), ENTITYVARTYPE_FLOAT)->value.f
+	entity_vardata_get((entity), (varname), VARTYPE_FLOAT)->value.f
 #define ENTITY_VARIABLE_STRING(entity, varname) \
-	entity_vardata_get((entity), (varname), ENTITYVARTYPE_STRING)->value.string
-#define ENTITY_VARIABLE_STRING_DUP(text) \
-	Z_strdup((text))
-#define ENTITY_VARIABLE_STRING_ERASE(text) \
-	do { Z_free((text)); (text) = NULL; } while(0)
+	entity_vardata_get((entity), (varname), VARTYPE_STRING)->value.string
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);

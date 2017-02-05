@@ -11,6 +11,7 @@
 #include "game.h"
 #include "net.h"
 #include "map.h"
+#include "vars.h"
 
 //состояние игры
 typedef struct
@@ -27,18 +28,7 @@ typedef struct
 /* Разрешить переход на состояние сохранения игры.
    Если игра была только что прочитана, её не нужно сохранять */
 	bool allow_state_gamesave;
-
-
 } server_state_t;
-
-#define _ENTITY_VARNAME_SIZE (64)
-
-typedef struct
-{
-	char varname[_ENTITY_VARNAME_SIZE];
-	entityvartype_t type;
-	entityvarvalue_t value;
-} host_clientvardata_t;
 
 typedef struct host_client_s
 {
@@ -49,8 +39,7 @@ typedef struct host_client_s
 	void * userstoredata;
 
 	/* сохраняемые переменные */
-	size_t varsdata_num;
-	host_clientvardata_t * varsdata;
+	var_t * vars; /* vardata_t */
 
 	/* адрес клиента */
 	net_socket_t * ns;
@@ -72,6 +61,8 @@ extern int host_client_num_get(void);
 
 extern void host_setgamestate(gamestate_t state);
 
+extern vardata_t * server_client_vardata_get(host_client_t * client, const char * varname, vartype_t vartype);
+
 extern host_client_t * host_client_get(int id);
 
 extern void host_event_send_win(void);
@@ -81,7 +72,6 @@ extern void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 extern void server_unjoin_clients(void);
 extern void server_restore_client_info(host_client_t * client);
 
-extern host_clientvardata_t * sv_client_storedvars_get(host_client_t * client, const char * varname);
 
 extern void server_start(int flags);
 extern void server_stop(void);

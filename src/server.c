@@ -6,6 +6,7 @@
  */
 
 #include "common_list2.h"
+#include "vars.h"
 #include "g_events.h"
 #include "sv_game.h"
 #include "net.h"
@@ -16,6 +17,7 @@
 #include "sound.h"
 #include "menu.h"
 #include "entity.h"
+#include "common_hash.h"
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -134,6 +136,31 @@ void host_setgamestate(gamestate_t state)
 	}
 }
 
+
+/*
+ * получить данные переменной
+ */
+vardata_t * server_client_vardata_get(host_client_t * client, const char * varname, vartype_t vartype)
+{
+	static const char * list[] =
+	{
+			"INTEGER",
+			"FLOAT",
+			"STRING",
+	};
+	var_t * var = var_find(client->vars, varname);
+	if(!var)
+	{
+		var = var_create(&client->vars, varname, vartype);
+	}
+	vardata_t * vardata = var->data;
+	if( (int)vartype >= 0 && vardata->type != vartype )
+	{
+		game_console_send("Warning: Host client variable \"%s\" has type %s, but used as %s.", varname, list[vardata->type], list[vartype]);
+	}
+	return vardata;
+}
+
 /**
  * подключение игрока к игре
  * @return id
@@ -150,15 +177,15 @@ static void server_client_info_store(host_client_t * client)
 	size_t vars_num = entity->info->vars_num;
 	entityvarinfo_t * vars = entity->info->vars;
 
-	client->varsdata_num = vars_num;
-	client->varsdata = Z_calloc(vars_num, sizeof(host_clientvardata_t));
 	size_t i;
 	for(i = 0; i < vars_num; i++)
 	{
-		entityvardata_t * vardata = entity_vardata_get(entity, vars[i].name, -1);
-		strncpy(client->varsdata[i].varname, vars[i].name, _ENTITY_VARNAME_SIZE);
-		client->varsdata[i].type    = vardata->type;
-		client->varsdata[i].value   = vardata->value;
+		var_t * var = var_create(&client->vars, vars[i].name, vars[i].type);
+		vardata_t * clientvardata = (vardata_t*)var->data;
+		vardata_t * entityvardata = entity_vardata_get(entity, vars[i].name, -1);
+		strncpy(clientvardata->name, vars[i].name, VARNAME_SIZE);
+		clientvardata->type  = entityvardata->type;
+		clientvardata->value = entityvardata->value;
 	}
 
 }
@@ -168,7 +195,6 @@ static void server_client_info_store(host_client_t * client)
  */
 static void server_client_info_restore(host_client_t * client)
 {
-	size_t i;
 	if(client->userstoredata)
 	{
 		(*client->entity->info->client_restore)(
@@ -180,28 +206,36 @@ static void server_client_info_restore(host_client_t * client)
 		client->userstoredata = NULL;
 	}
 
-	if(client->varsdata_num > 0)
+	if(client->vars)
 	{
 		entity_t * entity = client->entity;
-		size_t vars_num = client->varsdata_num;
-		host_clientvardata_t * vars = client->varsdata;
-		for(i = 0; i < vars_num; i++)
+
+		void var_restore(vardata_t * clientvardata, void * args)
 		{
-			entityvardata_t * entityvardata = entity_vardata_get(entity, vars[i].varname, -1);
+			vardata_t * entityvardata = entity_vardata_get(entity, clientvardata->name, -1);
 			if(!entityvardata)
-				game_console_send("Error: Can not restore client entity info, entity has no variable \"%s\".", vars[i].varname);
+				game_console_send("Error: Can not restore client entity info, entity has no variable \"%s\".", clientvardata->name);
 			else
 			{
-				if(entityvardata->type != vars[i].type)
+				if(entityvardata->type != clientvardata->type)
 				{
-					game_console_send("Error: Can not restore client entity info, variable \"%s\" has different types.", vars[i].varname);
+					game_console_send("Error: Can not restore client entity info, variable \"%s\" has different types.", clientvardata->name);
 				}
 				else
-					entityvardata->value = vars[i].value;
+				{
+					strncpy(entityvardata->name, clientvardata->name, VARNAME_SIZE);
+					entityvardata->type  = clientvardata->type;
+					entityvardata->value = clientvardata->value;
+				}
 			}
 		}
-		Z_free(client->varsdata);
-		client->varsdata_num = 0;
+
+		vars_dump(client->vars, "==== Client vars:");
+
+		vars_foreach(client->vars, var_restore, NULL);
+		vars_dump(client->entity->vars, "==== Entity vars:");
+
+		vars_delete(&client->vars);
 	}
 
 }
@@ -316,21 +350,6 @@ void server_unjoin_clients(void)
 		server_client_info_store(client);
 		client->entity = NULL;
 	}
-}
-
-host_clientvardata_t * sv_client_storedvars_get(host_client_t * client, const char * varname)
-{
-	size_t i;
-	for(i = 0 ;i < client->varsdata_num; i++)
-	{
-		if(!strncmp(client->varsdata[i].varname, varname, _ENTITY_VARNAME_SIZE))
-		{
-			return &client->varsdata[i];
-			break;
-		}
-	}
-	game_console_send("Error: variable \"%s\" not found in clientvars.", varname);
-	return NULL;
 }
 
 net_socket_t * host_ns = NULL;
