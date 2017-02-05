@@ -74,6 +74,11 @@ static char * image_files[__IMAGE_NUM] = {
 	"/pics/bull_mine.bii"     , /* B_MINE */
 	"/pics/explode_small.bii" , /* E_SMALL */
 	"/pics/explode_big.bii"   , /* E_BIG */
+	"/pics/hud_icon_tank0.bii", /* IMG_HUD_ICON_TANK0*/
+	"/pics/hud_icon_tank1.bii", /* IMG_HUD_ICON_TANK1*/
+	"/pics/hud_icon_tank2.bii", /* IMG_HUD_ICON_TANK2*/
+	"/pics/hud_icon_tank3.bii", /* IMG_HUD_ICON_TANK3*/
+	"/pics/hud_icon_tank4.bii", /* IMG_HUD_ICON_TANK4*/
 };
 
 

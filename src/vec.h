@@ -29,7 +29,7 @@ typedef vec_t vec2_t[2];
 		{ \
 			vec_t ilength = VEC_SQRT( DOT_PRODUCT2((v),(v)) ); \
 			if (ilength) \
-			ilength = 1.0f / ilength; \
+				ilength = 1.0f / ilength; \
 			dest[0] = (v)[0] * ilength; \
 			dest[1] = (v)[1] * ilength; \
 		}

@@ -887,6 +887,15 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t di
  */
 static void player_ui_draw(camera_t * cam, entity_t * player)
 {
+	static image_index_t list[] =
+	{
+			IMG_HUD_ICON_TANK0,
+			IMG_HUD_ICON_TANK1,
+			IMG_HUD_ICON_TANK2,
+			IMG_HUD_ICON_TANK3,
+			IMG_HUD_ICON_TANK4,
+	};
+
 	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
 	playerinfo_t *playerinfo = &playerinfo_table[level];
 
@@ -899,14 +908,14 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	ui_drawimage(cam, 16 * 0     , ref_y, game.i_health);
 	ui_drawimage(cam, 16 * 6     , ref_y, game.i_armor);
 
-	ui_printf(cam, 16 * 0 + 16, ref_y, "%d", ENTITY_VARIABLE_INTEGER(player, "item_health"));
-	ui_printf(cam, 16 * 6 + 16, ref_y, "%d", ENTITY_VARIABLE_INTEGER(player, "item_armor"));
+	ui_printf(cam, 16 * 0 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_health"));
+	ui_printf(cam, 16 * 6 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_armor"));
 	ui_printf(cam, 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
 	ui_printf(cam, 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
 
 	/* вторая строка */
 	ref_y += 16;
-	//gr2D_setimage1(cam->x + 16 * 0, ref_y, image_get( list[pl->level] ), 0, 0, c_p_MDL_box,c_p_MDL_box);
+	ui_drawimage(cam, 16 * 0, ref_y, image_get( list[ level ] ));
 	ui_drawimage(cam, 16 * 4, ref_y, image_get( weaponinfo_table[0].icon ));
 	ui_drawimage(cam, 16 * 6, ref_y, image_get( weaponinfo_table[1].icon ));
 	ui_drawimage(cam, 16 * 8, ref_y, image_get( weaponinfo_table[2].icon ));
