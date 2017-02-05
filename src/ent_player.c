@@ -453,7 +453,7 @@ ENTITY_FUNCTION_DONE(boss_done)
 }
 ENTITY_FUNCTION_HANDLE(boss_handle)
 {
-	//think_enemy(player);
+	think_enemy(this);
 	player_handle_common(this, thisdata);
 }
 
