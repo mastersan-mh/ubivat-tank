@@ -41,35 +41,8 @@ typedef enum gamestate_s
 //состояние игры
 typedef struct
 {
-
-	item_img_t * i_health;
-	item_img_t * i_armor;
-	item_img_t * i_star;
 	item_img_t * w_water[3];
 	/***********************/
-	item_img_t * m_i_logo;
-	item_img_t * m_i_conback;
-	item_img_t * m_i_game;
-	item_img_t * m_i_g_new_p1;
-	item_img_t * m_i_g_new_p2;
-	item_img_t * m_i_g_load;
-	item_img_t * m_i_g_save;
-	item_img_t * m_i_case;
-	item_img_t * m_i_options;
-	item_img_t * m_i_about;
-	item_img_t * m_i_abort;
-	item_img_t * m_i_quit;
-	item_img_t * m_i_cur_0;
-	item_img_t * m_i_cur_1;
-	item_img_t * m_i_arrowL;
-	item_img_t * m_i_arrowR;
-	item_img_t * m_i_lineL;
-	item_img_t * m_i_lineM;
-	item_img_t * m_i_lineR;
-	item_img_t * m_i_flagRUS;
-	item_img_t * m_i_flagUSA;
-	/*******************************************************************/
-
 
 } game_t;
 

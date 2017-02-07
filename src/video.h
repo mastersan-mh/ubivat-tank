@@ -8,7 +8,7 @@
 #ifndef SRC_VIDEO_H_
 #define SRC_VIDEO_H_
 
-#include <types.h>
+#include "types.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>

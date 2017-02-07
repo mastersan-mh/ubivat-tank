@@ -4,6 +4,7 @@
  * by Master San
  */
 
+#include "types.h"
 #include "g_events.h"
 #include "system.h"
 #include "game.h"
@@ -34,7 +35,6 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <types.h>
 
 //состояние игры
 game_t game;
@@ -119,33 +119,9 @@ void game_init(void)
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
 	images_init();
-	game.m_i_logo     = image_get(IMG_MENU_LOGO     );
-	game.m_i_conback  = image_get(IMG_MENU_CONBACK  );
-	game.m_i_game     = image_get(IMG_MENU_GAME     );
-	game.m_i_g_new_p1 = image_get(IMG_MENU_G_NEW_P1 );
-	game.m_i_g_new_p2 = image_get(IMG_MENU_G_NEW_P2 );
-	game.m_i_g_load   = image_get(IMG_MENU_G_LOAD   );
-	game.m_i_g_save   = image_get(IMG_MENU_G_SAVE   );
-	game.m_i_case     = image_get(IMG_MENU_CASE     );
-	game.m_i_options  = image_get(IMG_MENU_OPTIONS  );
-	game.m_i_about    = image_get(IMG_MENU_ABOUT    );
-	game.m_i_abort    = image_get(IMG_MENU_ABORT    );
-	game.m_i_quit     = image_get(IMG_MENU_QUIT     );
-	game.m_i_cur_0    = image_get(IMG_MENU_CUR_0    );
-	game.m_i_cur_1    = image_get(IMG_MENU_CUR_1    );
-	game.m_i_arrowL   = image_get(IMG_MENU_ARROWL   );
-	game.m_i_arrowR   = image_get(IMG_MENU_ARROWR   );
-	game.m_i_lineL    = image_get(IMG_MENU_LINEL    );
-	game.m_i_lineM    = image_get(IMG_MENU_LINEM    );
-	game.m_i_lineR    = image_get(IMG_MENU_LINER    );
-	game.m_i_flagRUS  = image_get(IMG_FLAG_RUS      );
-	game.m_i_flagUSA  = image_get(IMG_FLAG_USA      );
 	game.w_water[0]   = image_get(IMG_WATER0     );
 	game.w_water[1]   = image_get(IMG_WATER1     );
 	game.w_water[2]   = image_get(IMG_WATER2     );
-	game.i_health     = image_get(IMG_ITEM_HEALTH);
-	game.i_armor      = image_get(IMG_ITEM_ARMOR );
-	game.i_star       = image_get(IMG_ITEM_STAR  );
 
 	//чтение конфига
 	printf("Config init...\n");

@@ -73,11 +73,11 @@ static void cl_game_state_intermission_draw(void)
 {
 	static image_index_t list[] =
 	{
-			IMG_TANK0,
-			IMG_TANK1,
-			IMG_TANK2,
-			IMG_TANK3,
-			IMG_TANK4
+			IMG_HUD_ICON_TANK0,
+			IMG_HUD_ICON_TANK1,
+			IMG_HUD_ICON_TANK2,
+			IMG_HUD_ICON_TANK3,
+			IMG_HUD_ICON_TANK4
 	};
 	gr2D_setimage0(0, 0, image_get(IMG_MENU_I_INTERLV));
 	font_color_set3i(COLOR_15);
@@ -103,7 +103,7 @@ static void cl_game_state_intermission_draw(void)
 		{
 			long level = server_client_vardata_get(client, "level", VARTYPE_INTEGER)->value.i64;
 			item_img_t * img = image_get(list[level]);
-			gr2D_setimage1(26       , refy + 8 +     16 * i, img, 0, 0, c_p_MDL_box, c_p_MDL_box);
+			gr2D_setimage0(26, refy + 8 +     16 * i, img);
 			font_color_set3i(COLOR_15);
 			video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64);
 			video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "frags", VARTYPE_INTEGER)->value.i64);

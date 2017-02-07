@@ -7,13 +7,12 @@
 
 
 #include "common_list2.h"
-
 #include "types.h"
 #include "server.h"
 #include "client.h"
+#include "g_gamesave.h"
 
 #include <fcntl.h>
-#include <g_gamesave.h>
 #include <unistd.h>
 
 extern host_client_t * hclients;

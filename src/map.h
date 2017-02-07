@@ -149,7 +149,7 @@ extern void map_init(void);
 
 
 extern void map_clip_find(
-	vec2_t * orig,
+	const vec2_t orig,
 	vec_t BOX,
 	char mask,
 	bool * Ul,
@@ -162,8 +162,8 @@ extern void map_clip_find(
 	bool * Rd
 );
 
-extern void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist);
-extern void map_clip_find_near_wall(vec2_t * orig, direction_t dir, vec_t * dist, char * wall);
+extern void map_clip_find_near(const vec2_t origin, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist);
+extern void map_clip_find_near_wall(const vec2_t origin, direction_t dir, vec_t * dist, char * wall);
 
 extern mapdata_entity_type_t map_file_class_get(int fd);
 extern int map_load(const char * mapname);

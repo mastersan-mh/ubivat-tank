@@ -66,15 +66,10 @@ typedef enum direction_e
 //разрешенные для ввода символы
 #define chars_allowed "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-
-//body box
-#define c_p_MDL_box     16
 //время на перезарядку, мс
 #define c_p_WEAP_reloadtime 1000
 //время "думания" бота, мс
 #define BOT_THINK_TIME      1500
-//расстояние с которого бот будет стремиться вести атаку
-#define c_BOT_dist      (c_p_MDL_box*3)
 
 typedef void (*actionf_t)();
 

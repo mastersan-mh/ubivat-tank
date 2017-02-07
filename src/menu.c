@@ -164,7 +164,7 @@ menu_key_t menu_key_get(void)
 
 static void menu_draw_conback(void)
 {
-	gr2D_setimage0(0, 0, game.m_i_conback);
+	gr2D_setimage0(0, 0, image_get(IMG_MENU_CONBACK));
 }
 
 /*
@@ -209,7 +209,7 @@ static void menu_main_draw(const void * ctx)
 	const menu_main_ctx_t *__ctx = ctx;
 	int menu = __ctx->menu;
 	menu_draw_conback();
-	gr2D_setimage0(277  ,159    ,game.m_i_logo);
+	gr2D_setimage0(277  ,159    , image_get(IMG_MENU_LOGO));
 	font_color_set3i(COLOR_1);
 	video_printf(1     ,183          , c_strTITLE);
 	video_printf(1     ,191          , c_strCORP);
@@ -228,7 +228,7 @@ static void menu_main_draw(const void * ctx)
 		if(i != 4 || cl_state.state != GAMESTATE_NOGAME)
 			gr2D_setimage0(120, 30 + 23 * i, image_get(list[i]));
 	}
-	gr2D_setimage0( 97,30+23 * menu, game.m_i_cur_0);
+	gr2D_setimage0( 97,30+23 * menu, image_get(IMG_MENU_CUR_0));
 }
 /*
  * меню "ИГРА"
@@ -266,11 +266,11 @@ static void menu_game_draw(const void * ctx)
 	const menu_game_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
-	gr2D_setimage0(120, 30-23*1       ,game.m_i_game    );
-	gr2D_setimage0(120, 30+23*0       ,game.m_i_g_new_p1);
-	gr2D_setimage0(120, 30+23*1       ,game.m_i_g_new_p2);
-	gr2D_setimage0(120, 30+23*2       ,game.m_i_g_load  );
-	gr2D_setimage0( 97, 30+23* __ctx->menu, game.m_i_cur_0);
+	gr2D_setimage0(120, 30-23*1       , image_get(IMG_MENU_GAME));
+	gr2D_setimage0(120, 30+23*0       , image_get(IMG_MENU_G_NEW_P1));
+	gr2D_setimage0(120, 30+23*1       , image_get(IMG_MENU_G_NEW_P2));
+	gr2D_setimage0(120, 30+23*2       , image_get(IMG_MENU_G_LOAD));
+	gr2D_setimage0( 97, 30+23* __ctx->menu, image_get(IMG_MENU_CUR_0));
 };
 
 static int menu_game_new1P(void * ctx)
@@ -389,13 +389,13 @@ static void menu_game_load_draw(const void * ctx)
 	int irow;
 	int icol;
 	menu_draw_conback();
-	gr2D_setimage0(120,30+23*(-1), game.m_i_g_load );
+	gr2D_setimage0(120,30+23*(-1), image_get(IMG_MENU_G_LOAD));
 	for(irow = 0; irow < 8; irow++)
 	{
-		gr2D_setimage0(97+23, 30+irow*15, game.m_i_lineL);
+		gr2D_setimage0(97+23, 30+irow*15, image_get(IMG_MENU_LINEL));
 		for(icol = 0; icol<16; icol++)
-			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineM);
-		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineR);
+			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINEM));
+		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINER));
 		font_color_set3i(COLOR_7);
 		if(!gamesaves[irow].exist)
 		{
@@ -404,13 +404,13 @@ static void menu_game_load_draw(const void * ctx)
 		}
 		video_printf(97+23+4, 33+irow*15, gamesaves[irow].name);
 		//отображение статуса сохраненной игры
-		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
+		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
 		{
-			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
+			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 		};
 	};
-	gr2D_setimage0(97, 30 + 15 * __ctx->menu + 2, game.m_i_cur_1);
+	gr2D_setimage0(97, 30 + 15 * __ctx->menu + 2, image_get(IMG_MENU_CUR_1));
 }
 static int menu_game_save(void * ctx)
 {
@@ -492,15 +492,15 @@ static void menu_game_save_draw(const void * ctx)
 	int icol;
 
 	menu_draw_conback();
-	gr2D_setimage0(120, 30+23*(-1), game.m_i_g_save );
+	gr2D_setimage0(120, 30+23*(-1), image_get(IMG_MENU_G_SAVE));
 	if(__ctx->state == MENU_GAME_SAVE_SELECT)
-		gr2D_setimage0(97, 30+15*menu+2, game.m_i_cur_1);
+		gr2D_setimage0(97, 30+15*menu+2, image_get(IMG_MENU_CUR_1));
 	for(irow = 0; irow < 8; irow++)
 	{
-		gr2D_setimage0(97+23, 30+irow*15, game.m_i_lineL);
+		gr2D_setimage0(97+23, 30+irow*15, image_get(IMG_MENU_LINEL));
 		for(icol = 0; icol < 16; icol++)
-			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineM);
-		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, game.m_i_lineR);
+			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINEM));
+		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINER));
 		font_color_set3i(COLOR_7);
 		if(!gamesaves[irow].exist)
 		{
@@ -509,9 +509,9 @@ static void menu_game_save_draw(const void * ctx)
 		}
 		video_printf(97+23+4,33+irow*15, gamesaves[irow].name);
 		//отображение статуса сохраненной игры
-		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
+		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
-			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, game.m_i_flagRUS);
+			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 	}
 }
 
@@ -560,12 +560,12 @@ static void menu_custom_draw(const void * ctx)
 {
 	const menu_custom_ctx_t * __ctx = ctx;
 	menu_draw_conback();
-	gr2D_setimage0(120,30-23*1       , game.m_i_case    );
-	gr2D_setimage0(120,30+23*0       , game.m_i_arrowL  );
-	gr2D_setimage0(260,30+23*0       , game.m_i_arrowR  );
-	gr2D_setimage0(120,30+23*1       , game.m_i_g_new_p1);
-	gr2D_setimage0(120,30+23*2       , game.m_i_g_new_p2);
-	gr2D_setimage0( 97,30+23 * __ctx->menu, game.m_i_cur_0);
+	gr2D_setimage0(120,30-23*1       , image_get(IMG_MENU_CASE));
+	gr2D_setimage0(120,30+23*0       , image_get(IMG_MENU_ARROWL));
+	gr2D_setimage0(260,30+23*0       , image_get(IMG_MENU_ARROWR));
+	gr2D_setimage0(120,30+23*1       , image_get(IMG_MENU_G_NEW_P1));
+	gr2D_setimage0(120,30+23*2       , image_get(IMG_MENU_G_NEW_P2));
+	gr2D_setimage0( 97,30+23 * __ctx->menu, image_get(IMG_MENU_CUR_0));
 	font_color_set3i(COLOR_25);
 	video_printf(133, 33+23*0, cl_state.custommap->map);
 	video_printf(133, 41+23*0, cl_state.custommap->name);
@@ -693,9 +693,9 @@ static void menu_options_draw(const void * ctx)
 	const menu_options_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
-	gr2D_setimage0(120,30+23*(-1)     ,game.m_i_options);
+	gr2D_setimage0(120,30+23*(-1)     , image_get(IMG_MENU_OPTIONS));
 	if(__ctx->state == MENU_OPTIONS_SELECT)
-		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, game.m_i_cur_1);
+		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, image_get(IMG_MENU_CUR_1));
 	font_color_set3i(COLOR_25);
 	video_printf( 58+131*0, 30+9*0, "[ИГРОК 1]");
 	video_printf( 58+131*1, 30+9*0, "[ИГРОК 2]");

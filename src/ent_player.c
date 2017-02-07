@@ -578,7 +578,7 @@ static void player_handle_common(entity_t * player, player_t * pl)
 		STATE_DEAD
 	};
 	int state = STATE_IDLE;
-	vec2_t * Sorig;
+	vec2_t Sorig;
 	vec_t L,R,U,D;
 
 	var_int_t level = ENTITY_VARIABLE_INTEGER(player, "level");
@@ -674,30 +674,32 @@ static void player_handle_common(entity_t * player, player_t * pl)
 
 		vec_t speed_s = playerinfo->speed / 4;
 
+		vec_t halfbox = ENTITY_HALFBODYBOX(player);
+		vec_t quarterbox = halfbox * 0.5f;
 		//стрейф
 		switch(player->dir)
 		{
 		case DIR_UP:
 		case DIR_DOWN:
-			Sorig = &player->origin;
-			(*Sorig)[0] = (*Sorig)[0] - c_p_MDL_box/4;
-			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &L);
-			Sorig = &player->origin;
-			(*Sorig)[0] = (*Sorig)[0] + c_p_MDL_box/4;
-			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &R);
-			if((c_p_MDL_box/2<L) && (R-1<=c_p_MDL_box/2)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
-			if((c_p_MDL_box/2<R) && (L-1<=c_p_MDL_box/2)) entity_move(player, DIR_RIGHT, speed_s, true);//strafe right
+			VEC2_COPY(player->origin, Sorig);
+			Sorig[0] -= quarterbox;
+			map_clip_find_near(Sorig, halfbox, player->dir, MAP_WALL_CLIP, halfbox + 2, &L);
+			VEC2_COPY(player->origin, Sorig);
+			Sorig[0] += quarterbox;
+			map_clip_find_near(Sorig, halfbox, player->dir, MAP_WALL_CLIP, halfbox + 2, &R);
+			if((halfbox<L) && (R-1<=halfbox)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
+			if((halfbox<R) && (L-1<=halfbox)) entity_move(player, DIR_RIGHT, speed_s, true);//strafe right
 			break;
 		case DIR_LEFT:
 		case DIR_RIGHT:
-			Sorig = &player->origin;
-			(*Sorig)[1] = (*Sorig)[1] - c_p_MDL_box/4;
-			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &D);
-			Sorig = &player->origin;
-			(*Sorig)[1] = (*Sorig)[1] + c_p_MDL_box/4;
-			map_clip_find_near(Sorig, c_p_MDL_box/2, player->dir, MAP_WALL_CLIP, c_p_MDL_box/2+2, &U);
-			if((c_p_MDL_box/2<U)&&(D-1<=c_p_MDL_box/2)) entity_move(player, DIR_UP  , speed_s, true);//strafe up
-			if((c_p_MDL_box/2<D)&&(U-1<=c_p_MDL_box/2)) entity_move(player, DIR_DOWN, speed_s, true);//strafe down
+			VEC2_COPY(player->origin, Sorig);
+			Sorig[1] -= quarterbox;
+			map_clip_find_near(Sorig, halfbox, player->dir, MAP_WALL_CLIP, halfbox + 2, &D);
+			VEC2_COPY(player->origin, Sorig);
+			Sorig[1] += quarterbox;
+			map_clip_find_near(Sorig, halfbox, player->dir, MAP_WALL_CLIP, halfbox + 2, &U);
+			if((halfbox < U)&&(D-1 <= halfbox)) entity_move(player, DIR_UP  , speed_s, true);//strafe up
+			if((halfbox < D)&&(U-1 <= halfbox)) entity_move(player, DIR_DOWN, speed_s, true);//strafe down
 			break;
 		}
 	}
@@ -905,8 +907,8 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
 	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
 
-	ui_drawimage(cam, 16 * 0     , ref_y, game.i_health);
-	ui_drawimage(cam, 16 * 6     , ref_y, game.i_armor);
+	ui_drawimage(cam, 16 * 0     , ref_y, image_get(IMG_ITEM_HEALTH));
+	ui_drawimage(cam, 16 * 6     , ref_y, image_get(IMG_ITEM_ARMOR));
 
 	ui_printf(cam, 16 * 0 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_health"));
 	ui_printf(cam, 16 * 6 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_armor"));
@@ -935,7 +937,7 @@ static const entityinfo_t player_reginfo = {
 		.name = "player",
 		.datasize = sizeof(player_t),
 		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = c_p_MDL_box,
+		.bodybox = 16,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_player_models),
 		.init = player_init,
@@ -952,7 +954,7 @@ static const entityinfo_t enemy_reginfo = {
 		.name = "enemy",
 		.datasize = sizeof(player_t),
 		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = c_p_MDL_box,
+		.bodybox = 16,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_enemy_models),
 		.init = enemy_init,
@@ -966,7 +968,7 @@ static const entityinfo_t boss_reginfo = {
 		.name = "boss",
 		.datasize = sizeof(player_t),
 		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = c_p_MDL_box,
+		.bodybox = 16,
 		ENTITYINFO_VARS(player_vars),
 		ENTITYINFO_ENTMODELS(tank_boss_models),
 		.init = boss_init,

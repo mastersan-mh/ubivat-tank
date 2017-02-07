@@ -1,9 +1,8 @@
-#include <config.h>
-
+#include "config.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <types.h>
 #include <dirent.h>
 #include <sys/stat.h>
 

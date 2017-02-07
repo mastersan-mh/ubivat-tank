@@ -5,7 +5,7 @@
  *      Author: mastersan
  */
 
-#include <common_hash.h>
+#include "common_hash.h"
 
 uint32_t hash_ly(const char * str)
 {

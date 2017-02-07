@@ -8,7 +8,8 @@
 #include "vars.h"
 #include "Z_mem.h"
 #include "common_hash.h"
-#include <game.h>
+#include "game.h"
+
 #include <string.h>
 
 /*

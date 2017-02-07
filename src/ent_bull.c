@@ -101,7 +101,7 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	//найдем препятствия
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	map_clip_find(
-		&this->origin,
+		this->origin,
 		this->info->bodybox,
 		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd

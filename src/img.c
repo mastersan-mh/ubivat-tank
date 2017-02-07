@@ -5,10 +5,10 @@
  */
 
 #include "game.h"
-#include <img.h>
-#include <_gr2D.h>
-#include <Z_mem.h>
-#include <video.h>
+#include "img.h"
+#include "_gr2D.h"
+#include "Z_mem.h"
+#include "video.h"
 
 #include <errno.h>
 #include <stdlib.h>

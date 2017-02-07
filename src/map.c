@@ -159,7 +159,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
  * поиск препятствия на карте
  */
 void map_clip_find(
-	vec2_t * orig,
+	const vec2_t origin,
 	vec_t bodybox,
 	char mask,
 	bool * Ul,
@@ -174,8 +174,8 @@ void map_clip_find(
 {
 
 	if(
-			(*orig)[0] < 0 || MAP_SX * MAP_WALLBLOCKSIZE < (*orig)[0] ||
-			(*orig)[1] < 0 || MAP_SY * MAP_WALLBLOCKSIZE < (*orig)[1]
+			origin[0] < 0 || MAP_SX * MAP_WALLBLOCKSIZE < origin[0] ||
+			origin[1] < 0 || MAP_SY * MAP_WALLBLOCKSIZE < origin[1]
 	)
 	{
 		*Ul = true; *Ur = true;
@@ -192,11 +192,11 @@ void map_clip_find(
 
 	vec_t hbox = bodybox/2;
 
-	vec_t x_add_hbox = (*orig)[0] + hbox;
-	vec_t x_sub_hbox = (*orig)[0] - hbox;
+	vec_t x_add_hbox = origin[0] + hbox;
+	vec_t x_sub_hbox = origin[0] - hbox;
 
-	vec_t y_add_hbox = (*orig)[1] + hbox;
-	vec_t y_sub_hbox = (*orig)[1] - hbox;
+	vec_t y_add_hbox = origin[1] + hbox;
+	vec_t y_sub_hbox = origin[1] - hbox;
 
 	int x_add_hbox_8 = VEC_TRUNC(x_add_hbox/8);
 	int x_sub_hbox_8 = VEC_TRUNC(x_sub_hbox/8);
@@ -257,124 +257,96 @@ void map_clip_find(
 		count++;
 	}
 }
+
 /*
  * вычисление расстояния до ближайшей стены
  */
-void map_clip_find_near(vec2_t * orig, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist)
+void map_clip_find_near(const vec2_t origin, vec_t bodybox, direction_t dir, char mask, vec_t maxdist, vec_t * dist)
 {
 	char wall;
-	float c;
-	box = box/2;
-	int mapx;
-	int mapy;
-	vec_t ox = (*orig)[0];
-	vec_t oy = (*orig)[1];
-	vec_t d = box/2;
+	vec_t halfbox = bodybox/2;
+	size_t mapx;
+	size_t mapy;
+	vec_t oy = origin_y;
+	vec_t ox = origin_x;
+
 	switch(dir)
 	{
-	case DIR_UP:
-		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * MAP_WALLBLOCKSIZE;
-		do
-		{
-			c = -box+1;
-			d++;
-			do
-			{
-				mapy = VEC_TRUNC((oy + d) / MAP_WALLBLOCKSIZE);
-				mapx = VEC_TRUNC((ox + c) / MAP_WALLBLOCKSIZE);
-				wall = map.map[mapy][mapx];
-				c++;
-			}while (! ( (box     <= c) || (wall & mask) ) );
-		}while     (! ( (DISTmax <= d) || (wall & mask) ) );
-		break;
-	case DIR_DOWN:
-		if(MAP_SY*8<DISTmax) DISTmax = MAP_SY * 8;
-		do
-		{
-			c = -box+1;
-			d++;
-			do
-			{
-				mapy = VEC_TRUNC((oy - d) / MAP_WALLBLOCKSIZE);
-				mapx = VEC_TRUNC((ox + c) / MAP_WALLBLOCKSIZE);
-				wall = map.map[mapy][mapx];
-				c++;
-			}while(! ( (box     <= c) || (wall & mask) ) );
-		}while    (! ( (DISTmax <= d) || (wall & mask) ) );
-		break;
-	case DIR_LEFT:
-		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX * MAP_WALLBLOCKSIZE;
-		do
-		{
-			c = -box+1;
-			d++;
-			do
-			{
-				mapy = VEC_TRUNC((oy + c) / 8);
-				mapx = VEC_TRUNC((ox - d) / 8);
-				wall = map.map[mapy][mapx];
-				c++;
-			}while(! ( (box     <= c) || (wall & mask) ) );
-		}while    (! ( (DISTmax <= d) || (wall & mask) ) );
-		break;
-	case DIR_RIGHT:
-		if(MAP_SX*8<DISTmax) DISTmax = MAP_SX * MAP_WALLBLOCKSIZE;
-		do
-		{
-			c = -box+1;
-			d++;
-			do
-			{
-				mapy = VEC_TRUNC((oy + c) / MAP_WALLBLOCKSIZE);
-				mapx = VEC_TRUNC((ox + d) / MAP_WALLBLOCKSIZE);
-				wall = map.map[mapy][mapx];
-				c++;
-			}while(!( (box     <= c) || (wall & mask) ) );
-		}while    (!( (DISTmax <= d) || (wall & mask) ) );
-		break;
+		case DIR_UP: case DIR_DOWN:
+			if(MAP_SY * MAP_WALLBLOCKSIZE < maxdist) maxdist = MAP_SY * MAP_WALLBLOCKSIZE;
+			break;
+		case DIR_LEFT: case DIR_RIGHT:
+			if(MAP_SX * MAP_WALLBLOCKSIZE < maxdist) maxdist = MAP_SX * MAP_WALLBLOCKSIZE;
+			break;
 	}
-	*dist = d;
+
+	vec_t ddist = halfbox/2;
+	do
+	{
+		ddist++;
+
+		vec_t dwidth = -halfbox+1;
+		do
+		{
+
+			vec_t dx;
+			vec_t dy;
+
+			switch(dir)
+			{
+				case DIR_UP   : dx = dwidth; dy =  ddist; break;
+				case DIR_DOWN : dx = dwidth; dy = -ddist; break;
+				case DIR_LEFT : dx = -ddist; dy = dwidth; break;
+				case DIR_RIGHT: dx =  ddist; dy = dwidth; break;
+			}
+
+			mapy = VEC_TRUNC((oy + dy) / MAP_WALLBLOCKSIZE);
+			mapx = VEC_TRUNC((ox + dx) / MAP_WALLBLOCKSIZE);
+			wall = map.map[mapy][mapx];
+			dwidth++;
+		} while ( (dwidth < halfbox ) && !(wall & mask) );
+	} while     ( (ddist  < maxdist ) && !(wall & mask) );
+
+	*dist = ddist;
 }
+
 /*
  * вычисление расстояния до ближайшей стены и определение стены
  */
-void map_clip_find_near_wall(vec2_t * orig, direction_t dir, vec_t * dist, char * wall)
+void map_clip_find_near_wall(const vec2_t origin, direction_t dir, vec_t * dist, char * wall)
 {
+	vec_t oy = origin_y;
+	vec_t ox = origin_x;
+	size_t y;
+	size_t x;
 	*dist = 0;
+	vec_t maxdist;
+
 	switch(dir)
 	{
-	case DIR_UP:
-		do
-		{
-			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]+(*dist))/8)][(int)VEC_TRUNC(((*orig)[0]     )/8)];
-			(*dist)++;
-		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
-		break;
-	case DIR_DOWN:
-		do
-		{
-			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]-(*dist))/8)][(int)VEC_TRUNC(((*orig)[0]     )/8)];
-			(*dist)++;
-		}while(!( (MAP_SY*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
-		break;
-	case DIR_LEFT:
-		do
-		{
-			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]     )/8)][(int)VEC_TRUNC(((*orig)[0]-(*dist))/8)];
-			(*dist)++;
-		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
-		break;
-	case DIR_RIGHT:
-		do
-		{
-			*wall = map.map[(int)VEC_TRUNC(((*orig)[1]     )/8)][(int)VEC_TRUNC(((*orig)[0]+(*dist))/8)];
-			(*dist)++;
-		}while(!( (MAP_SX*8<=(*dist)) || MAP_WALL_CLIPPED(*wall) ));
-		break;
+		case DIR_UP   : maxdist = MAP_SY * MAP_WALLBLOCKSIZE; break;
+		case DIR_DOWN : maxdist = MAP_SY * MAP_WALLBLOCKSIZE; break;
+		case DIR_LEFT : maxdist = MAP_SX * MAP_WALLBLOCKSIZE; break;
+		case DIR_RIGHT: maxdist = MAP_SX * MAP_WALLBLOCKSIZE; break;
 	}
+
+	do
+	{
+		y = VEC_TRUNC(oy / MAP_WALLBLOCKSIZE);
+		x = VEC_TRUNC(ox / MAP_WALLBLOCKSIZE);
+		*wall = map.map[y][x];
+		switch(dir)
+		{
+			case DIR_UP   : oy += 1.0f; break;
+			case DIR_DOWN : oy -= 1.0f; break;
+			case DIR_LEFT : ox -= 1.0f; break;
+			case DIR_RIGHT: ox += 1.0f; break;
+		}
+		(*dist)++;
+	} while( (*dist) < maxdist && !MAP_WALL_CLIPPED((*wall)) );
 }
 
-static mapdata_entity_type_t map_entity_name_to_value(const char * class)
+static mapdata_entity_type_t map_entity_name_to_entity_type(const char * class)
 {
 	int mapdata_mobj_type;
 	for(mapdata_mobj_type = 0; mapdata_mobj_type < MAPDATA_MOBJ_NUM; mapdata_mobj_type++)
@@ -399,7 +371,7 @@ mapdata_entity_type_t map_file_class_get(int fd)
 		class[i] = ch;
 		i++;
 	}while(count != 0 && ch!=0 );
-	return map_entity_name_to_value(class);
+	return map_entity_name_to_entity_type(class);
 }
 
 
@@ -432,7 +404,7 @@ static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_
 	}while(count != 0 && ch != 0);
 	if(count == 0) return 1;
 
-	*mapdata_mobj_type = map_entity_name_to_value(class);
+	*mapdata_mobj_type = map_entity_name_to_entity_type(class);
 	if(*mapdata_mobj_type == MAPDATA_MOBJ_UNKNOWN)
 	{
 		game_console_send("map load error: no map object type %s", class);

@@ -19,6 +19,11 @@
 
 #define ENTITY_NAME_SIZE (64)
 
+#define origin_x origin[0]
+#define origin_y origin[1]
+
+#define ENTITY_HALFBODYBOX(entity) ((entity)->info->bodybox * 0.5)
+
 /*
  * цикл по объектам одного определённого типа
  */

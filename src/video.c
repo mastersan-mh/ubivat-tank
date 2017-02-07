@@ -2,14 +2,11 @@
 //#include <SDL2/SDL_image.h>
 //#include <SDL2/SDL_mixer.h>
 
-#include <types.h>
-#include <video.h>
-
-#include <fonts.h>
+#include "types.h"
+#include "video.h"
+#include "fonts.h"
 
 #include <inttypes.h>
-
-
 #include <stdlib.h>
 #include <stdio.h>
 
