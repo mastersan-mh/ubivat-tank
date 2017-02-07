@@ -38,16 +38,6 @@ typedef enum gamestate_s
 	GAMESTATE_INTERMISSION,
 } gamestate_t;
 
-//состояние игры
-typedef struct
-{
-	item_img_t * w_water[3];
-	/***********************/
-
-} game_t;
-
-
-extern game_t game;
 extern unsigned long time_current;
 extern long dtime;
 extern double dtimed;

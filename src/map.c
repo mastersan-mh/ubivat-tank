@@ -575,6 +575,12 @@ static void map_wall_render(
  */
 void map_draw(camera_t * cam)
 {
+	static image_index_t water_images[] =
+	{
+			IMG_WATER0,
+			IMG_WATER1,
+			IMG_WATER2,
+	};
 
 	int x, y;
 	int x0,x1;
@@ -599,7 +605,7 @@ void map_draw(camera_t * cam)
 				case MAP_WALL_W0   : img = image_get(IMG_WALL_W0); break;
 				case MAP_WALL_W1   : img = image_get(IMG_WALL_W1); break;
 				case MAP_WALL_brick: img = image_get(IMG_WALL_BRICK); break;
-				case MAP_WALL_water  : img = game.w_water[xrand(3)]; break;
+				case MAP_WALL_water: img = image_get(water_images[xrand(3)]); break;
 			}
 			if(img)
 			{

@@ -36,9 +36,6 @@
 #include <errno.h>
 #include <stdarg.h>
 
-//состояние игры
-game_t game;
-
 int game_video_dfactor = 7;
 int game_video_sfactor = 6;
 
@@ -119,9 +116,6 @@ void game_init(void)
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
 	images_init();
-	game.w_water[0]   = image_get(IMG_WATER0     );
-	game.w_water[1]   = image_get(IMG_WATER1     );
-	game.w_water[2]   = image_get(IMG_WATER2     );
 
 	//чтение конфига
 	printf("Config init...\n");
