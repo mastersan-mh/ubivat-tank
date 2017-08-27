@@ -54,6 +54,8 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 
 	switch(event->type)
 	{
+		case GCLIENTEVENT_DISCOVERYSERVER:
+			break;
 		case GCLIENTEVENT_CONNECT:
 			break;
 		case GCLIENTEVENT_DISCONNECT:
@@ -325,6 +327,8 @@ static void client_listen(void)
 
 					switch(hevent.type)
 					{
+						case GHOSTEVENT_INFO:
+							break;
 						case GHOSTEVENT_CONNECTION_ACCEPTED:
 							break;
 						case GHOSTEVENT_CONNECTION_CLOSE:

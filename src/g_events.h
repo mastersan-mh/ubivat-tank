@@ -17,6 +17,7 @@
 
 typedef enum
 {
+	GCLIENTEVENT_DISCOVERYSERVER, /* найти серверы */
 	GCLIENTEVENT_CONNECT,
 	GCLIENTEVENT_DISCONNECT,
 	/* назначить игроку объект на карте */
@@ -32,6 +33,7 @@ typedef enum
 
 typedef enum
 {
+	GHOSTEVENT_INFO, /* информация о срвере на запрос GCLIENTEVENT_DISCOVERYSERVER */
 	GHOSTEVENT_CONNECTION_ACCEPTED,
 	GHOSTEVENT_CONNECTION_CLOSE,
 	GHOSTEVENT_GAMESTATE,
@@ -72,6 +74,10 @@ typedef struct
 	ghosteventtype_t type;
 	union
 	{
+		struct
+		{
+			int clients_num; /* количество клиентов на сервере */
+		} info;
 		struct
 		{
 			char pad[1];

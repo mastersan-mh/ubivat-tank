@@ -65,6 +65,7 @@ extern vardata_t * server_client_vardata_get(host_client_t * client, const char 
 
 extern host_client_t * host_client_get(int id);
 
+extern void host_event_info_send(const net_socket_t * net_sock);
 extern void host_event_send_win(void);
 extern void host_event_cliententity_send(host_client_t * client);
 extern void host_event_gamestate_send(host_client_t * client, gamestate_t state);

@@ -7,10 +7,10 @@
 #define CLIENT_ALL (-1)
 
 typedef enum
-	{
-		INPUT_ACTIONSRC_STR,
-		INPUT_ACTIONSRC_FUNC
-	} input_actionsrc_t;
+{
+	INPUT_ACTIONSRC_STR,
+	INPUT_ACTIONSRC_FUNC
+} input_actionsrc_t;
 
 typedef struct
 {

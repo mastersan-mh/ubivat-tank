@@ -56,8 +56,9 @@ void server_done(void)
 
 }
 
-void host_event_send(const host_client_t * client, const ghostevent_t * event)
+static void host_event_send(const net_socket_t * net_sock, const ghostevent_t * event)
 {
+	uint32_t nvalue32;
 	size_t buflen = 0;
 	char buf[sizeof(ghostevent_t)];
 	memset(buf, 0, sizeof(buf));
@@ -66,6 +67,12 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 
 	switch(event->type)
 	{
+		case GHOSTEVENT_INFO:
+			nvalue32 = htonl( (uint32_t) event->info.clients_num );
+			memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
+			buflen += sizeof(nvalue32);
+			break;
+
 		case GHOSTEVENT_CONNECTION_ACCEPTED:
 			break;
 		case GHOSTEVENT_CONNECTION_CLOSE:
@@ -86,10 +93,18 @@ void host_event_send(const host_client_t * client, const ghostevent_t * event)
 	}
 
 	net_send(
-		client->ns,
+		net_sock,
 		buf,
 		buflen
 	);
+}
+
+void host_event_info_send(const net_socket_t * net_sock)
+{
+	ghostevent_t hevent;
+	hevent.type = GHOSTEVENT_INFO;
+	hevent.info.clients_num = 0;
+	host_event_send(net_sock, &hevent);
 }
 
 void host_event_cliententity_send(host_client_t * client)
@@ -98,7 +113,7 @@ void host_event_cliententity_send(host_client_t * client)
 	hevent.type = GHOSTEVENT_SETPLAYERENTITY;
 	strncpy(hevent.setplayerentity.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_SIZE);
 	hevent.setplayerentity.entity = client->entity;
-	host_event_send(client, &hevent);
+	host_event_send(client->ns, &hevent);
 }
 
 void host_event_gamestate_send(host_client_t * client, gamestate_t state)
@@ -107,7 +122,7 @@ void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
 	hevent.gamestate.state = state;
-	host_event_send(client, &hevent);
+	host_event_send(client->ns, &hevent);
 }
 
 void host_event_gameload_loaded_send(int flags)
@@ -118,7 +133,7 @@ void host_event_gameload_loaded_send(int flags)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		host_event_send(client, &hevent);
+		host_event_send(client->ns, &hevent);
 	}
 }
 
@@ -132,7 +147,7 @@ void host_setgamestate(gamestate_t state)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		host_event_send(client, &hevent);
+		host_event_send(client->ns, &hevent);
 	}
 }
 
@@ -269,7 +284,7 @@ static void host_client_disconnect(host_client_t * client)
 {
 	ghostevent_t event;
 	event.type = GHOSTEVENT_CONNECTION_CLOSE;
-	host_event_send(client, &event);
+	host_event_send(client->ns, &event);
 
 	LIST2_UNLINK(hclients, client);
 
@@ -286,7 +301,7 @@ void host_clients_disconnect(void)
 	{
 		client = hclients;
 		hclients = hclients->next;
-		host_event_send(client, &event);
+		host_event_send(client->ns, &event);
 		host_client_delete(client);
 		clients_num--;
 	}
@@ -443,8 +458,17 @@ static void server_listen(void)
 		host_client_t * client;
 		size_t ofs = 0;
 		cevent.type = buf[ofs++];
+		net_socket_t * ns;
 		switch( cevent.type )
 		{
+			case GCLIENTEVENT_DISCOVERYSERVER:
+				ns = net_socket_create_sockaddr(sender.addr);
+
+				host_event_info_send(ns);
+
+				net_socket_close(ns);
+
+				break;
 			case GCLIENTEVENT_CONNECT:
 			{
 				game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
@@ -454,7 +478,7 @@ static void server_listen(void)
 				client = host_client_create(ns, mainclient);
 
 				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-				host_event_send(client, &hevent);
+				host_event_send(client->ns, &hevent);
 
 				host_event_gamestate_send(client, sv_state.state);
 
