@@ -17,6 +17,29 @@
 #include "cl_input.h"
 #include "cl_game.h"
 
+#define menu_draw_logo() \
+	gr2D_setimage0(277, 159, image_get(IMG_MENU_LOGO))
+
+#define menu_draw_header(image) \
+		gr2D_setimage00(120, 30 - 23, image_get(image), 0, 22)
+
+#define menu_draw_entry(row, image) \
+		gr2D_setimage00(120, 30 + 23 * (row), image_get(image), 0, 22)
+
+#define menu_draw_cursor(row) \
+		gr2D_setimage00(120 - 23, 30 + 23 * (row), image_get(IMG_MENU_CUR_0), 0, 22);
+
+#define menu_draw_string_indicator_small(row, nchars) \
+		do { \
+			gr2D_setimage0(120, 30 + (row) * 15, image_get(IMG_MENU_LINEL)); \
+			int icol; \
+			for(icol = 0; icol < (nchars); icol++) \
+			{ \
+				gr2D_setimage0(120 + 4 + icol * 8, 30 + (row) * 15, image_get(IMG_MENU_LINEM)); \
+			} \
+			gr2D_setimage0(120 + 4 + icol * 8, 30 + (row) * 15, image_get(IMG_MENU_LINER)); \
+		} while (0)
+
 typedef enum
 {
 	NOTHING,
@@ -51,6 +74,8 @@ menu_custom_ctx_t menu_custom_ctx = {};
 /* MENU_CUSTOM_NEWP1 */
 
 /* MENU_CUSTOM_NEWP2 */
+
+/* MENU_CUSTOM_CONNECT */
 
 /* MENU_OPTIONS */
 menu_options_ctx_t menu_options_ctx = {};
@@ -204,12 +229,12 @@ static int menu_main(void * ctx)
 	return MENU_MAIN;
 }
 
-static void menu_main_draw(const void * ctx)
+static void menu_main_draw(const void * ctx_)
 {
-	const menu_main_ctx_t *__ctx = ctx;
-	int menu = __ctx->menu;
+	const menu_main_ctx_t *ctx = ctx_;
+	int imenu = ctx->menu;
 	menu_draw_conback();
-	gr2D_setimage0(277  ,159    , image_get(IMG_MENU_LOGO));
+	menu_draw_logo();
 	font_color_set3i(COLOR_1);
 	video_printf(1     ,183          , c_strTITLE);
 	video_printf(1     ,191          , c_strCORP);
@@ -223,12 +248,12 @@ static void menu_main_draw(const void * ctx)
 			IMG_MENU_ABORT,
 			IMG_MENU_QUIT
 	};
-	for(int i = 0; i < 6; i++)
+	for(int i = 0; i < ARRAYSIZE(list); i++)
 	{
 		if(i != 4 || cl_state.state != GAMESTATE_NOGAME)
-			gr2D_setimage0(120, 30 + 23 * i, image_get(list[i]));
+			menu_draw_entry(i, list[i]);
 	}
-	gr2D_setimage0( 97,30+23 * menu, image_get(IMG_MENU_CUR_0));
+	menu_draw_cursor(imenu);
 }
 /*
  * меню "ИГРА"
@@ -261,16 +286,15 @@ static int menu_game(void * ctx)
 	return MENU_GAME;
 }
 
-static void menu_game_draw(const void * ctx)
+static void menu_game_draw(const void * ctx_)
 {
-	const menu_game_ctx_t * __ctx = ctx;
-
+	const menu_game_ctx_t * ctx = ctx_;
 	menu_draw_conback();
-	gr2D_setimage0(120, 30-23*1       , image_get(IMG_MENU_GAME));
-	gr2D_setimage0(120, 30+23*0       , image_get(IMG_MENU_G_NEW_P1));
-	gr2D_setimage0(120, 30+23*1       , image_get(IMG_MENU_G_NEW_P2));
-	gr2D_setimage0(120, 30+23*2       , image_get(IMG_MENU_G_LOAD));
-	gr2D_setimage0( 97, 30+23* __ctx->menu, image_get(IMG_MENU_CUR_0));
+	menu_draw_header(IMG_MENU_GAME);
+	menu_draw_entry(0, IMG_MENU_G_NEW_P1);
+	menu_draw_entry(1, IMG_MENU_G_NEW_P2);
+	menu_draw_entry(2, IMG_MENU_G_LOAD);
+	menu_draw_cursor(ctx->menu);
 };
 
 static int menu_game_new1P(void * ctx)
@@ -387,15 +411,11 @@ static void menu_game_load_draw(const void * ctx)
 {
 	const menu_game_load_ctx_t * __ctx = ctx;
 	int irow;
-	int icol;
 	menu_draw_conback();
-	gr2D_setimage0(120,30+23*(-1), image_get(IMG_MENU_G_LOAD));
+	menu_draw_header(IMG_MENU_G_LOAD);
 	for(irow = 0; irow < 8; irow++)
 	{
-		gr2D_setimage0(97+23, 30+irow*15, image_get(IMG_MENU_LINEL));
-		for(icol = 0; icol<16; icol++)
-			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINEM));
-		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINER));
+		menu_draw_string_indicator_small(irow, 16);
 		font_color_set3i(COLOR_7);
 		if(!gamesaves[irow].exist)
 		{
@@ -404,6 +424,7 @@ static void menu_game_load_draw(const void * ctx)
 		}
 		video_printf(97+23+4, 33+irow*15, gamesaves[irow].name);
 		//отображение статуса сохраненной игры
+		int icol = 16;
 		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
 		{
@@ -492,7 +513,7 @@ static void menu_game_save_draw(const void * ctx)
 	int icol;
 
 	menu_draw_conback();
-	gr2D_setimage0(120, 30+23*(-1), image_get(IMG_MENU_G_SAVE));
+	menu_draw_header(IMG_MENU_G_SAVE);
 	if(__ctx->state == MENU_GAME_SAVE_SELECT)
 		gr2D_setimage0(97, 30+15*menu+2, image_get(IMG_MENU_CUR_1));
 	for(irow = 0; irow < 8; irow++)
@@ -525,6 +546,7 @@ static int menu_custom(void * ctx)
 			MENU_CUSTOM,
 			MENU_CUSTOM_NEWP1,
 			MENU_CUSTOM_NEWP2,
+			MENU_CUSTOM_CONNECT,
 	};
 
 	menu_custom_ctx_t * __ctx = ctx;
@@ -532,8 +554,8 @@ static int menu_custom(void * ctx)
 	switch(menukey)
 	{
 	case NOTHING: break;
-	case UP     : _menu_dec(3, &__ctx->menu);break;
-	case DOWN   : _menu_inc(3, &__ctx->menu);break;
+	case UP     : _menu_dec(ARRAYSIZE(menus), &__ctx->menu);break;
+	case DOWN   : _menu_inc(ARRAYSIZE(menus), &__ctx->menu);break;
 	case LEFT   :
 	case RIGHT  :
 		if(__ctx->menu == 0)
@@ -556,20 +578,81 @@ static int menu_custom(void * ctx)
 	return MENU_CUSTOM;
 }
 
+
 static void menu_custom_draw(const void * ctx)
 {
 	const menu_custom_ctx_t * __ctx = ctx;
 	menu_draw_conback();
-	gr2D_setimage0(120,30-23*1       , image_get(IMG_MENU_CASE));
+	menu_draw_header(IMG_MENU_CASE);
 	gr2D_setimage0(120,30+23*0       , image_get(IMG_MENU_ARROWL));
 	gr2D_setimage0(260,30+23*0       , image_get(IMG_MENU_ARROWR));
-	gr2D_setimage0(120,30+23*1       , image_get(IMG_MENU_G_NEW_P1));
-	gr2D_setimage0(120,30+23*2       , image_get(IMG_MENU_G_NEW_P2));
-	gr2D_setimage0( 97,30+23 * __ctx->menu, image_get(IMG_MENU_CUR_0));
+	menu_draw_entry(1, IMG_MENU_G_NEW_P1);
+	menu_draw_entry(2, IMG_MENU_G_NEW_P2);
+	menu_draw_entry(3, IMG_MENU_CASE_SERVERCONNECT);
+	menu_draw_cursor(__ctx->menu);
 	font_color_set3i(COLOR_25);
 	video_printf(133, 33+23*0, cl_state.custommap->map);
 	video_printf(133, 41+23*0, cl_state.custommap->name);
 }
+
+static int menu_custom_connect(void * ctx_)
+{
+	static menu_selector_t menus[] =
+	{
+			MENU_CUSTOM,
+			MENU_CUSTOM_NEWP1,
+			MENU_CUSTOM_NEWP2,
+			MENU_CUSTOM_CONNECT,
+	};
+
+	menu_custom_ctx_t * ctx = ctx_;
+	menu_key_t menukey = menu_key_get();
+	switch(menukey)
+	{
+	case NOTHING: break;
+	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
+	case LEFT   :
+	case RIGHT  :
+		if(ctx->menu == 0)
+		{
+			if(menukey == LEFT)
+				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
+			if(menukey == RIGHT)
+				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
+		}
+		break;
+	case ENTER  :
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+		return menus[ctx->menu];
+	case LEAVE  :
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+		return MENU_MAIN;
+	case SPACE: break;
+	}
+
+	return MENU_CUSTOM;
+}
+
+static void menu_custom_connect_draw(const void * ctx_)
+{
+	const menu_custom_ctx_t * ctx = ctx_;
+	menu_draw_conback();
+	menu_draw_header(IMG_MENU_CASE_SERVERCONNECT);
+/*
+	gr2D_setimage0(120,30+23*0       , image_get(IMG_MENU_ARROWL));
+	gr2D_setimage0(260,30+23*0       , image_get(IMG_MENU_ARROWR));
+	menu_drawentry(1, IMG_MENU_G_NEW_P1);
+	menu_drawentry(2, IMG_MENU_G_NEW_P2);
+	menu_drawentry(3, IMG_MENU_CASE_SERVERCONNECT);
+	menu_drawcursor(ctx->menu);
+	font_color_set3i(COLOR_25);
+	video_printf(133, 33+23*0, cl_state.custommap->map);
+	video_printf(133, 41+23*0, cl_state.custommap->name);
+	*/
+}
+
+
 
 static int menu_custom_new1P(void * ctx)
 {
@@ -693,7 +776,7 @@ static void menu_options_draw(const void * ctx)
 	const menu_options_ctx_t * __ctx = ctx;
 
 	menu_draw_conback();
-	gr2D_setimage0(120,30+23*(-1)     , image_get(IMG_MENU_OPTIONS));
+	menu_draw_header(IMG_MENU_OPTIONS);
 	if(__ctx->state == MENU_OPTIONS_SELECT)
 		gr2D_setimage0(58 + __ctx->column * 131, 30 + 12 + 12 * __ctx->menu + 1, image_get(IMG_MENU_CUR_1));
 	font_color_set3i(COLOR_25);
@@ -776,6 +859,7 @@ menu_t menus[MENU_NUM] =
 		{ &menu_custom_ctx    , menu_custom      , menu_custom_draw }, /* MENU_CUSTOM */
 		{ NULL                , menu_custom_new1P, NULL }, /* MENU_CUSTOM_NEWP1 */
 		{ NULL                , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
+		{ NULL                , menu_custom_connect, menu_custom_connect_draw}, /* MENU_CUSTOM_CONNECT */
 		{ &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
 		{ &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
 		{ NULL                , menu_abort       , NULL }, /* MENU_ABORT */

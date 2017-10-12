@@ -102,7 +102,7 @@ static void cl_game_state_intermission_draw(void)
 		if(client)
 		{
 			long level = server_client_vardata_get(client, "level", VARTYPE_INTEGER)->value.i64;
-			item_img_t * img = image_get(list[level]);
+			const item_img_t * img = image_get(list[level]);
 			gr2D_setimage0(26, refy + 8 +     16 * i, img);
 			font_color_set3i(COLOR_15);
 			video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64);

@@ -10,13 +10,18 @@
 
 #include "img.h"
 
-void gr2D_setimage0(
+extern void gr2D_setimage00(
 	int out_x,
 	int out_y,
-	item_img_t * image
+	const item_img_t * image,
+	int scr_w,
+	int scr_h
 	);
 
-void gr2D_setimage_indexed(
+#define gr2D_setimage0(x, y, image) \
+		gr2D_setimage00((x), (y), (image), 0, 0)
+
+extern void gr2D_setimage_indexed(
 	int x,
 	int y,
 	unsigned int sx,

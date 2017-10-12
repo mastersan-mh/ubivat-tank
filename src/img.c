@@ -25,27 +25,30 @@
 #define IMG_SFACTOR GL_SRC_ALPHA
 #define IMG_DFACTOR GL_ONE_MINUS_SRC_ALPHA
 
-static char * image_files[__IMAGE_NUM] = {
-	"/menu/mhlogo.bii"  , /* M_LOGO */
-	"/menu/conback.bii" , /* M_CONBACK */
-	"/menu/interlv.bii" , /* M_I_INTERLV */
-	"/menu/game.bii"    , /* M_GAME */
-	"/menu/new_p1.bii"  , /* M_G_NEW_P1 */
-	"/menu/new_p2.bii"  , /* M_G_NEW_P2 */
-	"/menu/load.bii"    , /* M_G_LOAD */
-	"/menu/save.bii"    , /* M_G_SAVE */
-	"/menu/case.bii"    , /* M_CASE */
-	"/menu/options.bii" , /* M_OPTIONS */
-	"/menu/about.bii"   , /* M_ABOUT */
-	"/menu/abort.bii"   , /* M_ABORT */
-	"/menu/quit.bii"    , /* M_QUIT */
-	"/menu/cur_0.bii"   , /* M_CUR_0 */
-	"/menu/cur_1.bii"   , /* M_CUR_1 */
-	"/menu/arrowl.bii"  , /* M_ARROWL */
-	"/menu/arrowr.bii"  , /* M_ARROWR */
-	"/menu/linel.bii"   , /* M_LINEL */
-	"/menu/linem.bii"   , /* M_LINEM */
-	"/menu/liner.bii"   , /* M_LINER */
+static char * image_files[IMG__NUM] = {
+	"/menu/mhlogo.bii"  , /* IMG_MENU_LOGO */
+	"/menu/conback.bii" , /* IMG_MENU_CONBACK */
+	"/menu/interlv.bii" , /* IMG_MENU_I_INTERLV */
+	"/menu/game.bii"    , /* IMG_MENU_GAME */
+	"/menu/new_p1.bii"  , /* IMG_MENU_G_NEW_P1 */
+	"/menu/new_p2.bii"  , /* IMG_MENU_G_NEW_P2 */
+	"/menu/load.bii"    , /* IMG_MENU_G_LOAD */
+	"/menu/save.bii"    , /* IMG_MENU_G_SAVE */
+	"/menu/case.bii"    , /* IMG_MENU_CASE */
+	"/menu/server-connect.png", /* IMG_MENU_CASE_SERVERCONNECT */
+	"/menu/options.bii" , /* IMG_MENU_OPTIONS */
+	"/menu/about.bii"   , /* IMG_MENU_ABOUT */
+	"/menu/abort.bii"   , /* IMG_MENU_ABORT */
+	"/menu/quit.bii"    , /* IMG_MENU_QUIT */
+	"/menu/cur_0.bii"   , /* IMG_MENU_CUR_0 */
+	"/menu/cur_1.bii"   , /* IMG_MENU_CUR_1 */
+	"/menu/arrowl.bii"  , /* IMG_MENU_ARROWL */
+	"/menu/arrowr.bii"  , /* IMG_MENU_ARROWR */
+	"/menu/linel.bii"   , /* IMG_MENU_LINEL */
+	"/menu/linem.bii"   , /* IMG_MENU_LINEM */
+	"/menu/liner.bii"   , /* IMG_MENU_LINER */
+
+
 	"/pics/tank0.bii"   , /* TANK0 */
 	"/pics/tank1.bii"   , /* TANK1 */
 	"/pics/tank2.bii"   , /* TANK2 */
@@ -82,7 +85,7 @@ static char * image_files[__IMAGE_NUM] = {
 };
 
 
-static item_img_t image_table[__IMAGE_NUM];
+static item_img_t image_table[IMG__NUM];
 
 typedef struct
 {
@@ -347,6 +350,8 @@ static int __create_from_bitmap(
 		p->data           //const GLvoid * data
 	);
 
+	p->data = NULL;
+
 	return 0;
 }
 
@@ -449,7 +454,7 @@ static int __create_image_from_jpeg_png(const char * path, image_index_t i)
 		p->data           //const GLvoid * data
 	);
 
-
+	p->data = NULL;
 
 	SDL_FreeSurface(img);
 
@@ -474,7 +479,7 @@ static void __images_precache()
 	size_t path_len = 0;
 	char * path = NULL;
 
-	for(i = 0; i < __IMAGE_NUM; i++)
+	for(i = 0; i < IMG__NUM; i++)
 	{
 		char * filename = image_files[i];
 		size_t len = strlen(BASEDIR) + strlen(filename);
@@ -491,7 +496,8 @@ static void __images_precache()
 		ret = __create_image_from_jpeg_png(path, i);
 		if(ret)
 			ret = __create_image_from_bii(path, i);
-		if(ret) game_halt("Image \"%s\" load error %s", path, IMG_errorGet());
+		if(ret)
+			game_halt("Image \"%s\" load error %s", path, IMG_errorGet());
 	}
 	Z_free(path);
 };
@@ -502,7 +508,7 @@ static void __images_precache()
 static void __cache_free()
 {
 	int i;
-	for(i = 0; i < __IMAGE_NUM; i++)
+	for(i = 0; i < IMG__NUM; i++)
 	{
 		item_img_t * img = &image_table[i];
 
@@ -544,7 +550,7 @@ void images_done()
 	IMG_Quit();
 }
 
-item_img_t * image_get(image_index_t iimage)
+const item_img_t * image_get(image_index_t iimage)
 {
 	return &image_table[iimage];
 };

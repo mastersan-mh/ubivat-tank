@@ -56,7 +56,7 @@ void ui_register(
 	LIST2_PUSH(uients, uient);
 }
 
-void ui_drawimage(camera_t * cam, int x, int y, item_img_t * image)
+void ui_drawimage(camera_t * cam, int x, int y, const item_img_t * image)
 {
 	gr2D_setimage0(cam->x + x, cam->y + y, image);
 }

@@ -5,11 +5,16 @@
 #include "math.h"
 #include "utf8.h"
 
-#include <fttypes.h>
-#include <ftimage.h>
-#include FT_FREETYPE_H
-#include <freetype.h>
-#include <ft2build.h>
+#ifdef FONT_USE_SDL2
+#  include <SDL2/SDL_ttf.h>
+#else
+#  include <fttypes.h>
+#  include <ftimage.h>
+#  include FT_FREETYPE_H
+#  include <freetype.h>
+#  include <ft2build.h>
+#endif
+
 /*
 #include <fontconfig/fcfreetype.h>
 */

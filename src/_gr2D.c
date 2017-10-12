@@ -31,20 +31,44 @@ static int list[14] =
  * вывод байтового образа bytemap размерами full_x,full_y, в позицию
  * out_x,out_y на экран с позиции get_x,get_y, размером sx,sy
  */
-void gr2D_setimage0(
+void gr2D_setimage00(
 	int out_x,
 	int out_y,
-	item_img_t * image
+	const item_img_t * image,
+	int desired_sx,
+	int desired_sy
 )
 {
-	GLfloat mdl_sx = image->img_sx * VIDEO_SCALEX;
-	GLfloat mdl_sy = image->img_sy * VIDEO_SCALEY;
+	GLfloat mdl_sx;
+	GLfloat mdl_sy;
 
-	GLfloat texture_sx = image->texture_sx;
-	GLfloat texture_sy = image->texture_sy;
+	if(desired_sy > 0 && desired_sx > 0 )
+	{
+		mdl_sx = (GLfloat)desired_sx;
+		mdl_sy = (GLfloat)desired_sy;
+	}
+	else if(desired_sx > 0)
+	{
+		mdl_sx = (GLfloat)desired_sx;
+		mdl_sy = (GLfloat)image->img_sy * (GLfloat)desired_sx / (GLfloat)image->img_sx;
+	}
+	else if(desired_sy > 0)
+	{
+		mdl_sx = (GLfloat)image->img_sx * (GLfloat)desired_sy / (GLfloat)image->img_sy;
+		mdl_sy = (GLfloat)desired_sy;
+	}
+	else
+	{
+		mdl_sx = image->img_sx;
+		mdl_sy = image->img_sy;
+	}
 
-	GLfloat texture_x1 = image->img_sx/texture_sx;
-	GLfloat texture_y1 = image->img_sy/texture_sy;
+	mdl_sx *= VIDEO_SCALEX;
+	mdl_sy *= VIDEO_SCALEY;
+
+	GLfloat texture_x1 = (GLfloat)image->img_sx / (GLfloat)image->texture_sx;
+	GLfloat texture_y1 = (GLfloat)image->img_sy / (GLfloat)image->texture_sy;
+
 /*
 	int sfactor = list[game_video_sfactor];
 	int dfactor = list[game_video_dfactor];

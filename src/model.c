@@ -95,7 +95,7 @@ void model_render(
 		return;
 	}
 
-	item_img_t * texture = image_get(model->itexture);
+	const item_img_t * texture = image_get(model->itexture);
 
 	vec_t tr_x = ( cam->x + cam->sx / 2 + (pos[0] - cam->origin[0]) + translation[0] ) * VIDEO_SCALE;
 	vec_t tr_y = ( cam->y + cam->sy / 2 - (pos[1] - cam->origin[1]) + translation[1] ) * VIDEO_SCALE;

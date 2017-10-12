@@ -30,6 +30,7 @@ typedef enum
 	IMG_MENU_G_LOAD,
 	IMG_MENU_G_SAVE,
 	IMG_MENU_CASE,
+	IMG_MENU_CASE_SERVERCONNECT,
 	IMG_MENU_OPTIONS,
 	IMG_MENU_ABOUT,
 	IMG_MENU_ABORT,
@@ -74,8 +75,8 @@ typedef enum
 	IMG_HUD_ICON_TANK2,
 	IMG_HUD_ICON_TANK3,
 	IMG_HUD_ICON_TANK4,
-	__IMAGE_NUM
-}image_index_t;
+	IMG__NUM
+} image_index_t;
 
 
 //рисунок
@@ -115,7 +116,7 @@ void images_done();
 
 void images_init();
 
-item_img_t * image_get(image_index_t iimage);
+const item_img_t * image_get(image_index_t iimage);
 
 
 #endif /* SRC_IMG_H_ */
