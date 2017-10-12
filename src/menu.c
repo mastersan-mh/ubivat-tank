@@ -29,6 +29,12 @@
 #define menu_draw_cursor(row) \
 		gr2D_setimage00(120 - 23, 30 + 23 * (row), image_get(IMG_MENU_CUR_0), 0, 22);
 
+#define menu_draw_spinbox_horisontal(row, width) \
+		do { \
+			gr2D_setimage0(120          , 30 + 23 * (row), image_get(IMG_MENU_ARROWL)); \
+			gr2D_setimage0(120 + (width), 30 + 23 * (row), image_get(IMG_MENU_ARROWR)); \
+		} while (0)
+
 #define menu_draw_string_indicator_small(row, nchars) \
 		do { \
 			gr2D_setimage0(120, 30 + (row) * 15, image_get(IMG_MENU_LINEL)); \
@@ -39,6 +45,12 @@
 			} \
 			gr2D_setimage0(120 + 4 + icol * 8, 30 + (row) * 15, image_get(IMG_MENU_LINER)); \
 		} while (0)
+
+#define	menu_draw_cursor_small(row) \
+	gr2D_setimage0(97, 30 + 2 + (row) * 15, image_get(IMG_MENU_CUR_1))
+
+#define menu_draw_icon_small(col, row, image) \
+		gr2D_setimage0(120 + 1 + 4 + 15 * (col), 29 + (row) * 15, image_get((image)));
 
 typedef enum
 {
@@ -415,23 +427,29 @@ static void menu_game_load_draw(const void * ctx)
 	menu_draw_header(IMG_MENU_G_LOAD);
 	for(irow = 0; irow < 8; irow++)
 	{
+		char *s;
+		bool showstat;
+		if((showstat = gamesaves[irow].exist))
+			s = gamesaves[irow].name;
+		else
+			s = "---===EMPTY===---";
+
 		menu_draw_string_indicator_small(irow, 16);
 		font_color_set3i(COLOR_7);
-		if(!gamesaves[irow].exist)
-		{
-			video_printf(97+23+4, 33+irow*15, "---===EMPTY===---");
-			continue;
-		}
-		video_printf(97+23+4, 33+irow*15, gamesaves[irow].name);
+		video_printf(97+23+4, 33+irow*15, s);
 		//отображение статуса сохраненной игры
-		int icol = 16;
-		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
-		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
+		if(showstat)
 		{
-			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
-		};
-	};
-	gr2D_setimage0(97, 30 + 15 * __ctx->menu + 2, image_get(IMG_MENU_CUR_1));
+			int icol = 17;
+			menu_draw_icon_small(9, irow, IMG_FLAG_RUS);
+			if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
+			{
+				menu_draw_icon_small(10, irow, IMG_FLAG_RUS);
+			}
+		}
+	}
+
+	menu_draw_cursor_small(__ctx->menu);
 }
 static int menu_game_save(void * ctx)
 {
@@ -515,24 +533,30 @@ static void menu_game_save_draw(const void * ctx)
 	menu_draw_conback();
 	menu_draw_header(IMG_MENU_G_SAVE);
 	if(__ctx->state == MENU_GAME_SAVE_SELECT)
-		gr2D_setimage0(97, 30+15*menu+2, image_get(IMG_MENU_CUR_1));
+		menu_draw_cursor_small(menu);
 	for(irow = 0; irow < 8; irow++)
 	{
-		gr2D_setimage0(97+23, 30+irow*15, image_get(IMG_MENU_LINEL));
-		for(icol = 0; icol < 16; icol++)
-			gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINEM));
-		gr2D_setimage0(97+23+4+8*icol, 30+irow*15, image_get(IMG_MENU_LINER));
+		char *s;
+		bool showstat;
+		if((showstat = gamesaves[irow].exist))
+			s = gamesaves[irow].name;
+		else
+			s = "---===EMPTY===---";
+
+		menu_draw_string_indicator_small(irow, 16);
 		font_color_set3i(COLOR_7);
-		if(!gamesaves[irow].exist)
+		video_printf(97+23+4,33+irow*15, s);
+
+		if(showstat)
 		{
-			video_printf(97+23+4,33+irow*15, "---===EMPTY===---");
-			continue;
+			//отображение статуса сохраненной игры
+			int icol = 17;
+			menu_draw_icon_small(9, irow, IMG_FLAG_RUS);
+			if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
+			{
+				menu_draw_icon_small(10, irow, IMG_FLAG_RUS);
+			}
 		}
-		video_printf(97+23+4,33+irow*15, gamesaves[irow].name);
-		//отображение статуса сохраненной игры
-		gr2D_setimage0(98+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
-		if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
-			gr2D_setimage0(110+23+4+8*(icol+1), 29+irow*15, image_get(IMG_FLAG_RUS));
 	}
 }
 
@@ -584,15 +608,16 @@ static void menu_custom_draw(const void * ctx)
 	const menu_custom_ctx_t * __ctx = ctx;
 	menu_draw_conback();
 	menu_draw_header(IMG_MENU_CASE);
-	gr2D_setimage0(120,30+23*0       , image_get(IMG_MENU_ARROWL));
-	gr2D_setimage0(260,30+23*0       , image_get(IMG_MENU_ARROWR));
+
+	menu_draw_spinbox_horisontal(0, 140);
+	font_color_set3i(COLOR_25);
+	video_printf(120 + 13, 33 +     23*0, cl_state.custommap->map);
+	video_printf(120 + 13, 33 + 8 + 23*0, cl_state.custommap->name);
+
 	menu_draw_entry(1, IMG_MENU_G_NEW_P1);
 	menu_draw_entry(2, IMG_MENU_G_NEW_P2);
 	menu_draw_entry(3, IMG_MENU_CASE_SERVERCONNECT);
 	menu_draw_cursor(__ctx->menu);
-	font_color_set3i(COLOR_25);
-	video_printf(133, 33+23*0, cl_state.custommap->map);
-	video_printf(133, 41+23*0, cl_state.custommap->name);
 }
 
 static int menu_custom_connect(void * ctx_)
@@ -639,17 +664,6 @@ static void menu_custom_connect_draw(const void * ctx_)
 	const menu_custom_ctx_t * ctx = ctx_;
 	menu_draw_conback();
 	menu_draw_header(IMG_MENU_CASE_SERVERCONNECT);
-/*
-	gr2D_setimage0(120,30+23*0       , image_get(IMG_MENU_ARROWL));
-	gr2D_setimage0(260,30+23*0       , image_get(IMG_MENU_ARROWR));
-	menu_drawentry(1, IMG_MENU_G_NEW_P1);
-	menu_drawentry(2, IMG_MENU_G_NEW_P2);
-	menu_drawentry(3, IMG_MENU_CASE_SERVERCONNECT);
-	menu_drawcursor(ctx->menu);
-	font_color_set3i(COLOR_25);
-	video_printf(133, 33+23*0, cl_state.custommap->map);
-	video_printf(133, 41+23*0, cl_state.custommap->name);
-	*/
 }
 
 
