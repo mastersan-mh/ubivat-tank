@@ -89,22 +89,3 @@ void gr2D_setimage00(
 	glTexCoord2f(0.0f      , texture_y1); glVertex2f(0.0f  , mdl_sy); // Верхний левый
 	glEnd();
 }
-
-void gr2D_setimage_indexed(
-	int x,
-	int y,
-	unsigned int sx,
-	unsigned int sy,
-	void * indexed_image
-)
-{
-	/* DUMMY */
-}
-
-void gr2D_color_index(int index){}
-void gr2D_line_h(int x, int y, int width){}
-void gr2D_line_v(int x, int y, int height){}
-void gr2D_rectangle_e(int x, int y, int sx, int sy){}
-void gr2D_rectangle_f(int x, int y, int sx, int sy){}
-void gr2D_setpixel(int x, int y){}
-

@@ -21,7 +21,7 @@ extern void ui_register(
 	void (*cb)(camera_t * cam, entity_t * entity)
 );
 
-extern void ui_drawimage(camera_t * cam, int x, int y, const item_img_t * image);
+extern void ui_drawimage(camera_t * cam, int x, int y, image_index_t iimage);
 extern void ui_printf(camera_t * cam,int x, int y, const char * format, ...);
 
 #endif /* SRC_UI_H_ */

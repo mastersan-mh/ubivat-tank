@@ -18,22 +18,8 @@ extern void gr2D_setimage00(
 	int scr_h
 	);
 
-#define gr2D_setimage0(x, y, image) \
-		gr2D_setimage00((x), (y), (image), 0, 0)
 
-extern void gr2D_setimage_indexed(
-	int x,
-	int y,
-	unsigned int sx,
-	unsigned int sy,
-	void * indexed_image
-);
-
-extern void gr2D_color_index(int);
-extern void gr2D_line_h(int, int, int);
-void gr2D_line_v(int, int, int);
-void gr2D_rectangle_e(int, int, int, int);
-void gr2D_rectangle_f(int, int, int, int);
-void gr2D_setpixel(int, int);
+#define video_image_draw(x, y, image) \
+		gr2D_setimage00((x), (y), image_get((image)), 0, 0)
 
 #endif /* SRC__GR2D_H_ */

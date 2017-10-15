@@ -6,7 +6,6 @@
 
 #include "game.h"
 #include "img.h"
-#include "_gr2D.h"
 #include "Z_mem.h"
 #include "video.h"
 

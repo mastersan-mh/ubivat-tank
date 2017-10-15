@@ -907,8 +907,8 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 	// gr2D_settext(cam->x,cam_y,0,'('+realtostr(player->move.orig.x,8,4)+';'+realtostr(player->move.orig.y,8,4)+')');
 	// gr2D_settext(cam->x,cam_y,0,"PING %d", player->time.delta);
 
-	ui_drawimage(cam, 16 * 0     , ref_y, image_get(IMG_ITEM_HEALTH));
-	ui_drawimage(cam, 16 * 6     , ref_y, image_get(IMG_ITEM_ARMOR));
+	ui_drawimage(cam, 16 * 0     , ref_y, IMG_ITEM_HEALTH);
+	ui_drawimage(cam, 16 * 6     , ref_y, IMG_ITEM_ARMOR);
 
 	ui_printf(cam, 16 * 0 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_health"));
 	ui_printf(cam, 16 * 6 + 16, ref_y, "%ld", ENTITY_VARIABLE_INTEGER(player, "item_armor"));
@@ -917,10 +917,10 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 
 	/* вторая строка */
 	ref_y += 16;
-	ui_drawimage(cam, 16 * 0, ref_y, image_get( list[ level ] ));
-	ui_drawimage(cam, 16 * 4, ref_y, image_get( weaponinfo_table[0].icon ));
-	ui_drawimage(cam, 16 * 6, ref_y, image_get( weaponinfo_table[1].icon ));
-	ui_drawimage(cam, 16 * 8, ref_y, image_get( weaponinfo_table[2].icon ));
+	ui_drawimage(cam, 16 * 0, ref_y, list[level]);
+	ui_drawimage(cam, 16 * 4, ref_y, weaponinfo_table[0].icon);
+	ui_drawimage(cam, 16 * 6, ref_y, weaponinfo_table[1].icon);
+	ui_drawimage(cam, 16 * 8, ref_y, weaponinfo_table[2].icon);
 
 	ui_printf(cam, 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
 	if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") >= 0)

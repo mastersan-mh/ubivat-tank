@@ -56,7 +56,7 @@ void cl_game_abort(void)
  */
 static void cl_game_state_missionbrief_draw(void)
 {
-	gr2D_setimage0(0, 0, image_get(IMG_MENU_I_INTERLV));
+	video_image_draw(0, 0, IMG_MENU_I_INTERLV);
 	font_color_set3i(COLOR_15);
 	video_printf(160-06*4 ,8*5, "КАРТА:");
 	font_color_set3i(COLOR_15);
@@ -79,7 +79,7 @@ static void cl_game_state_intermission_draw(void)
 			IMG_HUD_ICON_TANK3,
 			IMG_HUD_ICON_TANK4
 	};
-	gr2D_setimage0(0, 0, image_get(IMG_MENU_I_INTERLV));
+	video_image_draw(0, 0, IMG_MENU_I_INTERLV);
 	font_color_set3i(COLOR_15);
 	video_printf(108,191,"НАЖМИ ПРОБЕЛ");
 
@@ -102,8 +102,7 @@ static void cl_game_state_intermission_draw(void)
 		if(client)
 		{
 			long level = server_client_vardata_get(client, "level", VARTYPE_INTEGER)->value.i64;
-			const item_img_t * img = image_get(list[level]);
-			gr2D_setimage0(26, refy + 8 +     16 * i, img);
+			video_image_draw(26, refy + 8 + 16 * i, list[level]);
 			font_color_set3i(COLOR_15);
 			video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64);
 			video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "frags", VARTYPE_INTEGER)->value.i64);
