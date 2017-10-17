@@ -26,12 +26,13 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <stdbool.h>
 
-#ifndef bool
+#ifndef __bool_true_false_are_defined
 typedef enum {
 	false = 0,
 	true = 1
-}bool;
+} bool;
 #endif
 
 typedef enum direction_e
