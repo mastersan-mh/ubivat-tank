@@ -112,10 +112,24 @@ typedef struct
 
 /* MENU_QUIT */
 
+typedef SDL_Scancode buffer_key_t;
+
+typedef enum
+{
+	NOTHING,
+	UP,
+	DOWN,
+	LEFT,
+	RIGHT,
+	ENTER,
+	LEAVE,
+	SPACE
+} menu_action_t;
+
 typedef struct
 {
 	void * context;
-	int  (* handle) (void * context);
+	int  (* handle) (buffer_key_t scancode, menu_action_t action, void * context);
 	void (* draw) (const void * context);
 } menu_t;
 

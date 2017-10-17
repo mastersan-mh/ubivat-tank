@@ -61,18 +61,6 @@
 #define menu_draw_icon_small(col, row, image) \
 		video_image_draw(120 + 1 + 4 + 15 * (col), 29 + (row) * 15, (image));
 
-typedef enum
-{
-	NOTHING,
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	ENTER,
-	LEAVE,
-	SPACE
-} menu_key_t;
-
 /* MENU_MAIN */
 menu_main_ctx_t menu_main_ctx = {};
 
@@ -129,7 +117,6 @@ static void _menu_inc(const int menu_amount, int * menu)
 }
 
 #define KEYBUFFER_SIZE (9)
-typedef SDL_Scancode buffer_key_t;
 static buffer_key_t buffer[KEYBUFFER_SIZE];
 static int buffer_start = 0;
 static int buffer_end   = 0;
@@ -187,13 +174,14 @@ void menu_events_pump(void)
 	}
 }
 
-
-
-menu_key_t menu_key_get(void)
+static buffer_key_t P_menu_scancode_get(void)
 {
-	if(buffer_isEmpty())return NOTHING;
-	buffer_key_t key = buffer_dequeue_nowait();
-	switch(key)
+	return buffer_dequeue_nowait();
+}
+
+static menu_action_t P_menu_scancode2action(buffer_key_t scancode)
+{
+	switch(scancode)
 	{
 	case SDL_SCANCODE_RETURN  :
 	case SDL_SCANCODE_RETURN2 : return ENTER;
@@ -203,15 +191,15 @@ menu_key_t menu_key_get(void)
 	case SDL_SCANCODE_LEFT    : return LEFT;
 	case SDL_SCANCODE_RIGHT   : return RIGHT;
 	case SDL_SCANCODE_SPACE   : return SPACE;
-	default: break;
+	case SDL_SCANCODE_UNKNOWN:
+	default: return NOTHING;
 	}
-	return NOTHING;
 }
 
 /*
  * главное меню
  */
-static int menu_main(void * ctx)
+static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	static menu_selector_t menus[] =
 	{
@@ -222,19 +210,19 @@ static int menu_main(void * ctx)
 			MENU_ABORT,
 			MENU_QUIT
 	};
-	menu_main_ctx_t * __ctx  = ctx;
-	switch(menu_key_get())
+	menu_main_ctx_t * ctx = ctx_;
+	switch(action)
 	{
 	case NOTHING: break;
-	case UP     : _menu_dec(6, &__ctx->menu);break;
-	case DOWN   : _menu_inc(6, &__ctx->menu);break;
+	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
 	case LEFT   : break;
 	case RIGHT  : break;
 	case ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		if(cl_state.state == GAMESTATE_NOGAME && __ctx->menu == 4)
+		if(cl_state.state == GAMESTATE_NOGAME && ctx->menu == 4)
 			return MENU_MAIN;
-		return menus[__ctx->menu];
+		return menus[ctx->menu];
 	case LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		if(cl_state.state != GAMESTATE_NOGAME)
@@ -274,21 +262,20 @@ static void menu_main_draw(const void * ctx_)
 /*
  * меню "ИГРА"
  */
-static int menu_game(void * ctx_)
+static int menu_game(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	static menu_selector_t menus[] =
 	{
 			MENU_GAME_NEW1P,
 			MENU_GAME_NEW2P,
-			MENU_GAME_LOAD,
-			MENU_GAME_SAVE
+			MENU_GAME_LOAD
 	};
 	menu_game_ctx_t * ctx = ctx_;
-	switch(menu_key_get())
+	switch(action)
 	{
 	case NOTHING: break;
-	case UP     : _menu_dec(3, &ctx->menu);break;
-	case DOWN   : _menu_inc(3, &ctx->menu);break;
+	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
 	case LEFT   : break;
 	case RIGHT  : break;
 	case ENTER  :
@@ -313,7 +300,7 @@ static void menu_game_draw(const void * ctx_)
 	menu_draw_cursor(ctx->menu);
 };
 
-static int menu_game_new1P(void * ctx)
+static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	int ret;
 	if(cl_state.state != GAMESTATE_NOGAME)
@@ -334,7 +321,7 @@ static int menu_game_new1P(void * ctx)
 	return MENU_MAIN;
 }
 
-static int menu_game_new2P(void * ctx_)
+static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	int ret;
 	if(cl_state.state != GAMESTATE_NOGAME)
@@ -360,10 +347,9 @@ static int menu_game_new2P(void * ctx_)
 /*
  * меню "ЗАГРУЗКА"
  */
-static int menu_game_load(void * ctx_)
+static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	menu_game_load_ctx_t * ctx = ctx_;
-	menu_key_t menukey = menu_key_get();
 	switch(ctx->state)
 	{
 	case MENU_GAME_LOAD_INIT:
@@ -371,7 +357,7 @@ static int menu_game_load(void * ctx_)
 		ctx->state = MENU_GAME_LOAD_SELECT;
 		break;
 	case MENU_GAME_LOAD_SELECT:
-		switch(menukey)
+		switch(action)
 		{
 		case NOTHING: break;
 		case UP     : _menu_dec(8, &ctx->menu);break;
@@ -454,7 +440,7 @@ static void menu_game_load_draw(const void * ctx_)
 
 	menu_draw_cursor_small(ctx->menu);
 }
-static int menu_game_save(void * ctx_)
+static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	menu_game_save_ctx_t * ctx = ctx_;
 	size_t l;
@@ -466,7 +452,7 @@ static int menu_game_save(void * ctx_)
 		ctx->state = MENU_GAME_SAVE_SELECT;
 		break;
 	case MENU_GAME_SAVE_SELECT:
-		switch(menu_key_get())
+		switch(action)
 		{
 		case NOTHING: break;
 		case UP     : _menu_dec(8, &ctx->menu);break;
@@ -564,7 +550,7 @@ static void menu_game_save_draw(const void * ctx_)
 /*
  * меню "ВЫБОР"
  */
-static int menu_custom(void * ctx_)
+static int menu_custom(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	static menu_selector_t menus[] =
 	{
@@ -575,8 +561,7 @@ static int menu_custom(void * ctx_)
 	};
 
 	menu_custom_ctx_t * ctx = ctx_;
-	menu_key_t menukey = menu_key_get();
-	switch(menukey)
+	switch(action)
 	{
 	case NOTHING: break;
 	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
@@ -585,9 +570,9 @@ static int menu_custom(void * ctx_)
 	case RIGHT  :
 		if(ctx->menu == 0)
 		{
-			if(menukey == LEFT)
+			if(action == LEFT)
 				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
-			if(menukey == RIGHT)
+			if(action == RIGHT)
 				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
 		}
 		break;
@@ -621,7 +606,7 @@ static void menu_custom_draw(const void * ctx_)
 	menu_draw_cursor(ctx->menu);
 }
 
-static int menu_custom_connect(void * ctx_)
+static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	static menu_selector_t menus[] =
 	{
@@ -632,8 +617,7 @@ static int menu_custom_connect(void * ctx_)
 	};
 
 	menu_custom_ctx_t * ctx = ctx_;
-	menu_key_t menukey = menu_key_get();
-	switch(menukey)
+	switch(action)
 	{
 	case NOTHING: break;
 	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
@@ -642,9 +626,9 @@ static int menu_custom_connect(void * ctx_)
 	case RIGHT  :
 		if(ctx->menu == 0)
 		{
-			if(menukey == LEFT)
+			if(action == LEFT)
 				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
-			if(menukey == RIGHT)
+			if(action == RIGHT)
 				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
 		}
 		break;
@@ -669,7 +653,7 @@ static void menu_custom_connect_draw(const void * ctx_)
 
 
 
-static int menu_custom_new1P(void * ctx)
+static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 
 	int ret;
@@ -690,7 +674,7 @@ static int menu_custom_new1P(void * ctx)
 	return MENU_MAIN;
 }
 
-static int menu_custom_new2P(void * ctx)
+static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	int ret;
 	if(cl_state.state != GAMESTATE_NOGAME)
@@ -735,7 +719,7 @@ static const char *player_actions[ACTION_PLAYER_NUM] =
 
 };
 
-static int menu_options(void * ctx_)
+static int menu_options(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	menu_options_ctx_t * ctx = ctx_;
 #define MENU_ROWS 7
@@ -743,7 +727,7 @@ static int menu_options(void * ctx_)
 	switch(ctx->state)
 	{
 	case MENU_OPTIONS_SELECT:
-		switch(menu_key_get())
+		switch(action)
 		{
 		case NOTHING: break;
 		case UP     : _menu_dec(MENU_ROWS, &ctx->menu);break;
@@ -763,9 +747,6 @@ static int menu_options(void * ctx_)
 		}
 		break;
 	case MENU_OPTIONS_WAIT_KEY:
-		if(buffer_isEmpty())
-			break;
-		buffer_key_t scancode = buffer_dequeue_nowait();
 		switch(scancode)
 		{
 		case SDL_SCANCODE_UNKNOWN: break;
@@ -819,9 +800,9 @@ static void menu_options_draw(const void * ctx_)
 /*
  * меню "О ИГРЕ"
  */
-static int menu_about(void * ctx)
+static int menu_about(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
-	if(menu_key_get() == LEAVE)
+	if(action == LEAVE)
 	{
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
@@ -847,13 +828,13 @@ static void menu_about_draw(const void * ctx)
 }
 
 
-static int menu_abort(void * ctx)
+static int menu_abort(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	cl_game_abort();
 	return MENU_MAIN;
 }
 
-static int menu_quit(void * ctx)
+static int menu_quit(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	cl_game_quit_set();
 	return MENU_MAIN;
@@ -884,8 +865,12 @@ int menu_handle(int imenu)
 {
 	if(0 <= imenu && imenu < MENU_NUM)
 	{
+		buffer_key_t scancode = P_menu_scancode_get();
+		menu_action_t action = P_menu_scancode2action(scancode);
+
 		menu_t * menu = &menus[imenu];
-		if(menu->handle) imenu = menu->handle(menu->context);
+		if(menu->handle)
+			imenu = menu->handle(scancode, action, menu->context);
 	}
 	return imenu;
 }
