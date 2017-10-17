@@ -62,23 +62,27 @@
 		video_image_draw(120 + 1 + 4 + 15 * (col), 29 + (row) * 15, (image));
 
 /* MENU_MAIN */
-menu_main_ctx_t menu_main_ctx = {};
+static menu_main_ctx_t menu_main_ctx = {};
 
 /* MENU_GAME */
-menu_game_ctx_t menu_game_ctx = {};
+static menu_game_ctx_t menu_game_ctx = {};
 
 /* MENU_GAME_NEW1P */
 
 /* MENU_GAME_NEW2P */
 
 /* MENU_GAME_LOAD */
-menu_game_load_ctx_t menu_load_ctx = {};
+static menu_game_load_ctx_t menu_load_ctx = {};
 
 /* MENU_GAME_SAVE */
-menu_game_save_ctx_t menu_save_ctx = {};
+static menu_game_save_ctx_t menu_save_ctx = {};
 
 /* MENU_CUSTOM */
-menu_custom_ctx_t menu_custom_ctx = {};
+static menu_custom_ctx_t menu_custom_ctx = {};
+
+/* MENU_CUSTOM_CONNECT */
+
+static menu_custom_connect_ctx_t menu_custom_connect_ctx = {};
 
 /* MENU_CUSTOM_NEWP1 */
 
@@ -87,9 +91,9 @@ menu_custom_ctx_t menu_custom_ctx = {};
 /* MENU_CUSTOM_CONNECT */
 
 /* MENU_OPTIONS */
-menu_options_ctx_t menu_options_ctx = {};
+static menu_options_ctx_t menu_options_ctx = {};
 /* MENU_ABOUT */
-menu_about_ctx_t menu_about_ctx = {};
+static menu_about_ctx_t menu_about_ctx = {};
 /* MENU_ABORT */
 
 /* MENU_QUIT */
@@ -184,15 +188,15 @@ static menu_action_t P_menu_scancode2action(buffer_key_t scancode)
 	switch(scancode)
 	{
 	case SDL_SCANCODE_RETURN  :
-	case SDL_SCANCODE_RETURN2 : return ENTER;
-	case SDL_SCANCODE_ESCAPE  : return LEAVE;
-	case SDL_SCANCODE_UP      : return UP;
-	case SDL_SCANCODE_DOWN    : return DOWN;
-	case SDL_SCANCODE_LEFT    : return LEFT;
-	case SDL_SCANCODE_RIGHT   : return RIGHT;
-	case SDL_SCANCODE_SPACE   : return SPACE;
+	case SDL_SCANCODE_RETURN2 : return MENU_ACTION_ENTER;
+	case SDL_SCANCODE_ESCAPE  : return MENU_ACTION_LEAVE;
+	case SDL_SCANCODE_UP      : return MENU_ACTION_UP;
+	case SDL_SCANCODE_DOWN    : return MENU_ACTION_DOWN;
+	case SDL_SCANCODE_LEFT    : return MENU_ACTION_LEFT;
+	case SDL_SCANCODE_RIGHT   : return MENU_ACTION_RIGHT;
+	case SDL_SCANCODE_SPACE   : return MENU_ACTION_SPACE;
 	case SDL_SCANCODE_UNKNOWN:
-	default: return NOTHING;
+	default: return MENU_ACTION_NOTHING;
 	}
 }
 
@@ -213,22 +217,23 @@ static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
 	menu_main_ctx_t * ctx = ctx_;
 	switch(action)
 	{
-	case NOTHING: break;
-	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
-	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
-	case LEFT   : break;
-	case RIGHT  : break;
-	case ENTER  :
+	case MENU_ACTION_NOTHING: break;
+	case MENU_ACTION_FIRSTENTRY: break;
+	case MENU_ACTION_UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_LEFT   : break;
+	case MENU_ACTION_RIGHT  : break;
+	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		if(cl_state.state == GAMESTATE_NOGAME && ctx->menu == 4)
 			return MENU_MAIN;
 		return menus[ctx->menu];
-	case LEAVE  :
+	case MENU_ACTION_LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		if(cl_state.state != GAMESTATE_NOGAME)
 			cl_state.show_menu = false;
 		break;
-	case SPACE: break;
+	case MENU_ACTION_SPACE: break;
 	}
 	return MENU_MAIN;
 }
@@ -273,18 +278,19 @@ static int menu_game(buffer_key_t scancode, menu_action_t action, void * ctx_)
 	menu_game_ctx_t * ctx = ctx_;
 	switch(action)
 	{
-	case NOTHING: break;
-	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
-	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
-	case LEFT   : break;
-	case RIGHT  : break;
-	case ENTER  :
+	case MENU_ACTION_NOTHING: break;
+	case MENU_ACTION_FIRSTENTRY: break;
+	case MENU_ACTION_UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_LEFT   : break;
+	case MENU_ACTION_RIGHT  : break;
+	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return menus[ctx->menu];
-	case LEAVE  :
+	case MENU_ACTION_LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
-	case SPACE: break;
+	case MENU_ACTION_SPACE: break;
 	}
 	return MENU_GAME;
 }
@@ -350,45 +356,40 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
 static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	menu_game_load_ctx_t * ctx = ctx_;
-	switch(ctx->state)
+	switch(action)
 	{
-	case MENU_GAME_LOAD_INIT:
+	case MENU_ACTION_NOTHING: break;
+	case MENU_ACTION_FIRSTENTRY:
 		g_gamesave_cacheinfos();
-		ctx->state = MENU_GAME_LOAD_SELECT;
 		break;
-	case MENU_GAME_LOAD_SELECT:
-		switch(action)
+	case MENU_ACTION_UP     : _menu_dec(8, &ctx->menu);break;
+	case MENU_ACTION_DOWN   : _menu_inc(8, &ctx->menu);break;
+	case MENU_ACTION_LEFT   : break;
+	case MENU_ACTION_RIGHT  : break;
+	case MENU_ACTION_ENTER  :
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+		if(cl_state.state != GAMESTATE_NOGAME)
+			return MENU_MAIN;
+		if(!gamesaves[ctx->menu].exist)
+			break;
+
 		{
-		case NOTHING: break;
-		case UP     : _menu_dec(8, &ctx->menu);break;
-		case DOWN   : _menu_inc(8, &ctx->menu);break;
-		case LEFT   : break;
-		case RIGHT  : break;
-		case ENTER  :
-			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-			ctx->state = MENU_GAME_LOAD_INIT;
-			if(cl_state.state != GAMESTATE_NOGAME)
-				return MENU_MAIN;
-			if(!gamesaves[ctx->menu].exist)
-				break;
 
+			int ret;
+			ret = cl_game_create(0);
+			if(ret)
 			{
-
-				int ret;
-				ret = cl_game_create(0);
-				if(ret)
-				{
-					game_halt("Error: Can not create game.");
-					return MENU_ABORT;
-				}
-
-				client_connect();
-				clients_initcams();
-
-				client_event_gamesave_load_send(ctx->menu);
-
+				game_halt("Error: Can not create game.");
+				return MENU_ABORT;
 			}
-			/*
+
+			client_connect();
+			clients_initcams();
+
+			client_event_gamesave_load_send(ctx->menu);
+
+		}
+		/*
 			 TODO: move this to server
 			if(!ret)
 				return MENU_MAIN;
@@ -397,14 +398,12 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
 				game_msg_error(ret+10);
 				return MENU_ABORT;
 			}
-			*/
-			return MENU_MAIN;
-		case LEAVE  :
-			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-			return MENU_GAME;
-		case SPACE  : break;
-		}
-		break;
+		 */
+		return MENU_MAIN;
+	case MENU_ACTION_LEAVE  :
+		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+		return MENU_GAME;
+	case MENU_ACTION_SPACE  : break;
 	}
 	return MENU_GAME_LOAD;
 
@@ -445,33 +444,36 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
 	menu_game_save_ctx_t * ctx = ctx_;
 	size_t l;
 	char ch;
-	switch(ctx->state)
+
+	if(action == MENU_ACTION_FIRSTENTRY)
 	{
-	case MENU_GAME_SAVE_INIT:
 		g_gamesave_cacheinfos();
 		ctx->state = MENU_GAME_SAVE_SELECT;
-		break;
+	}
+
+	switch(ctx->state)
+	{
 	case MENU_GAME_SAVE_SELECT:
 		switch(action)
 		{
-		case NOTHING: break;
-		case UP     : _menu_dec(8, &ctx->menu);break;
-		case DOWN   : _menu_inc(8, &ctx->menu);break;
-		case LEFT   :
-		case RIGHT  :
-		case ENTER  :
+		case MENU_ACTION_NOTHING: break;
+		case MENU_ACTION_FIRSTENTRY: break;
+		case MENU_ACTION_UP     : _menu_dec(8, &ctx->menu);break;
+		case MENU_ACTION_DOWN   : _menu_inc(8, &ctx->menu);break;
+		case MENU_ACTION_LEFT   :
+		case MENU_ACTION_RIGHT  :
+		case MENU_ACTION_ENTER  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			ctx->rec = gamesaves[ctx->menu];
 			gamesaves[ctx->menu].exist = true;
 			ctx->state = MENU_GAME_SAVE_INPUT;
 			break;
-		case LEAVE  :
+		case MENU_ACTION_LEAVE  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-			ctx->state = MENU_GAME_SAVE_INIT;
 			cl_state.show_menu = false;
 			client_event_nextgamestate_send();
 			return MENU_MAIN;
-		case SPACE  :break;
+		case MENU_ACTION_SPACE  :break;
 		}
 		break;
 	case MENU_GAME_SAVE_INPUT:
@@ -563,26 +565,27 @@ static int menu_custom(buffer_key_t scancode, menu_action_t action, void * ctx_)
 	menu_custom_ctx_t * ctx = ctx_;
 	switch(action)
 	{
-	case NOTHING: break;
-	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
-	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
-	case LEFT   :
-	case RIGHT  :
+	case MENU_ACTION_NOTHING: break;
+	case MENU_ACTION_FIRSTENTRY: break;
+	case MENU_ACTION_UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
+	case MENU_ACTION_LEFT   :
+	case MENU_ACTION_RIGHT  :
 		if(ctx->menu == 0)
 		{
-			if(action == LEFT)
+			if(action == MENU_ACTION_LEFT)
 				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
-			if(action == RIGHT)
+			if(action == MENU_ACTION_RIGHT)
 				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
 		}
 		break;
-	case ENTER  :
+	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return menus[ctx->menu];
-	case LEAVE  :
+	case MENU_ACTION_LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
-	case SPACE: break;
+	case MENU_ACTION_SPACE: break;
 	}
 
 	return MENU_CUSTOM;
@@ -608,40 +611,28 @@ static void menu_custom_draw(const void * ctx_)
 
 static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
-	static menu_selector_t menus[] =
-	{
-			MENU_CUSTOM,
-			MENU_CUSTOM_NEWP1,
-			MENU_CUSTOM_NEWP2,
-			MENU_CUSTOM_CONNECT,
-	};
-
-	menu_custom_ctx_t * ctx = ctx_;
+	menu_custom_connect_ctx_t * ctx = ctx_;
 	switch(action)
 	{
-	case NOTHING: break;
-	case UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
-	case DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
-	case LEFT   :
-	case RIGHT  :
-		if(ctx->menu == 0)
-		{
-			if(action == LEFT)
-				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
-			if(action == RIGHT)
-				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
-		}
+	case MENU_ACTION_NOTHING: break;
+	case MENU_ACTION_FIRSTENTRY:
+
 		break;
-	case ENTER  :
+	case MENU_ACTION_UP     : /* _menu_dec(, &ctx->menu);*/ break;
+	case MENU_ACTION_DOWN   : /* _menu_inc(, &ctx->menu);*/ break;
+	case MENU_ACTION_LEFT   :
+	case MENU_ACTION_RIGHT  : break;
+	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		return menus[ctx->menu];
-	case LEAVE  :
+		//return menus[ctx->menu];
+		break;
+	case MENU_ACTION_LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		return MENU_MAIN;
-	case SPACE: break;
+		return MENU_CUSTOM;
+	case MENU_ACTION_SPACE: break;
 	}
 
-	return MENU_CUSTOM;
+	return MENU_CUSTOM_CONNECT;
 }
 
 static void menu_custom_connect_draw(const void * ctx_)
@@ -697,17 +688,17 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
 
 enum
 {
-		ACTION_PLAYER_MOVE_NORTH,
-		ACTION_PLAYER_MOVE_SOUTH,
-		ACTION_PLAYER_MOVE_WEST,
-		ACTION_PLAYER_MOVE_EAST,
-		ACTION_PLAYER_ATTACK_WEAPON1,
-		ACTION_PLAYER_ATTACK_WEAPON2,
-		ACTION_PLAYER_ATTACK_WEAPON3,
-		ACTION_PLAYER_NUM,
+	ACTION_PLAYER_MOVE_NORTH,
+	ACTION_PLAYER_MOVE_SOUTH,
+	ACTION_PLAYER_MOVE_WEST,
+	ACTION_PLAYER_MOVE_EAST,
+	ACTION_PLAYER_ATTACK_WEAPON1,
+	ACTION_PLAYER_ATTACK_WEAPON2,
+	ACTION_PLAYER_ATTACK_WEAPON3,
+	ACTION_PLAYER__NUM,
 };
 
-static const char *player_actions[ACTION_PLAYER_NUM] =
+static const char *player_actions[ACTION_PLAYER__NUM] =
 {
 		"+move_north",
 		"+move_south",
@@ -715,8 +706,7 @@ static const char *player_actions[ACTION_PLAYER_NUM] =
 		"+move_east" ,
 		"+attack_artillery",
 		"+attack_missile",
-		"+attack_mine"
-
+		"+attack_mine",
 };
 
 static int menu_options(buffer_key_t scancode, menu_action_t action, void * ctx_)
@@ -729,21 +719,22 @@ static int menu_options(buffer_key_t scancode, menu_action_t action, void * ctx_
 	case MENU_OPTIONS_SELECT:
 		switch(action)
 		{
-		case NOTHING: break;
-		case UP     : _menu_dec(MENU_ROWS, &ctx->menu);break;
-		case DOWN   : _menu_inc(MENU_ROWS, &ctx->menu);break;
-		case LEFT   : _menu_dec(MENU_COLS, &ctx->column);break;
-		case RIGHT  : _menu_inc(MENU_COLS, &ctx->column);break;
-		case ENTER  :
+		case MENU_ACTION_NOTHING: break;
+		case MENU_ACTION_FIRSTENTRY: break;
+		case MENU_ACTION_UP     : _menu_dec(MENU_ROWS, &ctx->menu);break;
+		case MENU_ACTION_DOWN   : _menu_inc(MENU_ROWS, &ctx->menu);break;
+		case MENU_ACTION_LEFT   : _menu_dec(MENU_COLS, &ctx->column);break;
+		case MENU_ACTION_RIGHT  : _menu_inc(MENU_COLS, &ctx->column);break;
+		case MENU_ACTION_ENTER  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			ctx->state = MENU_OPTIONS_WAIT_KEY;break;
-		case LEAVE  :
+		case MENU_ACTION_LEAVE  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			gconf_rebind_all();
 			gconf_save();
 			ctx->state = MENU_OPTIONS_SELECT;
 			return MENU_MAIN;
-		case SPACE  : break;
+		case MENU_ACTION_SPACE  : break;
 		}
 		break;
 	case MENU_OPTIONS_WAIT_KEY:
@@ -788,7 +779,7 @@ static void menu_options_draw(const void * ctx_)
 	video_printf( 9,32+12*7, "Мина");
 
 	size_t i;
-	for(i = 0; i < ACTION_PLAYER_NUM; i++)
+	for(i = 0; i < ACTION_PLAYER__NUM; i++)
 	{
 		video_printf(82 + 131 * 0, 32 + 12 + 12 * i, "%d", input_key_get(0, player_actions[i]));
 		video_printf(82 + 131 * 1, 32 + 12 + 12 * i, "%d", input_key_get(1, player_actions[i]));
@@ -802,7 +793,7 @@ static void menu_options_draw(const void * ctx_)
  */
 static int menu_about(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
-	if(action == LEAVE)
+	if(action == MENU_ACTION_LEAVE)
 	{
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 		return MENU_MAIN;
@@ -853,7 +844,7 @@ menu_t menus[MENU_NUM] =
 		{ &menu_custom_ctx    , menu_custom      , menu_custom_draw }, /* MENU_CUSTOM */
 		{ NULL                , menu_custom_new1P, NULL }, /* MENU_CUSTOM_NEWP1 */
 		{ NULL                , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
-		{ NULL                , menu_custom_connect, menu_custom_connect_draw}, /* MENU_CUSTOM_CONNECT */
+		{ &menu_custom_connect_ctx, menu_custom_connect, menu_custom_connect_draw}, /* MENU_CUSTOM_CONNECT */
 		{ &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
 		{ &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
 		{ NULL                , menu_abort       , NULL }, /* MENU_ABORT */
@@ -863,11 +854,22 @@ menu_t menus[MENU_NUM] =
 
 int menu_handle(int imenu)
 {
+	static int imenu_old = -1;
 	if(0 <= imenu && imenu < MENU_NUM)
 	{
-		buffer_key_t scancode = P_menu_scancode_get();
-		menu_action_t action = P_menu_scancode2action(scancode);
-
+		buffer_key_t scancode;
+		menu_action_t action;
+		if(imenu_old != imenu)
+		{
+			scancode = SDL_SCANCODE_UNKNOWN;
+			action = MENU_ACTION_FIRSTENTRY;
+			imenu_old = imenu;
+		}
+		else
+		{
+			scancode = P_menu_scancode_get();
+			action = P_menu_scancode2action(scancode);
+		}
 		menu_t * menu = &menus[imenu];
 		if(menu->handle)
 			imenu = menu->handle(scancode, action, menu->context);

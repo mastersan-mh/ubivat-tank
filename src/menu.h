@@ -54,11 +54,6 @@ typedef struct
 /* MENU_GAME_LOAD */
 typedef struct
 {
-	enum
-	{
-		MENU_GAME_LOAD_INIT,
-		MENU_GAME_LOAD_SELECT
-	} state;
 	int menu;
 } menu_game_load_ctx_t;
 
@@ -67,11 +62,10 @@ typedef struct
 {
 	enum
 	{
-		MENU_GAME_SAVE_INIT,
 		MENU_GAME_SAVE_SELECT,
 		MENU_GAME_SAVE_INPUT,
 		MENU_GAME_SAVE_SAVE,
-	}state;
+	} state;
 	int menu;
 	// бэкап редактируемой записи
 	gamesave_descr_t rec;
@@ -82,6 +76,12 @@ typedef struct
 {
 	int menu;
 } menu_custom_ctx_t;
+
+/* MENU_CUSTOM_CONNECT */
+typedef struct
+{
+	int menu;
+} menu_custom_connect_ctx_t;
 
 /* MENU_CUSTOM_NEWP1 */
 
@@ -116,14 +116,15 @@ typedef SDL_Scancode buffer_key_t;
 
 typedef enum
 {
-	NOTHING,
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	ENTER,
-	LEAVE,
-	SPACE
+	MENU_ACTION_NOTHING,
+	MENU_ACTION_FIRSTENTRY, /* Первый вход в меню */
+	MENU_ACTION_UP,
+	MENU_ACTION_DOWN,
+	MENU_ACTION_LEFT,
+	MENU_ACTION_RIGHT,
+	MENU_ACTION_ENTER, /* Переход вглубь меню */
+	MENU_ACTION_LEAVE,
+	MENU_ACTION_SPACE
 } menu_action_t;
 
 typedef struct
