@@ -3,12 +3,13 @@ MAINTAINERCLEANFILES = Makefile.in
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = ubivat-tank
-SUBDIRS = 
 
 ubivat_tank_CFLAGS = -std=c99 -Wall -D_DEFAULT_SOURCE -I/usr/include/freetype2
 ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
+common/common_bstree.c \
+common/common_hash.c \
 ent_exit.c \
 ent_message.c \
 ent_spawn.c \
@@ -18,8 +19,6 @@ ent_weap.c \
 ent_items.c \
 ent_player.c \
 ent_player_think.c \
-common_bstree.c \
-common_hash.c \
 Z_mem.c \
 vars.c \
 system.c \

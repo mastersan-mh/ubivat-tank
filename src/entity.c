@@ -8,8 +8,8 @@
 #include "game.h"
 #include "entity.h"
 #include "model.h"
-#include "common_list2.h"
-#include "common_hash.h"
+#include "common/common_list2.h"
+#include "common/common_hash.h"
 #include "vars.h"
 
 typedef struct

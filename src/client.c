@@ -5,7 +5,7 @@
  *      Author: mastersan
  */
 
-#include "common_list2.h"
+#include "common/common_list2.h"
 #include "net.h"
 #include "client.h"
 #include "cl_input.h"

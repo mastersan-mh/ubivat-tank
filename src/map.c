@@ -530,7 +530,7 @@ static void map_wall_render(
 	camera_t * cam,
 	float pos_x,
 	float pos_y,
-	item_img_t * image
+	const item_img_t * image
 )
 {
 
@@ -599,7 +599,7 @@ void map_draw(camera_t * cam)
 	{
 		for(x = x0; x < x1; x++ )
 		{
-			item_img_t * img = NULL;
+			const item_img_t * img = NULL;
 			switch(MAP_WALL_TEXTURE(map.map[y][x]))
 			{
 				case MAP_WALL_W0   : img = image_get(IMG_WALL_W0); break;

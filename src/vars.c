@@ -7,7 +7,7 @@
 
 #include "vars.h"
 #include "Z_mem.h"
-#include "common_hash.h"
+#include "common/common_hash.h"
 #include "game.h"
 
 #include <string.h>

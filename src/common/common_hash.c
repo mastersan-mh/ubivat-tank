@@ -7,6 +7,7 @@
 
 #include "common_hash.h"
 
+/* Линейный конгруэнтный метод */
 uint32_t hash_ly(const char * str)
 {
 

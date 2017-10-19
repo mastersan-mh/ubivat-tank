@@ -9,7 +9,7 @@
 #include "server.h"
 #include "sv_game.h"
 #include "sound.h"
-#include "common_list2.h"
+#include "common/common_list2.h"
 
 extern host_client_t * hclients;
 

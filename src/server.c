@@ -5,7 +5,8 @@
  *      Author: mastersan
  */
 
-#include "common_list2.h"
+#include "common/common_list2.h"
+#include "common/common_hash.h"
 #include "vars.h"
 #include "g_events.h"
 #include "sv_game.h"
@@ -17,7 +18,6 @@
 #include "sound.h"
 #include "menu.h"
 #include "entity.h"
-#include "common_hash.h"
 
 #include <sys/time.h>
 #include <sys/types.h>

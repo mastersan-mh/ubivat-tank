@@ -8,7 +8,7 @@
 #ifndef SRC_VARS_H_
 #define SRC_VARS_H_
 
-#include "common_bstree.h"
+#include "common/common_bstree.h"
 
 #define VARNAME_SIZE (64)
 

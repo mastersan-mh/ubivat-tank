@@ -4,7 +4,7 @@ AC_INIT([ubivat-tank], [0.47b], [mastersan_mh@list.ru])
 AM_CONFIG_HEADER(src/config.h)
 AC_CONFIG_SRCDIR(src/main.c)
 
-AM_INIT_AUTOMAKE(1.13 foreign no-define)
+AM_INIT_AUTOMAKE([1.13 foreign no-define subdir-objects])
 
 # Checks compiler
 AC_PROG_CC
@@ -69,6 +69,9 @@ else
 fi
 
 AC_DEFINE_UNQUOTED(UTANKBASEDIR,"$UTANKBASEDIR",[Path to install base directory])
+
+#AC_CONFIG_HEADER(src/config.h)
+
 
 AC_CONFIG_FILES([
 Makefile

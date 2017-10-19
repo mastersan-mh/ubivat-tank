@@ -14,7 +14,7 @@
 #include "model.h"
 #include "img.h"
 #include "server.h"
-#include "common_bstree.h"
+#include "common/common_bstree.h"
 #include "vars.h"
 
 #define ENTITY_NAME_SIZE (64)
