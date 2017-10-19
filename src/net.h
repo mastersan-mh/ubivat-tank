@@ -14,16 +14,17 @@
 
 #define NET_PORT 20000
 
+typedef union
+{
+	struct sockaddr addr;
+	struct sockaddr_in addr_in;
+} net_addr_t;
+
+
 typedef struct net_socket_s
 {
-	struct net_socket_s * prev;
-	struct net_socket_s * next;
 	int sock;
-	union
-	{
-		struct sockaddr addr;
-		struct sockaddr_in addr_in;
-	};
+	net_addr_t addr_;
 } net_socket_t;
 
 extern net_socket_t * net_socket_create(short port, const char * hostname);

@@ -42,7 +42,7 @@ typedef struct host_client_s
 	var_t * vars; /* vardata_t */
 
 	/* адрес клиента */
-	net_socket_t * ns;
+	net_socket_t ns;
 	/* клиент является главным, может управлять сервером.
 	 * только от него принимаются команды управления сервером.
 	 */

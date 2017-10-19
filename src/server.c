@@ -113,7 +113,7 @@ void host_event_cliententity_send(host_client_t * client)
 	hevent.type = GHOSTEVENT_SETPLAYERENTITY;
 	strncpy(hevent.setplayerentity.entityname, client->entity->info->name, GAME_HOSTEVENT_ENTNAME_SIZE);
 	hevent.setplayerentity.entity = client->entity;
-	host_event_send(client->ns, &hevent);
+	host_event_send(&client->ns, &hevent);
 }
 
 void host_event_gamestate_send(host_client_t * client, gamestate_t state)
@@ -122,7 +122,7 @@ void host_event_gamestate_send(host_client_t * client, gamestate_t state)
 	ghostevent_t hevent;
 	hevent.type = GHOSTEVENT_GAMESTATE;
 	hevent.gamestate.state = state;
-	host_event_send(client->ns, &hevent);
+	host_event_send(&client->ns, &hevent);
 }
 
 void host_event_gameload_loaded_send(int flags)
@@ -133,7 +133,7 @@ void host_event_gameload_loaded_send(int flags)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		host_event_send(client->ns, &hevent);
+		host_event_send(&client->ns, &hevent);
 	}
 }
 
@@ -147,7 +147,7 @@ void host_setgamestate(gamestate_t state)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		host_event_send(client->ns, &hevent);
+		host_event_send(&client->ns, &hevent);
 	}
 }
 
@@ -255,7 +255,7 @@ static void server_client_info_restore(host_client_t * client)
 
 }
 
-static host_client_t * host_client_create(const net_socket_t * ns, bool main)
+static host_client_t * host_client_create(int sock, const net_addr_t * net_addr, bool main)
 {
 	host_client_t * client = Z_malloc(sizeof(host_client_t));
 	if(!client)
@@ -263,7 +263,8 @@ static host_client_t * host_client_create(const net_socket_t * ns, bool main)
 
 	client->entity = NULL;
 	client->userstoredata = NULL;
-	client->ns = (net_socket_t *) ns;
+	client->ns.sock = sock;
+	client->ns.addr_ = *net_addr;
 	client->main = main;
 
 	LIST2_PUSH(hclients, client);
@@ -275,7 +276,6 @@ static host_client_t * host_client_create(const net_socket_t * ns, bool main)
 
 static void host_client_delete(host_client_t * client)
 {
-	net_socket_close(client->ns);
 	Z_free(client->userstoredata);
 	Z_free(client);
 }
@@ -284,7 +284,7 @@ static void host_client_disconnect(host_client_t * client)
 {
 	ghostevent_t event;
 	event.type = GHOSTEVENT_CONNECTION_CLOSE;
-	host_event_send(client->ns, &event);
+	host_event_send(&client->ns, &event);
 
 	LIST2_UNLINK(hclients, client);
 
@@ -301,7 +301,7 @@ void host_clients_disconnect(void)
 	{
 		client = hclients;
 		hclients = hclients->next;
-		host_event_send(client->ns, &event);
+		host_event_send(&client->ns, &event);
 		host_client_delete(client);
 		clients_num--;
 	}
@@ -312,7 +312,7 @@ static host_client_t * host_client_find_by_addr(const struct sockaddr * addr)
 	host_client_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
-		if( !memcmp(&client->ns->addr, addr, sizeof(struct sockaddr)) )
+		if( !memcmp(&client->ns.addr_.addr, addr, sizeof(struct sockaddr)) )
 			return client;
 	}
 	return NULL;
@@ -383,7 +383,7 @@ void server_start(int flags)
 		game_halt("socket() failed");
 	}
 
-	if(bind(host_ns->sock, &host_ns->addr, sizeof(host_ns->addr)) < 0)
+	if(bind(host_ns->sock, &host_ns->addr_.addr, sizeof(host_ns->addr_.addr)) < 0)
 	{
 		game_halt("bind");
 	}
@@ -430,11 +430,7 @@ static int sv_gamesave_load(int isave)
 static void server_listen(void)
 {
 
-	union
-	{
-		struct sockaddr addr;
-		struct sockaddr_in addr_in;
-	} sender;
+	net_addr_t sender;
 
 	size_t i;
 	ghostevent_t hevent;
@@ -473,12 +469,12 @@ static void server_listen(void)
 			{
 				game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 
-				net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
+				//net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
 				mainclient = (hclients == NULL);
-				client = host_client_create(ns, mainclient);
+				client = host_client_create(host_ns->sock, &sender, mainclient);
 
 				hevent.type = GHOSTEVENT_CONNECTION_ACCEPTED;
-				host_event_send(client->ns, &hevent);
+				host_event_send(&client->ns, &hevent);
 
 				host_event_gamestate_send(client, sv_state.state);
 

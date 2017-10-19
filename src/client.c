@@ -43,7 +43,7 @@ void cl_done(void)
 
 }
 
-void client_event_send(const client_t * client, const gclientevent_t * event)
+void client_socket_event_send(const net_socket_t * ns, const gclientevent_t * event)
 {
 	size_t buflen = 0;
 	size_t len;
@@ -87,11 +87,16 @@ void client_event_send(const client_t * client, const gclientevent_t * event)
 	}
 
 	net_send(
-		client->ns,
+		ns,
 		buf,
 		buflen
 	);
 
+}
+
+void client_event_send(const client_t * client, const gclientevent_t * event)
+{
+	client_socket_event_send(client->ns, event);
 }
 
 void client_event_join_send(void)
@@ -314,7 +319,7 @@ static void client_listen(void)
 					if(buf[ofs] == GHOSTEVENT_CONNECTION_ACCEPTED)
 					{
 						ofs++;
-						game_console_send("client: server accept connection at 0x%00000000x:%d.", client->ns->addr_in.sin_addr, ntohs(client->ns->addr_in.sin_port));
+						game_console_send("client: server accept connection at 0x%00000000x:%d.", client->ns->addr_.addr_in.sin_addr, ntohs(client->ns->addr_.addr_in.sin_port));
 						client->state = CLIENT_LISTEN;
 					}
 

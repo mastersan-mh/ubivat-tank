@@ -31,9 +31,9 @@ net_socket_t * net_socket_create(short port, const char * hostname)
 
 	net_socket_t * ns = Z_malloc(sizeof(net_socket_t));
 	ns->sock = sock;
-	ns->addr_in.sin_family = AF_INET; // домены Internet
-	ns->addr_in.sin_port = htons(port); // или любой другой порт...
-	ns->addr_in.sin_addr.s_addr = inet_addr(hostname);
+	ns->addr_.addr_in.sin_family = AF_INET; // домены Internet
+	ns->addr_.addr_in.sin_port = htons(port); // или любой другой порт...
+	ns->addr_.addr_in.sin_addr.s_addr = inet_addr(hostname);
 	return ns;
 }
 
@@ -54,7 +54,7 @@ net_socket_t * net_socket_create_sockaddr(struct sockaddr addr)
 	addr_to.sin_addr.s_addr = inet_addr(hostname);
 */
 	net_socket_t * ns = Z_malloc(sizeof(net_socket_t));
-	ns->addr = addr;
+	ns->addr_.addr = addr;
 	ns->sock = sock;
 	return ns;
 }
@@ -72,7 +72,7 @@ void net_socket_close(net_socket_t * net_sock)
  */
 void net_send(const net_socket_t * net_sock, void * buf, size_t size)
 {
-	if( sendto(net_sock->sock, buf, size, 0, &net_sock->addr, sizeof(net_sock->addr)) < 0 )
+	if( sendto(net_sock->sock, buf, size, 0, &net_sock->addr_.addr, sizeof(net_sock->addr_.addr)) < 0 )
 	{
 		game_halt("sendto()");
 	}
@@ -91,7 +91,7 @@ void * net_recv(const net_socket_t * net_sock, size_t * size, struct sockaddr * 
 	LOCK();
 	if(*addr_len <= 0)
 		*addr_len = sizeof(struct sockaddr);
-	int size_ = recvfrom(net_sock->sock, recv_buf, MAXCONTENTLENGTH, 0, addr, addr_len);
+	ssize_t size_ = recvfrom(net_sock->sock, recv_buf, MAXCONTENTLENGTH, 0, addr, addr_len);
 	if(size_ <= 0)
 	{
 		*size = 0;

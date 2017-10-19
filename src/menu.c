@@ -477,8 +477,6 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
 		}
 		break;
 	case MENU_GAME_SAVE_INPUT:
-		if(buffer_isEmpty())break;
-		buffer_key_t scancode = buffer_dequeue_nowait();
 		switch(scancode)
 		{
 		case SDL_SCANCODE_UNKNOWN: break;
