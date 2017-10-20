@@ -28,6 +28,7 @@ typedef struct net_socket_s
 } net_socket_t;
 
 extern net_socket_t * net_socket_create(short port, const char * hostname);
+extern int net_socket_bind(const net_socket_t * sock);
 extern net_socket_t * net_socket_create_sockaddr(struct sockaddr addr);
 void net_socket_close(net_socket_t * ns);
 

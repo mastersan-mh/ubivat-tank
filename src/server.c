@@ -382,10 +382,9 @@ void server_start(int flags)
 	{
 		game_halt("socket() failed");
 	}
-
-	if(bind(host_ns->sock, &host_ns->addr_.addr, sizeof(host_ns->addr_.addr)) < 0)
+	if(net_socket_bind(host_ns) < 0)
 	{
-		game_halt("bind");
+		game_halt("server bind() failed");
 	}
 
 	sv_state.allow_state_gamesave = true;

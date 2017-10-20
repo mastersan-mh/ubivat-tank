@@ -14,7 +14,7 @@
 
 #include "ent_player.h"
 
-extern client_t * clients;
+extern client_client_t * clients;
 
 bool cl_game_quit_get(void)
 {
@@ -42,6 +42,7 @@ void cl_game_action_showmenu(void)
 int cl_game_create(int flags)
 {
 	server_start(flags);
+	client_start(flags);
 	cl_state.show_menu = false;
 	return 0;
 }
@@ -130,7 +131,7 @@ static void client_game_draw_cam(camera_t * cam, entity_t * player)
 
 static void cl_draw(void)
 {
-	client_t * client;
+	client_client_t * client;
 
 
 

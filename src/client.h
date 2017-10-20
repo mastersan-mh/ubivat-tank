@@ -47,7 +47,7 @@ typedef struct client_s
 	struct client_s * next;
 
 	/* ассоциированный сокет */
-	net_socket_t * ns;
+	//net_socket_t * ns;
 	enum
 	{
 		CLIENT_AWAITING_CONNECTION,
@@ -60,7 +60,7 @@ typedef struct client_s
 	entity_t * entity;
 	camera_t cam;
 
-} client_t;
+} client_client_t;
 
 extern void cl_game_init(void);
 extern void cl_done(void);
@@ -68,7 +68,7 @@ extern void cl_done(void);
 extern int client_connect(void);
 extern void clients_initcams(void);
 
-extern void client_event_send(const client_t * client, const gclientevent_t * event);
+extern void client_event_send(const client_client_t * client, const gclientevent_t * event);
 extern void client_event_join_send(void);
 extern void client_event_control_send(int clientId, const char * action_name);
 extern void client_event_gameabort_send(void);

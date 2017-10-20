@@ -16,7 +16,7 @@
 #include <fcntl.h>
 
 /*
- *
+ * @param hostname = NULL - any address
  */
 net_socket_t * net_socket_create(short port, const char * hostname)
 {
@@ -28,17 +28,18 @@ net_socket_t * net_socket_create(short port, const char * hostname)
 	{
 		game_halt("fcntl() failed");
 	}
-
 	net_socket_t * ns = Z_malloc(sizeof(net_socket_t));
 	ns->sock = sock;
 	ns->addr_.addr_in.sin_family = AF_INET; // домены Internet
-	ns->addr_.addr_in.sin_port = htons(port); // или любой другой порт...
-	ns->addr_.addr_in.sin_addr.s_addr = inet_addr(hostname);
+	ns->addr_.addr_in.sin_port = htons(port);
+	ns->addr_.addr_in.sin_addr.s_addr = inet_addr (hostname ? hostname : INADDR_ANY);
 	return ns;
 }
 
-
-
+int net_socket_bind(const net_socket_t * sock)
+{
+	return bind(sock->sock, &sock->addr_.addr, sizeof(sock->addr_.addr));
+}
 
 net_socket_t * net_socket_create_sockaddr(struct sockaddr addr)
 {

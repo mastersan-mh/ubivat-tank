@@ -22,7 +22,9 @@
 
 client_state_t cl_state = {};
 
-client_t * clients = NULL;
+net_socket_t * client_ns = NULL;
+
+client_client_t * clients = NULL;
 
 void cl_game_init(void)
 {
@@ -94,16 +96,16 @@ void client_socket_event_send(const net_socket_t * ns, const gclientevent_t * ev
 
 }
 
-void client_event_send(const client_t * client, const gclientevent_t * event)
+void client_event_send(const client_client_t * client, const gclientevent_t * event)
 {
-	client_socket_event_send(client->ns, event);
+	client_socket_event_send(client_ns, event);
 }
 
 void client_event_join_send(void)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_JOIN;
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
@@ -117,7 +119,7 @@ void client_event_control_send(int clientId, const char * action_name)
 	event.type = GCLIENTEVENT_CONTROL;
 	strncpy(event.control.action, action_name, GAME_EVENT_CONTROL_ACTION_SIZE);
 
-	client_t * client;
+	client_client_t * client;
 	int num, i;
 	LIST2_FOREACH_I(clients, client, num);
 	if(clientId < 0 || clientId >= num)
@@ -131,7 +133,7 @@ void client_event_gameabort_send(void)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_GAMEABORT;
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
@@ -142,7 +144,7 @@ void client_event_nextgamestate_send(void)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_NEXTGAMESTATE;
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
@@ -154,7 +156,7 @@ void client_event_gamesave_save_send(int isave)
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_GAMESAVE_SAVE;
 	event.gamesave.isave = isave;
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
@@ -166,7 +168,7 @@ void client_event_gamesave_load_send(int isave)
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD;
 	event.gamesave.isave = isave;
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
@@ -178,16 +180,18 @@ void client_event_setgamemap_send(const char * mapname)
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_SVCTRL_SETGAMEMAP;
 	strncpy(event.setgamemap.mapname, mapname, MAP_FILENAME_SIZE);
-	client_t * client;
+	client_client_t * client;
 	LIST2_FOREACH(clients, client)
 	{
 		client_event_send(client, &event);
 	}
 }
 
-static void client_delete(client_t * client)
+static void client_delete(client_client_t * client)
 {
+	/* TODO
 	net_socket_close(client->ns);
+	*/
 	Z_free(client);
 }
 
@@ -198,12 +202,14 @@ static void client_delete(client_t * client)
  */
 int client_connect(void)
 {
+	/*
+	 TODO:
 	net_socket_t * ns = net_socket_create(NET_PORT, "127.0.0.1");
 	if(!ns)
 		return -1;
-
-	client_t * client = Z_malloc(sizeof(client_t));
-	client->ns = ns;
+*/
+	client_client_t * client = Z_malloc(sizeof(client_client_t));
+	/* TODO: client->ns = ns; */
 	client->state = CLIENT_AWAITING_CONNECTION;
 	client->time = time_current;
 
@@ -223,7 +229,7 @@ int client_connect(void)
  */
 void clients_initcams(void)
 {
-	client_t * client;
+	client_client_t * client;
 	size_t clients_num;
 	LIST2_FOREACH_I(clients, client, clients_num);
 
@@ -249,7 +255,7 @@ void clients_initcams(void)
 
 }
 
-static void client_disconnect(client_t * client)
+static void client_disconnect(client_client_t * client)
 {
 	gclientevent_t event;
 	event.type = GCLIENTEVENT_DISCONNECT;
@@ -273,117 +279,139 @@ static const char * gamestate_to_str(gamestate_t state)
 	return list[state];
 }
 
+void client_start(int flags)
+{
+	client_ns = net_socket_create(NET_PORT, "127.0.0.1");
+
+	if(client_ns == NULL)
+	{
+		game_halt("client socket() failed");
+	}
+	/*
+	if(net_socket_bind(client_ns) < 0)
+	{
+		game_halt("client bind() failed");
+	}
+	*/
+}
+
+
 /*
  * слушать хост, получать от него сообщения для клиентов
  */
 static void client_listen(void)
 {
+	if(!client_ns)
+		return;
+
 	struct sockaddr addr;
 	socklen_t addr_len = 0;
 	size_t buf_size;
 	char * buf = NULL;
 	size_t ofs;
 
-	client_t * client;
-	client_t * erased;
+	client_client_t * client;
+	client_client_t * erased;
 
 	ghostevent_t hevent;
 
 	char * entname;
 
-	LIST2_FOREACHM(clients, client, erased)
+	do
 	{
+		buf = net_recv(client_ns, &buf_size, &addr, &addr_len);
+		if(!buf)
+			break;
 
-		for(;client != NULL;)
+		LIST2_FOREACHM(clients, client, erased)
 		{
-			buf = net_recv(client->ns, &buf_size, &addr, &addr_len);
-			if(!buf)
-				break;
+
 			ofs = 0;
 
 			switch(client->state)
 			{
-				case CLIENT_AWAITING_CONNECTION:
+			case CLIENT_AWAITING_CONNECTION:
 
-					if(!buf)
+				if(!buf)
+				{
+					if(time_current - client->time > CLIENT_TIMEOUT)
 					{
-						if(time_current - client->time > CLIENT_TIMEOUT)
-						{
-							LIST2_FOREACHM_EXCLUDE(clients, client, erased);
-							client_delete(erased);
-						}
-						break;
+						LIST2_FOREACHM_EXCLUDE(clients, client, erased);
+						client_delete(erased);
 					}
+					break;
+				}
 
-					client->time = time_current;
-					if(buf[ofs] == GHOSTEVENT_CONNECTION_ACCEPTED)
+				client->time = time_current;
+				if(buf[ofs] == GHOSTEVENT_CONNECTION_ACCEPTED)
+				{
+					ofs++;
+					game_console_send("client: server accept connection at 0x%00000000x:%d.", client_ns->addr_.addr_in.sin_addr, ntohs(client_ns->addr_.addr_in.sin_port));
+					client->state = CLIENT_LISTEN;
+				}
+
+				break;
+			case CLIENT_LISTEN:
+				if(!buf)
+					break;
+				client->time = time_current;
+				hevent.type = buf[ofs++];
+
+				switch(hevent.type)
+				{
+				case GHOSTEVENT_INFO:
+					break;
+				case GHOSTEVENT_CONNECTION_ACCEPTED:
+					break;
+				case GHOSTEVENT_CONNECTION_CLOSE:
+					LIST2_FOREACHM_EXCLUDE(clients, client, erased);
+					client_delete(erased);
+					game_console_send("client: host closed the connection.");
+					break;
+				case GHOSTEVENT_GAMESTATE:
+					hevent.gamestate.state = buf[ofs];
+					cl_state.state = hevent.gamestate.state;
+					game_console_send("client: host change gamestate to %s.", gamestate_to_str(cl_state.state));
+
+					if(hevent.gamestate.state == GAMESTATE_INTERMISSION)
 					{
-						ofs++;
-						game_console_send("client: server accept connection at 0x%00000000x:%d.", client->ns->addr_.addr_in.sin_addr, ntohs(client->ns->addr_.addr_in.sin_port));
-						client->state = CLIENT_LISTEN;
+						game_console_send("client: host say: GAME WIN!");
+						cl_state.win = true;
 					}
 
 					break;
-				case CLIENT_LISTEN:
-					if(!buf)
-						break;
-					client->time = time_current;
-					hevent.type = buf[ofs++];
-
-					switch(hevent.type)
+				case GHOSTEVENT_SETPLAYERENTITY:
+					entname = &buf[ofs];
+					ofs += GAME_HOSTEVENT_ENTNAME_SIZE;
+					entity_t * clientent;
+					memcpy(&clientent, &buf[ofs], sizeof(entity_t*));
+					bool local_client = true;
+					if(local_client)
 					{
-						case GHOSTEVENT_INFO:
-							break;
-						case GHOSTEVENT_CONNECTION_ACCEPTED:
-							break;
-						case GHOSTEVENT_CONNECTION_CLOSE:
-							LIST2_FOREACHM_EXCLUDE(clients, client, erased);
-							client_delete(erased);
-							game_console_send("client: host closed the connection.");
-							break;
-						case GHOSTEVENT_GAMESTATE:
-							hevent.gamestate.state = buf[ofs];
-							cl_state.state = hevent.gamestate.state;
-							game_console_send("client: host change gamestate to %s.", gamestate_to_str(cl_state.state));
-
-							if(hevent.gamestate.state == GAMESTATE_INTERMISSION)
-							{
-								game_console_send("client: host say: GAME WIN!");
-								cl_state.win = true;
-							}
-
-							break;
-						case GHOSTEVENT_SETPLAYERENTITY:
-							entname = &buf[ofs];
-							ofs += GAME_HOSTEVENT_ENTNAME_SIZE;
-							entity_t * clientent;
-							memcpy(&clientent, &buf[ofs], sizeof(entity_t*));
-							bool local_client = true;
-							if(local_client)
-							{
-								client->entity = clientent;
-							}
-
-							break;
-						case GHOSTEVENT_GAMESAVE_LOADED:
-							cl_state.flags = buf[ofs];
-							if(cl_state.flags & GAMEFLAG_2PLAYERS)
-							{
-								client_connect();
-								clients_initcams();
-							}
-							break;
+						client->entity = clientent;
 					}
 
 					break;
+				case GHOSTEVENT_GAMESAVE_LOADED:
+					cl_state.flags = buf[ofs];
+					if(cl_state.flags & GAMEFLAG_2PLAYERS)
+					{
+						client_connect();
+						clients_initcams();
+					}
+					break;
+				}
+
+				break;
 
 			}
 			net_recv_free(buf);
+
+			LIST2_FOREACHM_NEXT(client, erased);
+
 		}
 
-		LIST2_FOREACHM_NEXT(client, erased);
-
-	}
+	} while(1);
 
 	if(clients == NULL)
 		cl_state.state = GAMESTATE_NOGAME;
