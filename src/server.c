@@ -433,7 +433,7 @@ static void server_listen(void)
 
 	size_t i;
 	ghostevent_t hevent;
-	gclientevent_t cevent;
+	game_client_request_data_t cevent;
 	//struct sockaddr sender_addr;
 
 	socklen_t sender_addr_len = sizeof(sender.addr);
@@ -643,7 +643,7 @@ static void server_listen(void)
 
 }
 
-void server()
+void server_handle()
 {
 	if(!server_run)
 		return;

@@ -87,12 +87,12 @@ static int conf_line_save(const input_key_t * keybind, void * userdata)
 	FILE *f = userdata;
 
 	char * cmd;
-	switch(keybind->clientId)
+	switch(keybind->playerId)
 	{
 	case 0: cmd = list[0]; break;
 	case 1: cmd = list[1]; break;
 	default:
-		game_halt("gconf_save(): invalid clientId %d.", keybind->clientId);
+		game_halt("gconf_save(): invalid playerId %d.", keybind->playerId);
 	}
 	if(keybind->actionsrc == INPUT_ACTIONSRC_STR)
 	{

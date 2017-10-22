@@ -14,8 +14,6 @@
 
 #include "ent_player.h"
 
-extern client_client_t * clients;
-
 bool cl_game_quit_get(void)
 {
 	return cl_state.quit;
@@ -49,7 +47,7 @@ int cl_game_create(int flags)
 
 void cl_game_abort(void)
 {
-	client_event_gameabort_send();
+	client_req_gameabort_send();
 }
 
 /*
@@ -131,16 +129,16 @@ static void client_game_draw_cam(camera_t * cam, entity_t * player)
 
 static void cl_draw(void)
 {
-	client_client_t * client;
+	client_player_t * player;
 
 
 
-	LIST2_FOREACH(clients, client)
+	LIST2_FOREACH(client.players, player)
 	{
-		entity_t * entity = client->entity;
+		entity_t * entity = player->entity;
 		if(entity)
 		{
-			camera_t * cam = &client->cam;
+			camera_t * cam = &player->cam;
 
 			video_viewport_set(
 				cam->x,

@@ -36,7 +36,7 @@ extern void net_send(const net_socket_t * sock, void * buf, size_t size);
 
 void * net_recv(const net_socket_t * net_sock, size_t * size, struct sockaddr * addr, socklen_t * addr_len);
 
-#define net_recv_free(buf) \
+#define net_pdu_free(buf) \
 		do \
 		{  \
 			Z_free(buf); \

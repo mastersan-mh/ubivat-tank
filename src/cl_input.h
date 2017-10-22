@@ -14,8 +14,8 @@ typedef enum
 
 typedef struct
 {
-	/* id игрока-клиента */
-	int clientId;
+	/* id игрока */
+	int playerId;
 	/* код клавиши */
 	int key;
 	input_actionsrc_t actionsrc;

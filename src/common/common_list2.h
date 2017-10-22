@@ -31,6 +31,11 @@
 				(ent)->next->prev = (ent)->prev; \
 		} while(0)
 
+/* добавить элемент в начало списка (не в цикле!) */
+#define LIST2_IS_EMPTY(list) \
+		(list == NULL)
+
+
 /* проход по элементам без удаления элементов */
 #define LIST2_FOREACH(list, ent) \
 	for((ent) = (list); (ent) != NULL; (ent) = (ent)->next)
@@ -57,7 +62,7 @@
 		if(!(erased) && (ent)) \
 			(ent) = (ent)->next;
 
-
+/* извлечение элемнта из списка во время прохождения в цикле */
 #define LIST2_FOREACHM_EXCLUDE(list, ent, erased) \
 		do \
 		{  \

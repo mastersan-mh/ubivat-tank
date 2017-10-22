@@ -322,7 +322,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 	client_connect();
 	clients_initcams();
 
-	client_event_setgamemap_send(cl_state.gamemap->map);
+	client_req_setgamemap_send(cl_state.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -341,10 +341,9 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
 	}
 
 	client_connect();
-	client_connect();
 	clients_initcams();
 
-	client_event_setgamemap_send(cl_state.gamemap->map);
+	client_req_setgamemap_send(cl_state.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -386,7 +385,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
 			client_connect();
 			clients_initcams();
 
-			client_event_gamesave_load_send(ctx->menu);
+			client_req_gamesave_load_send(ctx->menu);
 
 		}
 		/*
@@ -471,7 +470,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
 		case MENU_ACTION_LEAVE  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			cl_state.show_menu = false;
-			client_event_nextgamestate_send();
+			client_req_nextgamestate_send();
 			return MENU_MAIN;
 		case MENU_ACTION_SPACE  :break;
 		}
@@ -501,7 +500,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
 		}
 		break;
 	case MENU_GAME_SAVE_SAVE:
-		client_event_gamesave_save_send(ctx->menu);
+		client_req_gamesave_save_send(ctx->menu);
 		ctx->state = MENU_GAME_SAVE_SELECT;
 		break;
 	}
@@ -658,7 +657,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 	client_connect();
 	clients_initcams();
 
-	client_event_setgamemap_send(cl_state.custommap->map);
+	client_req_setgamemap_send(cl_state.custommap->map);
 
 	return MENU_MAIN;
 }
@@ -676,10 +675,9 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
 	}
 
 	client_connect();
-	client_connect();
 	clients_initcams();
 
-	client_event_setgamemap_send(cl_state.custommap->map);
+	client_req_setgamemap_send(cl_state.custommap->map);
 
 	return MENU_MAIN;
 }

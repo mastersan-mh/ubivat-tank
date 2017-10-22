@@ -209,8 +209,8 @@ void game_main(void)
 
 		video_screen_draw_begin();
 
-		server();
-		client();
+		server_handle();
+		client_handle();
 
 		font_color_set3i(COLOR_15);
 		video_printf(10,10, "FPS = %d", fps);

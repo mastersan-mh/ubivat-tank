@@ -143,7 +143,7 @@ void input_key_setState(int key, bool state)
 	if(func)
 		func();
 
-	int clientId = keyhash->collision[cindex].clientId;
+	int playerId = keyhash->collision[cindex].playerId;
 
 	switch(cl_state.state)
 	{
@@ -152,18 +152,18 @@ void input_key_setState(int key, bool state)
 		case GAMESTATE_MISSION_BRIEF:
 			if(!state) break;
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-			client_event_nextgamestate_send();
-			client_event_join_send();
+			client_req_nextgamestate_send();
+			client_req_join_send();
 			break;
 		case GAMESTATE_GAMESAVE:
 			break;
 		case GAMESTATE_INGAME:
 			if(action)
-				client_event_control_send(clientId, action);
+				client_player_action_send(playerId, action);
 			break;
 		case GAMESTATE_INTERMISSION:
 			if(!state) break;
-			client_event_nextgamestate_send();
+			client_req_nextgamestate_send();
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
 			break;
 	}
@@ -180,7 +180,7 @@ int input_key_get(int clientId, const char * action)
 		{
 			input_key_t * keybind = &keyhash->collision[cindex];
 			if(
-					keybind->clientId == clientId &&
+					keybind->playerId == clientId &&
 					keybind->actionsrc == INPUT_ACTIONSRC_STR &&
 					(
 							ACTIONCMP(keybind->action.str.press, action) ||
@@ -222,7 +222,7 @@ int input_key_bind_act(int clientId, int key, const char * action)
 		return -1;
 	cindex = hash_extend(keyhash);
 	input_key_t * keybind = &keyhash->collision[cindex];
-	keybind->clientId = clientId;
+	keybind->playerId = clientId;
 	keybind->key = key;
 	keybind->actionsrc = INPUT_ACTIONSRC_STR;
 	keybind->action.str.press = strdup(action);
@@ -346,7 +346,7 @@ void input_action_unbind(int clientId, const char * action)
 			input_key_t * keybind = &keyhash->collision[cindex];
 			if(
 					!(
-							keybind->clientId == clientId &&
+							keybind->playerId == clientId &&
 							keybind->actionsrc == INPUT_ACTIONSRC_STR &&
 							(
 									ACTIONCMP(keybind->action.str.press, action) ||
@@ -375,7 +375,7 @@ void input_action_unbind(int clientId, const char * action)
 					input_key_t * keybind = &keyhash->collision[cindex];
 					if(
 							(
-									keybind->clientId == clientId &&
+									keybind->playerId == clientId &&
 									keybind->actionsrc == INPUT_ACTIONSRC_STR &&
 									(
 											ACTIONCMP(keybind->action.str.press, action) ||

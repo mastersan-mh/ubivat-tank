@@ -15,21 +15,51 @@
 #define GAME_EVENT_CONTROL_ACTION_SIZE (64)
 #define GAME_HOSTEVENT_ENTNAME_SIZE (64)
 
+/** @brief Запросы клиента на сервер */
 typedef enum
 {
-	GCLIENTEVENT_DISCOVERYSERVER, /* найти серверы */
-	GCLIENTEVENT_CONNECT,
-	GCLIENTEVENT_DISCONNECT,
-	/* назначить игроку объект на карте */
-	GCLIENTEVENT_JOIN,
-	GCLIENTEVENT_CONTROL,
-	GCLIENTEVENT_SVCTRL_GAMEABORT,
-	/* перейти на следующее состояние, если допустимо */
-	GCLIENTEVENT_SVCTRL_NEXTGAMESTATE,
-	GCLIENTEVENT_SVCTRL_GAMESAVE_SAVE,
-	GCLIENTEVENT_SVCTRL_GAMESAVE_LOAD,
-	GCLIENTEVENT_SVCTRL_SETGAMEMAP,
-} gclienteventtype_t;
+	/** Непривилегированые запросы */
+	G_CLIENT_REQ_DISCOVERYSERVER, /**< найти серверы */
+	G_CLIENT_REQ_CONNECT,
+	G_CLIENT_REQ_DISCONNECT,
+	G_CLIENT_REQ_JOIN,     /**< назначить игроку объект на карте */
+	/** Привилегированные запросы */
+#define G_CLIENT_REQ_PRIVILEGED G_CLIENT_REQ_GAME_ABORT
+	G_CLIENT_REQ_GAME_ABORT,
+	G_CLIENT_REQ_GAME_SETMAP,
+	G_CLIENT_REQ_GAME_NEXTSTATE, /**< перейти на следующее состояние, если допустимо */
+	G_CLIENT_REQ_GAME_SAVE,
+	G_CLIENT_REQ_GAME_LOAD,
+} game_client_request_type_t;
+
+typedef union
+{
+	struct
+	{
+		int isave;
+	} GAME_SAVE;
+	struct
+	{
+		int isave;
+	} GAME_LOAD;
+	struct
+	{
+		char mapname[MAP_FILENAME_SIZE];
+	} GAME_SETMAP;
+} game_client_request_data_t;
+
+typedef struct
+{
+	game_client_request_type_t req;
+	game_client_request_data_t data;
+} game_client_request_t;
+
+/* Управление игроком */
+typedef enum
+{
+	G_CLIENT_PLAYER_REQ_NONE, /**< нет запроса */
+	G_CLIENT_PLAYER_REQ_CONTROL,
+} game_client_player_request_type_t;
 
 typedef enum
 {
@@ -45,28 +75,6 @@ typedef enum
 //#define CLIENT_MSG_SPAWN_ME 0x02
 #define CLIENT_MSG_PLAYER_ACTION 0x03
 */
-
-typedef struct
-{
-	/* тип события */
-	gclienteventtype_t type;
-	union
-	{
-		struct
-		{
-			char action[GAME_EVENT_CONTROL_ACTION_SIZE];
-		} control;
-		struct
-		{
-			int isave;
-		} gamesave;
-		struct
-		{
-			char mapname[MAP_FILENAME_SIZE];
-		} setgamemap;
-	};
-
-} gclientevent_t;
 
 typedef struct
 {

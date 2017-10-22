@@ -77,6 +77,6 @@ extern void server_restore_client_info(host_client_t * client);
 extern void server_start(int flags);
 extern void server_stop(void);
 
-extern void server(void);
+extern void server_handle(void);
 
 #endif /* SRC_SERVER_H_ */
