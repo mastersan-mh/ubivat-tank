@@ -11,7 +11,7 @@
 #include "sound.h"
 #include "common/common_list2.h"
 
-extern host_client_t * hclients;
+extern server_player_t * hclients;
 
 extern server_state_t sv_state;
 
@@ -45,7 +45,7 @@ void sv_game_win(void)
 {
 	bool alive = true;
 	// проверим что все игроки живы
-	host_client_t * client;
+	server_player_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
 		if( !client->entity->alive )
@@ -76,7 +76,7 @@ void sv_game_mainTick(void)
 	bool statechanged = false;
 	if(state_prev != sv_state.state)
 	{
-		host_setgamestate(sv_state.state);
+		server_setgamestate(sv_state.state);
 		state_prev = sv_state.state;
 		statechanged = true;
 	}

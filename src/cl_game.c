@@ -83,7 +83,7 @@ static void cl_game_state_intermission_draw(void)
 	video_printf(108,191,"НАЖМИ ПРОБЕЛ");
 
 	int i;
-	int num = host_client_num_get();
+	int num = server_client_num_get();
 
 	int refy;
 	if(num == 0) refy = 84;
@@ -97,15 +97,19 @@ static void cl_game_state_intermission_draw(void)
 */
 	for(i = 0; i < num; i++)
 	{
-		host_client_t * client = host_client_get(i);
+		server_client_t * client = server_client_get(i);
 		if(client)
 		{
-			long level = server_client_vardata_get(client, "level", VARTYPE_INTEGER)->value.i64;
-			video_image_draw(26, refy + 8 + 16 * i, list[level]);
-			font_color_set3i(COLOR_15);
-			video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64);
-			video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "frags", VARTYPE_INTEGER)->value.i64);
-			video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(client, "fragstotal", VARTYPE_INTEGER)->value.i64);
+			server_player_t * player;
+			LIST2_FOREACHR(client->players, player)
+			{
+				long level = server_client_vardata_get(player, "level", VARTYPE_INTEGER)->value.i64;
+				video_image_draw(26, refy + 8 + 16 * i, list[level]);
+				font_color_set3i(COLOR_15);
+				video_printf(48 + 8 *  0, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(player, "scores", VARTYPE_INTEGER)->value.i64);
+				video_printf(48 + 8 * 10, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(player, "frags", VARTYPE_INTEGER)->value.i64);
+				video_printf(48 + 8 * 21, refy + 8 + 4 + 16 * i, "%ld", server_client_vardata_get(player, "fragstotal", VARTYPE_INTEGER)->value.i64);
+			}
 		}
 	}
 }

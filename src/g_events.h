@@ -8,12 +8,11 @@
 #ifndef SRC_G_EVENTS_H_
 #define SRC_G_EVENTS_H_
 
-#include "entity.h"
+#include "map.h"
 #include "game.h"
-#include "g_gamesave.h"
 
-#define GAME_EVENT_CONTROL_ACTION_SIZE (64)
 #define GAME_HOSTEVENT_ENTNAME_SIZE (64)
+#define GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE (64)
 
 /** @brief Запросы клиента на сервер */
 typedef enum
@@ -61,6 +60,16 @@ typedef enum
 	G_CLIENT_PLAYER_REQ_CONTROL,
 } game_client_player_request_type_t;
 
+typedef struct
+{
+	struct
+	{
+		char action[GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE];
+	} CONTROL;
+} game_client_player_request_data_t;
+
+
+/* тип события */
 typedef enum
 {
 	GHOSTEVENT_INFO, /* информация о срвере на запрос GCLIENTEVENT_DISCOVERYSERVER */
@@ -69,45 +78,43 @@ typedef enum
 	GHOSTEVENT_GAMESTATE,
 	GHOSTEVENT_SETPLAYERENTITY,
 	GHOSTEVENT_GAMESAVE_LOADED,
-} ghosteventtype_t;
-/*
-#define CLIENT_MSG_CONNECT  0x01
-//#define CLIENT_MSG_SPAWN_ME 0x02
-#define CLIENT_MSG_PLAYER_ACTION 0x03
-*/
+} game_server_request_type_t;
+
+typedef union
+{
+	struct
+	{
+		int clients_num; /* количество клиентов на сервере */
+	} info;
+	struct
+	{
+		char pad[1];
+	} accepted;
+	struct
+	{
+		gamestate_t state;
+	} gamestate;
+	struct
+	{
+		uint8_t imenu;
+	} imenu;
+	struct
+	{
+		char entityname[GAME_HOSTEVENT_ENTNAME_SIZE];
+		void /*entity_t */ * entity;
+	} setplayerentity;
+	struct
+	{
+		int flags;
+	} gamesave_loaded;
+} game_server_request_data_t;
+
 
 typedef struct
 {
-	/* тип события */
-	ghosteventtype_t type;
-	union
-	{
-		struct
-		{
-			int clients_num; /* количество клиентов на сервере */
-		} info;
-		struct
-		{
-			char pad[1];
-		} accepted;
-		struct
-		{
-			gamestate_t state;
-		} gamestate;
-		struct
-		{
-			uint8_t imenu;
-		} imenu;
-		struct
-		{
-			char entityname[GAME_HOSTEVENT_ENTNAME_SIZE];
-			entity_t * entity;
-		} setplayerentity;
-		struct
-		{
-			int flags;
-		} gamesave_loaded;
-	};
-} ghostevent_t;
+	game_server_request_type_t req;
+	game_server_request_data_t data;
+} game_server_request_t;
+
 
 #endif /* SRC_G_EVENTS_H_ */

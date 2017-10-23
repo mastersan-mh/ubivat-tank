@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-extern host_client_t * hclients;
+extern server_player_t * hclients;
 extern server_state_t sv_state;
 
 /* список записей */
@@ -85,7 +85,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
  * чтение игрока
  * @return true | false
  */
-static int g_gamesave_load_player(int fd, host_client_t * client)
+static int g_gamesave_load_player(int fd, server_player_t * client)
 {
 	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
@@ -158,7 +158,7 @@ int g_gamesave_save(int isave)
 		return false;
 	}
 
-	host_client_t * client;
+	server_player_t * client;
 	LIST2_FOREACHR(hclients, client)
 	{
 		g_gamesave_save_player(fd, client->entity);
@@ -229,7 +229,7 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
 	int player_num = (ctx->flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
 
 	int i;
-	host_client_t * client;
+	server_player_t * client;
 	LIST2_FOREACH(hclients, client)
 	{
 		if(client->next == NULL)

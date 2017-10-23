@@ -43,6 +43,25 @@ void cl_done(void)
 
 }
 
+int client_player_num_get(void)
+{
+	client_player_t * player;
+	size_t clients_num;
+	LIST2_FOREACH_I(client.players, player, clients_num);
+	return clients_num;
+}
+
+client_player_t * client_player_get(int playerId)
+{
+	int num, i;
+	num = client_player_num_get();
+	if(playerId < 0 || playerId >= num)
+		return NULL;
+	client_player_t * player;
+	LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
+	return player;
+}
+
 void client_req_send(const game_client_request_t * req)
 {
 	if(client.req_queue_num >= CLIENT_REQ_QUEUE_SIZE)
@@ -61,18 +80,6 @@ void client_req_join_send(void)
 	client_req_send(&req);
 }
 
-client_player_t * client_player_get(int playerId)
-{
-	client_player_t * player;
-	int num, i;
-	LIST2_FOREACH_I(client.players, player, num);
-	if(playerId < 0 || playerId >= num)
-		return NULL;
-	LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
-	return player;
-}
-
-
 void client_player_action_send(int playerId, const char * action_name)
 {
 	client_player_t * player;
@@ -82,7 +89,7 @@ void client_player_action_send(int playerId, const char * action_name)
 		game_console_send("CLIENT: player %d events overflow.", playerId);
 		return;
 	}
-	strncpy(player->events[player->events_num].control.action, action_name, GAME_EVENT_CONTROL_ACTION_SIZE);
+	strncpy(player->events[player->events_num].CONTROL.action, action_name, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
 	player->events_num++;
 }
 
@@ -160,8 +167,7 @@ int client_connect(void)
 void clients_initcams(void)
 {
 	client_player_t * player;
-	size_t clients_num;
-	LIST2_FOREACH_I(client.players, player, clients_num);
+	int clients_num = client_player_num_get();
 
 	float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
 	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
@@ -232,7 +238,7 @@ void client_start(int flags)
 
 static void client_pdu_parse(char * buf, size_t buf_size)
 {
-	ghostevent_t hevent;
+	game_server_request_t hevent;
 	char * entname;
 	size_t ofs = 0;
 
@@ -262,9 +268,9 @@ static void client_pdu_parse(char * buf, size_t buf_size)
 		if(!buf)
 			break;
 		client.time = time_current;
-		hevent.type = buf[ofs++];
+		hevent.req = buf[ofs++];
 
-		switch(hevent.type)
+		switch(hevent.req)
 		{
 		case GHOSTEVENT_INFO:
 			break;
@@ -275,11 +281,11 @@ static void client_pdu_parse(char * buf, size_t buf_size)
 			game_console_send("client: host closed the connection.");
 			break;
 		case GHOSTEVENT_GAMESTATE:
-			hevent.gamestate.state = buf[ofs];
-			cl_state.state = hevent.gamestate.state;
+			hevent.data.gamestate.state = buf[ofs];
+			cl_state.state = hevent.data.gamestate.state;
 			game_console_send("client: host change gamestate to %s.", gamestate_to_str(cl_state.state));
 
-			if(hevent.gamestate.state == GAMESTATE_INTERMISSION)
+			if(hevent.data.gamestate.state == GAMESTATE_INTERMISSION)
 			{
 				game_console_send("client: host say: GAME WIN!");
 				cl_state.win = true;
@@ -321,7 +327,7 @@ static void client_pdu_parse(char * buf, size_t buf_size)
 
 
 
-static char *client_pdu_build(size_t * pdu_size)
+static char *client_pdu_build(size_t * buf_size)
 {
 #define PDU_PUSH(pdu, ofs, data, size) \
 		do { \
@@ -329,20 +335,20 @@ static char *client_pdu_build(size_t * pdu_size)
 			(ofs) += (size); \
 		} while (0);
 
-	char * pdu;
+	char * buf;
 	char * p;
 	size_t ofs = 0;
 
 	/* client requests */
 	uint16_t req_queue_num = htons(client.req_queue_num);
-	PDU_PUSH(pdu, ofs, &req_queue_num, sizeof(req_queue_num));
+	PDU_PUSH(buf, ofs, &req_queue_num, sizeof(req_queue_num));
 	for(size_t i = 0; i < client.req_queue_num; i++)
 	{
 		int16_t client_req;
 		int16_t isave;
 		game_client_request_t * req = &client.req_queue[i].req;
 		client_req = htons(req->req);
-		PDU_PUSH(pdu, ofs, &client_req, sizeof(client_req));
+		PDU_PUSH(buf, ofs, &client_req, sizeof(client_req));
 		switch(req->req)
 		{
 		/** Непривилегированые запросы */
@@ -354,17 +360,17 @@ static char *client_pdu_build(size_t * pdu_size)
 		case G_CLIENT_REQ_GAME_ABORT:
 			break;
 		case G_CLIENT_REQ_GAME_SETMAP:
-			PDU_PISH(pdu, ofs, req->data.GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
+			PDU_PUSH(buf, ofs, req->data.GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
 			break;
 		case G_CLIENT_REQ_GAME_NEXTSTATE:
 			break;
 		case G_CLIENT_REQ_GAME_SAVE:
 			isave = htons(req->data.GAME_SAVE.isave);
-			PDU_PISH(pdu, ofs, isave, sizeof(isave));
+			PDU_PUSH(buf, ofs, isave, sizeof(isave));
 			break;
 		case G_CLIENT_REQ_GAME_LOAD:
 			isave = htons(req->data.GAME_LOAD.isave);
-			PDU_PISH(pdu, ofs, isave, sizeof(isave));
+			PDU_PUSH(buf, ofs, isave, sizeof(isave));
 			break;
 		}
 	}
@@ -378,17 +384,17 @@ static char *client_pdu_build(size_t * pdu_size)
 		if(player->events_num == 0)
 		{
 			player_req = htons(G_CLIENT_PLAYER_REQ_NONE);
-			PDU_PUSH(pdu, ofs, &player_req, sizeof(player_req));
+			PDU_PUSH(buf, ofs, &player_req, sizeof(player_req));
 		}
 		else
 		{
 			player_req = htons(G_CLIENT_PLAYER_REQ_CONTROL);
-			PDU_PUSH(pdu, ofs, &player_req, sizeof(player_req));
-			uint16_t pdu_events_num = htons(player->events_num);
-			PDU_PUSH(pdu, ofs, &pdu_events_num, sizeof(pdu_events_num));
+			PDU_PUSH(buf, ofs, &player_req, sizeof(player_req));
+			uint16_t player_events_num = htons(player->events_num);
+			PDU_PUSH(buf, ofs, &player_events_num, sizeof(player_events_num));
 			for(size_t i = 0; i < player->events_num; i++)
 			{
-				PDU_PUSH(pdu, ofs, player->events[player->events_num].control.action, GAME_EVENT_CONTROL_ACTION_SIZE);
+				PDU_PUSH(buf, ofs, player->events[player->events_num].CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
 			}
 			player->events_num = 0;
 		}
@@ -409,15 +415,11 @@ static void client_listen(void)
 	size_t buf_size;
 	char * buf = NULL;
 
-	do
+	while((buf = net_recv(client.ns, &buf_size, &addr, &addr_len)))
 	{
-		buf = net_recv(client.ns, &buf_size, &addr, &addr_len);
-		if(!buf)
-			break;
 		client_pdu_parse(buf, buf_size);
 		net_pdu_free(buf);
-
-	} while(1);
+	}
 
 	buf = client_pdu_build(&buf_size);
 	net_send(client.ns, buf, buf_size);

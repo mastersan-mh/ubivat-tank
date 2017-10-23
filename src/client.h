@@ -45,14 +45,6 @@ extern client_state_t cl_state;
 
 #define CLIENT_REQ_QUEUE_SIZE 5
 
-typedef struct
-{
-	struct
-	{
-		char action[GAME_EVENT_CONTROL_ACTION_SIZE];
-	} control;
-} client_event_t;
-
 typedef struct client_player_s
 {
 	struct client_player_s * prev;
@@ -65,7 +57,7 @@ typedef struct client_player_s
 	camera_t cam;
 
 	size_t events_num;
-	client_event_t events[CLIENT_EVENTS_MAX];
+	game_client_player_request_data_t events[CLIENT_EVENTS_MAX];
 
 } client_player_t;
 
@@ -99,6 +91,9 @@ extern client_client_t client;
 
 extern void cl_game_init(void);
 extern void cl_done(void);
+
+extern int client_player_num_get(void);
+extern client_player_t * client_player_get(int playerId);
 
 extern void client_start(int flags);
 

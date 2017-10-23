@@ -8,10 +8,15 @@
 #ifndef SRC_SERVER_H_
 #define SRC_SERVER_H_
 
+#include "net.h"
+#include "g_events.h"
+
 #include "game.h"
 #include "net.h"
 #include "map.h"
 #include "vars.h"
+
+#define SERVER_TX_QUEUE_SIZE 16
 
 //состояние игры
 typedef struct
@@ -41,37 +46,63 @@ typedef struct host_client_s
 	/* сохраняемые переменные */
 	var_t * vars; /* vardata_t */
 
-	/* адрес клиента */
-	net_socket_t ns;
+} server_player_t;
+
+typedef struct
+{
+	game_server_request_t req;
+} server_tx_t;
+
+typedef struct server_client_s
+{
+	struct server_client_s * prev;
+	struct server_client_s * next;
+
 	/* клиент является главным, может управлять сервером.
 	 * только от него принимаются команды управления сервером.
 	 */
 	bool main;
-} host_client_t;
+
+	/* адрес клиента */
+	net_socket_t ns;
+
+	server_player_t * players;
+
+	size_t server_tx_queue_num;
+	server_tx_t server_tx_queue[SERVER_TX_QUEUE_SIZE];
+
+} server_client_t;
+
+typedef struct
+{
+	net_socket_t * ns;
+
+	server_client_t * clients;
+} server_t;
 
 #include "entity.h"
 
 extern void server_init(void);
 extern void server_done(void);
 
-extern int host_client_join(host_client_t * client);
-extern void host_clients_disconnect(void);
+extern int server_client_join(server_client_t * client);
+extern void server_clients_disconnect(void);
 
-extern int host_client_num_get(void);
+extern int server_client_num_get(void);
 
-extern void host_setgamestate(gamestate_t state);
+extern void server_setgamestate(gamestate_t state);
 
-extern vardata_t * server_client_vardata_get(host_client_t * client, const char * varname, vartype_t vartype);
+extern vardata_t * server_client_vardata_get(server_player_t * client, const char * varname, vartype_t vartype);
 
-extern host_client_t * host_client_get(int id);
+extern server_client_t * server_client_get(int id);
 
-extern void host_event_info_send(const net_socket_t * net_sock);
-extern void host_event_send_win(void);
-extern void host_event_cliententity_send(host_client_t * client);
-extern void host_event_gamestate_send(host_client_t * client, gamestate_t state);
+extern void server_event_info_send(server_client_t * client);
+extern void server_event_send_win(void);
+extern void server_event_cliententity_send(server_client_t * client);
+extern void server_event_gamestate_send(server_client_t * client, gamestate_t state);
 
 extern void server_unjoin_clients(void);
-extern void server_restore_client_info(host_client_t * client);
+extern void server_restore_client_info(server_player_t * client);
 
 
 extern void server_start(int flags);
