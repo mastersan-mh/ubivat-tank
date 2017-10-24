@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-extern server_player_t * hclients;
+extern server_t * server;
 extern server_state_t sv_state;
 
 /* список записей */
@@ -85,7 +85,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
  * чтение игрока
  * @return true | false
  */
-static int g_gamesave_load_player(int fd, server_player_t * client)
+static int g_gamesave_load_player(int fd, server_player_t * player)
 {
 	mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
 	if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
@@ -94,16 +94,16 @@ static int g_gamesave_load_player(int fd, server_player_t * client)
 	ssize_t c = read(fd, &savedata, sizeof(savedata));
 	if(c != sizeof(savedata))return false;
 
-	server_client_vardata_get(client, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
-	server_client_vardata_get(client, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
-	server_client_vardata_get(client, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
-	server_client_vardata_get(client, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
-	server_client_vardata_get(client, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
-	server_client_vardata_get(client, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
-	server_client_vardata_get(client, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
-	server_client_vardata_get(client, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
+	server_client_vardata_get(player, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
+	server_client_vardata_get(player, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
+	server_client_vardata_get(player, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
+	server_client_vardata_get(player, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
+	server_client_vardata_get(player, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
+	server_client_vardata_get(player, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
+	server_client_vardata_get(player, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
+	server_client_vardata_get(player, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
 
-	vars_dump(client->vars, "==== LOADED:");
+	vars_dump(player->vars, "==== LOADED:");
 	return 0;
 };
 
@@ -158,10 +158,14 @@ int g_gamesave_save(int isave)
 		return false;
 	}
 
-	server_player_t * client;
-	LIST2_FOREACHR(hclients, client)
+	server_client_t * client;
+	LIST2_FOREACHR(server->clients, client)
 	{
-		g_gamesave_save_player(fd, client->entity);
+		server_player_t * player;
+		LIST2_FOREACHR(client->players, player)
+		{
+			g_gamesave_save_player(fd, player->entity);
+		}
 	}
 
 	close(fd);
@@ -228,17 +232,19 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
 
 	int player_num = (ctx->flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
 
-	int i;
-	server_player_t * client;
-	LIST2_FOREACH(hclients, client)
+	int i = 0;
+	server_client_t * client;
+	LIST2_FOREACHR(server->clients, client)
 	{
-		if(client->next == NULL)
-			break;
-	}
-	for(i = 0; i < player_num; i++)
-	{
-		g_gamesave_load_player(ctx->fd, client);
-		client = client->prev;
+		server_player_t * player;
+		LIST2_FOREACHR(client->players, player)
+		{
+			g_gamesave_load_player(ctx->fd, player);
+			i++;
+			if(i >= player_num) break;
+
+		}
+		if(i >= player_num) break;
 	}
 	return 0;
 

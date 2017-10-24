@@ -10,6 +10,7 @@
 #include "vars.h"
 #include "g_events.h"
 #include "sv_game.h"
+#include "net_pdu.h"
 #include "net.h"
 #include "server.h"
 #include "game.h"
@@ -55,94 +56,53 @@ void server_done(void)
 
 }
 
-static void server_req_send(server_client_t * client, const game_server_request_t * req)
+static void server_req_send(server_client_t * client, const game_server_event_t * req)
 {
-
-	if(client->server_tx_queue_num >= SERVER_TX_QUEUE_SIZE)
+	if(client->tx_queue_num >= SERVER_TX_QUEUE_SIZE)
 	{
 		game_console_send("SERVER: TX queue overflow.");
 		return;
 	}
-
-	/*
-	 *
-	 * 	uint32_t nvalue32;
-	size_t buflen = 0;
-	char buf[sizeof(ghostevent_t)];
-	memset(buf, 0, sizeof(buf));
-	buf[buflen] = event->type;
-	buflen++;
-
-	switch(event->type)
-	{
-		case GHOSTEVENT_INFO:
-			nvalue32 = htonl( (uint32_t) event->info.clients_num );
-			memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
-			buflen += sizeof(nvalue32);
-			break;
-
-		case GHOSTEVENT_CONNECTION_ACCEPTED:
-			break;
-		case GHOSTEVENT_CONNECTION_CLOSE:
-			break;
-		case GHOSTEVENT_SETPLAYERENTITY:
-			strncpy(&buf[buflen], event->setplayerentity.entityname, GAME_HOSTEVENT_ENTNAME_SIZE);
-			buflen += GAME_HOSTEVENT_ENTNAME_SIZE;
-			size_t size = sizeof(entity_t*);
-			memcpy(&buf[buflen], &event->setplayerentity.entity, size);
-			buflen += size;
-			break;
-		case GHOSTEVENT_GAMESTATE:
-			buf[buflen++] = event->gamestate.state;
-			break;
-		case GHOSTEVENT_GAMESAVE_LOADED:
-			buf[buflen++] = event->gamesave_loaded.flags;
-			break;
-	}
-	 *
-	 */
-
-
-	client->server_tx_queue[client->server_tx_queue_num].req = *req;
-	client->server_tx_queue_num++;
+	client->tx_queue[client->tx_queue_num].req = *req;
+	client->tx_queue_num++;
 }
 
 void server_event_info_send(server_client_t * client)
 {
-	game_server_request_t req;
-	req.req = GHOSTEVENT_INFO;
-	req.data.info.clients_num = 0;
-	server_req_send(client, &req);
+    game_server_event_t event;
+    event.type = G_SERVER_EVENT_INFO;
+    event.data.INFO.clients_num = 0;
+    server_req_send(client, &event);
 }
 
 void server_event_cliententity_send(server_client_t * client)
 {
-	game_server_request_t req;
-	req.req = GHOSTEVENT_SETPLAYERENTITY;
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_PLAYER_ENTITY_SET;
 	server_player_t * player;
-	strncpy(req.data.setplayerentity.entityname, player->entity->info->name, GAME_HOSTEVENT_ENTNAME_SIZE);
-	req.data.setplayerentity.entity = player->entity;
-	server_req_send(client, &req);
+	strncpy(event.data.PLAYER_ENTITY_SET.entityname, player->entity->info->name, GAME_SERVER_EVENT_ENTNAME_SIZE);
+	event.data.PLAYER_ENTITY_SET.entity = player->entity;
+	server_req_send(client, &event);
 }
 
 void server_event_gamestate_send(server_client_t * client, gamestate_t state)
 {
 	sv_state.state = state;
-	game_server_request_t req;
-	req.req = GHOSTEVENT_GAMESTATE;
-	req.data.gamestate.state = state;
-	server_req_send(client, &req);
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_GAME_STATE_SET;
+	event.data.GAME_STATE_SET.state = state;
+	server_req_send(client, &event);
 }
 
 void host_event_gameload_loaded_send(int flags)
 {
-	game_server_request_t req;
-	req.req = GHOSTEVENT_GAMESAVE_LOADED;
-	req.data.gamesave_loaded.flags = flags;
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_GAME_LOADED;
+	event.data.GAME_LOADED.flags = flags;
 	server_client_t * client;
 	LIST2_FOREACH(server.clients, client)
 	{
-		server_req_send(client, &req);
+		server_req_send(client, &event);
 	}
 }
 
@@ -150,13 +110,13 @@ void host_event_gameload_loaded_send(int flags)
 void server_setgamestate(gamestate_t state)
 {
 	//sv_state.state = state;
-	game_server_request_t req;
-	req.req = GHOSTEVENT_GAMESTATE;
-	req.data.gamestate.state = state;
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_GAME_STATE_SET;
+	event.data.GAME_STATE_SET.state = state;
 	server_client_t * client;
 	LIST2_FOREACH(server.clients, client)
 	{
-		server_req_send(client, &req);
+		server_req_send(client, &event);
 	}
 }
 
@@ -186,9 +146,7 @@ vardata_t * server_client_vardata_get(server_player_t * client, const char * var
 }
 
 /**
- * подключение игрока к игре
- * @return id
- * @return -1 ошибка
+ * @brief сохранение информации о клиенте
  */
 static void server_client_info_store(server_player_t * client)
 {
@@ -274,7 +232,7 @@ static server_client_t * server_client_create(int sock, const net_addr_t * net_a
 	client->ns.sock = sock;
 	client->ns.addr_ = *net_addr;
 	client->players = NULL;
-	client->server_tx_queue_num = 0;
+	client->tx_queue_num = 0;
 	LIST2_PUSH(server.clients, client);
 
 	return client;
@@ -293,9 +251,9 @@ static void server_player_delete(server_player_t * player)
 
 static void server_client_disconnect(server_client_t * client)
 {
-	game_server_request_t req;
-	req.req = GHOSTEVENT_CONNECTION_CLOSE;
-	server_req_send(client, &req);
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_CONNECTION_CLOSE;
+	server_req_send(client, &event);
 
 	LIST2_UNLINK(server.clients, client);
 
@@ -304,14 +262,14 @@ static void server_client_disconnect(server_client_t * client)
 
 void server_clients_disconnect(void)
 {
-	game_server_request_t req;
-	req.req = GHOSTEVENT_CONNECTION_CLOSE;
-	server_client_t * client;
+	game_server_event_t event;
+	event.type = G_SERVER_EVENT_CONNECTION_CLOSE;
+	server_client_t * client = NULL;
 
 	while(!LIST2_IS_EMPTY(server.clients))
 	{
 		LIST2_UNLINK(server.clients, client);
-		server_req_send(client, &req);
+		server_req_send(client, &event);
 		server_client_delete(client);
 	}
 }
@@ -363,9 +321,6 @@ int server_client_join(server_client_t * client)
 	return 0;
 }
 
-/**
- * @description сохранение информации о клиенте
- */
 /**
  * восстановление информации о клиенте
  */
@@ -517,223 +472,274 @@ void server_client_control_handle()
 */
 }
 
-
-
-static void server_pdu_parse(char * buf, size_t buf_size)
+static void server_fsm(const game_client_request_t * req)
 {
-#define PDU_POP(data, pdu, ofs, size) \
-		do { \
-			memcpy((data), &(pdu)[(ofs)], (size)); \
-			(ofs) += (size); \
-		} while (0);
+    switch(req->type)
+    {
+    /** Непривилегированые запросы */
+    case G_CLIENT_REQ_DISCOVERYSERVER:
+        /*
+        host_event_info_send(ns);
+         */
+        break;
+    case G_CLIENT_REQ_CONNECT:
+    {
+        game_console_send("server: client request connection.");
+        //          game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
 
-	size_t sv_req_queue_num;
-	game_client_request_type_t sv_client_req_req;
-	game_client_request_data_t sv_client_req_data;
-	int isave;
+        net_addr_t sender;
 
-	size_t ofs = 0;
-	uint16_t req_queue_num;
+        bool mainclient = true;
+        //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
+        server_client_t * client = server_client_create(server.ns->sock, &sender, mainclient);
+        game_server_event_t event;
+        event.type = G_SERVER_EVENT_CONNECTION_ACCEPTED;
+        server_req_send(client, &event);
 
-	PDU_POP(&req_queue_num, buf, ofs, sizeof(req_queue_num));
-	sv_req_queue_num = ntohs(req_queue_num);
-	for(size_t i = 0; i < sv_req_queue_num; i++)
-	{
-		uint16_t client_req;
-		PDU_POP(&client_req, buf, ofs, sizeof(client_req));
-		sv_client_req_req = htons(client_req);
-		switch(sv_client_req_req)
-		{
-		/** Непривилегированые запросы */
-		case G_CLIENT_REQ_DISCOVERYSERVER:
-/*
-			host_event_info_send(ns);
-*/
-			break;
-		case G_CLIENT_REQ_CONNECT:
-		{
-			game_console_send("server: client request connection.");
-//			game_console_send("server: client request connection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+        server_event_gamestate_send(client, sv_state.state);
 
-			net_addr_t sender;
+        break;
+    }
+    case G_CLIENT_REQ_DISCONNECT:
+        //          game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
+        game_console_send("server: client request disconnection.");
+        break;
+    case G_CLIENT_REQ_JOIN:
+    {
+        net_addr_t sender;
 
-			bool mainclient = true;
-			//net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-			server_client_t * client = server_client_create(server.ns->sock, &sender, mainclient);
-			game_server_request_t req;
-			req.req = GHOSTEVENT_CONNECTION_ACCEPTED;
-			server_req_send(client, &req);
+        server_client_t * client = server_client_find_by_addr(&sender.addr);
+        if(!LIST2_IS_EMPTY(client->players))
+        {
+            game_console_send("server: client already joined.");
+            break;
+        }
+        if(server_client_join(client) != 0)
+        {
+            game_console_send("server: can not join client, no entity to spawn.");
+            break;
+        }
+        server_event_cliententity_send(client);
+        game_console_send("server: client joined to game.");
+        break;
+    }
+    /** Привилегированные запросы */
+    case G_CLIENT_REQ_GAME_ABORT:
+    {
+        net_addr_t sender;
 
-			server_event_gamestate_send(client, sv_state.state);
+        server_client_t * client = server_client_find_by_addr(&sender.addr);
+        if(!client || !client->main)
+            break;
+        game_console_send("server: client aborted game.");
+        sv_game_abort();
+        break;
+    }
+    case G_CLIENT_REQ_GAME_SETMAP:
+    {
+        const char * mapname = req->data.GAME_SETMAP.mapname;
+        sv_state.gamemap = map_find(mapname);
+        if(!sv_state.gamemap)
+        {
+            game_console_send("Error: Map \"%s\" not found.", mapname);
+            //game_abort();
+            break;
+        }
+        if(map_load(mapname))
+        {
+            game_console_send("Error: Could not load map \"%s\".", mapname);
+            //game_abort();
+        }
+        break;
+    }
+    case G_CLIENT_REQ_GAME_NEXTSTATE:
+    {
+        switch(sv_state.state)
+        {
+        case GAMESTATE_NOGAME:
+            break;
+        case GAMESTATE_MISSION_BRIEF:
+            if(sv_state.allow_state_gamesave)
+                sv_state.state = GAMESTATE_GAMESAVE;
+            else
+                sv_state.state = GAMESTATE_INGAME;
+            break;
+        case GAMESTATE_GAMESAVE:
+            sv_state.state = GAMESTATE_INGAME;
+            break;
+        case GAMESTATE_INGAME:
+            break;
+        case GAMESTATE_INTERMISSION:
+            sv_state.state = GAMESTATE_MISSION_BRIEF;
+            break;
+        }
+        break;
+    }
+    case G_CLIENT_REQ_GAME_SAVE:
+          g_gamesave_save(req->data.GAME_SAVE.isave);
+        break;
+    case G_CLIENT_REQ_GAME_LOAD:
+        sv_gamesave_load(req->data.GAME_LOAD.isave);
+        break;
+    }
 
-			break;
-		}
-		case G_CLIENT_REQ_DISCONNECT:
-//			game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port));
-			game_console_send("server: client request disconnection.");
-			break;
-		case G_CLIENT_REQ_JOIN:
-		{
-			net_addr_t sender;
-
-			server_client_t * client = server_client_find_by_addr(&sender.addr);
-			if(!LIST2_IS_EMPTY(client->players))
-			{
-				game_console_send("server: client already joined.");
-				break;
-			}
-			if(server_client_join(client) != 0)
-			{
-				game_console_send("server: can not join client, no entity to spawn.");
-				break;
-			}
-			server_event_cliententity_send(client);
-			game_console_send("server: client joined to game.");
-			break;
-		}
-		/** Привилегированные запросы */
-		case G_CLIENT_REQ_GAME_ABORT:
-		{
-			net_addr_t sender;
-
-			server_client_t * client = server_client_find_by_addr(&sender.addr);
-			if(!client || !client->main)
-				break;
-			game_console_send("server: client aborted game.");
-			sv_game_abort();
-		}
-
-			break;
-		case G_CLIENT_REQ_GAME_SETMAP:
-		{
-			game_client_request_data_t sv_client_req_data;
-			PDU_POP(sv_client_req_data.GAME_SETMAP.mapname, buf, ofs, MAP_FILENAME_SIZE);
-
-
-			{
-				char * mapname = &buf[ofs];
-				sv_state.gamemap = map_find(mapname);
-				if(!sv_state.gamemap)
-				{
-					game_console_send("Error: Map \"%s\" not found.", mapname);
-					//game_abort();
-					break;
-				}
-				if(map_load(mapname))
-				{
-					game_console_send("Error: Could not load map \"%s\".", mapname);
-					//game_abort();
-				}
-			}
-		}
-			break;
-		case G_CLIENT_REQ_GAME_NEXTSTATE:
-
-
-		{
-			switch(sv_state.state)
-			{
-			case GAMESTATE_NOGAME:
-				break;
-			case GAMESTATE_MISSION_BRIEF:
-				if(sv_state.allow_state_gamesave)
-					sv_state.state = GAMESTATE_GAMESAVE;
-				else
-					sv_state.state = GAMESTATE_INGAME;
-				break;
-			case GAMESTATE_GAMESAVE:
-				sv_state.state = GAMESTATE_INGAME;
-				break;
-			case GAMESTATE_INGAME:
-				break;
-			case GAMESTATE_INTERMISSION:
-				sv_state.state = GAMESTATE_MISSION_BRIEF;
-				break;
-			}
-		}
-
-
-		break;
-		case G_CLIENT_REQ_GAME_SAVE:
-			PDU_POP(&isave, buf, ofs, sizeof(isave));
-			sv_client_req_data.GAME_SAVE.isave = ntohs(isave);
-
-			{
-				g_gamesave_save(isave);
-			}
-
-			break;
-		case G_CLIENT_REQ_GAME_LOAD:
-			PDU_POP(&isave, buf, ofs, sizeof(isave));
-			sv_client_req_data.GAME_SAVE.isave = ntohs(isave);
-
-			{
-				sv_gamesave_load(isave);
-			}
-
-			break;
-		}
-
-	}
-
-	game_client_player_request_type_t sv_client_player_req_req;
-	game_client_player_request_data_t sv_client_player_req_data;
-
-	int16_t player_req;
-	uint16_t player_events_num;
-
-	PDU_POP(&player_req, buf, ofs, sizeof(player_req));
-	sv_client_player_req_req = ntohs(player_req);
-	switch(sv_client_player_req_req)
-	{
-	case G_CLIENT_PLAYER_REQ_NONE:
-		break;
-	case G_CLIENT_PLAYER_REQ_CONTROL:
-		PDU_POP(&player_events_num, buf, ofs, sizeof(player_events_num));
-		size_t sv_client_player_events_num = htons(player_events_num);
-		for(size_t i = 0; i < sv_client_player_events_num; i++)
-		{
-			PDU_POP(&sv_client_player_req_data.CONTROL.action, buf, ofs, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
-
-			server_client_control_handle();
-
-		}
-		break;
-	}
 }
+
+
+static int server_pdu_parse(const char * buf, size_t buf_len)
+{
+    size_t sv_req_queue_num;
+    game_client_request_t client_req;
+
+    size_t ofs = 0;
+    int16_t value16;
+
+    PDU_POP_BUF(&value16, sizeof(value16));
+    sv_req_queue_num = ntohs(value16);
+    for(size_t i = 0; i < sv_req_queue_num; i++)
+    {
+        PDU_POP_BUF(&value16, sizeof(value16));
+        client_req.type = htons(value16);
+        switch(client_req.type)
+        {
+        /** Непривилегированые запросы */
+        case G_CLIENT_REQ_DISCOVERYSERVER:
+        case G_CLIENT_REQ_CONNECT:
+        case G_CLIENT_REQ_DISCONNECT:
+        case G_CLIENT_REQ_JOIN:
+        /** Привилегированные запросы */
+        case G_CLIENT_REQ_GAME_ABORT:
+            break;
+        case G_CLIENT_REQ_GAME_SETMAP:
+            PDU_POP_BUF(client_req.data.GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
+            break;
+        case G_CLIENT_REQ_GAME_NEXTSTATE:
+            break;
+        case G_CLIENT_REQ_GAME_SAVE:
+            PDU_POP_BUF(&value16, sizeof(value16));
+            client_req.data.GAME_SAVE.isave = ntohs(value16);
+            break;
+        case G_CLIENT_REQ_GAME_LOAD:
+            PDU_POP_BUF(&value16, sizeof(value16));
+            client_req.data.GAME_LOAD.isave = ntohs(value16);
+            break;
+        }
+        server_fsm(&client_req);
+    }
+
+    game_client_player_request_type_t sv_client_player_req_req;
+    game_client_player_request_data_t sv_client_player_req_data;
+
+    PDU_POP_BUF(&value16, sizeof(value16));
+    sv_client_player_req_req = ntohs(value16);
+    switch(sv_client_player_req_req)
+    {
+    case G_CLIENT_PLAYER_REQ_NONE:
+        break;
+    case G_CLIENT_PLAYER_REQ_CONTROL:
+        PDU_POP_BUF(&value16, sizeof(value16));
+        size_t sv_client_player_events_num = htons(value16);
+        for(size_t i = 0; i < sv_client_player_events_num; i++)
+        {
+            PDU_POP_BUF(&sv_client_player_req_data.CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
+
+            server_client_control_handle();
+
+        }
+        break;
+    }
+    return 0;
+}
+
+int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size)
+{
+    int16_t value16;
+    size_t i;
+    size_t ofs = 0;
+
+    value16 = htons(client->tx_queue_num);
+    PDU_PUSH_BUF(&value16, sizeof(value16));
+
+    for(i = 0; i < client->tx_queue_num; i++)
+    {
+        game_server_event_t *event = &client->tx_queue[i].req;
+        value16 = htons(event->type);
+        PDU_PUSH_BUF(&value16, sizeof(value16));
+        switch(event->type)
+        {
+        case G_SERVER_EVENT_INFO:
+            /*
+            nvalue32 = htonl( (uint32_t) event->info.clients_num );
+            memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
+            buflen += sizeof(nvalue32);
+            */
+            break;
+        case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+        case G_SERVER_EVENT_CONNECTION_CLOSE:
+            break;
+        case G_SERVER_EVENT_GAME_STATE_SET:
+            value16 = htons(event->data.GAME_STATE_SET.state);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            break;
+        case G_SERVER_EVENT_GAME_LOADED:
+            value16 = htons(event->data.GAME_LOADED.flags);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            break;
+        case G_SERVER_EVENT_PLAYER_ENTITY_SET:
+            PDU_PUSH_BUF(event->data.PLAYER_ENTITY_SET.entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+            PDU_PUSH_BUF(event->data.PLAYER_ENTITY_SET.entity, sizeof(event->data.PLAYER_ENTITY_SET.entity));
+            break;
+        }
+    }
+    client->tx_queue_num = 0;
+    return 0;
+}
+
 
 static void server_listen(void)
 {
+    static char buf[PDU_BUF_SIZE];
 
-	net_addr_t sender;
+    int err;
 
-	game_server_request_t req;
-	//struct sockaddr sender_addr;
+    net_addr_t sender;
 
-	socklen_t sender_addr_len = sizeof(sender.addr);
+    //struct sockaddr sender_addr;
 
-	/*
-	 * https://www.linux.org.ru/forum/development/10072313
-	 */
+    socklen_t sender_addr_len = sizeof(sender.addr);
 
-	// буфур для приема
-	char buf[2048];
+    /*
+     * https://www.linux.org.ru/forum/development/10072313
+     */
 
-	size_t maxcontentlength = 512;
-	ssize_t buf_size;
-	while( (buf_size = recvfrom(server.ns->sock, buf, maxcontentlength, 0, &sender.addr, &sender_addr_len)) > 0 )
-	{
-		server_pdu_parse(buf, buf_size);
-	}
+    size_t buf_len;
+    ssize_t size_;
+    while( (size_ = recvfrom(server.ns->sock, buf, PDU_BUF_SIZE, 0, &sender.addr, &sender_addr_len)) > 0 )
+    {
+        buf_len = size_;
+        err = server_pdu_parse(buf, buf_len);
+        if(err)
+        {
+            game_console_send("CLIENT: TX PDU parse error.");
+        }
 
-	server_client_t * client;
-	LIST2_FOREACH(server.clients, client)
-	{
-		buf = server_pdu_build(client, &buf_size);
-		net_send(client->ns, buf, buf_size);
-		net_pdu_free(buf);
-	}
+    }
 
+    server_client_t * client;
+    LIST2_FOREACH(server.clients, client)
+    {
+        err = server_pdu_build(client, buf, &buf_len, PDU_BUF_SIZE);
+        if(err)
+        {
+            game_console_send("SERVER: client TX buffer overflow");
+            return;
+        }
+        if(buf_len > 0)
+        {
+            net_send(&client->ns, buf, buf_len);
+        }
+
+    }
 }
 
 void server_handle()

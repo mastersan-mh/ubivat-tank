@@ -98,7 +98,7 @@ extern client_player_t * client_player_get(int playerId);
 extern void client_start(int flags);
 
 extern int client_connect(void);
-extern void clients_initcams(void);
+extern void client_initcams(void);
 
 extern void client_req_send(const game_client_request_t * req);
 extern void client_req_join_send(void);

@@ -50,7 +50,7 @@ typedef struct host_client_s
 
 typedef struct
 {
-	game_server_request_t req;
+	game_server_event_t req;
 } server_tx_t;
 
 typedef struct server_client_s
@@ -68,8 +68,8 @@ typedef struct server_client_s
 
 	server_player_t * players;
 
-	size_t server_tx_queue_num;
-	server_tx_t server_tx_queue[SERVER_TX_QUEUE_SIZE];
+	size_t tx_queue_num;
+	server_tx_t tx_queue[SERVER_TX_QUEUE_SIZE];
 
 } server_client_t;
 

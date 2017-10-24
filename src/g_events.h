@@ -11,7 +11,7 @@
 #include "map.h"
 #include "game.h"
 
-#define GAME_HOSTEVENT_ENTNAME_SIZE (64)
+#define GAME_SERVER_EVENT_ENTNAME_SIZE (64)
 #define GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE (64)
 
 /** @brief Запросы клиента на сервер */
@@ -49,7 +49,7 @@ typedef union
 
 typedef struct
 {
-	game_client_request_type_t req;
+	game_client_request_type_t type;
 	game_client_request_data_t data;
 } game_client_request_t;
 
@@ -72,49 +72,41 @@ typedef struct
 /* тип события */
 typedef enum
 {
-	GHOSTEVENT_INFO, /* информация о срвере на запрос GCLIENTEVENT_DISCOVERYSERVER */
-	GHOSTEVENT_CONNECTION_ACCEPTED,
-	GHOSTEVENT_CONNECTION_CLOSE,
-	GHOSTEVENT_GAMESTATE,
-	GHOSTEVENT_SETPLAYERENTITY,
-	GHOSTEVENT_GAMESAVE_LOADED,
-} game_server_request_type_t;
+    G_SERVER_EVENT_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
+    G_SERVER_EVENT_CONNECTION_ACCEPTED,
+    G_SERVER_EVENT_CONNECTION_CLOSE,
+    G_SERVER_EVENT_GAME_STATE_SET,
+    G_SERVER_EVENT_GAME_LOADED,
+    G_SERVER_EVENT_PLAYER_ENTITY_SET,
+} game_server_event_type_t;
 
 typedef union
 {
-	struct
-	{
-		int clients_num; /* количество клиентов на сервере */
-	} info;
-	struct
-	{
-		char pad[1];
-	} accepted;
-	struct
-	{
-		gamestate_t state;
-	} gamestate;
-	struct
-	{
-		uint8_t imenu;
-	} imenu;
-	struct
-	{
-		char entityname[GAME_HOSTEVENT_ENTNAME_SIZE];
-		void /*entity_t */ * entity;
-	} setplayerentity;
-	struct
-	{
-		int flags;
-	} gamesave_loaded;
-} game_server_request_data_t;
+    struct
+    {
+        int clients_num; /* количество клиентов на сервере */
+    } INFO;
+    struct
+    {
+        gamestate_t state;
+    } GAME_STATE_SET;
+    struct
+    {
+        int flags;
+    } GAME_LOADED;
+    struct
+    {
+        char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
+        void /*entity_t */ * entity;
+    } PLAYER_ENTITY_SET;
+} game_server_event_data_t;
 
 
 typedef struct
 {
-	game_server_request_type_t req;
-	game_server_request_data_t data;
-} game_server_request_t;
+	game_server_event_type_t type;
+	game_server_event_data_t data;
+} game_server_event_t;
 
 
 #endif /* SRC_G_EVENTS_H_ */

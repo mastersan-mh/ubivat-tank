@@ -320,7 +320,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 	}
 
 	client_connect();
-	clients_initcams();
+	client_initcams();
 
 	client_req_setgamemap_send(cl_state.gamemap->map);
 
@@ -341,7 +341,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
 	}
 
 	client_connect();
-	clients_initcams();
+	client_initcams();
 
 	client_req_setgamemap_send(cl_state.gamemap->map);
 
@@ -383,7 +383,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
 			}
 
 			client_connect();
-			clients_initcams();
+			client_initcams();
 
 			client_req_gamesave_load_send(ctx->menu);
 
@@ -655,7 +655,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 	}
 
 	client_connect();
-	clients_initcams();
+	client_initcams();
 
 	client_req_setgamemap_send(cl_state.custommap->map);
 
@@ -675,7 +675,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
 	}
 
 	client_connect();
-	clients_initcams();
+	client_initcams();
 
 	client_req_setgamemap_send(cl_state.custommap->map);
 
