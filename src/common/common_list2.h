@@ -21,8 +21,7 @@
 
 /* исключение элемента из списка (не в цикле!) */
 #define LIST2_UNLINK(list, ent) \
-		do \
-		{  \
+		do { \
 			if((ent) == (list))        \
 				(list) = (list)->next; \
 			if((ent)->prev)            \
@@ -31,9 +30,9 @@
 				(ent)->next->prev = (ent)->prev; \
 		} while(0)
 
-/* добавить элемент в начало списка (не в цикле!) */
+/* Список пустой? */
 #define LIST2_IS_EMPTY(list) \
-		(list == NULL)
+		((list) == NULL)
 
 
 /* проход по элементам без удаления элементов */

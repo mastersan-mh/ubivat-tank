@@ -21,63 +21,63 @@
 //состояние игры
 typedef struct
 {
-	gamestate_t state;
+    gamestate_t state;
 
-	char * msg;
-	/* флаги состояния игры */
-	int flags;
-	bool paused;
+    char * msg;
+    /* флаги состояния игры */
+    int flags;
+    bool paused;
 
-	maplist_t * gamemap;
-	maplist_t * custommap;
-/* Разрешить переход на состояние сохранения игры.
+    maplist_t * gamemap;
+    maplist_t * custommap;
+    /* Разрешить переход на состояние сохранения игры.
    Если игра была только что прочитана, её не нужно сохранять */
-	bool allow_state_gamesave;
+    bool allow_state_gamesave;
 } server_state_t;
 
 typedef struct host_client_s
 {
-	struct host_client_s * prev;
-	struct host_client_s * next;
+    struct host_client_s * prev;
+    struct host_client_s * next;
 
-	struct entity_s * entity;
-	void * userstoredata;
+    struct entity_s * entity;
+    void * userstoredata;
 
-	/* сохраняемые переменные */
-	var_t * vars; /* vardata_t */
+    /* сохраняемые переменные */
+    var_t * vars; /* vardata_t */
 
 } server_player_t;
 
 typedef struct
 {
-	game_server_event_t req;
+    game_server_event_t req;
 } server_tx_t;
 
 typedef struct server_client_s
 {
-	struct server_client_s * prev;
-	struct server_client_s * next;
+    struct server_client_s * prev;
+    struct server_client_s * next;
 
-	/* клиент является главным, может управлять сервером.
-	 * только от него принимаются команды управления сервером.
-	 */
-	bool main;
+    /* клиент является главным, может управлять сервером.
+     * только от него принимаются команды управления сервером.
+     */
+    bool main;
+    /* адрес клиента */
+    net_socket_t ns;
 
-	/* адрес клиента */
-	net_socket_t ns;
+    int players_num;
+    server_player_t * players;
 
-	server_player_t * players;
-
-	size_t tx_queue_num;
-	server_tx_t tx_queue[SERVER_TX_QUEUE_SIZE];
+    size_t tx_queue_num;
+    server_tx_t tx_queue[SERVER_TX_QUEUE_SIZE];
 
 } server_client_t;
 
 typedef struct
 {
-	net_socket_t * ns;
+    net_socket_t * ns;
 
-	server_client_t * clients;
+    server_client_t * clients;
 } server_t;
 
 #include "entity.h"
@@ -85,8 +85,7 @@ typedef struct
 extern void server_init(void);
 extern void server_done(void);
 
-extern int server_client_join(server_client_t * client);
-extern void server_clients_disconnect(void);
+extern int server_client_join(server_client_t * client, int players_num);
 
 extern int server_client_num_get(void);
 

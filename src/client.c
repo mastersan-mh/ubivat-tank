@@ -76,22 +76,27 @@ void client_req_send(const game_client_request_t * req)
 
 void client_req_join_send(void)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_JOIN;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_JOIN;
+    req.data.JOIN.players_num = (cl_state.flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    client_req_send(&req);
 }
 
 void client_player_action_send(int playerId, const char * action_name)
 {
-	client_player_t * player;
-	player = client_player_get(playerId);
-	if(player->events_num >= CLIENT_EVENTS_MAX)
-	{
-		game_console_send("CLIENT: player %d events overflow.", playerId);
-		return;
-	}
-	strncpy(player->events[player->events_num].CONTROL.action, action_name, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
-	player->events_num++;
+    client_player_t * player = client_player_get(playerId);
+    if(!player)
+    {
+        /* клавиша игрока, которого нет */
+        return;
+    }
+    if(player->events_num >= CLIENT_EVENTS_MAX)
+    {
+        game_console_send("CLIENT: player %d events overflow.", playerId);
+        return;
+    }
+    strncpy(player->events[player->events_num].CONTROL.action, action_name, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
+    player->events_num++;
 }
 
 void client_req_gameabort_send(void)
@@ -194,16 +199,17 @@ void client_initcams(void)
 
 static void client_disconnect(void)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_DISCONNECT;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_DISCONNECT;
+    client_req_send(&req);
 
-	client_player_t * player = NULL;
-	while(!LIST2_IS_EMPTY(client.players))
-	{
-		LIST2_UNLINK(client.players, player);
-		client_player_delete(player);
-	}
+    client_player_t * player;
+    while(!LIST2_IS_EMPTY(client.players))
+    {
+        player = client.players;
+        LIST2_UNLINK(client.players, player);
+        client_player_delete(player);
+    }
 }
 
 static const char * gamestate_to_str(gamestate_t state)
@@ -284,26 +290,24 @@ static void client_fsm(const game_server_event_t * event)
 
             if(cl_state.state == GAMESTATE_INTERMISSION)
             {
-                game_console_send("client: server say: GAME WIN!");
+                game_console_send("client: server say: PLAYER WIN!");
                 cl_state.win = true;
             }
 
             break;
         case G_SERVER_EVENT_PLAYER_ENTITY_SET:
         {
-            entity_t * clientent = event->data.PLAYER_ENTITY_SET.entity;
-            bool local_client = true;
-            if(local_client)
+            int player_num = event->data.PLAYER_ENTITY_SET.player2 ? 2 : 1;
+
+            for(int i = 0; i < player_num; i++)
             {
-                client_player_get(0)->entity = clientent;
-            }
-            /*
-                memcpy(&clientent, &buf[ofs], sizeof(entity_t*));
+                entity_t * clientent = event->data.PLAYER_ENTITY_SET.ent[i].entity;
+                bool local_client = true;
                 if(local_client)
                 {
-                    client_player_get(1)->entity = clientent;
+                    client_player_get(i)->entity = clientent;
                 }
-            */
+            }
             break;
         }
         case G_SERVER_EVENT_GAME_LOADED:
@@ -354,8 +358,17 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
             reply.data.GAME_LOADED.flags = ntohs(value16);
             break;
         case G_SERVER_EVENT_PLAYER_ENTITY_SET:
-            PDU_POP_BUF(reply.data.PLAYER_ENTITY_SET.entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-            PDU_POP_BUF(reply.data.PLAYER_ENTITY_SET.entity, sizeof(reply.data.PLAYER_ENTITY_SET.entity));
+
+            PDU_POP_BUF(&value16, sizeof(value16));
+            reply.data.PLAYER_ENTITY_SET.player2 = ntohs(value16);
+
+            int player_num = reply.data.PLAYER_ENTITY_SET.player2 ? 2 : 1;
+            for(int i = 0; i < player_num; i++)
+            {
+                PDU_POP_BUF(reply.data.PLAYER_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                PDU_POP_BUF(&reply.data.PLAYER_ENTITY_SET.ent[i].entity, sizeof(reply.data.PLAYER_ENTITY_SET.ent[i].entity));
+            }
+
             break;
         }
 
@@ -386,9 +399,15 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
         {
         /** Непривилегированые запросы */
         case G_CLIENT_REQ_DISCOVERYSERVER:
+            break;
         case G_CLIENT_REQ_CONNECT:
+            break;
         case G_CLIENT_REQ_DISCONNECT:
+            break;
         case G_CLIENT_REQ_JOIN:
+            value16 = ntohs(req->data.JOIN.players_num);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            break;
             /** Привилегированные запросы */
         case G_CLIENT_REQ_GAME_ABORT:
             break;
@@ -426,7 +445,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
             PDU_PUSH_BUF(&value16, sizeof(value16));
             for(size_t i = 0; i < player->events_num; i++)
             {
-                PDU_PUSH_BUF(player->events[player->events_num].CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
+                PDU_PUSH_BUF(player->events[i].CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
             }
             player->events_num = 0;
         }

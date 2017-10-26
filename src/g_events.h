@@ -33,6 +33,10 @@ typedef enum
 
 typedef union
 {
+    struct
+    {
+        int players_num;
+    } JOIN;
 	struct
 	{
 		int isave;
@@ -68,6 +72,11 @@ typedef struct
 	} CONTROL;
 } game_client_player_request_data_t;
 
+typedef struct
+{
+    game_client_player_request_type_t type;
+    game_client_player_request_data_t data;
+} game_client_player_request_t;
 
 /* тип события */
 typedef enum
@@ -96,8 +105,12 @@ typedef union
     } GAME_LOADED;
     struct
     {
-        char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
-        void /*entity_t */ * entity;
+        bool player2;
+        struct
+        {
+            char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
+            void /*entity_t */ * entity;
+        } ent[2];
     } PLAYER_ENTITY_SET;
 } game_server_event_data_t;
 

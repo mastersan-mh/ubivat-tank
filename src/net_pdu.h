@@ -16,7 +16,7 @@
 
 #define PDU_POP_PROTECT(ofs, data_size, buf_len) \
         do { \
-            if( (ofs) + (data_size) >= (buf_len)) return -1; \
+            if( (ofs) + (data_size) > (buf_len)) return -1; \
         } while (0)
 
 #define PDU_POP_BUF(data, data_size) \
@@ -35,7 +35,7 @@
 
 #define PDU_PUSH_PROTECT(ofs, data_size, buf_size) \
         do { \
-            if( (ofs) + (data_size) >= (buf_size)) return -1; \
+            if( (ofs) + (data_size) > (buf_size)) return -1; \
         } while (0)
 
 #define PDU_PUSH_BUF(data, data_size) \
