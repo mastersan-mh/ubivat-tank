@@ -27,15 +27,15 @@ client_client_t client = {};
 
 void cl_game_init(void)
 {
-	cl_state.quit = false;
+    cl_state.quit = false;
 
-	cl_state.imenu = MENU_MAIN;
+    cl_state.imenu = MENU_MAIN;
 
-	cl_state.msg       = NULL;
-	cl_state.state     = GAMESTATE_NOGAME;
-	cl_state.show_menu = true;
-	cl_state.custommap = mapList;
-	cl_state.gamemap   = mapList;
+    cl_state.msg       = NULL;
+    cl_state.state     = GAMESTATE_NOGAME;
+    cl_state.show_menu = true;
+    cl_state.custommap = mapList;
+    cl_state.gamemap   = mapList;
 
 }
 
@@ -46,32 +46,32 @@ void cl_done(void)
 
 int client_player_num_get(void)
 {
-	client_player_t * player;
-	size_t clients_num;
-	LIST2_FOREACH_I(client.players, player, clients_num);
-	return clients_num;
+    client_player_t * player;
+    size_t clients_num;
+    LIST2_FOREACH_I(client.players, player, clients_num);
+    return clients_num;
 }
 
 client_player_t * client_player_get(int playerId)
 {
-	int num, i;
-	num = client_player_num_get();
-	if(playerId < 0 || playerId >= num)
-		return NULL;
-	client_player_t * player;
-	LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
-	return player;
+    int num, i;
+    num = client_player_num_get();
+    if(playerId < 0 || playerId >= num)
+        return NULL;
+    client_player_t * player;
+    LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
+    return player;
 }
 
 void client_req_send(const game_client_request_t * req)
 {
-	if(client.req_queue_num >= CLIENT_REQ_QUEUE_SIZE)
-	{
-		game_console_send("CLIENT: REQ queue overflow.");
-		return;
-	}
-	client.req_queue[client.req_queue_num].req = *req;
-	client.req_queue_num++;
+    if(client.req_queue_num >= CLIENT_REQ_QUEUE_SIZE)
+    {
+        game_console_send("CLIENT: REQ queue overflow.");
+        return;
+    }
+    client.req_queue[client.req_queue_num].req = *req;
+    client.req_queue_num++;
 }
 
 void client_req_join_send(void)
@@ -101,45 +101,45 @@ void client_player_action_send(int playerId, const char * action_name)
 
 void client_req_gameabort_send(void)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_GAME_ABORT;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_GAME_ABORT;
+    client_req_send(&req);
 }
 
 void client_req_nextgamestate_send(void)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_GAME_NEXTSTATE;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_GAME_NEXTSTATE;
+    client_req_send(&req);
 }
 
 void client_req_gamesave_save_send(int isave)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_GAME_SAVE;
-	req.data.GAME_SAVE.isave = isave;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_GAME_SAVE;
+    req.data.GAME_SAVE.isave = isave;
+    client_req_send(&req);
 }
 
 void client_req_gamesave_load_send(int isave)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_GAME_LOAD;
-	req.data.GAME_LOAD.isave = isave;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_GAME_LOAD;
+    req.data.GAME_LOAD.isave = isave;
+    client_req_send(&req);
 }
 
 void client_req_setgamemap_send(const char * mapname)
 {
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_GAME_SETMAP;
-	strncpy(req.data.GAME_SETMAP.mapname, mapname, MAP_FILENAME_SIZE);
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_GAME_SETMAP;
+    strncpy(req.data.GAME_SETMAP.mapname, mapname, MAP_FILENAME_SIZE);
+    client_req_send(&req);
 }
 
 static void client_player_delete(client_player_t * player)
 {
-	Z_free(player);
+    Z_free(player);
 }
 
 /**
@@ -148,23 +148,23 @@ static void client_player_delete(client_player_t * player)
  */
 int client_connect(void)
 {
-	client_player_t * player;
-	player = Z_malloc(sizeof(client_player_t));
-	LIST2_PUSH(client.players, player);
-	if(cl_state.flags & GAMEFLAG_2PLAYERS)
-	{
-		player = Z_malloc(sizeof(client_player_t));
-		LIST2_PUSH(client.players, player);
-	}
+    client_player_t * player;
+    player = Z_malloc(sizeof(client_player_t));
+    LIST2_PUSH(client.players, player);
+    if(cl_state.flags & GAMEFLAG_2PLAYERS)
+    {
+        player = Z_malloc(sizeof(client_player_t));
+        LIST2_PUSH(client.players, player);
+    }
 
-	client.state = CLIENT_AWAITING_CONNECTION;
-	client.time = time_current;
+    client.state = CLIENT_AWAITING_CONNECTION;
+    client.time = time_current;
 
-	game_client_request_t req;
-	req.type = G_CLIENT_REQ_CONNECT;
-	client_req_send(&req);
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_CONNECT;
+    client_req_send(&req);
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -172,28 +172,28 @@ int client_connect(void)
  */
 void client_initcams(void)
 {
-	client_player_t * player;
-	int clients_num = client_player_num_get();
+    client_player_t * player;
+    int clients_num = client_player_num_get();
 
-	float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
-	float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
+    float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
+    float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
-	cam_sx /= clients_num;
+    cam_sx /= clients_num;
 
-	float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
+    float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
-	float border = 1.0;
-	float x = border;
-	LIST2_FOREACH(client.players, player)
-	{
-		VEC2_CLEAR(player->cam.origin);
+    float border = 1.0;
+    float x = border;
+    LIST2_FOREACH(client.players, player)
+    {
+        VEC2_CLEAR(player->cam.origin);
 
-		player->cam.x     = x;
-		player->cam.y     = 0;
-		player->cam.sx    = cam_sx - (border * 2.0);
-		player->cam.sy    = cam_sy - statusbar_h;//184
-		x = x + cam_sx;
-	}
+        player->cam.x     = x;
+        player->cam.y     = 0;
+        player->cam.sx    = cam_sx - (border * 2.0);
+        player->cam.sy    = cam_sy - statusbar_h;//184
+        x = x + cam_sx;
+    }
 
 }
 
@@ -214,31 +214,32 @@ static void client_disconnect(void)
 
 static const char * gamestate_to_str(gamestate_t state)
 {
-	static const char *list[] =
-	{
-			"GAMESTATE_NOGAME",
-			"GAMESTATE_MISSION_BRIEF",
-			"GAMESTATE_GAMESAVE",
-			"GAMESTATE_INGAME",
-			"GAMESTATE_INTERMISSION",
-	};
-	return list[state];
+    static const char *list[] =
+    {
+            "GAMESTATE_NOGAME",
+            "GAMESTATE_MISSION_BRIEF",
+            "GAMESTATE_GAMESAVE",
+            "GAMESTATE_INGAME",
+            "GAMESTATE_INTERMISSION",
+    };
+    return list[state];
 }
 
 void client_start(int flags)
 {
-	client.ns = net_socket_create(NET_PORT, "127.0.0.1");
+    cl_state.flags = flags;
+    client.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
-	if(client.ns == NULL)
-	{
-		game_halt("client socket() failed");
-	}
-	/*
+    if(client.ns == NULL)
+    {
+        game_halt("client socket() failed");
+    }
+    /*
 	if(net_socket_bind(client_ns) < 0)
 	{
 		game_halt("client bind() failed");
 	}
-	*/
+     */
 }
 
 
@@ -247,7 +248,7 @@ static void client_fsm(const game_server_event_t * event)
     switch(client.state)
     {
     case CLIENT_AWAITING_CONNECTION:
-/*
+        /*
         if(!buf)
         {
             if(time_current - client.time > CLIENT_TIMEOUT)
@@ -256,7 +257,7 @@ static void client_fsm(const game_server_event_t * event)
             }
             break;
         }
-*/
+         */
 
         client.time = time_current;
         if(event->type == G_SERVER_EVENT_CONNECTION_ACCEPTED)
@@ -344,7 +345,7 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
             nvalue32 = htonl( (uint32_t) event->info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
             buflen += sizeof(nvalue32);
-            */
+             */
             break;
         case G_SERVER_EVENT_CONNECTION_ACCEPTED:
         case G_SERVER_EVENT_CONNECTION_CLOSE:
@@ -495,55 +496,55 @@ static void client_listen(void)
 
 static void client_events_pump()
 {
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-		//printf("event.type = %d\n", event.type);
-		switch(event.type)
-		{
-			case SDL_KEYDOWN:
-				input_key_setState(event.key.keysym.scancode, true);
-				break;
-			case SDL_KEYUP:
-				input_key_setState(event.key.keysym.scancode, false);
-				break;
-		}
-		//player_checkcode();
-	}
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        //printf("event.type = %d\n", event.type);
+        switch(event.type)
+        {
+        case SDL_KEYDOWN:
+            input_key_setState(event.key.keysym.scancode, true);
+            break;
+        case SDL_KEYUP:
+            input_key_setState(event.key.keysym.scancode, false);
+            break;
+        }
+        //player_checkcode();
+    }
 }
 
 void client_handle(void)
 {
 
-	client_listen();
+    client_listen();
 
-	if(cl_state.state == GAMESTATE_GAMESAVE)
-	{
-		cl_state.show_menu = true;
-		cl_state.imenu     = MENU_GAME_SAVE;
-	}
+    if(cl_state.state == GAMESTATE_GAMESAVE)
+    {
+        cl_state.show_menu = true;
+        cl_state.imenu     = MENU_GAME_SAVE;
+    }
 
-	if(cl_state.show_menu)
-	{
-		menu_events_pump();
-	}
-	else
-	{
-		client_events_pump();
-	}
+    if(cl_state.show_menu)
+    {
+        menu_events_pump();
+    }
+    else
+    {
+        client_events_pump();
+    }
 
-	if(cl_state.show_menu)
-	{
-		cl_state.paused = true;
-		menu_selector_t imenu_process = cl_state.imenu;
-		cl_state.imenu = menu_handle(imenu_process);
-		menu_draw(imenu_process);
-	}
-	else
-	{
-		cl_state.paused = false;
-		cl_game_draw();
-	}
+    if(cl_state.show_menu)
+    {
+        cl_state.paused = true;
+        menu_selector_t imenu_process = cl_state.imenu;
+        cl_state.imenu = menu_handle(imenu_process);
+        menu_draw(imenu_process);
+    }
+    else
+    {
+        cl_state.paused = false;
+        cl_game_draw();
+    }
 
 }
 
