@@ -37,7 +37,7 @@
 
 server_state_t sv_state = {};
 
-static int server_run = 0;
+/*static*/ int server_run = 0;
 
 server_t server;
 
@@ -823,6 +823,7 @@ void server_handle()
         //закроем карту
         map_clear();
         sv_state.state = GAMESTATE_NOGAME;
+
     }
 
     sv_game_mainTick();

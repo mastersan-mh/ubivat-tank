@@ -513,8 +513,14 @@ static void client_events_pump()
     }
 }
 
+extern int server_run;
+
 void client_handle(void)
 {
+    if(!server_run)
+    {
+        cl_state.state = GAMESTATE_NOGAME;
+    }
 
     client_listen();
 
