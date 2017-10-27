@@ -173,12 +173,12 @@ int client_connect(void)
 void client_initcams(void)
 {
     client_player_t * player;
-    int clients_num = client_player_num_get();
+    int players_num = client_player_num_get();
 
     float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
     float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 
-    cam_sx /= clients_num;
+    cam_sx /= players_num;
 
     float statusbar_h = 32.0f * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
 

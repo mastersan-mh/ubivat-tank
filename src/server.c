@@ -90,7 +90,7 @@ void server_event_cliententity_send(server_client_t * client)
             break;
         strncpy(event.data.PLAYER_ENTITY_SET.ent[i].entityname, player->entity->info->name, GAME_SERVER_EVENT_ENTNAME_SIZE);
         event.data.PLAYER_ENTITY_SET.ent[i].entity = player->entity;
-
+        i++;
     }
     server_req_send(client, &event);
 
@@ -268,7 +268,6 @@ static server_client_t * server_client_create(int sock, const net_addr_t * net_a
 
 static void server_client_delete(server_client_t * client)
 {
-    LIST2_UNLINK(server.clients, client);
     server_player_t * player;
     while(!LIST2_IS_EMPTY(client->players))
     {
@@ -281,9 +280,12 @@ static void server_client_delete(server_client_t * client)
 
 static void server_clients_delete(void)
 {
+    server_client_t * client;
     while(!LIST2_IS_EMPTY(server.clients))
     {
-        server_client_delete(server.clients);
+        client = server.clients;
+        LIST2_UNLINK(server.clients, client);
+        server_client_delete(client);
     }
 }
 
