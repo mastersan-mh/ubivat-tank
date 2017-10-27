@@ -19,26 +19,26 @@ static unsigned long basetime;
 
 unsigned long system_getTime_realTime()
 {
-	struct timeval tv;
-	unsigned long thistimereply;
+    struct timeval tv;
+    unsigned long thistimereply;
 
-	gettimeofday(&tv, NULL);
+    gettimeofday(&tv, NULL);
 
-	thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
+    thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
 
-	/* Fix for time problem */
-	if (!basetime) {
-		basetime = thistimereply;
-		thistimereply = 0;
-	}
-	else
-	{
-		thistimereply -= basetime;
-	}
-	if (thistimereply < lasttimereply)
-		thistimereply = lasttimereply;
+    /* Fix for time problem */
+    if (!basetime) {
+        basetime = thistimereply;
+        thistimereply = 0;
+    }
+    else
+    {
+        thistimereply -= basetime;
+    }
+    if (thistimereply < lasttimereply)
+        thistimereply = lasttimereply;
 
-	return (lasttimereply = thistimereply);
+    return (lasttimereply = thistimereply);
 }
 
 /*
@@ -46,40 +46,40 @@ unsigned long system_getTime_realTime()
  */
 unsigned long system_getTime_realTime_ms()
 {
-	struct timeval tv;
-	unsigned long thistimereply;
+    struct timeval tv;
+    unsigned long thistimereply;
 
-	gettimeofday(&tv, NULL);
+    gettimeofday(&tv, NULL);
 
-	thistimereply = (tv.tv_sec * TICRATE * 1000 + (tv.tv_usec * TICRATE) / 1000);
+    thistimereply = (tv.tv_sec * TICRATE * 1000 + (tv.tv_usec * TICRATE) / 1000);
 
-	/* Fix for time problem */
-	if (!basetime)
-	{
-		basetime = thistimereply;
-		thistimereply = 0;
-	}
-	else
-	{
-		thistimereply -= basetime;
-	}
-	if (thistimereply < lasttimereply)
-		thistimereply = lasttimereply;
+    /* Fix for time problem */
+    if (!basetime)
+    {
+        basetime = thistimereply;
+        thistimereply = 0;
+    }
+    else
+    {
+        thistimereply -= basetime;
+    }
+    if (thistimereply < lasttimereply)
+        thistimereply = lasttimereply;
 
-	return (lasttimereply = thistimereply);
+    return (lasttimereply = thistimereply);
 }
 
 
 
 void randomize()
 {
-	srandom(1024);
+    srandom(1024);
 }
 
 int xrand(int hi)
 {
-	if(hi == 0)
-		game_halt("Error: xrand: hi == 0.");
-	return random() % hi;
+    if(hi == 0)
+        game_halt("Error: xrand: hi == 0.");
+    return random() % hi;
 }
 

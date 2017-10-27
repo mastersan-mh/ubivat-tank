@@ -12,16 +12,16 @@
 #include "img.h"
 
 #define GAME_LOGO \
-		"          _____    ______              __     ______ \n"\
-		"||    || |  __ \\  |__  __| ||    ||   /  \\   |__  __|\n"\
-		"||    || | |  \\ |    ||    ||    ||  / /\\ \\     ||   \n"\
-		"||    || | |__//     ||    ||    || | |__| |    ||   \n"\
-		"||    || | |  \\\\     ||    ||    || | ____ |    ||   \n"\
-		"\\\\____|| | |__/ |  __||__   \\\\__//  ||    ||    ||   \n"\
-		" \\_____| |_____/  |______|   \\__/   ||    ||    ||   \n"\
-		"\n"\
-		"                       T A N K\n"\
-		"\n"
+        "          _____    ______              __     ______ \n"\
+        "||    || |  __ \\  |__  __| ||    ||   /  \\   |__  __|\n"\
+        "||    || | |  \\ |    ||    ||    ||  / /\\ \\     ||   \n"\
+        "||    || | |__//     ||    ||    || | |__| |    ||   \n"\
+        "||    || | |  \\\\     ||    ||    || | ____ |    ||   \n"\
+        "\\\\____|| | |__/ |  __||__   \\\\__//  ||    ||    ||   \n"\
+        " \\_____| |_____/  |______|   \\__/   ||    ||    ||   \n"\
+        "\n"\
+        "                       T A N K\n"\
+        "\n"
 
 /* флаги состояния игры */
 /* 2 игрока */
@@ -31,11 +31,11 @@
 
 typedef enum gamestate_s
 {
-	GAMESTATE_NOGAME, /* игра не создана */
-	GAMESTATE_MISSION_BRIEF,
-	GAMESTATE_GAMESAVE,
-	GAMESTATE_INGAME,
-	GAMESTATE_INTERMISSION,
+    GAMESTATE_NOGAME, /* игра не создана */
+    GAMESTATE_MISSION_BRIEF,
+    GAMESTATE_GAMESAVE,
+    GAMESTATE_INGAME,
+    GAMESTATE_INTERMISSION,
 } gamestate_t;
 
 extern unsigned long time_current;
@@ -69,7 +69,7 @@ extern void game_msg_error(int error);
 
 
 void game_halt(const char *error, ...)
-	__attribute__ ((noreturn));
+__attribute__ ((noreturn));
 void game_console_send(const char *error, ...);
 
 #endif /* SRC_GAME_H_ */

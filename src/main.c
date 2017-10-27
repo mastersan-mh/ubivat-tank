@@ -10,10 +10,10 @@
 
 int main()
 {
-//	fonts_test();
+    //	fonts_test();
 
-	game_init();
-	game_main();
-	game_done();
-	return 0;
+    game_init();
+    game_main();
+    game_done();
+    return 0;
 }

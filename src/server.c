@@ -35,11 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-server_state_t sv_state = {};
-
 /*static*/ int server_run = 0;
 
-server_t server;
+server_t server = {};
 
 fd_set readfds;
 fd_set writefds;
@@ -47,8 +45,8 @@ fd_set exceptfds;
 
 void server_init(void)
 {
-    sv_state.custommap = mapList;
-    sv_state.gamemap   = mapList;
+    server.gamestate.custommap = mapList;
+    server.gamestate.gamemap   = mapList;
 }
 
 void server_done(void)
@@ -98,7 +96,7 @@ void server_event_cliententity_send(server_client_t * client)
 
 void server_event_gamestate_send(server_client_t * client, gamestate_t state)
 {
-    sv_state.state = state;
+    server.gamestate.state = state;
     game_server_event_t event;
     event.type = G_SERVER_EVENT_GAME_STATE_SET;
     event.data.GAME_STATE_SET.state = state;
@@ -120,7 +118,7 @@ void host_event_gameload_loaded_send(int flags)
 
 void server_setgamestate(gamestate_t state)
 {
-    //sv_state.state = state;
+    //server.gamestate.state = state;
     game_server_event_t event;
     event.type = G_SERVER_EVENT_GAME_STATE_SET;
     event.data.GAME_STATE_SET.state = state;
@@ -361,19 +359,19 @@ void server_unjoin_clients(void)
     LIST2_FOREACHR(server.clients, client)
     {
         LIST2_FOREACHR(client->players, player)
-                {
+                        {
             server_client_player_info_store(player);
             player->entity = NULL;
-                }
+                        }
     }
 }
 
 void server_start(int flags)
 {
     server_run = 1;
-    sv_state.flags = flags;
-    sv_state.state = GAMESTATE_MISSION_BRIEF;
-    sv_state.paused = false;
+    server.gamestate.flags = flags;
+    server.gamestate.state = GAMESTATE_MISSION_BRIEF;
+    server.gamestate.paused = false;
 
     server.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
@@ -386,7 +384,7 @@ void server_start(int flags)
         game_halt("server bind() failed");
     }
 
-    sv_state.allow_state_gamesave = true;
+    server.gamestate.allow_state_gamesave = true;
 
 }
 
@@ -413,13 +411,13 @@ static int sv_gamesave_load(int isave)
         return -1;
     }
 
-    sv_state.flags = ctx.flags;
+    server.gamestate.flags = ctx.flags;
 
     host_event_gameload_loaded_send(ctx.flags);
 
     g_gamesave_load_close(&ctx);
 
-    sv_state.allow_state_gamesave = false;
+    server.gamestate.allow_state_gamesave = false;
     return 0;
 }
 
@@ -451,7 +449,7 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                 found = true;
                 if(ent->spawned)
                 {
-                    switch(sv_state.state)
+                    switch(server.gamestate.state)
                     {
                     case GAMESTATE_NOGAME:
                         break;
@@ -471,7 +469,7 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                 {
                     if(info->spawn)
                     {
-                        if(sv_state.flags & GAMEFLAG_2PLAYERS)
+                        if(server.gamestate.flags & GAMEFLAG_2PLAYERS)
                         {
                             game_console_send("server: spawn client.");
                             server_client_player_info_restore(player);
@@ -515,7 +513,7 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         event.type = G_SERVER_EVENT_CONNECTION_ACCEPTED;
         server_req_send(client, &event);
 
-        server_event_gamestate_send(client, sv_state.state);
+        server_event_gamestate_send(client, server.gamestate.state);
 
         break;
     }
@@ -565,8 +563,8 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
     case G_CLIENT_REQ_GAME_SETMAP:
     {
         const char * mapname = req->data.GAME_SETMAP.mapname;
-        sv_state.gamemap = map_find(mapname);
-        if(!sv_state.gamemap)
+        server.gamestate.gamemap = map_find(mapname);
+        if(!server.gamestate.gamemap)
         {
             game_console_send("Error: Map \"%s\" not found.", mapname);
             //game_abort();
@@ -581,23 +579,23 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
     }
     case G_CLIENT_REQ_GAME_NEXTSTATE:
     {
-        switch(sv_state.state)
+        switch(server.gamestate.state)
         {
         case GAMESTATE_NOGAME:
             break;
         case GAMESTATE_MISSION_BRIEF:
-            if(sv_state.allow_state_gamesave)
-                sv_state.state = GAMESTATE_GAMESAVE;
+            if(server.gamestate.allow_state_gamesave)
+                server.gamestate.state = GAMESTATE_GAMESAVE;
             else
-                sv_state.state = GAMESTATE_INGAME;
+                server.gamestate.state = GAMESTATE_INGAME;
             break;
         case GAMESTATE_GAMESAVE:
-            sv_state.state = GAMESTATE_INGAME;
+            server.gamestate.state = GAMESTATE_INGAME;
             break;
         case GAMESTATE_INGAME:
             break;
         case GAMESTATE_INTERMISSION:
-            sv_state.state = GAMESTATE_MISSION_BRIEF;
+            server.gamestate.state = GAMESTATE_MISSION_BRIEF;
             break;
         }
         break;
@@ -822,7 +820,7 @@ void server_handle()
         server.ns = NULL;
         //закроем карту
         map_clear();
-        sv_state.state = GAMESTATE_NOGAME;
+        server.gamestate.state = GAMESTATE_NOGAME;
 
     }
 

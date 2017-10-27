@@ -18,23 +18,6 @@
 
 #define SERVER_TX_QUEUE_SIZE 16
 
-//состояние игры
-typedef struct
-{
-    gamestate_t state;
-
-    char * msg;
-    /* флаги состояния игры */
-    int flags;
-    bool paused;
-
-    maplist_t * gamemap;
-    maplist_t * custommap;
-    /* Разрешить переход на состояние сохранения игры.
-   Если игра была только что прочитана, её не нужно сохранять */
-    bool allow_state_gamesave;
-} server_state_t;
-
 typedef struct host_client_s
 {
     struct host_client_s * prev;
@@ -75,6 +58,24 @@ typedef struct server_client_s
 
 typedef struct
 {
+
+    //состояние игры
+    struct
+    {
+        gamestate_t state;
+
+        char * msg;
+        /* флаги состояния игры */
+        int flags;
+        bool paused;
+
+        maplist_t * gamemap;
+        maplist_t * custommap;
+        /* Разрешить переход на состояние сохранения игры.
+       Если игра была только что прочитана, её не нужно сохранять */
+        bool allow_state_gamesave;
+    } gamestate;
+
     net_socket_t * ns;
 
     server_client_t * clients;
