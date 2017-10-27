@@ -21,21 +21,19 @@
 
 #include <string.h>
 
-client_state_t cl_state = {};
-
-client_client_t client = {};
+client_t client = {};
 
 void cl_game_init(void)
 {
-    cl_state.quit = false;
+    client.gamestate.quit = false;
 
-    cl_state.imenu = MENU_MAIN;
+    client.gamestate.imenu = MENU_MAIN;
 
-    cl_state.msg       = NULL;
-    cl_state.state     = GAMESTATE_NOGAME;
-    cl_state.show_menu = true;
-    cl_state.custommap = mapList;
-    cl_state.gamemap   = mapList;
+    client.gamestate.msg       = NULL;
+    client.gamestate.state     = GAMESTATE_NOGAME;
+    client.gamestate.show_menu = true;
+    client.gamestate.custommap = mapList;
+    client.gamestate.gamemap   = mapList;
 
 }
 
@@ -78,7 +76,7 @@ void client_req_join_send(void)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_JOIN;
-    req.data.JOIN.players_num = (cl_state.flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    req.data.JOIN.players_num = (client.gamestate.flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
     client_req_send(&req);
 }
 
@@ -151,7 +149,7 @@ int client_connect(void)
     client_player_t * player;
     player = Z_malloc(sizeof(client_player_t));
     LIST2_PUSH(client.players, player);
-    if(cl_state.flags & GAMEFLAG_2PLAYERS)
+    if(client.gamestate.flags & GAMEFLAG_2PLAYERS)
     {
         player = Z_malloc(sizeof(client_player_t));
         LIST2_PUSH(client.players, player);
@@ -227,7 +225,7 @@ static const char * gamestate_to_str(gamestate_t state)
 
 void client_start(int flags)
 {
-    cl_state.flags = flags;
+    client.gamestate.flags = flags;
     client.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
     if(client.ns == NULL)
@@ -286,13 +284,13 @@ static void client_fsm(const game_server_event_t * event)
             game_console_send("client: host closed the connection.");
             break;
         case G_SERVER_EVENT_GAME_STATE_SET:
-            cl_state.state = event->data.GAME_STATE_SET.state;
-            game_console_send("client: host change gamestate to %s.", gamestate_to_str(cl_state.state));
+            client.gamestate.state = event->data.GAME_STATE_SET.state;
+            game_console_send("client: host change gamestate to %s.", gamestate_to_str(client.gamestate.state));
 
-            if(cl_state.state == GAMESTATE_INTERMISSION)
+            if(client.gamestate.state == GAMESTATE_INTERMISSION)
             {
                 game_console_send("client: server say: PLAYER WIN!");
-                cl_state.win = true;
+                client.gamestate.win = true;
             }
 
             break;
@@ -312,7 +310,7 @@ static void client_fsm(const game_server_event_t * event)
             break;
         }
         case G_SERVER_EVENT_GAME_LOADED:
-            cl_state.flags = event->data.GAME_LOADED.flags;
+            client.gamestate.flags = event->data.GAME_LOADED.flags;
             client_connect();
             client_initcams();
             break;
@@ -491,7 +489,7 @@ static void client_listen(void)
     }
 
     if(LIST2_IS_EMPTY(client.players))
-        cl_state.state = GAMESTATE_NOGAME;
+        client.gamestate.state = GAMESTATE_NOGAME;
 }
 
 static void client_events_pump()
@@ -519,18 +517,18 @@ void client_handle(void)
 {
     if(!server_run)
     {
-        cl_state.state = GAMESTATE_NOGAME;
+        client.gamestate.state = GAMESTATE_NOGAME;
     }
 
     client_listen();
 
-    if(cl_state.state == GAMESTATE_GAMESAVE)
+    if(client.gamestate.state == GAMESTATE_GAMESAVE)
     {
-        cl_state.show_menu = true;
-        cl_state.imenu     = MENU_GAME_SAVE;
+        client.gamestate.show_menu = true;
+        client.gamestate.imenu     = MENU_GAME_SAVE;
     }
 
-    if(cl_state.show_menu)
+    if(client.gamestate.show_menu)
     {
         menu_events_pump();
     }
@@ -539,16 +537,16 @@ void client_handle(void)
         client_events_pump();
     }
 
-    if(cl_state.show_menu)
+    if(client.gamestate.show_menu)
     {
-        cl_state.paused = true;
-        menu_selector_t imenu_process = cl_state.imenu;
-        cl_state.imenu = menu_handle(imenu_process);
+        client.gamestate.paused = true;
+        menu_selector_t imenu_process = client.gamestate.imenu;
+        client.gamestate.imenu = menu_handle(imenu_process);
         menu_draw(imenu_process);
     }
     else
     {
-        cl_state.paused = false;
+        client.gamestate.paused = false;
         cl_game_draw();
     }
 

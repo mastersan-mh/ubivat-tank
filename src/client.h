@@ -17,76 +17,76 @@
 
 #define CLIENT_TIMEOUT 30000
 
-//состояние игры
-typedef struct
-{
-	bool quit;
-	gamestate_t state;
-
-	menu_selector_t imenu;
-	bool show_menu;
-
-	char * msg;
-	/* флаги состояния игры */
-	int flags;
-	/* игрок победил */
-	bool win;
-	bool paused;
-	int sound_playId;
-
-	maplist_t * gamemap;
-	maplist_t * custommap;
-
-} client_state_t;
-
-extern client_state_t cl_state;
-
 #define CLIENT_EVENTS_MAX 10
 
 #define CLIENT_REQ_QUEUE_SIZE 5
 
 typedef struct client_player_s
 {
-	struct client_player_s * prev;
-	struct client_player_s * next;
+    struct client_player_s * prev;
+    struct client_player_s * next;
 
-	/* ассоциированный сокет */
-	//net_socket_t * ns;
+    /* ассоциированный сокет */
+    //net_socket_t * ns;
 
-	entity_t * entity;
-	camera_t cam;
+    entity_t * entity;
+    camera_t cam;
 
-	size_t events_num;
-	game_client_player_request_data_t events[CLIENT_EVENTS_MAX];
+    size_t events_num;
+    game_client_player_request_data_t events[CLIENT_EVENTS_MAX];
 
 } client_player_t;
 
 typedef struct
 {
-	game_client_request_t req;
+    game_client_request_t req;
 } client_req_queue_t;
 
 typedef struct
 {
-	net_socket_t * ns;
 
-	enum
-	{
-		CLIENT_AWAITING_CONNECTION,
-		CLIENT_LISTEN
-	} state;
 
-	/* время последнего получения сообщения */
-	unsigned long time;
+    //состояние игры
+    struct
+    {
+        bool quit;
+        gamestate_t state;
 
-	client_player_t * players;
+        menu_selector_t imenu;
+        bool show_menu;
 
-	size_t req_queue_num;
-	client_req_queue_t req_queue[CLIENT_REQ_QUEUE_SIZE];
+        char * msg;
+        /* флаги состояния игры */
+        int flags;
+        /* игрок победил */
+        bool win;
+        bool paused;
 
-} client_client_t;
+        maplist_t * gamemap;
+        maplist_t * custommap;
 
-extern client_client_t client;
+    } gamestate;
+
+
+    net_socket_t * ns;
+
+    enum
+    {
+        CLIENT_AWAITING_CONNECTION,
+        CLIENT_LISTEN
+    } state;
+
+    /* время последнего получения сообщения */
+    unsigned long time;
+
+    client_player_t * players;
+
+    size_t req_queue_num;
+    client_req_queue_t req_queue[CLIENT_REQ_QUEUE_SIZE];
+
+} client_t;
+
+extern client_t client;
 
 
 extern void cl_game_init(void);

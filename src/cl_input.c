@@ -145,7 +145,7 @@ void input_key_setState(int key, bool state)
 
 	int playerId = keyhash->collision[cindex].playerId;
 
-	switch(cl_state.state)
+	switch(client.gamestate.state)
 	{
 		case GAMESTATE_NOGAME:
 			break;

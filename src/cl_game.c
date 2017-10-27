@@ -16,17 +16,17 @@
 
 bool cl_game_quit_get(void)
 {
-	return cl_state.quit;
+	return client.gamestate.quit;
 }
 
 void cl_game_quit_set(void)
 {
-	cl_state.quit = true;
+	client.gamestate.quit = true;
 }
 
 void cl_game_action_showmenu(void)
 {
-	cl_state.show_menu = true;
+	client.gamestate.show_menu = true;
 }
 
 /*
@@ -41,7 +41,7 @@ int cl_game_create(int flags)
 {
 	server_start(flags);
 	client_start(flags);
-	cl_state.show_menu = false;
+	client.gamestate.show_menu = false;
 	return 0;
 }
 
@@ -163,11 +163,11 @@ static void cl_draw(void)
 		VIDEO_SCREEN_H
 	);
 
-	if(cl_state.msg)
+	if(client.gamestate.msg)
 	{
 		font_color_set3i(COLOR_1);
-		video_printf_wide(96, 84, 128, cl_state.msg);
-		cl_state.msg = NULL;
+		video_printf_wide(96, 84, 128, client.gamestate.msg);
+		client.gamestate.msg = NULL;
 	};
 
 	extern server_state_t sv_state;
@@ -185,7 +185,7 @@ static void cl_draw(void)
 
 void cl_game_draw(void)
 {
-	switch(cl_state.state)
+	switch(client.gamestate.state)
 	{
 	case GAMESTATE_NOGAME:
 		break;

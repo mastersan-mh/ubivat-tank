@@ -225,13 +225,13 @@ static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
 	case MENU_ACTION_RIGHT  : break;
 	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		if(cl_state.state == GAMESTATE_NOGAME && ctx->menu == 4)
+		if(client.gamestate.state == GAMESTATE_NOGAME && ctx->menu == 4)
 			return MENU_MAIN;
 		return menus[ctx->menu];
 	case MENU_ACTION_LEAVE  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		if(cl_state.state != GAMESTATE_NOGAME)
-			cl_state.show_menu = false;
+		if(client.gamestate.state != GAMESTATE_NOGAME)
+			client.gamestate.show_menu = false;
 		break;
 	case MENU_ACTION_SPACE: break;
 	}
@@ -259,7 +259,7 @@ static void menu_main_draw(const void * ctx_)
 	};
 	for(int i = 0; i < ARRAYSIZE(list); i++)
 	{
-		if(i != 4 || cl_state.state != GAMESTATE_NOGAME)
+		if(i != 4 || client.gamestate.state != GAMESTATE_NOGAME)
 			menu_draw_entry(i, list[i]);
 	}
 	menu_draw_cursor(imenu);
@@ -309,9 +309,9 @@ static void menu_game_draw(const void * ctx_)
 static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	int ret;
-	if(cl_state.state != GAMESTATE_NOGAME)
+	if(client.gamestate.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	cl_state.gamemap = mapList;
+	client.gamestate.gamemap = mapList;
 	ret = cl_game_create(0);
 	if(ret)
 	{
@@ -322,7 +322,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 	client_connect();
 	client_initcams();
 
-	client_req_setgamemap_send(cl_state.gamemap->map);
+	client_req_setgamemap_send(client.gamestate.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -330,9 +330,9 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
 	int ret;
-	if(cl_state.state != GAMESTATE_NOGAME)
+	if(client.gamestate.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
-	cl_state.gamemap = mapList;
+	client.gamestate.gamemap = mapList;
 	ret = cl_game_create(GAMEFLAG_2PLAYERS);
 	if(ret)
 	{
@@ -343,7 +343,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
 	client_connect();
 	client_initcams();
 
-	client_req_setgamemap_send(cl_state.gamemap->map);
+	client_req_setgamemap_send(client.gamestate.gamemap->map);
 
 	return MENU_MAIN;
 }
@@ -367,7 +367,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
 	case MENU_ACTION_RIGHT  : break;
 	case MENU_ACTION_ENTER  :
 		sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-		if(cl_state.state != GAMESTATE_NOGAME)
+		if(client.gamestate.state != GAMESTATE_NOGAME)
 			return MENU_MAIN;
 		if(!gamesaves[ctx->menu].exist)
 			break;
@@ -469,7 +469,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
 			break;
 		case MENU_ACTION_LEAVE  :
 			sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-			cl_state.show_menu = false;
+			client.gamestate.show_menu = false;
 			client_req_nextgamestate_send();
 			return MENU_MAIN;
 		case MENU_ACTION_SPACE  :break;
@@ -571,9 +571,9 @@ static int menu_custom(buffer_key_t scancode, menu_action_t action, void * ctx_)
 		if(ctx->menu == 0)
 		{
 			if(action == MENU_ACTION_LEFT)
-				if(cl_state.custommap->prev) cl_state.custommap = cl_state.custommap->prev;
+				if(client.gamestate.custommap->prev) client.gamestate.custommap = client.gamestate.custommap->prev;
 			if(action == MENU_ACTION_RIGHT)
-				if(cl_state.custommap->next) cl_state.custommap = cl_state.custommap->next;
+				if(client.gamestate.custommap->next) client.gamestate.custommap = client.gamestate.custommap->next;
 		}
 		break;
 	case MENU_ACTION_ENTER  :
@@ -597,8 +597,8 @@ static void menu_custom_draw(const void * ctx_)
 
 	menu_draw_spinbox_horisontal(0, 140);
 	font_color_set3i(COLOR_25);
-	video_printf(120 + 13, 33 +     23*0, cl_state.custommap->map);
-	video_printf(120 + 13, 33 + 8 + 23*0, cl_state.custommap->name);
+	video_printf(120 + 13, 33 +     23*0, client.gamestate.custommap->map);
+	video_printf(120 + 13, 33 + 8 + 23*0, client.gamestate.custommap->name);
 
 	menu_draw_entry(1, IMG_MENU_G_NEW_P1);
 	menu_draw_entry(2, IMG_MENU_G_NEW_P2);
@@ -645,7 +645,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 {
 
 	int ret;
-	if(cl_state.state != GAMESTATE_NOGAME)
+	if(client.gamestate.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
 	ret = cl_game_create(GAMEFLAG_CUSTOMGAME);
 	if(ret)
@@ -657,7 +657,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 	client_connect();
 	client_initcams();
 
-	client_req_setgamemap_send(cl_state.custommap->map);
+	client_req_setgamemap_send(client.gamestate.custommap->map);
 
 	return MENU_MAIN;
 }
@@ -665,7 +665,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
 	int ret;
-	if(cl_state.state != GAMESTATE_NOGAME)
+	if(client.gamestate.state != GAMESTATE_NOGAME)
 		return MENU_MAIN;
 	ret = cl_game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
 	if(ret)
@@ -677,7 +677,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
 	client_connect();
 	client_initcams();
 
-	client_req_setgamemap_send(cl_state.custommap->map);
+	client_req_setgamemap_send(client.gamestate.custommap->map);
 
 	return MENU_MAIN;
 }
