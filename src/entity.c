@@ -74,7 +74,7 @@ void entity_register(const entityinfo_t * info)
         return;
     }
 
-    if(info->datasize != 0 && info->init == NULL)
+    if(info->edatasize != 0 && info->init == NULL)
         game_console_send("Entity registration warning: entity \"%s\" invalid register data: .entityinit == NULL.", info->name);
     /*
 	if(info->datasize == 0 && info->init != NULL)
@@ -188,12 +188,12 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
         }
     }
 
-    if(entityinfo->datasize == 0)
-        entity->data = NULL;
+    if(entityinfo->edatasize == 0)
+        entity->edata = NULL;
     else
-        entity->data = Z_malloc(entityinfo->datasize);
+        entity->edata = Z_malloc(entityinfo->edatasize);
     if(entityinfo->init)
-        entityinfo->init(entity, entity->data, parent);
+        entityinfo->init(entity, entity->edata, parent);
 
     if(entityinfo->spawn == NULL)
     {
@@ -202,7 +202,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
     else
     {
         entity->spawned = false;
-        entityinfo->spawn(entity, entity->data);
+        entityinfo->spawn(entity, entity->edata);
         entity->spawned = true;
     }
 
@@ -217,9 +217,9 @@ static void entity_freemem(entity_t * entity)
     if(entity->info != NULL)
     {
         if(entity->info->done != NULL)
-            entity->info->done(entity, entity->data);
-        if(entity->info->datasize)
-            Z_free(entity->data);
+            entity->info->done(entity, entity->edata);
+        if(entity->info->edatasize)
+            Z_free(entity->edata);
     }
     Z_free(entity->modelplayers);
 
@@ -504,7 +504,7 @@ void entities_handle(void)
             VEC2_COPY(entity->origin, entity->origin_prev);
             if(info->handle != NULL)
             {
-                (*info->handle)(entity, entity->data);
+                (*info->handle)(entity, entity->edata);
             }
 
             if(!entity->erase)

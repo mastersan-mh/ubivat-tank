@@ -120,7 +120,7 @@ typedef struct
 	think_t brain;
 } player_t;
 
-#define ENT_PLAYER(entity) ((player_t *) (entity)->data)
+#define ENT_PLAYER(entity) ((player_t *) (entity)->edata)
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 

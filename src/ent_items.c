@@ -61,7 +61,7 @@ static entitymodel_t item_ammo_mine_models[] =
 
 static const entityinfo_t item_scores_reginfo = {
 		.name = "item_scores",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(item_vars),
 		ENTITYINFO_ENTMODELS(item_scores_models),
@@ -74,7 +74,7 @@ static const entityinfo_t item_scores_reginfo = {
 
 static const entityinfo_t item_health_reginfo = {
 		.name = "item_health",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(item_vars),
 		ENTITYINFO_ENTMODELS(item_health_models),
@@ -87,7 +87,7 @@ static const entityinfo_t item_health_reginfo = {
 
 static const entityinfo_t item_armor_reginfo = {
 		.name = "item_armor",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(item_vars),
 		ENTITYINFO_ENTMODELS(item_armor_models),
@@ -100,7 +100,7 @@ static const entityinfo_t item_armor_reginfo = {
 
 static const entityinfo_t item_ammo_missile_reginfo = {
 		.name = "item_ammo_missile",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(item_vars),
 		ENTITYINFO_ENTMODELS(item_ammo_missile_models),
@@ -113,7 +113,7 @@ static const entityinfo_t item_ammo_missile_reginfo = {
 
 static const entityinfo_t item_ammo_mine_reginfo = {
 		.name = "item_ammo_mine",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(item_vars),
 		ENTITYINFO_ENTMODELS(item_ammo_mine_models),

@@ -180,7 +180,7 @@ static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
 
 static const entityinfo_t explode_artillery_reginfo = {
 		.name = "explode_artillery",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 7.0f * 2.0f,
 		ENTITYINFO_ENTMODELS(explode_small_models),
 		.init = explode_artillery_entity_init,
@@ -192,7 +192,7 @@ static const entityinfo_t explode_artillery_reginfo = {
 
 static const entityinfo_t explode_missile_reginfo = {
 		.name = "explode_missile",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 11.0f * 2.0f,
 		ENTITYINFO_ENTMODELS(explode_big_models),
 		.init = explode_missile_entity_init,
@@ -204,7 +204,7 @@ static const entityinfo_t explode_missile_reginfo = {
 
 static const entityinfo_t explode_mine_reginfo = {
 		.name = "explode_mine",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 11.0f * 2.0f,
 		ENTITYINFO_ENTMODELS(explode_big_models),
 		.init = explode_mine_entity_init,

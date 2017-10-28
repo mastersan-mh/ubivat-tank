@@ -86,7 +86,7 @@ static void cl_game_state_intermission_draw(void)
 static void client_game_draw_cam(camera_t * cam, entity_t * player)
 {
 
-    player_t * pl = player->data;
+    player_t * pl = player->edata;
 
     if(pl->bull)
     {

@@ -153,8 +153,8 @@ vardata_t * server_client_vardata_get(server_player_t * client, const char * var
 static void server_client_player_info_store(server_player_t * player)
 {
     if(player->entity->info->client_store)
-        player->userstoredata = (*player->entity->info->client_store)(
-                player->entity->data
+        player->userstoredata = player->entity->info->client_store(
+                player->entity->edata
         );
 
     entity_t * entity = player->entity;
@@ -183,7 +183,7 @@ static void server_client_player_info_restore(server_player_t * player)
     {
         player->entity->info->client_restore(
             player->entity,
-            player->entity->data,
+            player->entity->edata,
             player->userstoredata
         );
         Z_free(player->userstoredata);
@@ -436,7 +436,7 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                         break;
                     case GAMESTATE_INGAME:
                         if(action->action_f)
-                            action->action_f(ent, ent->data, action->action);
+                            action->action_f(ent, ent->edata, action->action);
                         break;
                     case GAMESTATE_INTERMISSION:
                         break;
@@ -450,7 +450,7 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                         {
                             game_console_send("server: spawn client.");
                             server_client_player_info_restore(player);
-                            info->spawn(ent, ent->data);
+                            info->spawn(ent, ent->edata);
                             ent->spawned = true;
                             ent->alive = true;
                         }

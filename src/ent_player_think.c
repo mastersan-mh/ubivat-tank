@@ -69,7 +69,7 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 	vec_t Ld;
 	vec_t Rd;
 
-	player_t * pl = player->data;
+	player_t * pl = player->edata;
 
 	bool danger = false;
 	if(pl->bull)
@@ -201,7 +201,7 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
  */
 static void ctrl_AI_checkdangers(entity_t * player)
 {
-	player_t * pl = player->data;
+	player_t * pl = player->edata;
 	bool danger = false;
 	entity_t * dangerous;
 
@@ -270,7 +270,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	/* противник в прямой видимости */
 	void P_weapon_select_direct_view(entity_t *player)
 	{
-		player_t * pl = player->data;
+		player_t * pl = player->edata;
 		if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
 		{
 			//выбираем наугад ракету или мину
@@ -317,7 +317,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 
 
-	player_t * pl = player->data;
+	player_t * pl = player->edata;
 
 	vec_t dist;
 	char wall;
@@ -416,7 +416,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
  */
 static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 {
-	player_t * pl = player->data;
+	player_t * pl = player->edata;
 
 	if(
 			(160<VEC_ABS(player->origin_x-target->origin_x))||
@@ -467,7 +467,7 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
  */
 void think_enemy(entity_t * player)
 {
-	player_t * pl = player->data;
+	player_t * pl = player->edata;
 	if(debug_noAI)
 		return;
 	if(!player->alive)

@@ -49,7 +49,7 @@ static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
 
 static const entityinfo_t spawn_player_reginfo = {
 		.name = "spawn_player",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(spawn_player_vars),
 		.init = spawn_player_init,
@@ -62,7 +62,7 @@ static const entityinfo_t spawn_player_reginfo = {
 
 static const entityinfo_t spawn_enemy_reginfo = {
 		.name = "spawn_enemy",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(spawn_player_vars),
 		.init = spawn_enemy_init,
@@ -74,7 +74,7 @@ static const entityinfo_t spawn_enemy_reginfo = {
 
 static const entityinfo_t spawn_boss_reginfo = {
 		.name = "spawn_boss",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(spawn_player_vars),
 		.init = spawn_boss_init,

@@ -136,7 +136,8 @@ typedef struct entity_s
 	/* структура для проигрывания кардов моделей, связанных с объектом */
 	struct ent_modelplayer_s * modelplayers;
 
-	void * data;
+    /* extended data */
+	void * edata;
 } entity_t;
 
 typedef struct
@@ -194,7 +195,7 @@ typedef struct entityaction_s
 typedef struct entityinfo_s
 {
 	char * name;
-	size_t datasize;
+	size_t edatasize;
 
 	/* entity flags */
 	int flags;
@@ -223,7 +224,7 @@ typedef struct entityinfo_s
 
 	entity_t * (*client_join)(const entity_t * this);
 
-	void * (*client_store)(const void * thisdata);
+	void * (*client_store)(const void * this_edata);
 	void (*client_restore)(entity_t * this, void * thisdata, const void * userstoredata);
 
 	/* массив действий, допустимых для entity */

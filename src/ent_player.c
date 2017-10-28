@@ -218,10 +218,10 @@ static ENTITY_FUNCTION_INIT(player_init);
 static ENTITY_FUNCTION_DONE(player_done);
 
 static ENTITY_FUNCTION_SPAWN(player_spawn)
-        {
+{
     entity_t * spawn = entity_get_random("spawn_player");
     player_spawn_init(this, thisdata, spawn);
-        }
+}
 
 static ENTITY_FUNCTION_HANDLE(player_handle);
 
@@ -265,7 +265,7 @@ static void player_touch_item_scores(entity_t * player, entity_t * item)
 
     var_int_t scores = ( ENTITY_VARIABLE_INTEGER(player, "scores") += ENTITY_VARIABLE_INTEGER(item, "amount") );
 
-    player_class_init(player, player->data);
+    player_class_init(player, player->edata);
     if(scores / PLAYER_SCOREPERCLASS >= 5)
     {
         if(ENTITY_VARIABLE_INTEGER(player, "item_health") < playerinfo->items[ITEM_HEALTH])
@@ -857,7 +857,7 @@ void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t di
             entity_t * killer = explode->parent;
             if(killer)
             {
-                player_t * pl = killer->data;
+                player_t * pl = killer->edata;
                 if(!self)
                 {
                     //атакующему добавим очки
@@ -935,7 +935,7 @@ static void player_ui_draw(camera_t * cam, entity_t * player)
 
 static const entityinfo_t player_reginfo = {
         .name = "player",
-        .datasize = sizeof(player_t),
+        .edatasize = sizeof(player_t),
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars),
@@ -952,7 +952,7 @@ static const entityinfo_t player_reginfo = {
 
 static const entityinfo_t enemy_reginfo = {
         .name = "enemy",
-        .datasize = sizeof(player_t),
+        .edatasize = sizeof(player_t),
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars),
@@ -966,7 +966,7 @@ static const entityinfo_t enemy_reginfo = {
 
 static const entityinfo_t boss_reginfo = {
         .name = "boss",
-        .datasize = sizeof(player_t),
+        .edatasize = sizeof(player_t),
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars),

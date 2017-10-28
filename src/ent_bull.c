@@ -152,7 +152,7 @@ entitytouch_t bull_artillery_touchs[] =
 
 static const entityinfo_t bull_artillery_reginfo = {
 		.name = "bull_artillery",
-		.datasize = 0,
+		.edatasize = 0,
 		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 2.0f,
 		ENTITYINFO_ENTMODELS(bull_artillery_models),
@@ -192,7 +192,7 @@ static entitymodel_t bull_missile_models[] =
 static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 {
 	bull_common_modelaction_startplay(this, 0, "fly");
-	((player_t *)parent->data)->bull = this;
+	((player_t *)parent->edata)->bull = this;
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
@@ -217,7 +217,7 @@ entitytouch_t bull_missile_touchs[] =
 
 static const entityinfo_t bull_missile_reginfo = {
 		.name = "bull_missile",
-		.datasize = 0,
+		.edatasize = 0,
 		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 8.0f,
 		ENTITYINFO_ENTMODELS(bull_missile_models),
@@ -280,7 +280,7 @@ entitytouch_t bull_mine_touchs[] =
 
 static const entityinfo_t bull_mine_reginfo = {
 		.name = "bull_mine",
-		.datasize = 0,
+		.edatasize = 0,
 		.flags = ENTITYFLAG_SOLIDWALL,
 		.bodybox = 8.0f,
 		ENTITYINFO_ENTMODELS(bull_mine_models),

@@ -47,7 +47,7 @@ void cl_done(void)
 int client_player_num_get(void)
 {
     client_player_t * player;
-    size_t clients_num;
+    size_t clients_num = 0;
     LIST2_FOREACH_I(client.players, player, clients_num);
     return clients_num;
 }
@@ -202,7 +202,11 @@ static void client_disconnect(void)
     game_client_request_t req;
     req.type = G_CLIENT_REQ_DISCONNECT;
     client_req_send(&req);
+}
 
+
+static void client_players_delete(void)
+{
     client_player_t * player;
     while(!LIST2_IS_EMPTY(client.players))
     {
@@ -211,6 +215,7 @@ static void client_disconnect(void)
         client_player_delete(player);
     }
 }
+
 
 static const char * gamestate_to_str(gamestate_t state)
 {
@@ -572,6 +577,7 @@ void client_handle(void)
 {
     if(!client_run)
     {
+        client_players_delete();
         client.gamestate.state = GAMESTATE_NOGAME;
     }
 

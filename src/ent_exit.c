@@ -25,7 +25,7 @@ static entitymodel_t exit_models[] =
 
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
-		.datasize = 0,
+		.edatasize = 0,
 		.bodybox = 16.0f,
 		ENTITYINFO_VARS(exit_vars),
 		ENTITYINFO_ENTMODELS(exit_models),
