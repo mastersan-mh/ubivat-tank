@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "img.h"
+#include "menu.h"
 
 #define GAME_LOGO \
         "          _____    ______              __     ______ \n"\
@@ -56,15 +57,27 @@ extern char * game_dir_saves;
 extern int game_video_dfactor;
 extern int game_video_sfactor;
 
+extern bool game_quit_get(void);
+extern void game_quit_set(void);
+
 extern void game_init(void);
 extern void game_done(void);
 extern void game_main(void);
+
+extern int game_create(int flags);
+extern void game_abort(void);
+extern void game_handle(void);
+
+extern void game_draw(void);
+
+extern void game_action_showmenu(void);
+extern void game_menu_show(menu_selector_t imenu);
+extern void game_menu_hide(void);
 
 extern int game_pal_get(void);
 extern void game_record_getsaves(void);
 extern bool game_record_save(int isave);
 extern int game_record_load(int isave);
-extern int cl_game_create(int flags);
 extern void game_msg_error(int error);
 
 

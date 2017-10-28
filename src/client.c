@@ -6,6 +6,7 @@
  */
 
 #include "common/common_list2.h"
+#include "sound.h"
 #include "net_pdu.h"
 #include "net.h"
 #include "client.h"
@@ -21,20 +22,21 @@
 
 #include <string.h>
 
+static int client_run = 0;
+
 client_t client = {};
 
+bool client_running(void)
+{
+    return client_run;
+}
 void cl_game_init(void)
 {
-    client.gamestate.quit = false;
-
-    client.gamestate.imenu = MENU_MAIN;
-
     client.gamestate.msg       = NULL;
     client.gamestate.state     = GAMESTATE_NOGAME;
-    client.gamestate.show_menu = true;
     client.gamestate.custommap = mapList;
     client.gamestate.gamemap   = mapList;
-
+    game_action_showmenu();
 }
 
 void cl_done(void)
@@ -238,6 +240,14 @@ void client_start(int flags)
 		game_halt("client bind() failed");
 	}
      */
+
+    client_run = 1;
+}
+
+void client_stop(void)
+{
+    client_req_gameabort_send();
+    client_run = 0;
 }
 
 
@@ -492,7 +502,7 @@ static void client_listen(void)
         client.gamestate.state = GAMESTATE_NOGAME;
 }
 
-static void client_events_pump()
+void client_events_pump(void)
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -511,11 +521,56 @@ static void client_events_pump()
     }
 }
 
-extern int server_run;
+
+
+#define GAME_SOUND_MENU 10
+
+void cl_game_mainTick(void)
+{
+    static gamestate_t state_prev = GAMESTATE_NOGAME;
+    bool statechanged = false;
+    if(state_prev != client.gamestate.state)
+    {
+        server_setgamestate(client.gamestate.state);
+        state_prev = client.gamestate.state;
+        statechanged = true;
+    }
+    switch(client.gamestate.state)
+    {
+    case GAMESTATE_NOGAME:
+        break;
+    case GAMESTATE_MISSION_BRIEF:
+        if(statechanged)
+        {
+            if(sound_started(NULL, GAME_SOUND_MENU))
+                sound_play_stop(NULL, GAME_SOUND_MENU);
+            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+        }
+        break;
+    case GAMESTATE_GAMESAVE:
+        break;
+    case GAMESTATE_INGAME:
+        if(statechanged)
+        {
+            sound_play_stop(NULL, GAME_SOUND_MENU);
+        }
+        break;
+    case GAMESTATE_INTERMISSION:
+        if(statechanged)
+        {
+            if(sound_started(NULL, GAME_SOUND_MENU))
+                sound_play_stop(NULL, GAME_SOUND_MENU);
+            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+        }
+        break;
+    }
+
+}
+
 
 void client_handle(void)
 {
-    if(!server_run)
+    if(!client_run)
     {
         client.gamestate.state = GAMESTATE_NOGAME;
     }
@@ -524,31 +579,7 @@ void client_handle(void)
 
     if(client.gamestate.state == GAMESTATE_GAMESAVE)
     {
-        client.gamestate.show_menu = true;
-        client.gamestate.imenu     = MENU_GAME_SAVE;
+        game_menu_show(MENU_GAME_SAVE);
     }
-
-    if(client.gamestate.show_menu)
-    {
-        menu_events_pump();
-    }
-    else
-    {
-        client_events_pump();
-    }
-
-    if(client.gamestate.show_menu)
-    {
-        client.gamestate.paused = true;
-        menu_selector_t imenu_process = client.gamestate.imenu;
-        client.gamestate.imenu = menu_handle(imenu_process);
-        menu_draw(imenu_process);
-    }
-    else
-    {
-        client.gamestate.paused = false;
-        cl_game_draw();
-    }
-
 }
 

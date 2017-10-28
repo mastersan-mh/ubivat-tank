@@ -49,18 +49,12 @@ typedef struct
     //состояние игры
     struct
     {
-        bool quit;
         gamestate_t state;
-
-        menu_selector_t imenu;
-        bool show_menu;
-
         char * msg;
         /* флаги состояния игры */
         int flags;
         /* игрок победил */
         bool win;
-        bool paused;
 
         maplist_t * gamemap;
         maplist_t * custommap;
@@ -92,10 +86,13 @@ extern client_t client;
 extern void cl_game_init(void);
 extern void cl_done(void);
 
+extern void client_start(int flags);
+extern void client_stop(void);
+extern bool client_running(void);
+
 extern int client_player_num_get(void);
 extern client_player_t * client_player_get(int playerId);
 
-extern void client_start(int flags);
 
 extern int client_connect(void);
 extern void client_initcams(void);
@@ -108,6 +105,8 @@ extern void client_req_nextgamestate_send(void);
 extern void client_req_gamesave_save_send(int isave);
 extern void client_req_gamesave_load_send(int isave);
 extern void client_req_setgamemap_send(const char * mapname);
+
+extern void client_events_pump(void);
 
 extern void client_handle(void);
 

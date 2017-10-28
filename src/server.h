@@ -56,8 +56,17 @@ typedef struct server_client_s
 
 } server_client_t;
 
+typedef enum
+{
+    SERVER_STATE_IDLE,
+    SERVER_STATE_INIT,
+    SERVER_STATE_RUN,
+    SERVER_STATE_DONE
+} server_state_t;
+
 typedef struct
 {
+    server_state_t state;
 
     //состояние игры
     struct
@@ -107,6 +116,8 @@ extern void server_restore_client_info(server_player_t * client);
 
 extern void server_start(int flags);
 extern void server_stop(void);
+
+extern bool server_running(void);
 
 extern void server_handle(void);
 

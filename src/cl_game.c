@@ -6,49 +6,18 @@
  */
 
 #include "common/common_list2.h"
+
+#include "types.h"
+
 #include "client.h"
+#include "server.h"
 #include "_gr2D.h"
 #include "video.h"
 #include "ui.h"
 #include "game.h"
 
+
 #include "ent_player.h"
-
-bool cl_game_quit_get(void)
-{
-    return client.gamestate.quit;
-}
-
-void cl_game_quit_set(void)
-{
-    client.gamestate.quit = true;
-}
-
-void cl_game_action_showmenu(void)
-{
-    client.gamestate.show_menu = true;
-}
-
-/*
- * создание игры
- *
- * @return = 0 - игра создана успешно
- * @return = 1 - игра уже создана
- * @return = 2 - ошибка создания серверного игрока
- * @return = 3 - ошибка создания серверного игрока
- */
-int cl_game_create(int flags)
-{
-    server_start(flags);
-    client_start(flags);
-    client.gamestate.show_menu = false;
-    return 0;
-}
-
-void cl_game_abort(void)
-{
-    client_req_gameabort_send();
-}
 
 /*
  * информация об уровне

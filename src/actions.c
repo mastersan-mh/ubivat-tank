@@ -10,7 +10,7 @@
 
 
 action_t actions[ACTION_NUM] = {
-		{ cl_game_action_showmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
+		{ game_action_showmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
 		//{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
 		{ action_sfactor, NULL},
 		{ action_dfactor, NULL}

@@ -8,6 +8,7 @@
 #include "g_events.h"
 #include "system.h"
 #include "game.h"
+#include "server.h"
 #include "client.h"
 #include "cl_input.h"
 #include "cl_game.h"
@@ -36,6 +37,17 @@
 #include <errno.h>
 #include <stdarg.h>
 
+typedef struct
+{
+    bool quit;
+    bool show_menu;
+    menu_selector_t imenu_process;
+    menu_selector_t imenu;
+
+} game_t;
+
+game_t game = {};
+
 int game_video_dfactor = 7;
 int game_video_sfactor = 6;
 
@@ -60,8 +72,26 @@ char * game_dir_home;
 char * game_dir_conf;
 char * game_dir_saves;
 
+bool game_quit_get(void)
+{
+    return !server_running() && !client_running() && game.quit;
+}
+
+void game_quit_set(void)
+{
+    server_stop();
+    client_stop();
+    game.quit = true;
+}
+
 void game_init(void)
 {
+    game.quit = false;
+    game.show_menu = true;
+    game.imenu = MENU_MAIN;
+    game.imenu_process = game.imenu;
+
+
     char * home_dir = getenv("HOME");
 
     game_dir_home = Z_malloc(strlen(home_dir) + strlen(GAME_DIR_HOME) + 1);
@@ -151,6 +181,17 @@ void game_done(void)
     images_done();
 };
 
+static void game_events_pump(void)
+{
+    if(game.show_menu)
+    {
+        menu_events_pump();
+    }
+    else
+    {
+        client_events_pump();
+    }
+}
 
 /*
  *
@@ -180,7 +221,7 @@ void game_main(void)
 
     long int cycletimeeventer = 0;
 
-    while(!cl_game_quit_get())
+    while(!game_quit_get())
     {
         time_prev = time_current;
         time_current = system_getTime_realTime_ms();
@@ -209,8 +250,10 @@ void game_main(void)
 
         video_screen_draw_begin();
 
-        server_handle();
-        client_handle();
+        game_events_pump();
+        game_handle();
+        game_draw();
+
 
         font_color_set3i(COLOR_15);
         video_printf(10,10, "FPS = %d", fps);
@@ -219,6 +262,72 @@ void game_main(void)
     }
 }
 
+/**
+ * @brief создание игры
+ *
+ * @return = 0 - игра создана успешно
+ * @return = 1 - игра уже создана
+ * @return = 2 - ошибка создания серверного игрока
+ * @return = 3 - ошибка создания серверного игрока
+ */
+int game_create(int flags)
+{
+    server_start(flags);
+    client_start(flags);
+    game.show_menu = false;
+    return 0;
+}
+
+void game_abort(void)
+{
+    server_stop();
+    client_stop();
+}
+
+void game_handle(void)
+{
+    server_handle();
+    client_handle();
+
+    if(game.show_menu)
+    {
+        game.imenu_process = game.imenu;
+        game.imenu = menu_handle(game.imenu_process);
+    }
+    else
+    {
+        cl_game_mainTick();
+    }
+}
+
+void game_draw(void)
+{
+    if(game.show_menu)
+    {
+        menu_draw(game.imenu_process);
+    }
+    else
+    {
+        cl_game_draw();
+    }
+}
+
+void game_action_showmenu(void)
+{
+    game.show_menu = true;
+}
+
+void game_menu_show(menu_selector_t imenu)
+{
+    game.show_menu = true;
+    game.imenu     = imenu;
+
+}
+
+void game_menu_hide(void)
+{
+    game.show_menu = false;
+}
 
 /*
  * чтение файла палитры

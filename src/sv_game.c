@@ -90,19 +90,12 @@ void sv_game_mainTick(void)
     case GAMESTATE_NOGAME:
         break;
     case GAMESTATE_MISSION_BRIEF:
-        if(statechanged)
-        {
-            if(sound_started(NULL, GAME_SOUND_MENU))
-                sound_play_stop(NULL, GAME_SOUND_MENU);
-            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-        }
         break;
     case GAMESTATE_GAMESAVE:
         break;
     case GAMESTATE_INGAME:
         if(statechanged)
         {
-            sound_play_stop(NULL, GAME_SOUND_MENU);
             server.gamestate.allow_state_gamesave = true;
         }
         sv_game_gameTick();
@@ -125,10 +118,6 @@ void sv_game_mainTick(void)
                     //server.gamestate.state = GAMESTATE_INTERMISSION;
                 }
             }
-
-            if(sound_started(NULL, GAME_SOUND_MENU))
-                sound_play_stop(NULL, GAME_SOUND_MENU);
-            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
         }
         break;
     }

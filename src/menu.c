@@ -17,6 +17,8 @@
 #include "cl_input.h"
 #include "cl_game.h"
 
+#include "g_gamesave.h"
+
 #define menu_draw_bkground(image) \
         video_image_draw(0, 0, (image))
 
@@ -61,10 +63,19 @@
 #define menu_draw_icon_small(col, row, image) \
         video_image_draw(120 + 1 + 4 + 15 * (col), 29 + (row) * 15, (image));
 
+
 /* MENU_MAIN */
+typedef struct
+{
+    int menu;
+} menu_main_ctx_t;
 static menu_main_ctx_t menu_main_ctx = {};
 
 /* MENU_GAME */
+typedef struct
+{
+    int menu;
+} menu_game_ctx_t;
 static menu_game_ctx_t menu_game_ctx = {};
 
 /* MENU_GAME_NEW1P */
@@ -72,16 +83,39 @@ static menu_game_ctx_t menu_game_ctx = {};
 /* MENU_GAME_NEW2P */
 
 /* MENU_GAME_LOAD */
+typedef struct
+{
+    int menu;
+} menu_game_load_ctx_t;
 static menu_game_load_ctx_t menu_load_ctx = {};
 
 /* MENU_GAME_SAVE */
+typedef struct
+{
+    enum
+    {
+        MENU_GAME_SAVE_SELECT,
+        MENU_GAME_SAVE_INPUT,
+        MENU_GAME_SAVE_SAVE,
+    } state;
+    int menu;
+    // бэкап редактируемой записи
+    gamesave_descr_t rec;
+} menu_game_save_ctx_t;
 static menu_game_save_ctx_t menu_save_ctx = {};
 
 /* MENU_CUSTOM */
+typedef struct
+{
+    int menu;
+} menu_custom_ctx_t;
 static menu_custom_ctx_t menu_custom_ctx = {};
 
 /* MENU_CUSTOM_CONNECT */
-
+typedef struct
+{
+    int menu;
+} menu_custom_connect_ctx_t;
 static menu_custom_connect_ctx_t menu_custom_connect_ctx = {};
 
 /* MENU_CUSTOM_NEWP1 */
@@ -91,8 +125,21 @@ static menu_custom_connect_ctx_t menu_custom_connect_ctx = {};
 /* MENU_CUSTOM_CONNECT */
 
 /* MENU_OPTIONS */
+typedef struct
+{
+    enum{
+        MENU_OPTIONS_SELECT,
+        MENU_OPTIONS_WAIT_KEY
+    } state;
+    int menu;
+    int column;
+} menu_options_ctx_t;
 static menu_options_ctx_t menu_options_ctx = {};
 /* MENU_ABOUT */
+typedef struct
+{
+    int menu;
+} menu_about_ctx_t;
 static menu_about_ctx_t menu_about_ctx = {};
 /* MENU_ABORT */
 
@@ -231,7 +278,7 @@ static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
     case MENU_ACTION_LEAVE  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
         if(client.gamestate.state != GAMESTATE_NOGAME)
-            client.gamestate.show_menu = false;
+            game_menu_hide();
         break;
     case MENU_ACTION_SPACE: break;
     }
@@ -312,7 +359,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
     if(client.gamestate.state != GAMESTATE_NOGAME)
         return MENU_MAIN;
     client.gamestate.gamemap = mapList;
-    ret = cl_game_create(0);
+    ret = game_create(0);
     if(ret)
     {
         game_halt("Error: Can not create game.");
@@ -333,7 +380,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
     if(client.gamestate.state != GAMESTATE_NOGAME)
         return MENU_MAIN;
     client.gamestate.gamemap = mapList;
-    ret = cl_game_create(GAMEFLAG_2PLAYERS);
+    ret = game_create(GAMEFLAG_2PLAYERS);
     if(ret)
     {
         game_halt("Error: Can not create game.");
@@ -375,7 +422,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
         {
 
             int ret;
-            ret = cl_game_create(0);
+            ret = game_create(0);
             if(ret)
             {
                 game_halt("Error: Can not create game.");
@@ -469,7 +516,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
             break;
         case MENU_ACTION_LEAVE  :
             sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-            client.gamestate.show_menu = false;
+            game_menu_hide();
             client_req_nextgamestate_send();
             return MENU_MAIN;
         case MENU_ACTION_SPACE  :break;
@@ -647,7 +694,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
     int ret;
     if(client.gamestate.state != GAMESTATE_NOGAME)
         return MENU_MAIN;
-    ret = cl_game_create(GAMEFLAG_CUSTOMGAME);
+    ret = game_create(GAMEFLAG_CUSTOMGAME);
     if(ret)
     {
         game_halt("Error: Can not create game.");
@@ -667,7 +714,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
     int ret;
     if(client.gamestate.state != GAMESTATE_NOGAME)
         return MENU_MAIN;
-    ret = cl_game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
+    ret = game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
     if(ret)
     {
         game_halt("Error: Can not create game.");
@@ -817,13 +864,13 @@ static void menu_about_draw(const void * ctx)
 
 static int menu_abort(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
-    cl_game_abort();
+    game_abort();
     return MENU_MAIN;
 }
 
 static int menu_quit(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
-    cl_game_quit_set();
+    game_quit_set();
     return MENU_MAIN;
 }
 

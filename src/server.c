@@ -16,7 +16,6 @@
 #include "game.h"
 #include "g_gamesave.h"
 #include "map.h"
-#include "sound.h"
 #include "menu.h"
 #include "entity.h"
 
@@ -35,13 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*static*/ int server_run = 0;
-
 server_t server = {};
-
-fd_set readfds;
-fd_set writefds;
-fd_set exceptfds;
 
 void server_init(void)
 {
@@ -355,42 +348,26 @@ int server_client_join(server_client_t * client, int players_num)
 void server_unjoin_clients(void)
 {
     server_client_t * client;
-    server_player_t * player;
     LIST2_FOREACHR(server.clients, client)
     {
+        server_player_t * player;
         LIST2_FOREACHR(client->players, player)
-                        {
+        {
             server_client_player_info_store(player);
             player->entity = NULL;
-                        }
+        }
     }
 }
 
 void server_start(int flags)
 {
-    server_run = 1;
+    server.state = SERVER_STATE_INIT;
     server.gamestate.flags = flags;
-    server.gamestate.state = GAMESTATE_MISSION_BRIEF;
-    server.gamestate.paused = false;
-
-    server.ns = net_socket_create(NET_PORT, "127.0.0.1");
-
-    if(server.ns == NULL)
-    {
-        game_halt("socket() failed");
-    }
-    if(net_socket_bind(server.ns) < 0)
-    {
-        game_halt("server bind() failed");
-    }
-
-    server.gamestate.allow_state_gamesave = true;
-
 }
 
 void server_stop(void)
 {
-    server_run = 0;
+    server.state = SERVER_STATE_DONE;
 }
 
 
@@ -805,15 +782,40 @@ static void server_listen(void)
     }
 }
 
+bool server_running(void)
+{
+    return server.state != SERVER_STATE_IDLE;
+}
+
 void server_handle()
 {
-    if(!server_run)
-        return;
 
-    server_listen();
-
-    if(!server_run)
+    switch(server.state)
     {
+    case SERVER_STATE_IDLE:
+        break;
+    case SERVER_STATE_INIT:
+        server.gamestate.state = GAMESTATE_MISSION_BRIEF;
+        server.gamestate.paused = false;
+
+        server.ns = net_socket_create(NET_PORT, "127.0.0.1");
+
+        if(server.ns == NULL)
+        {
+            game_halt("socket() failed");
+        }
+        if(net_socket_bind(server.ns) < 0)
+        {
+            game_halt("server bind() failed");
+        }
+        server.gamestate.allow_state_gamesave = true;
+        server.state = SERVER_STATE_RUN;
+        break;
+    case SERVER_STATE_RUN :
+        server_listen();
+        sv_game_mainTick();
+        break;
+    case SERVER_STATE_DONE:
         // удалить оставшихся игроков
         server_clients_delete();
         net_socket_close(server.ns);
@@ -821,9 +823,7 @@ void server_handle()
         //закроем карту
         map_clear();
         server.gamestate.state = GAMESTATE_NOGAME;
-
+        server.state = SERVER_STATE_IDLE;
+        break;
     }
-
-    sv_game_mainTick();
-
 }
