@@ -58,17 +58,20 @@ static void bull_artillery_detonate(entity_t * this, entity_t * that)
 
 static void bull_missile_detonate(entity_t * this, entity_t * that)
 {
-	if(that && this->parent == that)
-		return;
-	ENT_PLAYER(this->parent)->bull =
-	entity_new(
-		"explode_missile",
-		this->origin[0],
-		this->origin[1],
-		this->dir,
-		this->parent
-	);
-	ENTITY_ERASE(this);
+    if(that && this->parent == that)
+        return;
+    entity_t * e =
+            entity_new(
+                "explode_missile",
+                this->origin[0],
+                this->origin[1],
+                this->dir,
+                this->parent
+            );
+    ENT_PLAYER(this->parent)->bull = e;
+    this->parent->cam_entity = e;
+
+    ENTITY_ERASE(this);
 }
 
 static void bull_mine_detonate(entity_t * this, entity_t * that)
@@ -191,8 +194,9 @@ static entitymodel_t bull_missile_models[] =
 
 static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 {
-	bull_common_modelaction_startplay(this, 0, "fly");
-	((player_t *)parent->edata)->bull = this;
+    bull_common_modelaction_startplay(this, 0, "fly");
+    ((player_t *)parent->edata)->bull = this;
+    this->parent->cam_entity = this;
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)

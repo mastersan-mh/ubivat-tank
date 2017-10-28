@@ -16,9 +16,6 @@
 #include "ui.h"
 #include "game.h"
 
-
-#include "ent_player.h"
-
 /*
  * информация об уровне
  */
@@ -83,20 +80,8 @@ static void cl_game_state_intermission_draw(void)
     }
 }
 
-static void client_game_draw_cam(camera_t * cam, entity_t * player)
+static void client_game_draw_cam(camera_t * cam)
 {
-
-    player_t * pl = player->edata;
-
-    if(pl->bull)
-    {
-        VEC2_COPY(pl->bull->origin, cam->origin);
-    }
-    else
-    {
-        VEC2_COPY(player->origin, cam->origin);
-    }
-
     map_draw(cam);
 }
 
@@ -119,8 +104,16 @@ static void cl_draw(void)
                 cam->sx,
                 cam->sy
             );
-
-            client_game_draw_cam(cam, entity);
+            if(entity->cam_entity)
+            {
+                VEC2_COPY(entity->cam_entity->origin, cam->origin);
+            }
+            else
+            {
+                static vec2_t cam_origin_default = {0.0, 0.0};
+                VEC2_COPY(cam_origin_default, cam->origin);
+            }
+            client_game_draw_cam(cam);
             ui_draw(cam, entity);
         }
     }

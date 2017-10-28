@@ -77,14 +77,16 @@ static void explode_touch_common(entity_t * this, entity_t * that, const explode
 
 static void explode_common_modelaction_endframef(entity_t * this, unsigned int imodel, char * actionname)
 {
-	if(this->parent)
-	{
-		if(ENT_PLAYER(this->parent)->bull == this)
-		{
-			ENT_PLAYER(this->parent)->bull = NULL;
-		}
-	}
-	ENTITY_ERASE(this);
+    if(this->parent)
+    {
+        if(ENT_PLAYER(this->parent)->bull == this)
+        {
+            ENT_PLAYER(this->parent)->bull = NULL;
+            /* вернуть камеру игроку */
+            this->parent->cam_entity = this->parent;
+        }
+    }
+    ENTITY_ERASE(this);
 }
 
 /*

@@ -156,6 +156,7 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
     entity_t * entity = Z_malloc(sizeof(entity_t));
 
     entity->parent = (entity_t*)parent;
+    entity->cam_entity = entity;
     entity->erase = false;
     VEC2_SET(entity->origin, x, y);
     entity->dir   = dir;
