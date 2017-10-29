@@ -20,7 +20,9 @@ typedef struct
 {
 	char name[G_GAMESAVE_NAME_SIZE];
 	char mapfilename[MAP_FILENAME_SIZE];
-	uint16_t flags;
+	uint16_t flag_localgame;
+	uint16_t flag_allow_respawn;
+	uint16_t players_num;
 
 } ATTR_PACKED gamesave_data_header_t;
 
@@ -43,7 +45,8 @@ typedef struct
 	//внутреннее имя записи
 	char name[G_GAMESAVE_NAME_SIZE];
 	//флаги настройки игры
-	uint16_t flags;
+	server_gameflags_t flags;
+	int player_nums;
 } gamesave_descr_t;
 
 /* чтение сохранённой иры */
@@ -53,7 +56,9 @@ typedef struct
 	/* имя файла карты */
 	char mapfilename[G_GAMESAVE_MAPFILENAME_SIZE];
 	//флаги настройки игры
-	uint16_t flags;
+    int flag_localgame;
+	int flag_allow_respawn;
+	int players_num;
 } gamesave_load_context_t;
 
 extern gamesave_descr_t gamesaves[G_GAMESAVES_NUM];

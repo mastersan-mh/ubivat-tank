@@ -154,6 +154,8 @@ void cl_game_draw(void)
     case GAMESTATE_MISSION_BRIEF:
         cl_game_state_missionbrief_draw();
         break;
+    case GAMESTATE_JOIN_AWAITING:
+        break;
     case GAMESTATE_GAMESAVE:
         break;
     case GAMESTATE_INGAME:

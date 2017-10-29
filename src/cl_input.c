@@ -107,7 +107,7 @@ void input_done()
 /*
  * state = true | false = pressed | released
  */
-void input_key_setState(int key, bool state)
+void input_key_setState(int key, bool state_pressed)
 {
     ssize_t cindex;
     actionf_t func = NULL;
@@ -123,7 +123,7 @@ void input_key_setState(int key, bool state)
 
     input_actionsrc_t actionsrc = keyhash->collision[cindex].actionsrc;
 
-    if(state)
+    if(state_pressed)
     {
         switch(actionsrc)
         {
@@ -150,10 +150,12 @@ void input_key_setState(int key, bool state)
     case GAMESTATE_NOGAME:
         break;
     case GAMESTATE_MISSION_BRIEF:
-        if(!state) break;
+        if(!state_pressed)
+            break;
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        client_req_nextgamestate_send();
-        client_req_join_send();
+        client_req_send_game_nextstate();
+        break;
+    case GAMESTATE_JOIN_AWAITING:
         break;
     case GAMESTATE_GAMESAVE:
         break;
@@ -162,8 +164,9 @@ void input_key_setState(int key, bool state)
             client_player_action_send(playerId, action);
         break;
     case GAMESTATE_INTERMISSION:
-        if(!state) break;
-        client_req_nextgamestate_send();
+        if(!state_pressed)
+            break;
+        client_req_send_game_nextstate();
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
         break;
     }

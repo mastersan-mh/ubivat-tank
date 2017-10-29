@@ -22,15 +22,13 @@
 
 #include <string.h>
 
-static int client_run = 0;
-
 client_t client = {};
 
 bool client_running(void)
 {
-    return client_run;
+    return client.state != CLIENT_STATE_IDLE;
 }
-void cl_game_init(void)
+void client_init(void)
 {
     client.gamestate.msg       = NULL;
     client.gamestate.state     = GAMESTATE_NOGAME;
@@ -39,7 +37,7 @@ void cl_game_init(void)
     game_action_showmenu();
 }
 
-void cl_done(void)
+void client_done()
 {
 
 }
@@ -74,11 +72,11 @@ void client_req_send(const game_client_request_t * req)
     client.req_queue_num++;
 }
 
-void client_req_join_send(void)
+void client_req_send_players_join(void)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_JOIN;
-    req.data.JOIN.players_num = (client.gamestate.flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    req.data.JOIN.players_num = client.gamestate.players_num;
     client_req_send(&req);
 }
 
@@ -106,11 +104,13 @@ void client_req_gameabort_send(void)
     client_req_send(&req);
 }
 
-void client_req_nextgamestate_send(void)
+void client_req_send_game_nextstate(void)
 {
+    if(client.game_next_state_sended) return;
     game_client_request_t req;
     req.type = G_CLIENT_REQ_GAME_NEXTSTATE;
     client_req_send(&req);
+    client.game_next_state_sended = true;
 }
 
 void client_req_gamesave_save_send(int isave)
@@ -129,7 +129,7 @@ void client_req_gamesave_load_send(int isave)
     client_req_send(&req);
 }
 
-void client_req_setgamemap_send(const char * mapname)
+void client_req_send_setgamemap(const char * mapname)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_GAME_SETMAP;
@@ -148,16 +148,7 @@ static void client_player_delete(client_player_t * player)
  */
 int client_connect(void)
 {
-    client_player_t * player;
-    player = Z_malloc(sizeof(client_player_t));
-    LIST2_PUSH(client.players, player);
-    if(client.gamestate.flags & GAMEFLAG_2PLAYERS)
-    {
-        player = Z_malloc(sizeof(client_player_t));
-        LIST2_PUSH(client.players, player);
-    }
-
-    client.state = CLIENT_AWAITING_CONNECTION;
+    client.netstate = CLIENT_NETSTATE_AWAITING_CONNECTION;
     client.time = time_current;
 
     game_client_request_t req;
@@ -173,7 +164,7 @@ int client_connect(void)
 void client_initcams(void)
 {
     client_player_t * player;
-    int players_num = client_player_num_get();
+    int players_num = client.gamestate.players_num;
 
     float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
     float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
@@ -223,44 +214,30 @@ static const char * gamestate_to_str(gamestate_t state)
     {
             "GAMESTATE_NOGAME",
             "GAMESTATE_MISSION_BRIEF",
+            "GAMESTATE_JOIN_AWAITING",
             "GAMESTATE_GAMESAVE",
             "GAMESTATE_INGAME",
             "GAMESTATE_INTERMISSION",
     };
     return list[state];
 }
-
 void client_start(int flags)
 {
-    client.gamestate.flags = flags;
-    client.ns = net_socket_create(NET_PORT, "127.0.0.1");
-
-    if(client.ns == NULL)
-    {
-        game_halt("client socket() failed");
-    }
-    /*
-	if(net_socket_bind(client_ns) < 0)
-	{
-		game_halt("client bind() failed");
-	}
-     */
-
-    client_run = 1;
+    client.gamestate.players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    client.state = CLIENT_STATE_INIT;
 }
 
 void client_stop(void)
 {
-    client_req_gameabort_send();
-    client_run = 0;
+    client.state = CLIENT_STATE_DONE;
 }
 
 
 static void client_fsm(const game_server_event_t * event)
 {
-    switch(client.state)
+    switch(client.netstate)
     {
-    case CLIENT_AWAITING_CONNECTION:
+    case CLIENT_NETSTATE_AWAITING_CONNECTION:
         /*
         if(!buf)
         {
@@ -277,7 +254,7 @@ static void client_fsm(const game_server_event_t * event)
         {
             //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
             game_console_send("client: server accept connection.");
-            client.state = CLIENT_LISTEN;
+            client.netstate = CLIENT_NETSTATE_LISTEN;
         }
         else
         {
@@ -285,7 +262,7 @@ static void client_fsm(const game_server_event_t * event)
         }
 
         break;
-    case CLIENT_LISTEN:
+    case CLIENT_NETSTATE_LISTEN:
         client.time = time_current;
 
         switch(event->type)
@@ -309,13 +286,28 @@ static void client_fsm(const game_server_event_t * event)
             }
 
             break;
-        case G_SERVER_EVENT_PLAYER_ENTITY_SET:
-        {
-            int player_num = event->data.PLAYER_ENTITY_SET.player2 ? 2 : 1;
+        case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
+            client.gamestate.players_num = event->data.PLAYERS_JOIN_AWAITING.players_num;
 
-            for(int i = 0; i < player_num; i++)
+            client_req_send_players_join();
+            client_req_send_game_nextstate();
+
+            break;
+        case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
+        {
+            int players_num = client.gamestate.players_num;
+
+            for(int i = 0; i < players_num; i++)
             {
-                entity_t * clientent = event->data.PLAYER_ENTITY_SET.ent[i].entity;
+                client_player_t * player = Z_malloc(sizeof(client_player_t));
+                LIST2_PUSH(client.players, player);
+            }
+
+            client_initcams();
+
+            for(int i = 0; i < players_num; i++)
+            {
+                entity_t * clientent = event->data.PLAYERS_ENTITY_SET.ent[i].entity;
                 bool local_client = true;
                 if(local_client)
                 {
@@ -324,11 +316,6 @@ static void client_fsm(const game_server_event_t * event)
             }
             break;
         }
-        case G_SERVER_EVENT_GAME_LOADED:
-            client.gamestate.flags = event->data.GAME_LOADED.flags;
-            client_connect();
-            client_initcams();
-            break;
         }
 
         break;
@@ -361,29 +348,28 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
              */
             break;
         case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+            break;
         case G_SERVER_EVENT_CONNECTION_CLOSE:
             break;
         case G_SERVER_EVENT_GAME_STATE_SET:
             PDU_POP_BUF(&value16, sizeof(value16));
             reply.data.GAME_STATE_SET.state = ntohs(value16);
             break;
-        case G_SERVER_EVENT_GAME_LOADED:
+        case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
             PDU_POP_BUF(&value16, sizeof(value16));
-            reply.data.GAME_LOADED.flags = ntohs(value16);
+            reply.data.PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
             break;
-        case G_SERVER_EVENT_PLAYER_ENTITY_SET:
-
-            PDU_POP_BUF(&value16, sizeof(value16));
-            reply.data.PLAYER_ENTITY_SET.player2 = ntohs(value16);
-
-            int player_num = reply.data.PLAYER_ENTITY_SET.player2 ? 2 : 1;
+        case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
+        {
+            int player_num = client.gamestate.players_num;
             for(int i = 0; i < player_num; i++)
             {
-                PDU_POP_BUF(reply.data.PLAYER_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                PDU_POP_BUF(&reply.data.PLAYER_ENTITY_SET.ent[i].entity, sizeof(reply.data.PLAYER_ENTITY_SET.ent[i].entity));
+                PDU_POP_BUF(reply.data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                PDU_POP_BUF(&reply.data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply.data.PLAYERS_ENTITY_SET.ent[i].entity));
             }
 
             break;
+        }
         }
 
 
@@ -441,6 +427,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
         }
     }
     client.req_queue_num = 0;
+    client.game_next_state_sended = false;
 
     /* players */
     client_player_t *player;
@@ -467,7 +454,6 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
     return 0;
 }
 
-
 /*
  * слушать хост, получать от него сообщения для клиентов
  */
@@ -491,7 +477,6 @@ static void client_listen(void)
         }
     }
 
-
     err = client_pdu_build(buf, &buf_len, PDU_BUF_SIZE);
     if(err)
     {
@@ -502,9 +487,6 @@ static void client_listen(void)
     {
         net_send(client.ns, buf, buf_len);
     }
-
-    if(LIST2_IS_EMPTY(client.players))
-        client.gamestate.state = GAMESTATE_NOGAME;
 }
 
 void client_events_pump(void)
@@ -536,7 +518,6 @@ void cl_game_mainTick(void)
     bool statechanged = false;
     if(state_prev != client.gamestate.state)
     {
-        server_setgamestate(client.gamestate.state);
         state_prev = client.gamestate.state;
         statechanged = true;
     }
@@ -551,6 +532,8 @@ void cl_game_mainTick(void)
                 sound_play_stop(NULL, GAME_SOUND_MENU);
             sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
         }
+        break;
+    case GAMESTATE_JOIN_AWAITING:
         break;
     case GAMESTATE_GAMESAVE:
         break;
@@ -575,17 +558,41 @@ void cl_game_mainTick(void)
 
 void client_handle(void)
 {
-    if(!client_run)
+    switch(client.state)
     {
+    case CLIENT_STATE_IDLE:
+        client.gamestate.state = GAMESTATE_NOGAME;
+        break;
+    case CLIENT_STATE_INIT:
+        client.ns = net_socket_create(NET_PORT, "127.0.0.1");
+
+        if(client.ns == NULL)
+        {
+            game_halt("client socket() failed");
+        }
+        /*
+        if(net_socket_bind(client_ns) < 0)
+        {
+            game_halt("client bind() failed");
+        }
+         */
+        client.state = CLIENT_STATE_RUN;
+        break;
+    case CLIENT_STATE_RUN :
+        client_listen();
+        if(client.gamestate.state == GAMESTATE_GAMESAVE)
+        {
+            game_menu_show(MENU_GAME_SAVE);
+        }
+        break;
+    case CLIENT_STATE_DONE:
+        client_req_gameabort_send();
         client_players_delete();
         client.gamestate.state = GAMESTATE_NOGAME;
+        client.state = CLIENT_STATE_IDLE;
+        break;
     }
 
-    client_listen();
 
-    if(client.gamestate.state == GAMESTATE_GAMESAVE)
-    {
-        game_menu_show(MENU_GAME_SAVE);
-    }
 }
 

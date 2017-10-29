@@ -120,7 +120,7 @@ void game_init(void)
     map_load_list();
 
     server_init();
-    cl_game_init();
+    client_init();
 
     printf("ENTERING GRAPHIC...\n");
     if(video_init())
@@ -173,7 +173,7 @@ void game_done(void)
     sound_done();
     video_done();
     //прекратим игру
-    cl_done();
+    client_done();
     server_done();
     //очистим список карт
     map_list_removeall();

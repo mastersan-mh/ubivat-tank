@@ -10,7 +10,7 @@
 
 static entityvarinfo_t message_vars[] =
 {
-		{ "text", VARTYPE_STRING }
+		{ VARTYPE_STRING, "text" }
 };
 
 static const entityinfo_t message_reginfo = {

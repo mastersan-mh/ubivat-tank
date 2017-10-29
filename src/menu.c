@@ -367,9 +367,8 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     client_connect();
-    client_initcams();
 
-    client_req_setgamemap_send(client.gamestate.gamemap->map);
+    client_req_send_setgamemap(client.gamestate.gamemap->map);
 
     return MENU_MAIN;
 }
@@ -388,9 +387,8 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     client_connect();
-    client_initcams();
 
-    client_req_setgamemap_send(client.gamestate.gamemap->map);
+    client_req_send_setgamemap(client.gamestate.gamemap->map);
 
     return MENU_MAIN;
 }
@@ -430,7 +428,6 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
             }
 
             client_connect();
-            client_initcams();
 
             client_req_gamesave_load_send(ctx->menu);
 
@@ -475,10 +472,9 @@ static void menu_game_load_draw(const void * ctx_)
         //отображение статуса сохраненной игры
         if(showstat)
         {
-            menu_draw_icon_small(9, irow, IMG_FLAG_RUS);
-            if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
+            for(int i = 0; i < gamesaves[irow].player_nums; i++)
             {
-                menu_draw_icon_small(10, irow, IMG_FLAG_RUS);
+                menu_draw_icon_small(9 + i, irow, IMG_FLAG_RUS);
             }
         }
     }
@@ -517,7 +513,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
         case MENU_ACTION_LEAVE  :
             sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
             game_menu_hide();
-            client_req_nextgamestate_send();
+            client_req_send_game_nextstate();
             return MENU_MAIN;
         case MENU_ACTION_SPACE  :break;
         }
@@ -584,10 +580,9 @@ static void menu_game_save_draw(const void * ctx_)
         if(showstat)
         {
             //отображение статуса сохраненной игры
-            menu_draw_icon_small(9, irow, IMG_FLAG_RUS);
-            if(gamesaves[irow].flags & GAMEFLAG_2PLAYERS)
+            for(int i = 0; i < gamesaves[irow].player_nums; i++)
             {
-                menu_draw_icon_small(10, irow, IMG_FLAG_RUS);
+                menu_draw_icon_small(9 + i, irow, IMG_FLAG_RUS);
             }
         }
     }
@@ -702,9 +697,8 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
     }
 
     client_connect();
-    client_initcams();
 
-    client_req_setgamemap_send(client.gamestate.custommap->map);
+    client_req_send_setgamemap(client.gamestate.custommap->map);
 
     return MENU_MAIN;
 }
@@ -722,9 +716,8 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
     }
 
     client_connect();
-    client_initcams();
 
-    client_req_setgamemap_send(client.gamestate.custommap->map);
+    client_req_send_setgamemap(client.gamestate.custommap->map);
 
     return MENU_MAIN;
 }

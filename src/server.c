@@ -47,7 +47,7 @@ void server_done(void)
 
 }
 
-static void server_req_send(server_client_t * client, const game_server_event_t * req)
+static void server_reply_send(server_client_t * client, const game_server_event_t * req)
 {
     if(client->tx_queue_num >= SERVER_TX_QUEUE_SIZE)
     {
@@ -58,70 +58,56 @@ static void server_req_send(server_client_t * client, const game_server_event_t 
     client->tx_queue_num++;
 }
 
-void server_event_info_send(server_client_t * client)
+void server_reply_send_info(server_client_t * client)
 {
     game_server_event_t event;
     event.type = G_SERVER_EVENT_INFO;
     event.data.INFO.clients_num = 0;
-    server_req_send(client, &event);
+    server_reply_send(client, &event);
 }
 
-void server_event_cliententity_send(server_client_t * client)
+void server_reply_send_connection_accepted(server_client_t * client)
 {
     game_server_event_t event;
-    event.type = G_SERVER_EVENT_PLAYER_ENTITY_SET;
+    event.type = G_SERVER_EVENT_CONNECTION_ACCEPTED;
+    server_reply_send(client, &event);
+}
+
+void server_reply_send_player_join_awaiting(server_client_t * client)
+{
+    game_server_event_t event;
+    event.type = G_SERVER_EVENT_PLAYERS_JOIN_AWAITING;
+    event.data.PLAYERS_JOIN_AWAITING.players_num = client->players_num;
+    server_reply_send(client, &event);
+}
+
+void server_reply_send_cliententity(server_client_t * client)
+{
+    game_server_event_t event;
+    event.type = G_SERVER_EVENT_PLAYERS_ENTITY_SET;
 
     int i = 0;
     server_player_t * player;
 
-    event.data.PLAYER_ENTITY_SET.player2 = (client->players_num == 2);
     LIST2_FOREACHR(client->players, player)
     {
         if(i >= client->players_num)
             break;
-        strncpy(event.data.PLAYER_ENTITY_SET.ent[i].entityname, player->entity->info->name, GAME_SERVER_EVENT_ENTNAME_SIZE);
-        event.data.PLAYER_ENTITY_SET.ent[i].entity = player->entity;
+        strncpy(event.data.PLAYERS_ENTITY_SET.ent[i].entityname, player->entity->info->name, GAME_SERVER_EVENT_ENTNAME_SIZE);
+        event.data.PLAYERS_ENTITY_SET.ent[i].entity = player->entity;
         i++;
     }
-    server_req_send(client, &event);
+    server_reply_send(client, &event);
 
 }
 
-void server_event_gamestate_send(server_client_t * client, gamestate_t state)
+void server_reply_send_gamestate(server_client_t * client, gamestate_t state)
 {
-    server.gamestate.state = state;
     game_server_event_t event;
     event.type = G_SERVER_EVENT_GAME_STATE_SET;
     event.data.GAME_STATE_SET.state = state;
-    server_req_send(client, &event);
+    server_reply_send(client, &event);
 }
-
-void host_event_gameload_loaded_send(int flags)
-{
-    game_server_event_t event;
-    event.type = G_SERVER_EVENT_GAME_LOADED;
-    event.data.GAME_LOADED.flags = flags;
-    server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
-    {
-        server_req_send(client, &event);
-    }
-}
-
-
-void server_setgamestate(gamestate_t state)
-{
-    //server.gamestate.state = state;
-    game_server_event_t event;
-    event.type = G_SERVER_EVENT_GAME_STATE_SET;
-    event.data.GAME_STATE_SET.state = state;
-    server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
-    {
-        server_req_send(client, &event);
-    }
-}
-
 
 /*
  * получить данные переменной
@@ -246,10 +232,11 @@ static server_client_t * server_client_create(int sock, const net_addr_t * net_a
     if(!client)
         game_halt("server_client_create(): Can not alloc memory, failed");
 
+    client->joined = false;
     client->main = main;
     client->ns.sock = sock;
     client->ns.addr_ = *net_addr;
-    client->players_num = 0;
+    client->players_num = server.flags.allow_local_players_num;
     client->players = NULL;
     client->tx_queue_num = 0;
     LIST2_PUSH(server.clients, client);
@@ -284,7 +271,7 @@ static void server_client_disconnect(server_client_t * client)
 {
     game_server_event_t event;
     event.type = G_SERVER_EVENT_CONNECTION_CLOSE;
-    server_req_send(client, &event);
+    server_reply_send(client, &event);
 }
 
 
@@ -336,6 +323,7 @@ int server_client_join(server_client_t * client, int players_num)
         player->entity = entity;
         server_client_player_info_store(player);
     }
+    client->joined = true;
     return 0;
 }
 
@@ -362,8 +350,11 @@ void server_unjoin_clients(void)
 void server_start(int flags)
 {
     server.state = SERVER_STATE_INIT;
-    server.gamestate.flags = flags;
+    server.flags.localgame = !(flags & GAMEFLAG_CUSTOMGAME);
+    server.flags.allow_respawn = (flags & GAMEFLAG_2PLAYERS) || (flags & GAMEFLAG_CUSTOMGAME);
+    server.flags.allow_local_players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
 }
+
 
 void server_stop(void)
 {
@@ -388,9 +379,8 @@ static int sv_gamesave_load(int isave)
         return -1;
     }
 
-    server.gamestate.flags = ctx.flags;
-
-    host_event_gameload_loaded_send(ctx.flags);
+    server.flags.localgame = ctx.flag_localgame;
+    server.flags.allow_respawn = ctx.flag_allow_respawn;
 
     g_gamesave_load_close(&ctx);
 
@@ -434,6 +424,8 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                         break;
                     case GAMESTATE_GAMESAVE:
                         break;
+                    case GAMESTATE_JOIN_AWAITING:
+                        break;
                     case GAMESTATE_INGAME:
                         if(action->action_f)
                             action->action_f(ent, ent->edata, action->action);
@@ -446,7 +438,7 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
                 {
                     if(info->spawn)
                     {
-                        if(server.gamestate.flags & GAMEFLAG_2PLAYERS)
+                        if(server.flags.allow_respawn)
                         {
                             game_console_send("server: spawn client.");
                             server_client_player_info_restore(player);
@@ -469,9 +461,10 @@ void server_client_control_handle(server_player_t * player, const game_client_pl
 
 static void server_fsm(const net_addr_t * sender, const game_client_request_t * req)
 {
+    server_client_t * client = server_client_find_by_addr(sender);
     switch(req->type)
     {
-    /** Непривилегированые запросы */
+    /* Непривилегированые запросы */
     case G_CLIENT_REQ_DISCOVERYSERVER:
         /*
         host_event_info_send(ns);
@@ -479,34 +472,35 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         break;
     case G_CLIENT_REQ_CONNECT:
     {
-
-
+        if(client)
+        {
+            game_console_send("server: client from 0x%00000000x:%d  already connected.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
+            break;
+        }
         game_console_send("server: client request connection from 0x%00000000x:%d.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
         bool mainclient = true;
         //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-        server_client_t * client = server_client_create(server.ns->sock, sender, mainclient);
+        client = server_client_create(server.ns->sock, sender, mainclient);
 
-        game_server_event_t event;
-        event.type = G_SERVER_EVENT_CONNECTION_ACCEPTED;
-        server_req_send(client, &event);
-
-        server_event_gamestate_send(client, server.gamestate.state);
+        server_reply_send_connection_accepted(client);
+        server_reply_send_gamestate(client, server.gamestate.state);
 
         break;
     }
     case G_CLIENT_REQ_DISCONNECT:
-    {
-        game_console_send("server: client request disconnection from 0x%00000000x:%d.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
-        server_client_t * client = server_client_find_by_addr(sender);
-
+        if(!client)
+        {
+            game_console_send("SERVER: client 0x%00000000x:%d not found.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
+            break;
+        }
+        game_console_send("SERVER: client 0x%00000000x:%d require disconnection.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
+        server_reply_send_gamestate(client, server.gamestate.state);
+        server_client_disconnect(client);
         server_client_delete(client);
-
+        client = NULL;
         break;
-    }
     case G_CLIENT_REQ_JOIN:
-    {
-        server_client_t * client = server_client_find_by_addr(sender);
-        if(client->players_num > 0)
+        if(client->joined)
         {
             game_console_send("server: client already joined.");
             break;
@@ -517,14 +511,13 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
             game_console_send("server: can not join client, no entities to spawn.");
             break;
         }
-        server_event_cliententity_send(client);
+
+        server_reply_send_gamestate(client, server.gamestate.state);
+        server_reply_send_cliententity(client);
         game_console_send("server: client joined to game.");
         break;
-    }
-    /** Привилегированные запросы */
+    /* Привилегированные запросы */
     case G_CLIENT_REQ_GAME_ABORT:
-    {
-        server_client_t * client = server_client_find_by_addr(sender);
         if(!client)
         {
             game_console_send("server: no client 0x%00000000x:%d.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
@@ -536,7 +529,6 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         game_console_send("server: client aborted game.");
         sv_game_abort();
         break;
-    }
     case G_CLIENT_REQ_GAME_SETMAP:
     {
         const char * mapname = req->data.GAME_SETMAP.mapname;
@@ -556,25 +548,35 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
     }
     case G_CLIENT_REQ_GAME_NEXTSTATE:
     {
+        gamestate_t gamestate_next = server.gamestate.state;
         switch(server.gamestate.state)
         {
         case GAMESTATE_NOGAME:
             break;
         case GAMESTATE_MISSION_BRIEF:
+            gamestate_next = GAMESTATE_JOIN_AWAITING;
+            server_reply_send_player_join_awaiting(client);
+            break;
+        case GAMESTATE_JOIN_AWAITING:
             if(server.gamestate.allow_state_gamesave)
-                server.gamestate.state = GAMESTATE_GAMESAVE;
+                gamestate_next = GAMESTATE_GAMESAVE;
             else
-                server.gamestate.state = GAMESTATE_INGAME;
+                gamestate_next = GAMESTATE_INGAME;
             break;
         case GAMESTATE_GAMESAVE:
-            server.gamestate.state = GAMESTATE_INGAME;
+            gamestate_next = GAMESTATE_INGAME;
             break;
         case GAMESTATE_INGAME:
             break;
         case GAMESTATE_INTERMISSION:
-            server.gamestate.state = GAMESTATE_MISSION_BRIEF;
+            gamestate_next = GAMESTATE_MISSION_BRIEF;
             break;
         }
+
+        server_reply_send_gamestate(client, gamestate_next);
+
+        server.gamestate.state = gamestate_next;
+
         break;
     }
     case G_CLIENT_REQ_GAME_SAVE:
@@ -590,6 +592,8 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
 
 static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {
+    server_client_t * client = server_client_find_by_addr(sender);
+
     size_t sv_req_queue_num;
     game_client_request_t client_req;
 
@@ -610,19 +614,7 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
         case G_CLIENT_REQ_CONNECT:
             break;
         case G_CLIENT_REQ_DISCONNECT:
-        {
-            server_client_t * client = server_client_find_by_addr(sender);
-            if(!client)
-            {
-                game_console_send("SERVER: client 0x%00000000x:%d not found.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
-            }
-            else
-            {
-                game_console_send("SERVER: client 0x%00000000x:%d require disconnection.", sender->addr_in.sin_addr, ntohs(sender->addr_in.sin_port));
-                server_client_disconnect(client);
-            }
             break;
-        }
         case G_CLIENT_REQ_JOIN:
             PDU_POP_BUF(&value16, sizeof(value16));
             client_req.data.JOIN.players_num = ntohs(value16);
@@ -649,12 +641,12 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
 
     game_client_player_request_t client_player_req;
 
-    server_client_t * client = server_client_find_by_addr(sender);
     if(!client)
     {
         return 0;
     }
     int i = 0;
+
     server_player_t * player;
     LIST2_FOREACHR(client->players, player)
     {
@@ -706,25 +698,24 @@ int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, siz
              */
             break;
         case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+            break;
         case G_SERVER_EVENT_CONNECTION_CLOSE:
             break;
         case G_SERVER_EVENT_GAME_STATE_SET:
             value16 = htons(event->data.GAME_STATE_SET.state);
             PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
-        case G_SERVER_EVENT_GAME_LOADED:
-            value16 = htons(event->data.GAME_LOADED.flags);
+        case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
+            value16 = htons(event->data.PLAYERS_JOIN_AWAITING.players_num);
             PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
-        case G_SERVER_EVENT_PLAYER_ENTITY_SET:
+        case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
         {
-            value16 = htons(event->data.PLAYER_ENTITY_SET.player2);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            int player_num = event->data.PLAYER_ENTITY_SET.player2 ? 2 : 1;
+            int player_num = client->players_num;
             for(int i = 0; i < player_num; i++)
             {
-                PDU_PUSH_BUF(event->data.PLAYER_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                PDU_PUSH_BUF(&event->data.PLAYER_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYER_ENTITY_SET.ent[i].entity));
+                PDU_PUSH_BUF(event->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                PDU_PUSH_BUF(&event->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYERS_ENTITY_SET.ent[i].entity));
             }
             break;
         }

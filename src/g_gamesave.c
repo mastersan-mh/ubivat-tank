@@ -51,7 +51,9 @@ static int g_gamesave_cacheinfo(const char * savename, gamesave_descr_t * rec)
         return -1;
     }
     strncpy(rec->name, header.name, 15);
-    rec->flags = header.flags;
+    rec->flags.localgame = header.flag_localgame;
+    rec->flags.allow_respawn = header.flag_allow_respawn;
+    rec->player_nums = header.players_num;
     close(fd);
     rec->exist = true;
     return 0;
@@ -148,8 +150,11 @@ int g_gamesave_save(int isave)
     gamesave_data_header_t header;
     strncpy(header.name, gamesave->name, G_GAMESAVE_NAME_SIZE);
     strncpy(header.mapfilename, map._file, MAP_FILENAME_SIZE);
-    gamesave->flags = server.gamestate.flags;
-    header.flags = gamesave->flags;
+
+    gamesave->flags = server.flags;
+    header.flag_localgame = gamesave->flags.localgame;
+    header.flag_allow_respawn = gamesave->flags.allow_respawn;
+
     count = write(fd, &header, sizeof(header));
     if(count != sizeof(header))
     {
@@ -226,12 +231,12 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
     }
 
     strncpy(ctx->mapfilename, header.mapfilename, G_GAMESAVE_MAPFILENAME_SIZE);
-    ctx->flags = header.flags;
+    ctx->flag_localgame = header.flag_localgame;
+    ctx->flag_allow_respawn = header.flag_allow_respawn;
+    ctx->players_num = header.players_num;
 
+    int player_num = ctx->players_num;
 
-    int player_num = (ctx->flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
-
-    int i = 0;
     server_client_t * client;
     LIST2_FOREACHR(server.clients, client)
     {
@@ -239,11 +244,11 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
         LIST2_FOREACHR(client->players, player)
         {
             g_gamesave_load_player(ctx->fd, player);
-            i++;
-            if(i >= player_num) break;
+            player_num--;
+            if(player_num <= 0) break;
 
         }
-        if(i >= player_num) break;
+        if(player_num <= 0) break;
     }
     return 0;
 

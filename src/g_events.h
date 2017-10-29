@@ -85,8 +85,8 @@ typedef enum
     G_SERVER_EVENT_CONNECTION_ACCEPTED,
     G_SERVER_EVENT_CONNECTION_CLOSE,
     G_SERVER_EVENT_GAME_STATE_SET,
-    G_SERVER_EVENT_GAME_LOADED,
-    G_SERVER_EVENT_PLAYER_ENTITY_SET,
+    G_SERVER_EVENT_PLAYERS_JOIN_AWAITING,
+    G_SERVER_EVENT_PLAYERS_ENTITY_SET,
 } game_server_event_type_t;
 
 typedef union
@@ -101,17 +101,16 @@ typedef union
     } GAME_STATE_SET;
     struct
     {
-        int flags;
-    } GAME_LOADED;
+        int players_num; /**< amount of client local players */
+    } PLAYERS_JOIN_AWAITING;
     struct
     {
-        bool player2;
         struct
         {
             char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
             void /*entity_t */ * entity;
         } ent[2];
-    } PLAYER_ENTITY_SET;
+    } PLAYERS_ENTITY_SET;
 } game_server_event_data_t;
 
 

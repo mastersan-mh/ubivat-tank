@@ -113,7 +113,7 @@ void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn)
             else
             {
                 /* игрок-человек */
-                if(sv_game_is_custom_game())
+                if(sv_game_flag_localgame())
                     spawn_value = PLAYERINFOVAR(i);
                 else
                 {
@@ -351,16 +351,16 @@ ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 static entityvarinfo_t player_vars[] =
 {
-        { "fragstotal", VARTYPE_INTEGER }, /* фрагов за пройденые карты */
-        { "frags"     , VARTYPE_INTEGER }, /* фрагов за карту */
-        { "scores"    , VARTYPE_INTEGER }, /* набрано очков */
-        { "level"     , VARTYPE_INTEGER }, /* уровень игрока */
+        { VARTYPE_INTEGER, "fragstotal" }, /* фрагов за пройденые карты */
+        { VARTYPE_INTEGER, "frags"      }, /* фрагов за карту */
+        { VARTYPE_INTEGER, "scores"     }, /* набрано очков */
+        { VARTYPE_INTEGER, "level"      }, /* уровень игрока */
 
-        { "item_health"        , VARTYPE_INTEGER },
-        { "item_armor"         , VARTYPE_INTEGER },
-        { "item_ammo_artillery", VARTYPE_INTEGER },
-        { "item_ammo_missile"  , VARTYPE_INTEGER },
-        { "item_ammo_mine"     , VARTYPE_INTEGER },
+        { VARTYPE_INTEGER, "item_health"         },
+        { VARTYPE_INTEGER, "item_armor"          },
+        { VARTYPE_INTEGER, "item_ammo_artillery" },
+        { VARTYPE_INTEGER, "item_ammo_missile"   },
+        { VARTYPE_INTEGER, "item_ammo_mine"      },
 };
 
 static entitytouch_t player_touchs[] =

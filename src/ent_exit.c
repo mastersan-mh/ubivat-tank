@@ -11,7 +11,7 @@
 
 static entityvarinfo_t exit_vars[] =
 {
-		{ "text", VARTYPE_STRING }
+		{ VARTYPE_STRING, "text" }
 };
 
 static entitymodel_t exit_models[] =

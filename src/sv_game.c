@@ -26,9 +26,9 @@ void sv_game_message_send(const char * mess)
     server.gamestate.msg = (char*)mess;
 };
 
-int sv_game_is_custom_game(void)
+int sv_game_flag_localgame(void)
 {
-    return server.gamestate.flags & GAMEFLAG_CUSTOMGAME;
+    return server.flags.localgame;
 }
 
 /*
@@ -81,7 +81,6 @@ void sv_game_mainTick(void)
     bool statechanged = false;
     if(state_prev != server.gamestate.state)
     {
-        server_setgamestate(server.gamestate.state);
         state_prev = server.gamestate.state;
         statechanged = true;
     }
@@ -90,6 +89,8 @@ void sv_game_mainTick(void)
     case GAMESTATE_NOGAME:
         break;
     case GAMESTATE_MISSION_BRIEF:
+        break;
+    case GAMESTATE_JOIN_AWAITING:
         break;
     case GAMESTATE_GAMESAVE:
         break;
@@ -103,7 +104,7 @@ void sv_game_mainTick(void)
     case GAMESTATE_INTERMISSION:
         if(statechanged)
         {
-            if(server.gamestate.flags & GAMEFLAG_CUSTOMGAME)
+            if(!server.flags.localgame)
             {
                 //игра по выбору
                 sv_game_abort();

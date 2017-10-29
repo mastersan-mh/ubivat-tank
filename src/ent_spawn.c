@@ -12,11 +12,11 @@
 
 static entityvarinfo_t spawn_player_vars[] =
 {
-		{ "item_scores", VARTYPE_INTEGER },
-		{ "item_health", VARTYPE_INTEGER },
-		{ "item_armor" , VARTYPE_INTEGER },
-		{ "item_ammo_missile", VARTYPE_INTEGER },
-		{ "item_ammo_mine"   , VARTYPE_INTEGER },
+		{ VARTYPE_INTEGER, "item_scores" },
+		{ VARTYPE_INTEGER, "item_health" },
+		{ VARTYPE_INTEGER, "item_armor"  },
+		{ VARTYPE_INTEGER, "item_ammo_missile" },
+		{ VARTYPE_INTEGER, "item_ammo_mine"    },
 };
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
