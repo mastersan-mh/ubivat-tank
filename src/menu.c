@@ -472,7 +472,7 @@ static void menu_game_load_draw(const void * ctx_)
         //отображение статуса сохраненной игры
         if(showstat)
         {
-            for(int i = 0; i < gamesaves[irow].player_nums; i++)
+            for(int i = 0; i < gamesaves[irow].players_num_total; i++)
             {
                 menu_draw_icon_small(9 + i, irow, IMG_FLAG_RUS);
             }
@@ -580,7 +580,7 @@ static void menu_game_save_draw(const void * ctx_)
         if(showstat)
         {
             //отображение статуса сохраненной игры
-            for(int i = 0; i < gamesaves[irow].player_nums; i++)
+            for(int i = 0; i < gamesaves[irow].players_num_total; i++)
             {
                 menu_draw_icon_small(9 + i, irow, IMG_FLAG_RUS);
             }

@@ -107,6 +107,7 @@ extern void server_done(void);
 extern int server_client_join(server_client_t * client, int players_num);
 
 extern int server_client_num_get(void);
+extern int server_client_players_num_get(const server_client_t * client);
 
 extern vardata_t * server_client_vardata_get(server_player_t * client, const char * varname, vartype_t vartype);
 

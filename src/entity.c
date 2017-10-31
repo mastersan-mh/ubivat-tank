@@ -256,8 +256,9 @@ void entities_erase(void)
     }
 }
 
-/*
- * получить данные переменной
+/**
+ * @brief получить данные переменной
+ * @param vartype   тип переменной: -1 - тип выбрать автоматически
  */
 vardata_t * entity_vardata_get(const entity_t * entity, const char * varname, vartype_t vartype)
 {

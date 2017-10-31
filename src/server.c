@@ -134,7 +134,7 @@ vardata_t * server_client_vardata_get(server_player_t * player, const char * var
 }
 
 /**
- * @brief сохранение информации о клиенте
+ * @brief сохранение информации о entity игрока в хранилище игрока
  */
 static void server_client_player_info_store(server_player_t * player)
 {
@@ -161,7 +161,8 @@ static void server_client_player_info_store(server_player_t * player)
 }
 
 /**
- * @brief восстановление информации о entity клиента при переходе на следующий уровень и при чтении gamesave
+ * @brief восстановление информации о entity игрока из хранилища игрока в entity
+ * @brief (при переходе на следующий уровень и при чтении gamesave)
  */
 static void server_client_player_info_restore(server_player_t * player)
 {
@@ -388,6 +389,8 @@ static int server_gamesave_load(int isave)
     gamesave_load_context_t ctx;
     if(g_gamesave_load_open(isave, &ctx))
         return -1;
+
+    map_clear();
 
     //прочитаем карту
     if(map_load(ctx.mapfilename))

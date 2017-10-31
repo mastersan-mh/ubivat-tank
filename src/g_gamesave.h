@@ -46,19 +46,21 @@ typedef struct
 	char name[G_GAMESAVE_NAME_SIZE];
 	//флаги настройки игры
 	server_gameflags_t flags;
-	int player_nums;
+	size_t players_num_total;
 } gamesave_descr_t;
 
 /* чтение сохранённой иры */
 typedef struct
 {
-	int fd;
-	/* имя файла карты */
-	char mapfilename[G_GAMESAVE_MAPFILENAME_SIZE];
-	//флаги настройки игры
+    int fd;
+    char name[G_GAMESAVE_NAME_SIZE];
+    /* имя файла карты */
+    char mapfilename[G_GAMESAVE_MAPFILENAME_SIZE];
+    //флаги настройки игры
     int flag_localgame;
-	int flag_allow_respawn;
-	int players_num;
+    int flag_allow_respawn;
+    size_t clients_num;
+    size_t * clients_descr;  /* players_nums */
 } gamesave_load_context_t;
 
 extern gamesave_descr_t gamesaves[G_GAMESAVES_NUM];
