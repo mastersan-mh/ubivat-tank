@@ -17,9 +17,7 @@
 
 #define CLIENT_TIMEOUT 30000
 
-#define CLIENT_EVENTS_MAX 10
-
-#define CLIENT_REQ_QUEUE_SIZE 5
+#define CLIENT_REQ_QUEUE_SIZE 20
 
 typedef struct client_player_s
 {
@@ -31,9 +29,6 @@ typedef struct client_player_s
 
     entity_t * entity;
     camera_t cam;
-
-    size_t events_num;
-    game_client_player_request_data_t events[CLIENT_EVENTS_MAX];
 
 } client_player_t;
 
@@ -108,11 +103,11 @@ extern void client_initcams(void);
 
 extern void client_req_send(const game_client_request_t * req);
 extern void client_req_send_players_join(void);
-extern void client_player_action_send(int playerId, const char * action_name);
+extern void client_req_send_player_action(int playerId, const char * action_name);
 extern void client_req_gameabort_send(void);
 extern void client_req_send_game_nextstate(void);
-extern void client_req_gamesave_save_send(int isave);
-extern void client_req_gamesave_load_send(int isave);
+extern void client_req_send_gamesave_save(int isave);
+extern void client_req_send_gamesave_load(int isave);
 extern void client_req_send_setgamemap(const char * mapname);
 
 extern void client_events_pump(void);

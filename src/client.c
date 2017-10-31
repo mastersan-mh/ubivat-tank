@@ -80,7 +80,7 @@ void client_req_send_players_join(void)
     client_req_send(&req);
 }
 
-void client_player_action_send(int playerId, const char * action_name)
+void client_req_send_player_action(int playerId, const char * action_name)
 {
     client_player_t * player = client_player_get(playerId);
     if(!player)
@@ -88,13 +88,11 @@ void client_player_action_send(int playerId, const char * action_name)
         /* клавиша игрока, которого нет */
         return;
     }
-    if(player->events_num >= CLIENT_EVENTS_MAX)
-    {
-        game_console_send("CLIENT: player %d events overflow.", playerId);
-        return;
-    }
-    strncpy(player->events[player->events_num].CONTROL.action, action_name, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
-    player->events_num++;
+    game_client_request_t req;
+    req.type = G_CLIENT_REQ_PLAYER_ACTION;
+    req.data.PLAYER_ACTION.playerId = playerId;
+    memcpy(req.data.PLAYER_ACTION.action, action_name, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+    client_req_send(&req);
 }
 
 void client_req_gameabort_send(void)
@@ -113,7 +111,7 @@ void client_req_send_game_nextstate(void)
     client.game_next_state_sended = true;
 }
 
-void client_req_gamesave_save_send(int isave)
+void client_req_send_gamesave_save(int isave)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_GAME_SAVE;
@@ -121,7 +119,7 @@ void client_req_gamesave_save_send(int isave)
     client_req_send(&req);
 }
 
-void client_req_gamesave_load_send(int isave)
+void client_req_send_gamesave_load(int isave)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_GAME_LOAD;
@@ -287,12 +285,22 @@ static void client_fsm(const game_server_event_t * event)
 
             break;
         case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
-            client.gamestate.players_num = event->data.PLAYERS_JOIN_AWAITING.players_num;
-
+        {
+            int players_num = event->data.PLAYERS_JOIN_AWAITING.players_num;
+            if(players_num > GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT)
+            {
+                client.gamestate.players_num = players_num;
+                game_console_send("CLIENT: server assign players amount equal %d", players_num);
+            }
+            else
+            {
+                game_console_send("CLIENT: server not assign players amount, client set equal %d", client.gamestate.players_num);
+            }
             client_req_send_players_join();
             client_req_send_game_nextstate();
 
             break;
+        }
         case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
         {
             int players_num = client.gamestate.players_num;
@@ -408,6 +416,11 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
             value16 = ntohs(req->data.JOIN.players_num);
             PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
+        case G_CLIENT_REQ_PLAYER_ACTION:
+            value16 = ntohs(req->data.PLAYER_ACTION.playerId);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            PDU_PUSH_BUF(req->data.PLAYER_ACTION.action, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+            break;
             /** Привилегированные запросы */
         case G_CLIENT_REQ_GAME_ABORT:
             break;
@@ -429,28 +442,6 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
     client.req_queue_num = 0;
     client.game_next_state_sended = false;
 
-    /* players */
-    client_player_t *player;
-    LIST2_FOREACHR(client.players, player)
-    {
-        if(player->events_num == 0)
-        {
-            value16 = htons(G_CLIENT_PLAYER_REQ_NONE);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-        }
-        else
-        {
-            value16 = htons(G_CLIENT_PLAYER_REQ_CONTROL);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            value16 = htons(player->events_num);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            for(size_t i = 0; i < player->events_num; i++)
-            {
-                PDU_PUSH_BUF(player->events[i].CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
-            }
-            player->events_num = 0;
-        }
-    }
     return 0;
 }
 

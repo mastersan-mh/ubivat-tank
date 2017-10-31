@@ -112,7 +112,7 @@ void server_reply_send_gamestate(server_client_t * client, gamestate_t state)
 /*
  * получить данные переменной
  */
-vardata_t * server_client_vardata_get(server_player_t * client, const char * varname, vartype_t vartype)
+vardata_t * server_client_vardata_get(server_player_t * player, const char * varname, vartype_t vartype)
 {
     static const char * list[] =
     {
@@ -120,10 +120,10 @@ vardata_t * server_client_vardata_get(server_player_t * client, const char * var
             "FLOAT",
             "STRING",
     };
-    var_t * var = var_find(client->vars, varname);
+    var_t * var = var_find(player->vars, varname);
     if(!var)
     {
-        var = var_create(&client->vars, varname, vartype);
+        var = var_create(&player->vars, varname, vartype);
     }
     vardata_t * vardata = var->data;
     if( (int)vartype >= 0 && vardata->type != vartype )
@@ -160,8 +160,8 @@ static void server_client_player_info_store(server_player_t * player)
 
 }
 
-/*
- * восстановление информации о entity клиента при переходе на следующий уровень и при чтении gamesave
+/**
+ * @brief восстановление информации о entity клиента при переходе на следующий уровень и при чтении gamesave
  */
 static void server_client_player_info_restore(server_player_t * player)
 {
@@ -226,6 +226,25 @@ static void server_player_delete(server_player_t * player)
     Z_free(player);
 }
 
+int server_client_players_num_get(const server_client_t * client)
+{
+    server_player_t * player;
+    int num;
+    LIST2_FOREACH_I(client->players, player, num);
+    return num;
+}
+
+server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId)
+{
+    int players_num = server_client_players_num_get(client);
+    if(playerId < 0 || playerId >= players_num)
+        return NULL;
+    server_player_t * player = client->players;
+    playerId = players_num - 1 - playerId;
+    int i;
+    LIST2_LIST_TO_IENT(client->players, player, i, playerId);
+    return player;
+}
 static server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bool main)
 {
     server_client_t * client = Z_malloc(sizeof(server_client_t));
@@ -236,11 +255,16 @@ static server_client_t * server_client_create(int sock, const net_addr_t * net_a
     client->main = main;
     client->ns.sock = sock;
     client->ns.addr_ = *net_addr;
-    client->players_num = server.flags.allow_local_players_num;
+    client->players_num = GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT;
     client->players = NULL;
     client->tx_queue_num = 0;
     LIST2_PUSH(server.clients, client);
     return client;
+}
+
+static void server_client_players_num_set(server_client_t * client, int players_num)
+{
+    client->players_num = players_num;
 }
 
 
@@ -328,9 +352,6 @@ int server_client_join(server_client_t * client, int players_num)
 }
 
 /**
- * восстановление информации о клиенте
- */
-/**
  * @description убирание клиентов из игры (не дисконект!), сохранение информации о клиентах
  */
 void server_unjoin_clients(void)
@@ -352,7 +373,6 @@ void server_start(int flags)
     server.state = SERVER_STATE_INIT;
     server.flags.localgame = !(flags & GAMEFLAG_CUSTOMGAME);
     server.flags.allow_respawn = (flags & GAMEFLAG_2PLAYERS) || (flags & GAMEFLAG_CUSTOMGAME);
-    server.flags.allow_local_players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
 }
 
 
@@ -362,7 +382,7 @@ void server_stop(void)
 }
 
 
-static int sv_gamesave_load(int isave)
+static int server_gamesave_load(int isave)
 {
     /* игра уже создана */
     gamesave_load_context_t ctx;
@@ -385,76 +405,97 @@ static int sv_gamesave_load(int isave)
     g_gamesave_load_close(&ctx);
 
     server.gamestate.allow_state_gamesave = false;
+/* TODO:
+    foreach_loaded_client()
+    {
+    server.loaded_client[i] = ctx.loadedclient[i];
+
+    exiting_client_get(i).settings = server.loaded_client[i].settings;
+//       server_client_players_num_set(client, players_num);
+
+    }
+    */
     return 0;
 }
 
-
-
-void server_client_control_handle(server_player_t * player, const game_client_player_request_t * req)
+static entityaction_t * server_entity_action_find(entity_t * ent, const char * action_str)
 {
+    const entityinfo_t * info = ent->info;
+
+    for(size_t i = 0; i < info->actions_num; i++)
+    {
+        entityaction_t * action = &info->actions[i];
+        if(strncmp(action->action, action_str, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE) == 0)
+        {
+            return action;
+        }
+    }
+    return NULL;
+}
+
+
+void server_client_control_handle(server_client_t * client, const game_client_request_t * req)
+{
+    server_player_t * player = server_client_player_get_by_id(client, req->data.PLAYER_ACTION.playerId);
+
     /* TODO
 	game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
 		req.control.action
 	);
      */
-    game_console_send("server: received player action %s.", req->data.CONTROL.action
-    );
+
+    if(!player)
+        return;
+    game_console_send("server: player %d received action %s.",
+        req->data.PLAYER_ACTION.playerId,
+        req->data.PLAYER_ACTION.action);
 
     /* execute action */
     entity_t * ent = player->entity;
-    if(ent)
+
+    if(!ent)
+        return;
+
+    const entityinfo_t * info = ent->info;
+
+    const entityaction_t * action = server_entity_action_find(ent, req->data.PLAYER_ACTION.action);
+
+    if(!action)
     {
-        bool found = false;
+        game_console_send("server: unknown action :%d.", req->data.PLAYER_ACTION.action);
+        return;
+    }
 
-        const entityinfo_t * info = ent->info;
+    if(!ent->spawned)
+    {
+        if(server.flags.allow_respawn &&
+                info->spawn)
+        {
+            game_console_send("server: spawn client.");
+            server_client_player_info_restore(player);
+            info->spawn(ent, ent->edata);
+            ent->spawned = true;
+            ent->alive = true;
+        }
+        return;
+    }
 
-        for(size_t i = 0; i < info->actions_num; i++)
-        {
-            entityaction_t * action = &info->actions[i];
-            if(!strncmp(action->action, req->data.CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE))
-            {
-                found = true;
-                if(ent->spawned)
-                {
-                    switch(server.gamestate.state)
-                    {
-                    case GAMESTATE_NOGAME:
-                        break;
-                    case GAMESTATE_MISSION_BRIEF:
-                        break;
-                    case GAMESTATE_GAMESAVE:
-                        break;
-                    case GAMESTATE_JOIN_AWAITING:
-                        break;
-                    case GAMESTATE_INGAME:
-                        if(action->action_f)
-                            action->action_f(ent, ent->edata, action->action);
-                        break;
-                    case GAMESTATE_INTERMISSION:
-                        break;
-                    }
-                }
-                else
-                {
-                    if(info->spawn)
-                    {
-                        if(server.flags.allow_respawn)
-                        {
-                            game_console_send("server: spawn client.");
-                            server_client_player_info_restore(player);
-                            info->spawn(ent, ent->edata);
-                            ent->spawned = true;
-                            ent->alive = true;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        if(!found)
-        {
-            game_console_send("server: unknown action :%d.", req->data.CONTROL.action);
-        }
+    switch(server.gamestate.state)
+    {
+    case GAMESTATE_NOGAME:
+        break;
+    case GAMESTATE_MISSION_BRIEF:
+        break;
+    case GAMESTATE_GAMESAVE:
+        break;
+    case GAMESTATE_JOIN_AWAITING:
+        break;
+    case GAMESTATE_INGAME:
+        if(action->action_f)
+            action->action_f(ent, ent->edata, action->action);
+        break;
+    case GAMESTATE_INTERMISSION:
+        break;
     }
 
 }
@@ -481,6 +522,16 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         bool mainclient = true;
         //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
         client = server_client_create(server.ns->sock, sender, mainclient);
+/*
+TODO:
+        ctx = server_loadedclient_get(i);
+        if(ctx)
+        {
+        exiting_client_get(i).settings = ctx.settings;
+    //       server_client_players_num_set(client, players_num);
+        }
+*/
+
 
         server_reply_send_connection_accepted(client);
         server_reply_send_gamestate(client, server.gamestate.state);
@@ -515,6 +566,9 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         server_reply_send_gamestate(client, server.gamestate.state);
         server_reply_send_cliententity(client);
         game_console_send("server: client joined to game.");
+        break;
+    case G_CLIENT_REQ_PLAYER_ACTION:
+        server_client_control_handle(client, req);
         break;
     /* Привилегированные запросы */
     case G_CLIENT_REQ_GAME_ABORT:
@@ -583,7 +637,7 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
         g_gamesave_save(req->data.GAME_SAVE.isave);
         break;
     case G_CLIENT_REQ_GAME_LOAD:
-        sv_gamesave_load(req->data.GAME_LOAD.isave);
+        server_gamesave_load(req->data.GAME_LOAD.isave);
         break;
     }
 
@@ -592,8 +646,6 @@ static void server_fsm(const net_addr_t * sender, const game_client_request_t * 
 
 static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {
-    server_client_t * client = server_client_find_by_addr(sender);
-
     size_t sv_req_queue_num;
     game_client_request_t client_req;
 
@@ -619,6 +671,11 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             PDU_POP_BUF(&value16, sizeof(value16));
             client_req.data.JOIN.players_num = ntohs(value16);
             break;
+        case G_CLIENT_REQ_PLAYER_ACTION:
+            PDU_POP_BUF(&value16, sizeof(value16));
+            client_req.data.PLAYER_ACTION.playerId = ntohs(value16);
+            PDU_POP_BUF(client_req.data.PLAYER_ACTION.action, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+            break;
             /** Привилегированные запросы */
         case G_CLIENT_REQ_GAME_ABORT:
             break;
@@ -637,39 +694,6 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             break;
         }
         server_fsm(sender, &client_req);
-    }
-
-    game_client_player_request_t client_player_req;
-
-    if(!client)
-    {
-        return 0;
-    }
-    int i = 0;
-
-    server_player_t * player;
-    LIST2_FOREACHR(client->players, player)
-    {
-        if(i >= client->players_num)
-            break;
-        PDU_POP_BUF(&value16, sizeof(value16));
-        client_player_req.type = ntohs(value16);
-        switch(client_player_req.type)
-        {
-        case G_CLIENT_PLAYER_REQ_NONE:
-            break;
-        case G_CLIENT_PLAYER_REQ_CONTROL:
-            PDU_POP_BUF(&value16, sizeof(value16));
-            size_t sv_client_player_events_num = htons(value16);
-
-            for(size_t i = 0; i < sv_client_player_events_num; i++)
-            {
-                PDU_POP_BUF(client_player_req.data.CONTROL.action, GAME_CLIENT_PLAYER_REQUEST_CONTROL_ACTION_SIZE);
-                server_client_control_handle(player, &client_player_req);
-            }
-            break;
-        }
-        i++;
     }
     return 0;
 }

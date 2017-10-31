@@ -12,7 +12,7 @@
         do { \
             memcpy((data), &(pdu)[(ofs)], (data_size)); \
             (ofs) += (data_size); \
-        } while (0);
+        } while (0)
 
 #define PDU_POP_PROTECT(ofs, data_size, buf_len) \
         do { \

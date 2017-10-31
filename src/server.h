@@ -73,8 +73,6 @@ typedef struct
 {
     bool localgame; /**< level-by-level "single player" */
     bool allow_respawn;
-    int allow_local_players_num;
-
 } server_gameflags_t;
 typedef struct
 {

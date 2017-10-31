@@ -429,7 +429,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
 
             client_connect();
 
-            client_req_gamesave_load_send(ctx->menu);
+            client_req_send_gamesave_load(ctx->menu);
 
         }
         /*
@@ -543,7 +543,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
             }
             break;
             case MENU_GAME_SAVE_SAVE:
-                client_req_gamesave_save_send(ctx->menu);
+                client_req_send_gamesave_save(ctx->menu);
                 ctx->state = MENU_GAME_SAVE_SELECT;
                 break;
     }

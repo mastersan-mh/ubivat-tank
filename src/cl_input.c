@@ -161,7 +161,7 @@ void input_key_setState(int key, bool state_pressed)
         break;
     case GAMESTATE_INGAME:
         if(action)
-            client_player_action_send(playerId, action);
+            client_req_send_player_action(playerId, action);
         break;
     case GAMESTATE_INTERMISSION:
         if(!state_pressed)
