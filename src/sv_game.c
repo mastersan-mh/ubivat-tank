@@ -61,7 +61,7 @@ void sv_game_win(void)
     }
     if( alive )
     {
-        server.gamestate.state = GAMESTATE_INTERMISSION;
+        server.gamestate.state = GAMESTATE_6_INTERMISSION;
     }
 }
 
@@ -73,11 +73,9 @@ void sv_game_gameTick(void)
     entities_handle();
 }
 
-#define GAME_SOUND_MENU 10
-
 void sv_game_mainTick(void)
 {
-    static gamestate_t state_prev = GAMESTATE_NOGAME;
+    static gamestate_t state_prev = GAMESTATE_1_NOGAME;
     bool statechanged = false;
     if(state_prev != server.gamestate.state)
     {
@@ -86,22 +84,22 @@ void sv_game_mainTick(void)
     }
     switch(server.gamestate.state)
     {
-    case GAMESTATE_NOGAME:
+    case GAMESTATE_1_NOGAME:
         break;
-    case GAMESTATE_MISSION_BRIEF:
+    case GAMESTATE_2_MISSION_BRIEF:
         break;
-    case GAMESTATE_JOIN_AWAITING:
+    case GAMESTATE_3_JOIN_AWAITING:
         break;
-    case GAMESTATE_GAMESAVE:
+    case GAMESTATE_4_GAMESAVE:
         break;
-    case GAMESTATE_INGAME:
+    case GAMESTATE_5_INGAME:
         if(statechanged)
         {
             server.gamestate.allow_state_gamesave = true;
         }
         sv_game_gameTick();
         break;
-    case GAMESTATE_INTERMISSION:
+    case GAMESTATE_6_INTERMISSION:
         if(statechanged)
         {
             if(!server.flags.localgame)

@@ -30,10 +30,10 @@ bool client_running(void)
 }
 void client_init(void)
 {
-    client.gamestate.msg       = NULL;
-    client.gamestate.state     = GAMESTATE_NOGAME;
-    client.gamestate.custommap = mapList;
-    client.gamestate.gamemap   = mapList;
+    client.state            = CLIENT_STATE_IDLE;
+    client.gstate.msg       = NULL;
+    client.gstate.custommap = mapList;
+    client.gstate.gamemap   = mapList;
     game_action_showmenu();
 }
 
@@ -76,7 +76,7 @@ void client_req_send_players_join(void)
 {
     game_client_request_t req;
     req.type = G_CLIENT_REQ_JOIN;
-    req.data.JOIN.players_num = client.gamestate.players_num;
+    req.data.JOIN.players_num = client.gstate.players_num;
     client_req_send(&req);
 }
 
@@ -146,7 +146,6 @@ static void client_player_delete(client_player_t * player)
  */
 int client_connect(void)
 {
-    client.netstate = CLIENT_NETSTATE_AWAITING_CONNECTION;
     client.time = time_current;
 
     game_client_request_t req;
@@ -162,7 +161,7 @@ int client_connect(void)
 void client_initcams(void)
 {
     client_player_t * player;
-    int players_num = client.gamestate.players_num;
+    int players_num = client.gstate.players_num;
 
     float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
     float cam_sy = (float)VIDEO_SCREEN_H * (float)VIDEO_SCALEY / (float)VIDEO_SCALE;
@@ -210,18 +209,18 @@ static const char * gamestate_to_str(gamestate_t state)
 {
     static const char *list[] =
     {
-            "GAMESTATE_NOGAME",
-            "GAMESTATE_MISSION_BRIEF",
-            "GAMESTATE_JOIN_AWAITING",
-            "GAMESTATE_GAMESAVE",
-            "GAMESTATE_INGAME",
-            "GAMESTATE_INTERMISSION",
+            "GAMESTATE_1_NOGAME",
+            "GAMESTATE_2_MISSION_BRIEF",
+            "GAMESTATE_3_JOIN_AWAITING",
+            "GAMESTATE_4_GAMESAVE",
+            "GAMESTATE_5_INGAME",
+            "GAMESTATE_6_INTERMISSION",
     };
     return list[state];
 }
 void client_start(int flags)
 {
-    client.gamestate.players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    client.gstate.players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
     client.state = CLIENT_STATE_INIT;
 }
 
@@ -230,109 +229,269 @@ void client_stop(void)
     client.state = CLIENT_STATE_DONE;
 }
 
-
-static void client_fsm(const game_server_event_t * event)
+void client_fsm(const game_client_event_t * event)
 {
-    switch(client.netstate)
+
+#define INVALID_EVENT() game_console_send("client: invalid server gamestate %s event %d.", gamestate_to_str(gamestate), event->type)
+
+#define FSM_CLIENT_DISCONECT() \
+        do { \
+            client_disconnect(); \
+            game_console_send("client: server close the connection."); \
+        } while (0);
+
+#define FSM_GAMESTATE_SET() \
+        do { \
+            gamestate = event->data.REMOTE_GAME_STATE_SET.state; \
+            game_console_send("client: server change gamestate to %s.", gamestate_to_str(gamestate)); \
+        } while (0);
+
+
+    bool statechanged = false;
+    if(client.gamestate_prev != client.gamestate)
     {
-    case CLIENT_NETSTATE_AWAITING_CONNECTION:
-        /*
-        if(!buf)
-        {
-            if(time_current - client.time > CLIENT_TIMEOUT)
-            {
-                game_console_send("client: server reply timeout.");
-            }
-            break;
-        }
-         */
+        client.gamestate_prev = client.gamestate;
+        statechanged = true;
+    }
 
-        client.time = time_current;
-        if(event->type == G_SERVER_EVENT_CONNECTION_ACCEPTED)
-        {
-            //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
-            game_console_send("client: server accept connection.");
-            client.netstate = CLIENT_NETSTATE_LISTEN;
-        }
-        else
-        {
-            game_console_send("client: invalid server event.");
-        }
+    gamestate_t gamestate = client.gamestate;
 
-        break;
-    case CLIENT_NETSTATE_LISTEN:
-        client.time = time_current;
+    switch(client.gamestate)
+    {
+
+    case GAMESTATE_1_NOGAME:
 
         switch(event->type)
         {
-        case G_SERVER_EVENT_INFO:
+        case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+            key_handle_press(event->data.LOCAL_KEY_PRESS.key);
             break;
-        case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+        case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+            key_handle_release(event->data.LOCAL_KEY_RELEASE.key);
             break;
-        case G_SERVER_EVENT_CONNECTION_CLOSE:
-            client_disconnect();
-            game_console_send("client: host closed the connection.");
+        case G_CLIENT_EVENT_REMOTE_INFO:
             break;
-        case G_SERVER_EVENT_GAME_STATE_SET:
-            client.gamestate.state = event->data.GAME_STATE_SET.state;
-            game_console_send("client: host change gamestate to %s.", gamestate_to_str(client.gamestate.state));
-
-            if(client.gamestate.state == GAMESTATE_INTERMISSION)
-            {
-                game_console_send("client: server say: PLAYER WIN!");
-                client.gamestate.win = true;
-            }
-
-            break;
-        case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
-        {
-            int players_num = event->data.PLAYERS_JOIN_AWAITING.players_num;
-            if(players_num > GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT)
-            {
-                client.gamestate.players_num = players_num;
-                game_console_send("CLIENT: server assign players amount equal %d", players_num);
-            }
-            else
-            {
-                game_console_send("CLIENT: server not assign players amount, client set equal %d", client.gamestate.players_num);
-            }
-            client_req_send_players_join();
+        case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+            //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
+            game_console_send("client: server accept connection.");
             client_req_send_game_nextstate();
-
+            break;
+        case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+            break;
+        case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+            FSM_GAMESTATE_SET();
+            break;
+        case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+            break;
+        case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
             break;
         }
-        case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
-        {
-            int players_num = client.gamestate.players_num;
-
-            for(int i = 0; i < players_num; i++)
-            {
-                client_player_t * player = Z_malloc(sizeof(client_player_t));
-                LIST2_PUSH(client.players, player);
-            }
-
-            client_initcams();
-
-            for(int i = 0; i < players_num; i++)
-            {
-                entity_t * clientent = event->data.PLAYERS_ENTITY_SET.ent[i].entity;
-                bool local_client = true;
-                if(local_client)
-                {
-                    client_player_get(i)->entity = clientent;
-                }
-            }
-            break;
-        }
-        }
-
         break;
+    case GAMESTATE_2_MISSION_BRIEF:
+        if(statechanged)
+        {
+            if(sound_started(NULL, GAME_SOUND_MENU))
+                sound_play_stop(NULL, GAME_SOUND_MENU);
+            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+        }
+        switch(event->type)
+        {
+            case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                break;
+            case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+                client_req_send_game_nextstate();
+                break;
+            case G_CLIENT_EVENT_REMOTE_INFO:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                FSM_CLIENT_DISCONECT();
+                break;
+            case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+                FSM_GAMESTATE_SET();
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                break;
+        }
+        break;
+    case GAMESTATE_3_JOIN_AWAITING:
+        switch(event->type)
+        {
+            case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                break;
+            case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                break;
+            case G_CLIENT_EVENT_REMOTE_INFO:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                FSM_CLIENT_DISCONECT();
+                break;
+            case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+                FSM_GAMESTATE_SET();
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+            {
+                int players_num = event->data.REMOTE_PLAYERS_JOIN_AWAITING.players_num;
+                if(players_num > GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT)
+                {
+                    client.gstate.players_num = players_num;
+                    game_console_send("CLIENT: server assign players amount equal %d", players_num);
+                }
+                else
+                {
+                    game_console_send("CLIENT: server not assign players amount, client set equal %d", client.gstate.players_num);
+                }
+                client_req_send_players_join();
+                client_req_send_game_nextstate();
 
+                break;
+            }
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+            {
+                int players_num = client.gstate.players_num;
+
+                for(int i = 0; i < players_num; i++)
+                {
+                    client_player_t * player = Z_malloc(sizeof(client_player_t));
+                    LIST2_PUSH(client.players, player);
+                }
+
+                client_initcams();
+
+                for(int i = 0; i < players_num; i++)
+                {
+                    entity_t * clientent = event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity;
+                    bool local_client = true;
+                    if(local_client)
+                    {
+                        client_player_get(i)->entity = clientent;
+                    }
+                }
+                break;
+            }
+        }
+        break;
+    case GAMESTATE_4_GAMESAVE:
+        game_menu_show(MENU_GAME_SAVE);
+        switch(event->type)
+        {
+            case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                break;
+            case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                client_req_send_game_nextstate();
+                break;
+            case G_CLIENT_EVENT_REMOTE_INFO:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                FSM_CLIENT_DISCONECT();
+                break;
+            case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+                FSM_GAMESTATE_SET();
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                break;
+        }
+        break;
+    case GAMESTATE_5_INGAME:
+        if(statechanged)
+        {
+            sound_play_stop(NULL, GAME_SOUND_MENU);
+        }
+        switch(event->type)
+        {
+            case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                break;
+            case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                break;
+            case G_CLIENT_EVENT_REMOTE_INFO:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                FSM_CLIENT_DISCONECT();
+                break;
+            case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+                FSM_GAMESTATE_SET();
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                break;
+        }
+        break;
+    case GAMESTATE_6_INTERMISSION:
+        if(statechanged)
+        {
+            if(sound_started(NULL, GAME_SOUND_MENU))
+                sound_play_stop(NULL, GAME_SOUND_MENU);
+            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+        }
+        switch(event->type)
+        {
+            case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                break;
+            case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                client_req_send_game_nextstate();
+                sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+                break;
+            case G_CLIENT_EVENT_REMOTE_INFO:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                break;
+            case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                FSM_CLIENT_DISCONECT();
+                break;
+            case G_CLIENT_EVENT_REMOTE_GAME_STATE_SET:
+                FSM_GAMESTATE_SET();
+                game_console_send("client: server say: PLAYER WIN!");
+                client.gstate.win = true;
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING:
+                break;
+            case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                break;
+        }
+        break;
     }
+
+    client.gamestate = gamestate;
+
+}
+
+/*
+ * state = true | false = pressed | released
+ */
+void client_event_key_input(int key, bool state_pressed)
+{
+    game_client_event_t event;
+
+    if(state_pressed)
+    {
+        event.type = G_CLIENT_EVENT_LOCAL_KEY_PRESS;
+        event.data.LOCAL_KEY_PRESS.key = key;
+    }
+    else
+    {
+        event.type = G_CLIENT_EVENT_LOCAL_KEY_RELEASE;
+        event.data.LOCAL_KEY_RELEASE.key = key;
+    }
+
+    client_fsm(&event);
+
 }
 
 
-static int client_pdu_parse(const char * buf, size_t buf_len)
+static int client_pdu_parse(game_client_event_t * event, const char * buf, size_t buf_len)
 {
     int16_t value16;
     size_t i;
@@ -344,11 +503,11 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
     for(i = 0; i < events_num; i++)
     {
         PDU_POP_BUF(&value16, sizeof(value16));
-        game_server_event_t reply;
-        reply.type = ntohs(value16);
-        switch(reply.type)
+        game_server_event_type_t type = ntohs(value16);
+        switch(type)
         {
         case G_SERVER_EVENT_INFO:
+            event->type = G_CLIENT_EVENT_REMOTE_INFO;
             /*
             nvalue32 = htonl( (uint32_t) event->info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
@@ -356,32 +515,33 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
              */
             break;
         case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+            event->type = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
             break;
         case G_SERVER_EVENT_CONNECTION_CLOSE:
+            event->type = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
             break;
         case G_SERVER_EVENT_GAME_STATE_SET:
             PDU_POP_BUF(&value16, sizeof(value16));
-            reply.data.GAME_STATE_SET.state = ntohs(value16);
+            event->type = G_CLIENT_EVENT_REMOTE_GAME_STATE_SET;
+            event->data.REMOTE_GAME_STATE_SET.state = ntohs(value16);
             break;
         case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
             PDU_POP_BUF(&value16, sizeof(value16));
-            reply.data.PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
+            event->type = G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING;
+            event->data.REMOTE_PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
             break;
         case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
         {
-            int player_num = client.gamestate.players_num;
-            for(int i = 0; i < player_num; i++)
+            event->type = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
+            int player_num = client.gstate.players_num;
+             for(int i = 0; i < player_num; i++)
             {
-                PDU_POP_BUF(reply.data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                PDU_POP_BUF(&reply.data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply.data.PLAYERS_ENTITY_SET.ent[i].entity));
+                PDU_POP_BUF(event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                PDU_POP_BUF(&event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
             }
-
             break;
         }
         }
-
-
-        client_fsm(&reply);
     }
 
     return 0;
@@ -448,7 +608,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
 /*
  * слушать хост, получать от него сообщения для клиентов
  */
-static void client_listen(void)
+static void client_net_io(void)
 {
     static char buf[PDU_BUF_SIZE];
     int err;
@@ -459,12 +619,25 @@ static void client_listen(void)
     struct sockaddr addr;
     socklen_t addr_len = 0;
     size_t buf_len;
+
+    if(time_current - client.time > CLIENT_TIMEOUT)
+    {
+        game_console_send("client: server reply timeout.");
+    }
+
     while(net_recv(client.ns, buf, &buf_len, PDU_BUF_SIZE, &addr, &addr_len) == 0)
     {
-        err = client_pdu_parse(buf, buf_len);
+        game_client_event_t event;
+
+        client.time = time_current;
+        err = client_pdu_parse(&event, buf, buf_len);
         if(err)
         {
             game_console_send("CLIENT: TX PDU parse error.");
+        }
+        else
+        {
+            client_fsm(&event);
         }
     }
 
@@ -489,70 +662,25 @@ void client_events_pump(void)
         switch(event.type)
         {
         case SDL_KEYDOWN:
-            input_key_setState(event.key.keysym.scancode, true);
+            if(!event.key.repeat)
+                client_event_key_input(event.key.keysym.scancode, true);
             break;
         case SDL_KEYUP:
-            input_key_setState(event.key.keysym.scancode, false);
+            if(!event.key.repeat)
+                client_event_key_input(event.key.keysym.scancode, false);
             break;
         }
         //player_checkcode();
     }
 }
 
-
-
-#define GAME_SOUND_MENU 10
-
-void cl_game_mainTick(void)
-{
-    static gamestate_t state_prev = GAMESTATE_NOGAME;
-    bool statechanged = false;
-    if(state_prev != client.gamestate.state)
-    {
-        state_prev = client.gamestate.state;
-        statechanged = true;
-    }
-    switch(client.gamestate.state)
-    {
-    case GAMESTATE_NOGAME:
-        break;
-    case GAMESTATE_MISSION_BRIEF:
-        if(statechanged)
-        {
-            if(sound_started(NULL, GAME_SOUND_MENU))
-                sound_play_stop(NULL, GAME_SOUND_MENU);
-            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-        }
-        break;
-    case GAMESTATE_JOIN_AWAITING:
-        break;
-    case GAMESTATE_GAMESAVE:
-        break;
-    case GAMESTATE_INGAME:
-        if(statechanged)
-        {
-            sound_play_stop(NULL, GAME_SOUND_MENU);
-        }
-        break;
-    case GAMESTATE_INTERMISSION:
-        if(statechanged)
-        {
-            if(sound_started(NULL, GAME_SOUND_MENU))
-                sound_play_stop(NULL, GAME_SOUND_MENU);
-            sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-        }
-        break;
-    }
-
-}
-
-
 void client_handle(void)
 {
     switch(client.state)
     {
     case CLIENT_STATE_IDLE:
-        client.gamestate.state = GAMESTATE_NOGAME;
+        client.gamestate = GAMESTATE_1_NOGAME;
+        client.gamestate_prev = GAMESTATE_6_INTERMISSION;
         break;
     case CLIENT_STATE_INIT:
         client.ns = net_socket_create(NET_PORT, "127.0.0.1");
@@ -570,17 +698,13 @@ void client_handle(void)
         client.state = CLIENT_STATE_RUN;
         break;
     case CLIENT_STATE_RUN :
-        client_listen();
-        if(client.gamestate.state == GAMESTATE_GAMESAVE)
-        {
-            game_menu_show(MENU_GAME_SAVE);
-        }
+        client_net_io();
         break;
     case CLIENT_STATE_DONE:
         client_req_gameabort_send();
         client_players_delete();
-        client.gamestate.state = GAMESTATE_NOGAME;
         client.state = CLIENT_STATE_IDLE;
+        client.gamestate = GAMESTATE_1_NOGAME;
         break;
     }
 

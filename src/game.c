@@ -294,10 +294,6 @@ void game_handle(void)
         game.imenu_process = game.imenu;
         game.imenu = menu_handle(game.imenu_process);
     }
-    else
-    {
-        cl_game_mainTick();
-    }
 }
 
 void game_draw(void)
@@ -308,7 +304,7 @@ void game_draw(void)
     }
     else
     {
-        cl_game_draw();
+        client_game_draw();
     }
 }
 

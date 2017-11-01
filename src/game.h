@@ -32,12 +32,12 @@
 
 typedef enum gamestate_s
 {
-    GAMESTATE_NOGAME, /* игра не создана */
-    GAMESTATE_MISSION_BRIEF,
-    GAMESTATE_JOIN_AWAITING,
-    GAMESTATE_GAMESAVE,
-    GAMESTATE_INGAME,
-    GAMESTATE_INTERMISSION,
+    GAMESTATE_1_NOGAME, /* игра не создана */
+    GAMESTATE_2_MISSION_BRIEF,
+    GAMESTATE_3_JOIN_AWAITING,
+    GAMESTATE_4_GAMESAVE,
+    GAMESTATE_5_INGAME,
+    GAMESTATE_6_INTERMISSION,
 } gamestate_t;
 
 extern unsigned long time_current;

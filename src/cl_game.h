@@ -8,7 +8,6 @@
 #ifndef SRC_CL_GAME_H_
 #define SRC_CL_GAME_H_
 
-extern void cl_game_draw(void);
-extern void cl_game_mainTick(void);
+extern void client_game_draw(void);
 
 #endif /* SRC_CL_GAME_H_ */

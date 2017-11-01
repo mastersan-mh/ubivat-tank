@@ -125,11 +125,11 @@ static void cl_draw(void)
         VIDEO_SCREEN_H
     );
 
-    if(client.gamestate.msg)
+    if(client.gstate.msg)
     {
         font_color_set3i(COLOR_1);
-        video_printf_wide(96, 84, 128, client.gamestate.msg);
-        client.gamestate.msg = NULL;
+        video_printf_wide(96, 84, 128, client.gstate.msg);
+        client.gstate.msg = NULL;
     };
 
     extern server_t server;
@@ -145,23 +145,23 @@ static void cl_draw(void)
 }
 
 
-void cl_game_draw(void)
+void client_game_draw(void)
 {
-    switch(client.gamestate.state)
+    switch(client.gamestate)
     {
-    case GAMESTATE_NOGAME:
+    case GAMESTATE_1_NOGAME:
         break;
-    case GAMESTATE_MISSION_BRIEF:
+    case GAMESTATE_2_MISSION_BRIEF:
         cl_game_state_missionbrief_draw();
         break;
-    case GAMESTATE_JOIN_AWAITING:
+    case GAMESTATE_3_JOIN_AWAITING:
         break;
-    case GAMESTATE_GAMESAVE:
+    case GAMESTATE_4_GAMESAVE:
         break;
-    case GAMESTATE_INGAME:
+    case GAMESTATE_5_INGAME:
         cl_draw();
         break;
-    case GAMESTATE_INTERMISSION:
+    case GAMESTATE_6_INTERMISSION:
         cl_game_state_intermission_draw();
         break;
     }

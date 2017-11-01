@@ -19,6 +19,8 @@
 
 #define CLIENT_REQ_QUEUE_SIZE 20
 
+#define GAME_SOUND_MENU 10
+
 typedef struct client_player_s
 {
     struct client_player_s * prev;
@@ -49,12 +51,14 @@ typedef struct
 {
     client_state_t state;
 
+    gamestate_t gamestate;
+    gamestate_t gamestate_prev;
+
     //состояние игры
     struct
     {
         int players_num; /**< amount of local players: 0, 1, 2 */
 
-        gamestate_t state;
         char * msg;
         /* игрок победил */
         bool win;
@@ -62,16 +66,9 @@ typedef struct
         maplist_t * gamemap;
         maplist_t * custommap;
 
-    } gamestate;
-
+    } gstate;
 
     net_socket_t * ns;
-
-    enum
-    {
-        CLIENT_NETSTATE_AWAITING_CONNECTION,
-        CLIENT_NETSTATE_LISTEN
-    } netstate;
 
     /* время последнего получения сообщения */
     unsigned long time;
@@ -110,7 +107,11 @@ extern void client_req_send_gamesave_save(int isave);
 extern void client_req_send_gamesave_load(int isave);
 extern void client_req_send_setgamemap(const char * mapname);
 
+extern void client_event_key_input(int key, bool state);
+
 extern void client_events_pump(void);
+
+extern void client_fsm(const game_client_event_t * event);
 
 extern void client_handle(void);
 

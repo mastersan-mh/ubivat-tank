@@ -485,19 +485,19 @@ void server_client_control_handle(server_client_t * client, const game_client_re
 
     switch(server.gamestate.state)
     {
-    case GAMESTATE_NOGAME:
+    case GAMESTATE_1_NOGAME:
         break;
-    case GAMESTATE_MISSION_BRIEF:
+    case GAMESTATE_2_MISSION_BRIEF:
         break;
-    case GAMESTATE_GAMESAVE:
+    case GAMESTATE_4_GAMESAVE:
         break;
-    case GAMESTATE_JOIN_AWAITING:
+    case GAMESTATE_3_JOIN_AWAITING:
         break;
-    case GAMESTATE_INGAME:
+    case GAMESTATE_5_INGAME:
         if(action->action_f)
             action->action_f(ent, ent->edata, action->action);
         break;
-    case GAMESTATE_INTERMISSION:
+    case GAMESTATE_6_INTERMISSION:
         break;
     }
 
@@ -608,25 +608,25 @@ TODO:
         gamestate_t gamestate_next = server.gamestate.state;
         switch(server.gamestate.state)
         {
-        case GAMESTATE_NOGAME:
+        case GAMESTATE_1_NOGAME:
             break;
-        case GAMESTATE_MISSION_BRIEF:
-            gamestate_next = GAMESTATE_JOIN_AWAITING;
+        case GAMESTATE_2_MISSION_BRIEF:
+            gamestate_next = GAMESTATE_3_JOIN_AWAITING;
             server_reply_send_player_join_awaiting(client);
             break;
-        case GAMESTATE_JOIN_AWAITING:
+        case GAMESTATE_3_JOIN_AWAITING:
             if(server.gamestate.allow_state_gamesave)
-                gamestate_next = GAMESTATE_GAMESAVE;
+                gamestate_next = GAMESTATE_4_GAMESAVE;
             else
-                gamestate_next = GAMESTATE_INGAME;
+                gamestate_next = GAMESTATE_5_INGAME;
             break;
-        case GAMESTATE_GAMESAVE:
-            gamestate_next = GAMESTATE_INGAME;
+        case GAMESTATE_4_GAMESAVE:
+            gamestate_next = GAMESTATE_5_INGAME;
             break;
-        case GAMESTATE_INGAME:
+        case GAMESTATE_5_INGAME:
             break;
-        case GAMESTATE_INTERMISSION:
-            gamestate_next = GAMESTATE_MISSION_BRIEF;
+        case GAMESTATE_6_INTERMISSION:
+            gamestate_next = GAMESTATE_2_MISSION_BRIEF;
             break;
         }
 
@@ -813,7 +813,7 @@ void server_handle()
     case SERVER_STATE_IDLE:
         break;
     case SERVER_STATE_INIT:
-        server.gamestate.state = GAMESTATE_MISSION_BRIEF;
+        server.gamestate.state = GAMESTATE_2_MISSION_BRIEF;
         server.gamestate.paused = false;
 
         server.ns = net_socket_create(NET_PORT, "127.0.0.1");
@@ -840,7 +840,7 @@ void server_handle()
         server.ns = NULL;
         //закроем карту
         map_clear();
-        server.gamestate.state = GAMESTATE_NOGAME;
+        server.gamestate.state = GAMESTATE_1_NOGAME;
         server.state = SERVER_STATE_IDLE;
         break;
     }

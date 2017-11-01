@@ -104,14 +104,10 @@ void input_done()
     input_key_unbind_all();
 }
 
-/*
- * state = true | false = pressed | released
- */
-void input_key_setState(int key, bool state_pressed)
+
+const input_key_t * key_to_inputkey(int key)
 {
     ssize_t cindex;
-    actionf_t func = NULL;
-    char * action = NULL;
     keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);
     cindex = hash_find_collision(keyhash, key);
 
@@ -120,58 +116,62 @@ void input_key_setState(int key, bool state_pressed)
         cindex = hash_extend(keyhash);
         keyhash->collision[cindex].key = key;
     }
+    return &keyhash->collision[cindex];
+}
 
-    input_actionsrc_t actionsrc = keyhash->collision[cindex].actionsrc;
+void key_handle_press(int key)
+{
+    const input_key_t * inputkey = key_to_inputkey(key);
 
-    if(state_pressed)
+    char * action = NULL;
+    actionf_t func = NULL;
+
+    int playerId = inputkey->playerId;
+    input_actionsrc_t actionsrc = inputkey->actionsrc;
+
+    switch(actionsrc)
     {
-        switch(actionsrc)
-        {
-        case INPUT_ACTIONSRC_STR:  action = keyhash->collision[cindex].action.str.press; break;
-        case INPUT_ACTIONSRC_FUNC: func = keyhash->collision[cindex].action.func.press; break;
-        }
+    case INPUT_ACTIONSRC_STR:  action = inputkey->action.str.press; break;
+    case INPUT_ACTIONSRC_FUNC: func = inputkey->action.func.press; break;
     }
-    else
+
+    if(action)
+        client_req_send_player_action(playerId, action);
+    if(client.gamestate != GAMESTATE_5_INGAME)
     {
-        switch(actionsrc)
-        {
-        case INPUT_ACTIONSRC_STR : action = keyhash->collision[cindex].action.str.release; break;
-        case INPUT_ACTIONSRC_FUNC: func   = keyhash->collision[cindex].action.func.release; break;
-        }
-    }
-
-    if(func)
-        func();
-
-    int playerId = keyhash->collision[cindex].playerId;
-
-    switch(client.gamestate.state)
-    {
-    case GAMESTATE_NOGAME:
-        break;
-    case GAMESTATE_MISSION_BRIEF:
-        if(!state_pressed)
-            break;
-        sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        client_req_send_game_nextstate();
-        break;
-    case GAMESTATE_JOIN_AWAITING:
-        break;
-    case GAMESTATE_GAMESAVE:
-        break;
-    case GAMESTATE_INGAME:
-        if(action)
-            client_req_send_player_action(playerId, action);
-        break;
-    case GAMESTATE_INTERMISSION:
-        if(!state_pressed)
-            break;
-        client_req_send_game_nextstate();
-        sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        break;
+        if(func)
+            func();
     }
 
 }
+
+
+void key_handle_release(int key)
+{
+    input_key_t * inputkey = key_to_inputkey(key);
+
+    char * action = NULL;
+    actionf_t func = NULL;
+
+    int playerId = inputkey->playerId;
+    input_actionsrc_t actionsrc = inputkey->actionsrc;
+
+    switch(actionsrc)
+    {
+    case INPUT_ACTIONSRC_STR : action = inputkey->action.str.release; break;
+    case INPUT_ACTIONSRC_FUNC: func   = inputkey->action.func.release; break;
+    }
+
+    if(action)
+        client_req_send_player_action(playerId, action);
+    if(client.gamestate != GAMESTATE_5_INGAME)
+    {
+        if(func)
+            func();
+    }
+
+}
+
 
 int input_key_get(int clientId, const char * action)
 {

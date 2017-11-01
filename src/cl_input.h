@@ -39,7 +39,6 @@ extern void input_init();
 extern void input_done();
 
 extern int input_foreachkey(int (*callback)(const input_key_t * keybind, void * userdata), void * userdata );
-extern void input_key_setState(int key, bool state);
 extern int input_key_bind_act(int clientId, int key, const char * action);
 extern int input_key_bind(int key, actionf_t press, actionf_t release);
 extern int input_key_bindAction(int key, action_t action);
