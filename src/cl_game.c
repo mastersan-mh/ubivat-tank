@@ -10,6 +10,7 @@
 #include "types.h"
 
 #include "client.h"
+#include "client_private.h"
 #include "server.h"
 #include "_gr2D.h"
 #include "video.h"

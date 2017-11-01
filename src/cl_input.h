@@ -38,6 +38,9 @@ typedef struct
 extern void input_init();
 extern void input_done();
 
+extern void key_handle_press(int key);
+void key_handle_release(int key);
+
 extern int input_foreachkey(int (*callback)(const input_key_t * keybind, void * userdata), void * userdata );
 extern int input_key_bind_act(int clientId, int key, const char * action);
 extern int input_key_bind(int key, actionf_t press, actionf_t release);

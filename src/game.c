@@ -37,15 +37,6 @@
 #include <errno.h>
 #include <stdarg.h>
 
-typedef struct
-{
-    bool quit;
-    bool show_menu;
-    menu_selector_t imenu_process;
-    menu_selector_t imenu;
-
-} game_t;
-
 game_t game = {};
 
 int game_video_dfactor = 7;
@@ -118,6 +109,7 @@ void game_init(void)
     map_init();
 
     map_load_list();
+    game.custommap = mapList;
 
     server_init();
     client_init();

@@ -1,7 +1,10 @@
-#include "cl_input.h"
-#include "client.h"
+
 #include "game.h"
 #include "sound.h"
+
+#include "cl_input.h"
+#include "client.h"
+#include "client_private.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -148,7 +151,7 @@ void key_handle_press(int key)
 
 void key_handle_release(int key)
 {
-    input_key_t * inputkey = key_to_inputkey(key);
+    const input_key_t * inputkey = key_to_inputkey(key);
 
     char * action = NULL;
     actionf_t func = NULL;

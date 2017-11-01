@@ -44,6 +44,9 @@ ui.c \
 menu.c \
 server.c \
 sv_game.c \
-client.c \
+client_private.c \
+client_fsm.c \
+client_request.c \
 cl_input.c \
-cl_game.c
+cl_game.c \
+client.c

@@ -11,6 +11,7 @@
 #include "types.h"
 #include "img.h"
 #include "menu.h"
+#include "map.h"
 
 #define GAME_LOGO \
         "          _____    ______              __     ______ \n"\
@@ -39,6 +40,15 @@ typedef enum gamestate_s
     GAMESTATE_5_INGAME,
     GAMESTATE_6_INTERMISSION,
 } gamestate_t;
+
+typedef struct
+{
+    bool quit;
+    bool show_menu;
+    menu_selector_t imenu_process;
+    menu_selector_t imenu;
+    maplist_t * custommap;
+} game_t;
 
 extern unsigned long time_current;
 extern long dtime;

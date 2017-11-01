@@ -13,6 +13,7 @@
 #include "net_pdu.h"
 #include "net.h"
 #include "server.h"
+#include "client_request.h"
 #include "game.h"
 #include "g_gamesave.h"
 #include "map.h"
