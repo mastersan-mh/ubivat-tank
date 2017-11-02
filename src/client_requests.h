@@ -5,8 +5,8 @@
  *      Author: mastersan
  */
 
-#ifndef SRC_CLIENT_REQUEST_H_
-#define SRC_CLIENT_REQUEST_H_
+#ifndef SRC_CLIENT_REQUESTS_H_
+#define SRC_CLIENT_REQUESTS_H_
 
 #include "map.h"
 
@@ -76,4 +76,4 @@ extern void client_req_send_game_nextstate(void);
 extern void client_req_send_game_save(int isave);
 extern void client_req_send_game_load(int isave);
 
-#endif /* SRC_CLIENT_REQUEST_H_ */
+#endif /* SRC_CLIENT_REQUESTS_H_ */

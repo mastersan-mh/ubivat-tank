@@ -5,8 +5,8 @@
  *      Author: mastersan
  */
 
-#include "client_request.h"
 #include "client_private.h"
+#include "client_requests.h"
 #include <assert.h>
 
 void client_req_send(const game_client_request_t * req)

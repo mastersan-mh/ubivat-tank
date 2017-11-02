@@ -16,7 +16,7 @@
 #include "client.h"
 #include "cl_input.h"
 #include "cl_game.h"
-#include "client_request.h"
+#include "client_requests.h"
 
 #include "g_gamesave.h"
 

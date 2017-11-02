@@ -10,7 +10,7 @@
 
 #include "g_events.h"
 #include "net.h"
-#include "client_request.h"
+#include "client_requests.h"
 
 #include "entity.h"
 

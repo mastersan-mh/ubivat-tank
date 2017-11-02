@@ -46,7 +46,8 @@ server.c \
 sv_game.c \
 client_private.c \
 client_fsm.c \
-client_request.c \
+client_requests.c \
+client_events.c \
 cl_input.c \
 cl_game.c \
 client.c
