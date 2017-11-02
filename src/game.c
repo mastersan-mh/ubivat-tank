@@ -14,7 +14,6 @@
 #include "cl_game.h"
 #include "client_events.h"
 #include "g_conf.h"
-#include "actions.h"
 #include "menu.h"
 #include "map.h"
 #include "img.h"
@@ -142,10 +141,9 @@ void game_init(void)
 
     //чтение конфига
     printf("Config init...\n");
-    input_init();
-    gconf_newbind();
+    client_input_init();
+    gconf_newbinds();
     gconf_load();
-    gconf_rebind_all();
 
     model_resources_register();
 
@@ -161,7 +159,7 @@ void game_done(void)
     Z_free(game_dir_home);
     Z_free(game_dir_conf);
     Z_free(game_dir_saves);
-    input_done();
+    client_input_done();
     sound_precache_free();
     sound_done();
     video_done();
@@ -301,7 +299,7 @@ void game_draw(void)
     }
 }
 
-void game_action_showmenu(void)
+void game_action_showmenu(const char * action)
 {
     game.show_menu = true;
 }

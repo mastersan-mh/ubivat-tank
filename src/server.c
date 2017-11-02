@@ -422,19 +422,28 @@ static int server_gamesave_load(int isave)
     return 0;
 }
 
-static entityaction_t * server_entity_action_find(entity_t * ent, const char * action_str)
+const entityaction_t * server_entity_action_find_(
+    const char * action_str,
+    const entityaction_t *actions,
+    size_t actions_num)
 {
-    const entityinfo_t * info = ent->info;
 
-    for(size_t i = 0; i < info->actions_num; i++)
+    for(size_t i = 0; i < actions_num; i++)
     {
-        entityaction_t * action = &info->actions[i];
-        if(strncmp(action->action, action_str, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE) == 0)
+        const entityaction_t * action = &actions[i];
+        if(ACTIONS_EQ(action->action, action_str))
         {
             return action;
         }
     }
     return NULL;
+}
+
+
+const static entityaction_t * server_entity_action_find(const entity_t * ent, const char * action_str)
+{
+    const entityinfo_t * info = ent->info;
+    return server_entity_action_find_(action_str, info->actions, info->actions_num);
 }
 
 
@@ -678,7 +687,7 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
         case G_CLIENT_REQ_PLAYER_ACTION:
             PDU_POP_BUF(&value16, sizeof(value16));
             client_req.data.PLAYER_ACTION.playerId = ntohs(value16);
-            PDU_POP_BUF(client_req.data.PLAYER_ACTION.action, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+            PDU_POP_BUF(client_req.data.PLAYER_ACTION.action, GAME_ACTION_SIZE);
             break;
             /** Привилегированные запросы */
         case G_CLIENT_REQ_GAME_ABORT:

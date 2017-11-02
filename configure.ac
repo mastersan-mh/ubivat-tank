@@ -12,6 +12,9 @@ AC_PROG_CC
 AC_CHECK_HEADER([math.h], [], [ AC_MSG_ERROR([Unable to find math.h]) ] )
 AC_CHECK_LIB([m], [fabs], [], [ AC_MSG_ERROR([Unable to find libm])   ] )
 
+#
+# SDL2
+#
 AC_CHECK_HEADER([SDL2/SDL.h], [], [],
 [[#ifdef HAVE_SDL2_SDL_H
 # include <SDL2/SDL.h>
@@ -19,13 +22,20 @@ AC_CHECK_HEADER([SDL2/SDL.h], [], [],
 ]]
 )
 AC_CHECK_LIB([SDL2], [SDL_Init], [], [ AC_MSG_ERROR([Unable to find libSDL2])    ] )
+AC_CHECK_LIB([SDL2_image], [IMG_Load], [], [ AC_MSG_ERROR([Unable to find libSDL2_image])    ] )
 
+#
+# GL
+#
 AC_CHECK_HEADER([GL/gl.h], [], [ AC_MSG_ERROR([Unable to find GL/gl.h]) ] )
 AC_CHECK_LIB([GL], [glEnable], [])
 
 AC_CHECK_HEADER([GL/glu.h],     [], [ AC_MSG_ERROR([Unable to find GL/glu.h]) ] )
 AC_CHECK_LIB([GLU], [gluOrtho2D])
 
+#
+# fonts
+#
 AC_CHECK_HEADER([fontconfig/fontconfig.h], [], [ AC_MSG_ERROR([Unable to find fontconfig/fontconfig.h]) ] )
 AC_CHECK_LIB([fontconfig], [FcUtf8ToUcs4])
 

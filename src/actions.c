@@ -9,13 +9,6 @@
 #include <GL/gl.h>
 
 
-action_t actions[ACTION_NUM] = {
-		{ game_action_showmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
-		//{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
-		{ action_sfactor, NULL},
-		{ action_dfactor, NULL}
-};
-
 typedef struct
 {
 	bool light;
@@ -24,7 +17,7 @@ typedef struct
 
 scene_t scene = {};
 
-void kp_0()
+void kp_0(const char * action)
 {
 	scene.light = !scene.light;
 	if(scene.light)
@@ -35,7 +28,7 @@ void kp_0()
 
 }
 
-void kp_B()
+void kp_B(const char * action)
 {
 	scene.blend= !scene.blend;
 	if(scene.blend)
@@ -57,7 +50,7 @@ int factor_inc(int factor)
 	return factor % 14;
 }
 
-void action_sfactor()
+static void action_sfactor(const char * action)
 {
 	game_video_sfactor = factor_inc(game_video_sfactor);
 	printf("game_video_sfactor = %d\n", game_video_sfactor);
@@ -71,11 +64,32 @@ void action_sfactor()
 */
 }
 
-void action_dfactor()
+static void action_dfactor(const char * action)
 {
 	game_video_dfactor = factor_inc(game_video_dfactor);
 	printf("game_video_dfactor = %d\n", game_video_dfactor);
 }
 
+
+
+static game_action_t game_actions[] = {
+        { "menu", game_action_showmenu }, /*    ACTION_ENTER_MAINMENU */
+        { "+sfactor", action_sfactor},
+        { "+dfactor", action_dfactor}
+};
+
+
+const game_action_t * game_action_find(const char * action_str)
+{
+    for(size_t i = 0; i < ARRAYSIZE(game_actions); i++)
+    {
+        game_action_t * action = &game_actions[i];
+        if(ACTIONS_EQ(action->action, action_str))
+        {
+            return action;
+        }
+    }
+    return NULL;
+}
 
 

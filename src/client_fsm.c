@@ -214,10 +214,10 @@ void client_fsm(const game_client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    key_handle_press(event->data.LOCAL_KEY_PRESS.key);
+                    client_key_press(event->data.LOCAL_KEY_PRESS.key);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
-                    key_handle_release(event->data.LOCAL_KEY_RELEASE.key);
+                    client_key_release(event->data.LOCAL_KEY_RELEASE.key);
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     break;

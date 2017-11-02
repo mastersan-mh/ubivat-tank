@@ -12,6 +12,7 @@
 #include "img.h"
 #include "menu.h"
 #include "map.h"
+#include "actions.h"
 
 #define GAME_LOGO \
         "          _____    ______              __     ______ \n"\
@@ -81,7 +82,7 @@ extern void game_handle(void);
 
 extern void game_draw(void);
 
-extern void game_action_showmenu(void);
+extern void game_action_showmenu(const char * action);
 extern void game_menu_show(menu_selector_t imenu);
 extern void game_menu_hide(void);
 

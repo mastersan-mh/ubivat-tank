@@ -2,53 +2,35 @@
 #define SRC_CL_INPUT_H_
 
 #include "types.h"
-#include "actions.h"
 
 #define CLIENT_ALL (-1)
 
-typedef enum
-{
-	INPUT_ACTIONSRC_STR,
-	INPUT_ACTIONSRC_FUNC
-} input_actionsrc_t;
-
+/**
+ * @brief Привязка клавиши к действию
+ */
 typedef struct
 {
-	/* id игрока */
-	int playerId;
-	/* код клавиши */
-	int key;
-	input_actionsrc_t actionsrc;
-	union
-	{
-		/* функции обработки нажатий/отпусканий */
-		struct
-		{
-			char * press;
-			char * release;
-		} str;
-		struct
-		{
-			actionf_t press;
-			actionf_t release;
-		} func;
-	} action;
-} input_key_t;
+    /* id игрока */
+    int playerId;
+    /* код клавиши */
+    int key;
+    char * action_press;
+    char * action_release;
+} client_keybind_t;
 
-extern void input_init();
-extern void input_done();
+extern void client_input_init();
+extern void client_input_done();
 
-extern void key_handle_press(int key);
-void key_handle_release(int key);
+extern int client_key_bind(int playerId, int key, const char * action);
+extern int client_key_binded_get(int playerId, const char * action);
+extern void client_key_unbind(int key);
+extern void client_key_unbind_all(void);
+extern void client_key_unbind_action(int playerId, const char * action);
 
-extern int input_foreachkey(int (*callback)(const input_key_t * keybind, void * userdata), void * userdata );
-extern int input_key_bind_act(int clientId, int key, const char * action);
-extern int input_key_bind(int key, actionf_t press, actionf_t release);
-extern int input_key_bindAction(int key, action_t action);
-extern int input_key_get(int clientId, const char * action);
-extern void input_key_unbind(int key);
-extern void input_key_unbind_all();
-extern void input_action_unbind(int clientId, const char * action);
+extern void client_key_press(int key);
+extern void client_key_release(int key);
+
+extern int client_foreachkey(int (*callback)(const client_keybind_t * keybind, void * userdata), void * userdata );
 
 
 #endif /* SRC_CL_INPUT_H_ */

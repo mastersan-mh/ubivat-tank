@@ -14,21 +14,18 @@ typedef struct
 {
 	/*
 	кому принадлежит привязка клавиши:
-	-1 - все
 	0 - игрок 1
 	1 - игрок 2
 	...
 	 */
-	int clientId;
+	int playerId;
 	int key;
 	char * action;
 } keybind_t;
 
-extern void gconf_newbind();
+extern void gconf_newbinds();
 extern int gconf_key_get(int player, const char * action);
 extern int gconf_save();
 extern int gconf_load();
-extern void gconf_rebind_all();
-
 
 #endif /* SRC_G_CONF_H_ */

@@ -40,7 +40,7 @@ void client_init(void)
 {
     client.state            = CLIENT_STATE_IDLE;
     client.gstate.msg       = NULL;
-    game_action_showmenu();
+    game_action_showmenu(NULL);
 }
 
 void client_done()
@@ -76,8 +76,9 @@ static void client_players_delete(void)
     }
 }
 
-static int client_pdu_parse(game_client_event_t * event, const char * buf, size_t buf_len)
+static int client_pdu_parse(const char * buf, size_t buf_len)
 {
+    game_client_event_t event;
     int16_t value16;
     size_t i;
     size_t ofs = 0;
@@ -92,41 +93,42 @@ static int client_pdu_parse(game_client_event_t * event, const char * buf, size_
         switch(type)
         {
             case G_SERVER_EVENT_INFO:
-                event->type = G_CLIENT_EVENT_REMOTE_INFO;
+                event.type = G_CLIENT_EVENT_REMOTE_INFO;
                 /*
-            nvalue32 = htonl( (uint32_t) event->info.clients_num );
+            nvalue32 = htonl( (uint32_t) event.info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
             buflen += sizeof(nvalue32);
                  */
                 break;
             case G_SERVER_EVENT_CONNECTION_ACCEPTED:
-                event->type = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
+                event.type = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
                 break;
             case G_SERVER_EVENT_CONNECTION_CLOSE:
-                event->type = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
+                event.type = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
                 break;
             case G_SERVER_EVENT_GAME_STATE_SET:
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event->type = G_CLIENT_EVENT_REMOTE_GAME_STATE_SET;
-                event->data.REMOTE_GAME_STATE_SET.state = ntohs(value16);
+                event.type = G_CLIENT_EVENT_REMOTE_GAME_STATE_SET;
+                event.data.REMOTE_GAME_STATE_SET.state = ntohs(value16);
                 break;
             case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event->type = G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING;
-                event->data.REMOTE_PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
+                event.type = G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING;
+                event.data.REMOTE_PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
                 break;
             case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
             {
-                event->type = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
+                event.type = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
                 int player_num = client.gstate.players_num;
                 for(int i = 0; i < player_num; i++)
                 {
-                    PDU_POP_BUF(event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_POP_BUF(&event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
+                    PDU_POP_BUF(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                    PDU_POP_BUF(&event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
                 }
                 break;
             }
         }
+        client_fsm(&event);
     }
 
     return 0;
@@ -164,7 +166,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
             case G_CLIENT_REQ_PLAYER_ACTION:
                 value16 = ntohs(req->data.PLAYER_ACTION.playerId);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
-                PDU_PUSH_BUF(req->data.PLAYER_ACTION.action, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+                PDU_PUSH_BUF(req->data.PLAYER_ACTION.action, GAME_ACTION_SIZE);
                 break;
                 /** Привилегированные запросы */
             case G_CLIENT_REQ_GAME_ABORT:
@@ -212,17 +214,11 @@ static void client_net_io(void)
 
     while(net_recv(client.ns, buf, &buf_len, PDU_BUF_SIZE, &addr, &addr_len) == 0)
     {
-        game_client_event_t event;
-
         client.time = time_current;
-        err = client_pdu_parse(&event, buf, buf_len);
+        err = client_pdu_parse(buf, buf_len);
         if(err)
         {
             game_console_send("CLIENT: TX PDU parse error.");
-        }
-        else
-        {
-            client_fsm(&event);
         }
     }
 

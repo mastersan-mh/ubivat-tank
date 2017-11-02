@@ -14,57 +14,60 @@
 
 #include <SDL2/SDL.h>
 
-static uint32_t controls[ACTION_NUM] =
+static const keybind_t keybinds_permanent[] =
 {
-		[ACTION_ENTER_MAINMENU] = SDL_SCANCODE_ESCAPE,
-		[ACTION_SFACTOR] = SDL_SCANCODE_X,
-		[ACTION_DFACTOR] = SDL_SCANCODE_C
-
+        { 0, SDL_SCANCODE_ESCAPE, "menu" },
+        { 0, SDL_SCANCODE_X     , "+sfactor" },
+        { 0, SDL_SCANCODE_C     , "+dfactor" },
 };
+
 
 static const keybind_t keybinds_default[] =
 {
-		{ 0, SDL_SCANCODE_UP    , "+move_north" },
-		{ 0, SDL_SCANCODE_DOWN  , "+move_south" },
-		{ 0, SDL_SCANCODE_LEFT  , "+move_west"  },
-		{ 0, SDL_SCANCODE_RIGHT , "+move_east"  },
-		{ 0, SDL_SCANCODE_SLASH , "+attack_artillery" },
-		{ 0, SDL_SCANCODE_PERIOD, "+attack_missile"   },
-		{ 0, SDL_SCANCODE_COMMA , "+attack_mine"      },
-		{ 1, SDL_SCANCODE_R   , "+move_north" },
-		{ 1, SDL_SCANCODE_F   , "+move_south" },
-		{ 1, SDL_SCANCODE_D   , "+move_west"  },
-		{ 1, SDL_SCANCODE_G   , "+move_east"  },
-		{ 1, SDL_SCANCODE_W   , "+attack_artillery" },
-		{ 1, SDL_SCANCODE_Q   , "+attack_missile"   },
-		{ 1, SDL_SCANCODE_TAB , "+attack_mine"      },
-		{ 0, SDL_SCANCODE_Z   , "win"               },
+        { 0, SDL_SCANCODE_ESCAPE, "menu" },
+        { 0, SDL_SCANCODE_UP    , "+move_north" },
+        { 0, SDL_SCANCODE_DOWN  , "+move_south" },
+        { 0, SDL_SCANCODE_LEFT  , "+move_west"  },
+        { 0, SDL_SCANCODE_RIGHT , "+move_east"  },
+        { 0, SDL_SCANCODE_SLASH , "+attack_artillery" },
+        { 0, SDL_SCANCODE_PERIOD, "+attack_missile"   },
+        { 0, SDL_SCANCODE_COMMA , "+attack_mine"      },
+        { 1, SDL_SCANCODE_R   , "+move_north" },
+        { 1, SDL_SCANCODE_F   , "+move_south" },
+        { 1, SDL_SCANCODE_D   , "+move_west"  },
+        { 1, SDL_SCANCODE_G   , "+move_east"  },
+        { 1, SDL_SCANCODE_W   , "+attack_artillery" },
+        { 1, SDL_SCANCODE_Q   , "+attack_missile"   },
+        { 1, SDL_SCANCODE_TAB , "+attack_mine"      },
+        { 0, SDL_SCANCODE_Z   , "win"               },
 };
 
-void gconf_rebind_all()
+static void gconf_rebind_permanent()
 {
-
-	size_t i;
-	for(i = 0; i < ACTION_NUM; i++)
-	{
-		input_key_unbind(controls[i]);
-		input_key_bindAction(controls[i], actions[i]);
-	}
+    size_t i;
+    for(i = 0; i < ARRAYSIZE(keybinds_permanent); i++)
+    {
+        client_key_unbind(keybinds_permanent[i].key);
+        client_key_bind(
+            keybinds_permanent[i].playerId,
+            keybinds_permanent[i].key,
+            keybinds_permanent[i].action);
+    }
 
 }
 
-void gconf_newbind()
+void gconf_newbinds()
 {
-	size_t i;
-	for( i = 0; i < ARRAYSIZE(keybinds_default); i++)
-	{
-		const keybind_t * keybind = &keybinds_default[i];
-		input_key_bind_act(
-			keybind->clientId,
-			keybind->key,
-			keybind->action
-		);
-	}
+    size_t i;
+    for( i = 0; i < ARRAYSIZE(keybinds_default); i++)
+    {
+        const keybind_t * keybind = &keybinds_default[i];
+        client_key_bind(
+            keybind->playerId,
+            keybind->key,
+            keybind->action
+        );
+    }
 }
 
 /*
@@ -72,64 +75,63 @@ void gconf_newbind()
  */
 static int gconf_new()
 {
-	gconf_newbind();
-	return gconf_save();
+    gconf_newbinds();
+    return gconf_save();
 }
 
-static int conf_line_save(const input_key_t * keybind, void * userdata)
+static int conf_line_save(const client_keybind_t * keybind, void * userdata)
 {
-	static char *list[] =
-	{
-			"bind",
-			"bind2"
-	};
+    static char *list[] =
+    {
+            "bind",
+            "bind2"
+    };
 
-	FILE *f = userdata;
+    FILE *f = userdata;
 
-	char * cmd;
-	switch(keybind->playerId)
-	{
-	case 0: cmd = list[0]; break;
-	case 1: cmd = list[1]; break;
-	default:
-		game_halt("gconf_save(): invalid playerId %d.", keybind->playerId);
-	}
-	if(keybind->actionsrc == INPUT_ACTIONSRC_STR)
-	{
-		if(fprintf(f, "%s %d %s\n", cmd, keybind->key, keybind->action.str.press) <= 0 )
-			return -1;
-	}
-	return 0;
+    char * cmd;
+    switch(keybind->playerId)
+    {
+        case 0: cmd = list[1]; break;
+        case 1: cmd = list[2]; break;
+        default:
+            game_halt("gconf_save(): invalid playerId %d.", keybind->playerId);
+    }
+    if(fprintf(f, "%s %d %s\n", cmd, keybind->key, keybind->action_press) <= 0 )
+        return -1;
+    return 0;
 }
 /*
  * запись конфига
  */
 int gconf_save()
 {
-	int ret = 0;
+    gconf_rebind_permanent();
 
-	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-	strcpy(path, game_dir_conf);
-	strcat(path, FILENAME_CONFIG);
-	FILE * f = fopen(path, "w");
-	Z_free(path);
-	if(!f)
-	{
-		ret = 1;
-		goto __end;
-	}
+    int ret = 0;
 
-	ret = input_foreachkey(conf_line_save, f);
+    char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
+    strcpy(path, game_dir_conf);
+    strcat(path, FILENAME_CONFIG);
+    FILE * f = fopen(path, "w");
+    Z_free(path);
+    if(!f)
+    {
+        ret = 1;
+        goto __end;
+    }
 
-	__end:
-	switch(ret)
-	{
-		case 0:
-		case 2:
-			fclose(f);
-		case 1:;
-	}
-	return ret ? -1 : 0;
+    ret = client_foreachkey(conf_line_save, f);
+
+    __end:
+    switch(ret)
+    {
+        case 0:
+        case 2:
+            fclose(f);
+        case 1:;
+    }
+    return ret ? -1 : 0;
 };
 
 /*
@@ -137,67 +139,68 @@ int gconf_save()
  */
 int gconf_load()
 {
-	FILE * f;
+    FILE * f;
 
-	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-	strcpy(path, game_dir_conf);
-	strcat(path, FILENAME_CONFIG);
-	f = fopen(path, "r");
-	Z_free(path);
-	if(!f)
-		return gconf_new();
+    char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
+    strcpy(path, game_dir_conf);
+    strcat(path, FILENAME_CONFIG);
+    f = fopen(path, "r");
+    Z_free(path);
+    if(!f)
+        return gconf_new();
 
-	char * line;
-	size_t line_size = 0;
-	ssize_t value;
+    char * line;
+    size_t line_size = 0;
+    ssize_t value;
 
-	static const char delims[] = " \t\n";
+    static const char delims[] = " \t\n";
 
-	char * ptrptr;
+    char * ptrptr;
 
-	for(;;)
-	{
-		line = NULL;
-		value = getline(&line, &line_size, f);
-		if(value <= 0)
-		{
-			free(line);
-			break;
-		}
-		char * tok = strtok_r(line, delims, &ptrptr);
+    for(;;)
+    {
+        line = NULL;
+        value = getline(&line, &line_size, f);
+        if(value <= 0)
+        {
+            free(line);
+            break;
+        }
+        char * tok = strtok_r(line, delims, &ptrptr);
 
-		int player = -1;
+        int player = -1;
 
-		if(!strcmp(tok, "bind"))
-		{
-			player = 0;
-		}
-		else if(!strcmp(tok, "bind2"))
-		{
-			player = 1;
-		}
+        if(!strcmp(tok, "bind"))
+        {
+            player = 0;
+        }
+        else if(!strcmp(tok, "bind2"))
+        {
+            player = 1;
+        }
 
-		tok = strtok_r(NULL, delims, &ptrptr);
-		if(!tok)
-		{
-			free(line);
-			fclose(f);
-			return gconf_new();
-		}
-		int key = atoi(tok);
-		if(!tok)
-		{
-			free(line);
-			fclose(f);
-			return gconf_new();
-		}
-		tok = strtok_r(NULL, delims, &ptrptr);
-		char * action = tok;
+        tok = strtok_r(NULL, delims, &ptrptr);
+        if(!tok)
+        {
+            free(line);
+            fclose(f);
+            return gconf_new();
+        }
+        int key = atoi(tok);
+        if(!tok)
+        {
+            free(line);
+            fclose(f);
+            return gconf_new();
+        }
+        tok = strtok_r(NULL, delims, &ptrptr);
+        char * action = tok;
 
-		input_key_bind_act(player, key, action);
+        client_key_bind(player, key, action);
 
-		free(line);
-	};
-	fclose(f);
-	return 0;
+        free(line);
+    };
+    fclose(f);
+    gconf_rebind_permanent();
+    return 0;
 }

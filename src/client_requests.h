@@ -12,8 +12,6 @@
 
 #define CLIENT_REQ_QUEUE_SIZE 20
 
-#define GAME_CLIENT_REQ_PLAYER_ACTION_SIZE 64
-
 /** @brief Запросы клиента на сервер */
 typedef enum
 {
@@ -41,7 +39,7 @@ typedef union
     struct
     {
         int playerId;
-        char action[GAME_CLIENT_REQ_PLAYER_ACTION_SIZE];
+        char action[GAME_ACTION_SIZE];
     } PLAYER_ACTION;
     struct
     {

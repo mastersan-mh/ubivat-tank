@@ -3,24 +3,20 @@
 
 #include "types.h"
 
-typedef enum
-{
-	ACTION_ENTER_MAINMENU,
-	ACTION_SFACTOR,
-	ACTION_DFACTOR,
-	ACTION_NUM
-}actions_t;
+#define GAME_ACTION_SIZE 64
+
+/* сравнение действий: true / false */
+#define ACTIONS_EQ(act1, act2) \
+        ( act1 && act2 && !strncmp(act1, act2, GAME_ACTION_SIZE) )
 
 typedef struct
 {
-	actionf_t press;
-	actionf_t release;
-}action_t;
+    char * action;
+    void (*actionf_press)(const char * action);
+    void (*actionf_release)(const char * action);
+} game_action_t;
 
-extern action_t actions[ACTION_NUM];
-
-void action_sfactor();
-void action_dfactor();
+extern const game_action_t * game_action_find(const char * action_str);
 
 void kp_0();
 void kp_B();

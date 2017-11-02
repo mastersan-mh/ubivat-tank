@@ -11,7 +11,7 @@
 #include "map.h"
 #include "game.h"
 
-#define GAME_SERVER_EVENT_ENTNAME_SIZE (64)
+#define GAME_SERVER_EVENT_ENTNAME_SIZE 64
 
 /* количество игроков клиента назначает клиент */
 #define GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT 0

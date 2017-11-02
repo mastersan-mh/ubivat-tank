@@ -60,7 +60,7 @@ void client_req_send_player_action(int playerId, const char * action_name)
     game_client_request_t req;
     req.type = G_CLIENT_REQ_PLAYER_ACTION;
     req.data.PLAYER_ACTION.playerId = playerId;
-    memcpy(req.data.PLAYER_ACTION.action, action_name, GAME_CLIENT_REQ_PLAYER_ACTION_SIZE);
+    memcpy(req.data.PLAYER_ACTION.action, action_name, GAME_ACTION_SIZE);
     client_req_send(&req);
 }
 

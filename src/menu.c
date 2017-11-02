@@ -775,7 +775,6 @@ static int menu_options(buffer_key_t scancode, menu_action_t action, void * ctx_
             ctx->state = MENU_OPTIONS_WAIT_KEY;break;
         case MENU_ACTION_LEAVE  :
             sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-            gconf_rebind_all();
             gconf_save();
             ctx->state = MENU_OPTIONS_SELECT;
             return MENU_MAIN;
@@ -790,9 +789,9 @@ static int menu_options(buffer_key_t scancode, menu_action_t action, void * ctx_
                 ctx->state = MENU_OPTIONS_SELECT;
                 break;
             default:
-                input_key_unbind(scancode);
-                input_action_unbind(ctx->column, player_actions[ctx->menu]);
-                input_key_bind_act(ctx->column, scancode, player_actions[ctx->menu]);
+                client_key_unbind(scancode);
+                client_key_unbind_action(ctx->column, player_actions[ctx->menu]);
+                client_key_bind(ctx->column, scancode, player_actions[ctx->menu]);
                 ctx->state = MENU_OPTIONS_SELECT;
             }
     }
@@ -826,8 +825,8 @@ static void menu_options_draw(const void * ctx_)
     size_t i;
     for(i = 0; i < ACTION_PLAYER__NUM; i++)
     {
-        video_printf(82 + 131 * 0, 32 + 12 + 12 * i, "%d", input_key_get(0, player_actions[i]));
-        video_printf(82 + 131 * 1, 32 + 12 + 12 * i, "%d", input_key_get(1, player_actions[i]));
+        video_printf(82 + 131 * 0, 32 + 12 + 12 * i, "%d", client_key_binded_get(0, player_actions[i]));
+        video_printf(82 + 131 * 1, 32 + 12 + 12 * i, "%d", client_key_binded_get(1, player_actions[i]));
     }
 }
 

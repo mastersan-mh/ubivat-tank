@@ -17,10 +17,15 @@
 #include "ui.h"
 #include "game.h"
 
-/*
+static void client_game_draw_nogame(void)
+{
+    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+}
+
+/**
  * информация об уровне
  */
-static void cl_game_state_missionbrief_draw(void)
+static void client_game_draw_missionbrief(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
@@ -30,6 +35,16 @@ static void cl_game_state_missionbrief_draw(void)
     video_printf(160-07*4, 8*10, "ЗАДАЧА:");
     video_printf(108     , 191 , "НАЖМИ ПРОБЕЛ");
     video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
+}
+
+/**
+ * информация об уровне
+ */
+static void client_game_draw_join_awaiting(void)
+{
+    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+    font_color_set3i(COLOR_15);
+    video_printf(160 - 6 * 8 , 8 * 5, "Ожидание соединения...");
 }
 
 /*
@@ -151,11 +166,13 @@ void client_game_draw(void)
     switch(client.gamestate)
     {
     case GAMESTATE_1_NOGAME:
+        client_game_draw_nogame();
         break;
     case GAMESTATE_2_MISSION_BRIEF:
-        cl_game_state_missionbrief_draw();
+        client_game_draw_missionbrief();
         break;
     case GAMESTATE_3_JOIN_AWAITING:
+        client_game_draw_join_awaiting();
         break;
     case GAMESTATE_4_GAMESAVE:
         break;

@@ -72,8 +72,6 @@ typedef enum direction_e
 //время "думания" бота, мс
 #define BOT_THINK_TIME      1500
 
-typedef void (*actionf_t)();
-
 //камера
 typedef struct
 {
