@@ -108,7 +108,7 @@ void input_done()
 }
 
 
-const input_key_t * key_to_inputkey(int key)
+static const input_key_t * key_to_inputkey(int key)
 {
     ssize_t cindex;
     keyhash_t * keyhash = &(keyhashs[key % KEYS_HASH_NUM]);

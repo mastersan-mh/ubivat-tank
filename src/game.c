@@ -12,6 +12,7 @@
 #include "client.h"
 #include "cl_input.h"
 #include "cl_game.h"
+#include "client_events.h"
 #include "g_conf.h"
 #include "actions.h"
 #include "menu.h"

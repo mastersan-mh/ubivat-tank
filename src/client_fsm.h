@@ -8,6 +8,8 @@
 #ifndef SRC_CLIENT_FSM_H_
 #define SRC_CLIENT_FSM_H_
 
+#include "client_events.h"
+
 extern void client_fsm(const game_client_event_t * event);
 
 
