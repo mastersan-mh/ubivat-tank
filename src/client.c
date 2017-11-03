@@ -59,22 +59,6 @@ void client_stop(void)
     client.state = CLIENT_STATE_DONE;
 }
 
-static void client_player_delete(client_player_t * player)
-{
-    Z_free(player);
-}
-
-
-static void client_players_delete(void)
-{
-    client_player_t * player;
-    while(!LIST2_IS_EMPTY(client.players))
-    {
-        player = client.players;
-        LIST2_UNLINK(client.players, player);
-        client_player_delete(player);
-    }
-}
 
 static int client_pdu_parse(const char * buf, size_t buf_len)
 {

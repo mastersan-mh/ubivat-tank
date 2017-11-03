@@ -8,6 +8,7 @@
 #include "types.h"
 #include "system.h"
 #include "entity_helpers.h"
+#include "game.h"
 
 /**
  * получить любой объект из заданной группы

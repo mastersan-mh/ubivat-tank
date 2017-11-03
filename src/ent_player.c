@@ -25,6 +25,7 @@
 #include "map.h"
 #include "server.h"
 #include "sv_game.h"
+#include "game.h"
 #include "sound.h"
 
 void coerce_value_int(int * val, int min, int max)

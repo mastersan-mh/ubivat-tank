@@ -42,12 +42,15 @@ model.c \
 model_resources.c \
 ui.c \
 menu.c \
-server.c \
+server_private.c \
+server_fsm.c \
+server_reply.c \
 sv_game.c \
+server.c \
 client_private.c \
 client_fsm.c \
 client_requests.c \
 client_events.c \
-cl_input.c \
 cl_game.c \
+cl_input.c \
 client.c

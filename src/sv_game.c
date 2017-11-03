@@ -7,6 +7,7 @@
 
 #include "game.h"
 #include "server.h"
+#include "server_private.h"
 #include "sv_game.h"
 #include "sound.h"
 #include "common/common_list2.h"

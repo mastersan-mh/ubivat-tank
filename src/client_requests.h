@@ -8,7 +8,7 @@
 #ifndef SRC_CLIENT_REQUESTS_H_
 #define SRC_CLIENT_REQUESTS_H_
 
-#include "map.h"
+#include "actions.h"
 
 #define CLIENT_REQ_QUEUE_SIZE 20
 

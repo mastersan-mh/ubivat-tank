@@ -62,3 +62,19 @@ client_player_t * client_player_get(int playerId)
     LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
     return player;
 }
+
+void client_player_delete(client_player_t * player)
+{
+    Z_free(player);
+}
+
+void client_players_delete(void)
+{
+    client_player_t * player;
+    while(!LIST2_IS_EMPTY(client.players))
+    {
+        player = client.players;
+        LIST2_UNLINK(client.players, player);
+        client_player_delete(player);
+    }
+}

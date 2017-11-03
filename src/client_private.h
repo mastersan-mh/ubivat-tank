@@ -79,6 +79,8 @@ extern void client_initcams(void);
 extern int client_player_num_get(void);
 
 extern client_player_t * client_player_get(int playerId);
+void client_player_delete(client_player_t * player);
+void client_players_delete(void);
 
 
 #endif /* SRC_CLIENT_PRIVATE_H_ */

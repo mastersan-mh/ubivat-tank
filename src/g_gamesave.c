@@ -9,13 +9,12 @@
 #include "common/common_list2.h"
 #include "types.h"
 #include "server.h"
+#include "server_private.h"
 #include "client.h"
 #include "g_gamesave.h"
 
 #include <fcntl.h>
 #include <unistd.h>
-
-extern server_t server;
 
 /* список записей */
 gamesave_descr_t gamesaves[G_GAMESAVES_NUM];

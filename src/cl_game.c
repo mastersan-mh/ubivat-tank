@@ -12,6 +12,7 @@
 #include "client.h"
 #include "client_private.h"
 #include "server.h"
+#include "server_private.h"
 #include "_gr2D.h"
 #include "video.h"
 #include "ui.h"
@@ -79,7 +80,7 @@ static void cl_game_state_intermission_draw(void)
      */
     for(i = 0; i < num; i++)
     {
-        server_client_t * client = server_client_get(i);
+        struct server_client_s * client = server_client_get(i);
         if(client)
         {
             server_player_t * player;
