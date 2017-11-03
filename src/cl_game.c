@@ -44,7 +44,7 @@ static void client_game_draw_join_awaiting(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
-    video_printf(160 - 6 * 8 , 8 * 5, "Ожидание соединения...");
+    video_printf(160 - 6 * 10 , 8 * 5, "Ожидание соединения...");
 }
 
 /*

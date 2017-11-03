@@ -57,8 +57,7 @@ typedef struct
 } menu_t;
 
 extern menu_t menus[MENU_NUM];
-
-extern void menu_events_pump();
+extern void menu_event_key_down(bool key_repeat, int key);
 extern int menu_handle(int imenu);
 extern void menu_draw(int imenu);
 

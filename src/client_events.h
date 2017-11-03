@@ -64,7 +64,6 @@ typedef struct
 
 } game_client_event_t;
 
-extern void client_event_local_key_input(int key, bool state);
-extern void client_events_pump(void);
+extern void client_event_local_key_input(bool key_repeat, int key, bool state);
 
 #endif /* SRC_CLIENT_EVENTS_H_ */

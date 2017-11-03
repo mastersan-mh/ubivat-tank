@@ -95,10 +95,10 @@ void client_fsm(const game_client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    break;
-                case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
                     client_req_send_game_nextstate();
+                    break;
+                case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     break;
@@ -119,6 +119,10 @@ void client_fsm(const game_client_event_t * event)
         }
         case GAMESTATE_3_JOIN_AWAITING:
         {
+            if(statechanged)
+            {
+                client_req_send_join();
+            }
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -184,9 +188,9 @@ void client_fsm(const game_client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                    client_req_send_game_nextstate();
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
-                    client_req_send_game_nextstate();
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     break;
@@ -247,10 +251,10 @@ void client_fsm(const game_client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    break;
-                case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     client_req_send_game_nextstate();
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+                    break;
+                case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     break;

@@ -189,45 +189,26 @@ buffer_key_t buffer_dequeue_nowait(void)
     return key;
 }
 
-static void menu_send_event(const SDL_Event * event)
-{
-    switch(event->type)
-    {
-    case SDL_KEYDOWN:
-        if(event->key.repeat)
-            break;
 
-        /*
-		event->key.keysym.scancode; //SDL_Scancode
-		event->key.keysym.sym; //SDL_Keycode  - для ввода текста
-         */
-        if(
-                buffer_end + 1 == buffer_start ||
-                (buffer_end == KEYBUFFER_SIZE-1 && buffer_start == 0)
-        )
-            printf("buffer is full!\n");
-        else
-        {
-            buffer[buffer_end] = event->key.keysym.scancode;// use .sym istead
-            buffer_end++;
-            if(buffer_end >= KEYBUFFER_SIZE) buffer_end = 0;
-        }
-        break;
-    case SDL_KEYUP:
-        break;
-    case SDL_QUIT:
-        break;
-    default:
-        break;
-    }
-}
-
-void menu_events_pump(void)
+void menu_event_key_down(bool key_repeat, int key)
 {
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
+    if(key_repeat)
+        return;
+
+    /*
+        event->key.keysym.scancode; //SDL_Scancode
+        event->key.keysym.sym; //SDL_Keycode  - для ввода текста
+     */
+    if(
+            buffer_end + 1 == buffer_start ||
+            (buffer_end == KEYBUFFER_SIZE-1 && buffer_start == 0)
+    )
+        printf("buffer is full!\n");
+    else
     {
-        menu_send_event(&event);
+        buffer[buffer_end] = key;// use .sym istead
+        buffer_end++;
+        if(buffer_end >= KEYBUFFER_SIZE) buffer_end = 0;
     }
 }
 

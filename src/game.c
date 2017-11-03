@@ -174,13 +174,27 @@ void game_done(void)
 
 static void game_events_pump(void)
 {
-    if(game.show_menu)
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
     {
-        menu_events_pump();
-    }
-    else
-    {
-        client_events_pump();
+        //printf("event.type = %d\n", event.type);
+        switch(event.type)
+        {
+            case SDL_KEYDOWN:
+                if(game.show_menu)
+                    menu_event_key_down(event.key.repeat, event.key.keysym.scancode);
+                else
+                    client_event_local_key_input(event.key.repeat, event.key.keysym.scancode, true);
+                break;
+            case SDL_KEYUP:
+                if(!game.show_menu)
+                    client_event_local_key_input(event.key.repeat, event.key.keysym.scancode, false);
+                break;
+            case SDL_QUIT:
+                break;
+            default:
+                break;
+        }
     }
 }
 

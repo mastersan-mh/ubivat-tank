@@ -11,8 +11,10 @@
 /**
  * state = true | false = pressed | released
  */
-void client_event_local_key_input(int key, bool state_pressed)
+void client_event_local_key_input(bool key_repeat, int key, bool state_pressed)
 {
+    if(key_repeat)
+        return;
     game_client_event_t event;
 
     if(state_pressed)
@@ -27,26 +29,4 @@ void client_event_local_key_input(int key, bool state_pressed)
     }
 
     client_fsm(&event);
-
-}
-
-void client_events_pump(void)
-{
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        //printf("event.type = %d\n", event.type);
-        switch(event.type)
-        {
-            case SDL_KEYDOWN:
-                if(!event.key.repeat)
-                    client_event_local_key_input(event.key.keysym.scancode, true);
-                break;
-            case SDL_KEYUP:
-                if(!event.key.repeat)
-                    client_event_local_key_input(event.key.keysym.scancode, false);
-                break;
-        }
-        //player_checkcode();
-    }
 }
