@@ -119,10 +119,6 @@ void client_fsm(const game_client_event_t * event)
         }
         case GAMESTATE_3_JOIN_AWAITING:
         {
-            if(statechanged)
-            {
-                client_req_send_join();
-            }
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
