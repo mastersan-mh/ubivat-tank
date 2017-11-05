@@ -14,6 +14,17 @@
 #include <stdlib.h>
 
 
+const char * server_gamestate_to_str(server_gamestate_t state)
+{
+    static const char *list[] =
+    {
+            "SERVER_GAMESTATE_1_NOGAME",
+            "SERVER_GAMESTATE_2_INGAME",
+            "SERVER_GAMESTATE_3_INTERMISSION",
+    };
+    return list[state];
+}
+
 server_client_t * server_client_find_by_addr(const net_addr_t * addr)
 {
     server_client_t * client;
@@ -29,13 +40,6 @@ server_client_t * server_client_find_by_addr(const net_addr_t * addr)
 void server_client_players_num_set(server_client_t * client, int players_num)
 {
     client->players_num = players_num;
-}
-
-void server_client_disconnect(server_client_t * client)
-{
-    game_server_event_t event;
-    event.type = G_SERVER_EVENT_CONNECTION_CLOSE;
-    server_reply_send(client, &event);
 }
 
 void server_client_delete(server_client_t * client)
@@ -204,7 +208,7 @@ int server_gamesave_load(int isave)
 
     g_gamesave_load_close(&ctx);
 
-    server.gamestate.allow_state_gamesave = false;
+    server.gstate.allow_state_gamesave = false;
 /* TODO:
     foreach_loaded_client()
     {

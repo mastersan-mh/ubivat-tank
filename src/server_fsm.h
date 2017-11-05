@@ -9,9 +9,15 @@
 #define SRC_SERVER_FSM_H_
 
 #include "net.h"
-#include "client_requests.h"
+#include "server_events.h"
 
-void server_client_fsm(const net_addr_t * sender, const game_client_request_t * req);
+typedef enum
+{
+    SERVER_GAMESTATE_1_NOGAME, /* игра не создана */
+    SERVER_GAMESTATE_2_INGAME,
+    SERVER_GAMESTATE_3_INTERMISSION,
+} server_gamestate_t;
 
+void server_fsm(const game_server_event_t * event);
 
 #endif /* SRC_SERVER_FSM_H_ */

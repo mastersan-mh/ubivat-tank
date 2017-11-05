@@ -32,16 +32,6 @@
 /* игра по выбору */
 #define GAMEFLAG_CUSTOMGAME 0x02
 
-typedef enum gamestate_s
-{
-    GAMESTATE_1_NOGAME, /* игра не создана */
-    GAMESTATE_2_MISSION_BRIEF,
-    GAMESTATE_3_JOIN_AWAITING,
-    GAMESTATE_4_GAMESAVE,
-    GAMESTATE_5_INGAME,
-    GAMESTATE_6_INTERMISSION,
-} gamestate_t;
-
 typedef struct
 {
     bool quit;

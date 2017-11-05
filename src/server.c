@@ -25,6 +25,7 @@
 #include "sv_game.h"
 #include "server_fsm.h"
 #include "server_private.h"
+#include "server_events.h"
 
 #include "client_requests.h"
 
@@ -48,8 +49,8 @@ server_t server = {};
 
 void server_init(void)
 {
-    server.gamestate.custommap = mapList;
-    server.gamestate.gamemap   = mapList;
+    server.gstate.custommap = mapList;
+    server.gstate.gamemap   = mapList;
 }
 
 void server_done(void)
@@ -90,7 +91,8 @@ void server_stop(void)
 static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {
     size_t sv_req_queue_num;
-    game_client_request_t client_req;
+    game_server_event_t event;
+    event.sender = sender;
 
     size_t ofs = 0;
     int16_t value16;
@@ -100,43 +102,53 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
     for(size_t i = 0; i < sv_req_queue_num; i++)
     {
         PDU_POP_BUF(&value16, sizeof(value16));
-        client_req.type = htons(value16);
-        switch(client_req.type)
+        game_client_request_type_t type = htons(value16);
+        switch(type)
         {
         /** Непривилегированые запросы */
         case G_CLIENT_REQ_DISCOVERYSERVER:
+            event.type = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
             break;
         case G_CLIENT_REQ_CONNECT:
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
             break;
         case G_CLIENT_REQ_DISCONNECT:
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
             break;
         case G_CLIENT_REQ_JOIN:
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_JOIN;
             PDU_POP_BUF(&value16, sizeof(value16));
-            client_req.data.JOIN.players_num = ntohs(value16);
+            event.data.REMOTE_JOIN.players_num = ntohs(value16);
             break;
         case G_CLIENT_REQ_PLAYER_ACTION:
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
             PDU_POP_BUF(&value16, sizeof(value16));
-            client_req.data.PLAYER_ACTION.playerId = ntohs(value16);
-            PDU_POP_BUF(client_req.data.PLAYER_ACTION.action, GAME_ACTION_SIZE);
+            event.data.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
+            PDU_POP_BUF(event.data.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
             break;
             /** Привилегированные запросы */
         case G_CLIENT_REQ_GAME_ABORT:
+            event.type = G_SERVER_EVENT_REMOTE_GAME_ABORT;
             break;
         case G_CLIENT_REQ_GAME_SETMAP:
-            PDU_POP_BUF(client_req.data.GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
+            event.type = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
+            PDU_POP_BUF(event.data.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
             break;
-        case G_CLIENT_REQ_GAME_NEXTSTATE:
+        case G_CLIENT_REQ_READY:
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_READY;
             break;
         case G_CLIENT_REQ_GAME_SAVE:
+            event.type = G_SERVER_EVENT_REMOTE_GAME_SAVE;
             PDU_POP_BUF(&value16, sizeof(value16));
-            client_req.data.GAME_SAVE.isave = ntohs(value16);
+            event.data.REMOTE_GAME_SAVE.isave = ntohs(value16);
             break;
         case G_CLIENT_REQ_GAME_LOAD:
+            event.type = G_SERVER_EVENT_REMOTE_GAME_LOAD;
             PDU_POP_BUF(&value16, sizeof(value16));
-            client_req.data.GAME_LOAD.isave = ntohs(value16);
+            event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
             break;
         }
-        server_client_fsm(sender, &client_req);
+        server_fsm(&event);
     }
     return 0;
 }
@@ -152,31 +164,27 @@ static int server_pdu_build(server_client_t * client, char * buf, size_t * buf_l
 
     for(i = 0; i < client->tx_queue_num; i++)
     {
-        game_server_event_t *event = &client->tx_queue[i].req;
+        game_server_reply_t *event = &client->tx_queue[i].req;
         value16 = htons(event->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(event->type)
         {
-        case G_SERVER_EVENT_INFO:
+        case G_SERVER_REPLY_INFO:
             /*
             nvalue32 = htonl( (uint32_t) event->info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
             buflen += sizeof(nvalue32);
              */
             break;
-        case G_SERVER_EVENT_CONNECTION_ACCEPTED:
+        case G_SERVER_REPLY_CONNECTION_ACCEPTED:
             break;
-        case G_SERVER_EVENT_CONNECTION_CLOSE:
+        case G_SERVER_REPLY_CONNECTION_CLOSE:
             break;
-        case G_SERVER_EVENT_GAME_STATE_SET:
-            value16 = htons(event->data.GAME_STATE_SET.state);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            break;
-        case G_SERVER_EVENT_PLAYERS_JOIN_AWAITING:
+        case G_SERVER_REPLY_PLAYERS_JOIN_AWAITING:
             value16 = htons(event->data.PLAYERS_JOIN_AWAITING.players_num);
             PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
-        case G_SERVER_EVENT_PLAYERS_ENTITY_SET:
+        case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
         {
             int player_num = client->players_num;
             for(int i = 0; i < player_num; i++)
@@ -193,7 +201,7 @@ static int server_pdu_build(server_client_t * client, char * buf, size_t * buf_l
 }
 
 
-static void server_listen(void)
+static void server_net_io(void)
 {
     static char buf[PDU_BUF_SIZE];
 
@@ -251,11 +259,10 @@ void server_handle()
     switch(server.state)
     {
     case SERVER_STATE_IDLE:
+        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
+        server.gamestate_prev = SERVER_GAMESTATE_3_INTERMISSION;
         break;
     case SERVER_STATE_INIT:
-        server.gamestate.state = GAMESTATE_2_MISSION_BRIEF;
-        server.gamestate.paused = false;
-
         server.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
         if(server.ns == NULL)
@@ -266,12 +273,16 @@ void server_handle()
         {
             game_halt("server bind() failed");
         }
-        server.gamestate.allow_state_gamesave = true;
+
+        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
+        server.gstate.paused = false;
+        server.gstate.allow_state_gamesave = true;
         server.state = SERVER_STATE_RUN;
         break;
     case SERVER_STATE_RUN :
-        server_listen();
-        sv_game_mainTick();
+        server_net_io();
+        if(server.gamestate == SERVER_GAMESTATE_2_INGAME)
+            sv_game_gameTick();
         break;
     case SERVER_STATE_DONE:
         // удалить оставшихся игроков
@@ -280,7 +291,7 @@ void server_handle()
         server.ns = NULL;
         //закроем карту
         map_clear();
-        server.gamestate.state = GAMESTATE_1_NOGAME;
+        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
         server.state = SERVER_STATE_IDLE;
         break;
     }

@@ -9,7 +9,7 @@
 #include "client_requests.h"
 #include <assert.h>
 
-void client_req_send(const game_client_request_t * req)
+static void client_req_send(const game_client_request_t * req)
 {
     if(client.req_queue_num >= CLIENT_REQ_QUEUE_SIZE)
     {
@@ -79,13 +79,13 @@ void client_req_send_game_setmap(const char * mapname)
     client_req_send(&req);
 }
 
-void client_req_send_game_nextstate(void)
+void client_req_send_ready(void)
 {
-    if(client.game_next_state_sended) return;
+    if(client.game_ready_sended) return;
     game_client_request_t req;
-    req.type = G_CLIENT_REQ_GAME_NEXTSTATE;
+    req.type = G_CLIENT_REQ_READY;
     client_req_send(&req);
-    client.game_next_state_sended = true;
+    client.game_ready_sended = true;
 }
 
 void client_req_send_game_save(int isave)

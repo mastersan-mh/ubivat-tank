@@ -259,12 +259,12 @@ static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() == GAMESTATE_1_NOGAME && ctx->menu == 4)
+        if(client_gamestate_get() == CLIENT_GAMESTATE_1_NOGAME && ctx->menu == 4)
             return MENU_MAIN;
         return menus[ctx->menu];
     case MENU_ACTION_LEAVE  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+        if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
             game_menu_hide();
         break;
     case MENU_ACTION_SPACE: break;
@@ -293,7 +293,7 @@ static void menu_main_draw(const void * ctx_)
     };
     for(int i = 0; i < ARRAYSIZE(list); i++)
     {
-        if(i != 4 || client_gamestate_get() != GAMESTATE_1_NOGAME)
+        if(i != 4 || client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
             menu_draw_entry(i, list[i]);
     }
     menu_draw_cursor(imenu);
@@ -343,7 +343,7 @@ static void menu_game_draw(const void * ctx_)
 static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
     int ret;
-    if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
         return MENU_MAIN;
 
     ret = game_create(0);
@@ -363,7 +363,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
     int ret;
-    if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
         return MENU_MAIN;
 
     ret = game_create(GAMEFLAG_2PLAYERS);
@@ -399,7 +399,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+        if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
             return MENU_MAIN;
         if(!gamesaves[ctx->menu].exist)
             break;
@@ -500,7 +500,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
         case MENU_ACTION_LEAVE  :
             sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
             game_menu_hide();
-            client_req_send_game_nextstate();
+            client_req_send_ready();
             return MENU_MAIN;
         case MENU_ACTION_SPACE  :break;
         }
@@ -677,7 +677,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 {
 
     int ret;
-    if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
         return MENU_MAIN;
     ret = game_create(GAMEFLAG_CUSTOMGAME);
     if(ret)
@@ -696,7 +696,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
     int ret;
-    if(client_gamestate_get() != GAMESTATE_1_NOGAME)
+    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
         return MENU_MAIN;
     ret = game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
     if(ret)

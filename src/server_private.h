@@ -13,8 +13,10 @@
 #include "vars.h"
 #include "g_events.h"
 #include "entity.h"
+#include "server_reply.h"
+#include "server_fsm.h"
 
-#define SERVER_TX_QUEUE_SIZE 16
+#define SERVER_CLIENT_TX_QUEUE_SIZE 16
 
 typedef struct server_player_s
 {
@@ -31,13 +33,17 @@ typedef struct server_player_s
 
 typedef struct
 {
-    game_server_event_t req;
+    net_socket_t * ns;
+    game_server_reply_t req;
 } server_tx_t;
 
 typedef struct server_client_s
 {
     struct server_client_s * prev;
     struct server_client_s * next;
+
+    /* состояние игры для клиента */
+    server_gamestate_t gamestate;
 
     bool joined;
 
@@ -50,11 +56,10 @@ typedef struct server_client_s
 
     int players_num;
 
-
     server_player_t * players;
 
     size_t tx_queue_num;
-    server_tx_t tx_queue[SERVER_TX_QUEUE_SIZE];
+    server_tx_t tx_queue[SERVER_CLIENT_TX_QUEUE_SIZE];
 
 } server_client_t;
 
@@ -71,10 +76,11 @@ typedef struct
     server_state_t state;
     server_gameflags_t flags;
 
+    server_gamestate_t gamestate;
+    server_gamestate_t gamestate_prev;
     //состояние игры
     struct
     {
-        gamestate_t state;
 
         char * msg;
         bool paused;
@@ -84,14 +90,17 @@ typedef struct
         /* Разрешить переход на состояние сохранения игры.
        Если игра была только что прочитана, её не нужно сохранять */
         bool allow_state_gamesave;
-    } gamestate;
+    } gstate;
 
     net_socket_t * ns;
 
     server_client_t * clients;
+
 } server_t;
 
 extern server_t server;
+
+extern const char * server_gamestate_to_str(server_gamestate_t state);
 
 extern server_client_t * server_client_find_by_addr(const net_addr_t * addr);
 extern void server_client_players_num_set(server_client_t * client, int players_num);
@@ -103,7 +112,6 @@ extern server_client_t * server_client_get(int id);
 extern void server_unjoin_clients(void);
 extern int server_client_num_get(void);
 
-extern void server_client_disconnect(server_client_t * client);
 extern void server_client_delete(server_client_t * client);
 
 extern int server_gamesave_load(int isave);
@@ -119,8 +127,6 @@ extern void server_player_delete(server_player_t * player);
 extern void server_client_player_info_restore(server_player_t * player);
 extern void server_client_player_info_store(server_player_t * player);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
-void server_reply_send_connection_accepted(server_client_t * client);
-void server_reply_send_gamestate(server_client_t * client, gamestate_t state);
 
 
 #endif /* SRC_SERVER_PRIVATE_H_ */

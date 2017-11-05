@@ -11,8 +11,10 @@
 
 #include "client.h"
 #include "client_private.h"
+
+/* TODO: erase line */
 #include "server.h"
-#include "server_private.h"
+
 #include "_gr2D.h"
 #include "video.h"
 #include "ui.h"
@@ -64,7 +66,7 @@ static void cl_game_state_intermission_draw(void)
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
     video_printf(108,191,"НАЖМИ ПРОБЕЛ");
-
+/* TODO
     int i;
     int num = server_client_num_get();
 
@@ -74,10 +76,7 @@ static void cl_game_state_intermission_draw(void)
 
     font_color_set3i(COLOR_15);
     video_printf(48 + 8 * 00, refy      , "ОЧКИ      ФРАГИ      ВСЕГО ФРАГОВ");
-    /*
-	client_t * client;
-	LIST2_FOREACHR(clients, client)
-     */
+
     for(i = 0; i < num; i++)
     {
         struct server_client_s * client = server_client_get(i);
@@ -95,6 +94,7 @@ static void cl_game_state_intermission_draw(void)
             }
         }
     }
+*/
 }
 
 static void client_game_draw_cam(camera_t * cam)
@@ -149,14 +149,15 @@ static void cl_draw(void)
         client.gstate.msg = NULL;
     };
 
+    /* TODO
     extern server_t server;
-
     if(server.gamestate.msg)
     {
         font_color_set3i(COLOR_1);
         video_printf_wide(96, 84, 128, server.gamestate.msg);
         server.gamestate.msg = NULL;
     };
+    */
 
 
 }
@@ -166,21 +167,21 @@ void client_game_draw(void)
 {
     switch(client.gamestate)
     {
-    case GAMESTATE_1_NOGAME:
+    case CLIENT_GAMESTATE_1_NOGAME:
         client_game_draw_nogame();
         break;
-    case GAMESTATE_2_MISSION_BRIEF:
+    case CLIENT_GAMESTATE_2_MISSION_BRIEF:
         client_game_draw_missionbrief();
         break;
-    case GAMESTATE_3_JOIN_AWAITING:
+    case CLIENT_GAMESTATE_3_JOIN_AWAITING:
         client_game_draw_join_awaiting();
         break;
-    case GAMESTATE_4_GAMESAVE:
+    case CLIENT_GAMESTATE_4_GAMESAVE:
         break;
-    case GAMESTATE_5_INGAME:
+    case CLIENT_GAMESTATE_5_INGAME:
         cl_draw();
         break;
-    case GAMESTATE_6_INTERMISSION:
+    case CLIENT_GAMESTATE_6_INTERMISSION:
         cl_game_state_intermission_draw();
         break;
     }

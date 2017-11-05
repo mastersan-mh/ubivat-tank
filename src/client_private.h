@@ -11,6 +11,7 @@
 #include "g_events.h"
 #include "net.h"
 #include "client_requests.h"
+#include "client_fsm.h"
 
 #include "entity.h"
 
@@ -44,8 +45,8 @@ typedef struct
 {
     client_state_t state;
 
-    gamestate_t gamestate;
-    gamestate_t gamestate_prev;
+    client_gamestate_t gamestate;
+    client_gamestate_t gamestate_prev;
 
     //состояние игры
     struct
@@ -66,11 +67,13 @@ typedef struct
 
     size_t req_queue_num;
     client_req_queue_t req_queue[CLIENT_REQ_QUEUE_SIZE];
-    bool game_next_state_sended;// костыль
+    bool game_ready_sended;// костыль
 
 } client_t;
 
 extern client_t client;
+
+extern const char * client_gamestate_to_str(client_gamestate_t state);
 
 extern void client_disconnect();
 

@@ -5,11 +5,16 @@
  *      Author: mastersan
  */
 
-#include "game.h"
-#include "server.h"
-#include "server_private.h"
-#include "sv_game.h"
 #include "sound.h"
+
+#include "sv_game.h"
+
+#include "game.h"
+
+#include "server.h"
+#include "server_events.h"
+#include "server_private.h"
+
 #include "common/common_list2.h"
 
 extern server_t server;
@@ -24,7 +29,7 @@ void sv_game_abort(void)
 
 void sv_game_message_send(const char * mess)
 {
-    server.gamestate.msg = (char*)mess;
+    server.gstate.msg = (char*)mess;
 };
 
 int sv_game_flag_localgame(void)
@@ -37,7 +42,7 @@ int sv_game_flag_localgame(void)
  */
 int sv_game_is_first_map(void)
 {
-    return server.gamestate.gamemap == mapList;
+    return server.gstate.gamemap == mapList;
 }
 
 void sv_game_win(void)
@@ -62,7 +67,7 @@ void sv_game_win(void)
     }
     if( alive )
     {
-        server.gamestate.state = GAMESTATE_6_INTERMISSION;
+        server_event_local_win();
     }
 }
 
@@ -74,58 +79,6 @@ void sv_game_gameTick(void)
     entities_handle();
 }
 
-void sv_game_mainTick(void)
-{
-    static gamestate_t state_prev = GAMESTATE_1_NOGAME;
-    bool statechanged = false;
-    if(state_prev != server.gamestate.state)
-    {
-        state_prev = server.gamestate.state;
-        statechanged = true;
-    }
-    switch(server.gamestate.state)
-    {
-    case GAMESTATE_1_NOGAME:
-        break;
-    case GAMESTATE_2_MISSION_BRIEF:
-        break;
-    case GAMESTATE_3_JOIN_AWAITING:
-        break;
-    case GAMESTATE_4_GAMESAVE:
-        break;
-    case GAMESTATE_5_INGAME:
-        if(statechanged)
-        {
-            server.gamestate.allow_state_gamesave = true;
-        }
-        sv_game_gameTick();
-        break;
-    case GAMESTATE_6_INTERMISSION:
-        if(statechanged)
-        {
-            if(!server.flags.localgame)
-            {
-                //игра по выбору
-                sv_game_abort();
-            }
-            else
-            {
-                server_unjoin_clients();
-
-                //игра по уровням
-                if(sv_game_nextmap() == true)
-                {
-                    //server.gamestate.state = GAMESTATE_INTERMISSION;
-                }
-            }
-        }
-        break;
-    }
-
-}
-
-
-
 /*
  * сообщения об ошибках
  */
@@ -136,14 +89,14 @@ bool sv_game_nextmap(void)
     //закроем карту
     map_clear();
 
-    server.gamestate.gamemap = server.gamestate.gamemap->next;
-    if(!server.gamestate.gamemap)
+    server.gstate.gamemap = server.gstate.gamemap->next;
+    if(!server.gstate.gamemap)
     {
         // конец игры, последняя карта
         sv_game_abort();
         return false;
     }
-    ret = map_load(server.gamestate.gamemap->map);
+    ret = map_load(server.gstate.gamemap->map);
     if(ret)
     {
         game_msg_error(ret);

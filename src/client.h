@@ -9,7 +9,9 @@
 #define SRC_CLIENT_H_
 
 #include "net.h"
-#include "g_events.h"
+
+#include "client_fsm.h"
+
 #include "menu.h"
 
 #include "entity.h"
@@ -24,7 +26,7 @@ extern void client_start(int flags);
 extern void client_stop(void);
 extern bool client_running(void);
 
-extern gamestate_t client_gamestate_get(void);
+extern client_gamestate_t client_gamestate_get(void);
 
 extern void client_handle(void);
 

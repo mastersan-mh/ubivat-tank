@@ -25,7 +25,7 @@ typedef enum
 #define G_CLIENT_REQ_PRIVILEGED G_CLIENT_REQ_GAME_ABORT
     G_CLIENT_REQ_GAME_ABORT,
     G_CLIENT_REQ_GAME_SETMAP,
-    G_CLIENT_REQ_GAME_NEXTSTATE, /**< перейти на следующее состояние, если допустимо */
+    G_CLIENT_REQ_READY, /**< перейти на следующее состояние, если допустимо */
     G_CLIENT_REQ_GAME_SAVE,
     G_CLIENT_REQ_GAME_LOAD,
 } game_client_request_type_t;
@@ -62,7 +62,6 @@ typedef struct
 } game_client_request_t;
 
 
-extern void client_req_send(const game_client_request_t * req);
 extern void client_req_send_discoveryserver(void);
 extern void client_req_send_connect(void);
 extern void client_req_send_disconnect(void);
@@ -70,7 +69,7 @@ extern void client_req_send_join(void);
 extern void client_req_send_player_action(int playerId, const char * action_name);
 extern void client_req_send_game_abort(void);
 extern void client_req_send_game_setmap(const char * mapname);
-extern void client_req_send_game_nextstate(void);
+extern void client_req_send_ready(void);
 extern void client_req_send_game_save(int isave);
 extern void client_req_send_game_load(int isave);
 

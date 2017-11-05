@@ -8,14 +8,44 @@
 #ifndef SRC_SERVER_REPLY_H_
 #define SRC_SERVER_REPLY_H_
 
-extern void server_reply_send(server_client_t * client, const game_server_event_t * req);
+#include "game.h"
+#include "g_events.h"
 
-extern void server_reply_send_info(server_client_t * client);
-extern void server_reply_send_connection_accepted(server_client_t * client);
-extern void server_reply_send_player_join_awaiting(server_client_t * client);
-extern void server_event_send_win(void);
-extern void server_reply_send_cliententity(server_client_t * client);
-extern void server_reply_send_gamestate(server_client_t * client, gamestate_t state);
+/* тип события */
+typedef enum
+{
+    G_SERVER_REPLY_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
+    G_SERVER_REPLY_CONNECTION_ACCEPTED,
+    G_SERVER_REPLY_CONNECTION_CLOSE,
+    G_SERVER_REPLY_PLAYERS_JOIN_AWAITING,
+    G_SERVER_REPLY_PLAYERS_ENTITY_SET,
+} game_server_reply_type_t;
 
+typedef union
+{
+    struct
+    {
+        int clients_num; /* количество клиентов на сервере */
+    } INFO;
+    struct
+    {
+        int players_num; /**< amount of client local players */
+    } PLAYERS_JOIN_AWAITING;
+    struct
+    {
+        struct
+        {
+            char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
+            void /*entity_t */ * entity;
+        } ent[2];
+    } PLAYERS_ENTITY_SET;
+} game_server_reply_data_t;
+
+
+typedef struct
+{
+    game_server_reply_type_t type;
+    game_server_reply_data_t data;
+} game_server_reply_t;
 
 #endif /* SRC_SERVER_REPLY_H_ */

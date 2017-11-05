@@ -20,10 +20,10 @@ typedef enum
     G_CLIENT_EVENT_REMOTE_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
-    G_CLIENT_EVENT_REMOTE_GAME_STATE_SET,
     G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
 } game_client_event_type_t;
+
 typedef union
 {
 
@@ -39,10 +39,6 @@ typedef union
     {
         int clients_num; /* количество клиентов на сервере */
     } REMOTE_INFO;
-    struct
-    {
-        gamestate_t state;
-    } REMOTE_GAME_STATE_SET;
     struct
     {
         int players_num; /**< amount of client local players */
@@ -61,7 +57,6 @@ typedef struct
 {
     game_client_event_type_t type;
     game_client_event_data_t data;
-
 } game_client_event_t;
 
 extern void client_event_local_key_input(bool key_repeat, int key, bool state);
