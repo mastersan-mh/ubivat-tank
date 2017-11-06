@@ -24,20 +24,16 @@
 #include <stddef.h>
 
 #define FSM_CLIENT_CHECK(client) \
-        do { \
-            if(!client) \
-            { \
-                game_console_send("server: no client 0x%00000000x:%d.", \
-                    event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port)); \
-                    break; \
-            } \
-        } while(0)
+        if(!client) \
+        { \
+            game_console_send("server: no client 0x%00000000x:%d.", \
+                event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port)); \
+                break; \
+        }
 
 #define FSM_CLIENT_CHECK_PRIVILEGED(client) \
-        do { \
             FSM_CLIENT_CHECK((client)); \
-            if(!client->main) break; \
-        } while(0)
+            if(!client->main) break;
 
 #define FSM_GAMESTATE_SET(gs) \
         do { \

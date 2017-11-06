@@ -11,13 +11,13 @@
 
 static void client_req_send(const game_client_request_t * req)
 {
-    if(client.req_queue_num >= CLIENT_REQ_QUEUE_SIZE)
+    if(client.tx_queue_num >= CLIENT_REQ_QUEUE_SIZE)
     {
         game_console_send("CLIENT: REQ queue overflow.");
         return;
     }
-    client.req_queue[client.req_queue_num].req = *req;
-    client.req_queue_num++;
+    client.tx_queue[client.tx_queue_num].req = *req;
+    client.tx_queue_num++;
 }
 
 extern void client_req_send_discoveryserver(void)
@@ -81,11 +81,9 @@ void client_req_send_game_setmap(const char * mapname)
 
 void client_req_send_ready(void)
 {
-    if(client.game_ready_sended) return;
     game_client_request_t req;
     req.type = G_CLIENT_REQ_READY;
     client_req_send(&req);
-    client.game_ready_sended = true;
 }
 
 void client_req_send_game_save(int isave)

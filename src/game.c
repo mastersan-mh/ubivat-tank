@@ -149,6 +149,8 @@ void game_init(void)
 
 #include "entities_init.h"
 
+    game_menu_show(MENU_MAIN);
+
 }
 
 /*
@@ -322,7 +324,6 @@ void game_menu_show(menu_selector_t imenu)
 {
     game.show_menu = true;
     game.imenu     = imenu;
-
 }
 
 void game_menu_hide(void)

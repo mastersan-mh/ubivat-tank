@@ -45,7 +45,8 @@ void client_init(void)
 {
     client.state            = CLIENT_STATE_IDLE;
     client.gstate.msg       = NULL;
-    game_action_showmenu(NULL);
+    /* flush queues */
+    client.tx_queue_num = 0;
 }
 
 void client_done()
@@ -123,11 +124,11 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
     size_t ofs = 0;
 
     /* client requests */
-    value16 = htons(client.req_queue_num);
+    value16 = htons(client.tx_queue_num);
     PDU_PUSH_BUF(&value16, sizeof(value16));
-    for(size_t i = 0; i < client.req_queue_num; i++)
+    for(size_t i = 0; i < client.tx_queue_num; i++)
     {
-        game_client_request_t * req = &client.req_queue[i].req;
+        game_client_request_t * req = &client.tx_queue[i].req;
         value16 = htons(req->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(req->type)
@@ -166,8 +167,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
                 break;
         }
     }
-    client.req_queue_num = 0;
-    client.game_ready_sended = false;
+    client.tx_queue_num = 0;
 
     return 0;
 }
@@ -224,6 +224,7 @@ void client_handle(void)
             client.gamestate_prev = CLIENT_GAMESTATE_6_INTERMISSION;
             break;
         case CLIENT_STATE_INIT:
+
             client.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
             if(client.ns == NULL)
@@ -244,6 +245,8 @@ void client_handle(void)
         case CLIENT_STATE_DONE:
             client_req_send_game_abort();
             client_players_delete();
+            /* flush queue */
+            client.tx_queue_num = 0;
             client.state = CLIENT_STATE_IDLE;
             client.gamestate = CLIENT_GAMESTATE_1_NOGAME;
             break;

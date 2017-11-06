@@ -296,6 +296,7 @@ void client_key_press(int key)
     const client_keybind_t * inputkey = key_to_inputkey(key);
     const char * action_str = inputkey->action_press;
     const game_action_t * game_action = game_action_find(action_str);
+    /* Если клавиша перекрыта локальным действием, выполняем его без отправки серверу */
     if(game_action)
     {
         game_action->actionf_press(action_str);

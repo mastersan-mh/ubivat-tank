@@ -65,9 +65,8 @@ typedef struct
 
     client_player_t * players;
 
-    size_t req_queue_num;
-    client_req_queue_t req_queue[CLIENT_REQ_QUEUE_SIZE];
-    bool game_ready_sended;// костыль
+    size_t tx_queue_num;
+    client_req_queue_t tx_queue[CLIENT_REQ_QUEUE_SIZE];
 
 } client_t;
 
