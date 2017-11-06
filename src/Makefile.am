@@ -44,13 +44,14 @@ ui.c \
 menu.c \
 server_private.c \
 server_fsm.c \
-server_reply.c \
+server_events.c \
+server_reply_private.c \
 sv_game.c \
 server.c \
 client_private.c \
 client_fsm.c \
-client_requests.c \
 client_events.c \
+client_requests.c \
 cl_game.c \
 cl_input.c \
 client.c

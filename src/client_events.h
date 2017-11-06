@@ -17,10 +17,10 @@ typedef enum
 {
     G_CLIENT_EVENT_LOCAL_KEY_PRESS,
     G_CLIENT_EVENT_LOCAL_KEY_RELEASE,
+    G_CLIENT_EVENT_LOCAL_ENTERGAME,
     G_CLIENT_EVENT_REMOTE_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
-    G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
 } game_client_event_type_t;
 
@@ -42,9 +42,6 @@ typedef union
     struct
     {
         int players_num; /**< amount of client local players */
-    } REMOTE_PLAYERS_JOIN_AWAITING;
-    struct
-    {
         struct
         {
             char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];

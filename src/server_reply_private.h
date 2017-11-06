@@ -14,7 +14,6 @@
 extern void server_reply_send_info(server_client_t * client);
 extern void server_reply_send_connection_accepted(server_client_t * client);
 extern void server_reply_send_connection_close(server_client_t * client);
-extern void server_reply_send_players_join_awaiting(server_client_t * client);
 extern void server_reply_send_players_entity_set(server_client_t * client);
 
 #endif /* SRC_SERVER_REPLY_PRIVATE_H_ */

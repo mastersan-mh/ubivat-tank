@@ -19,7 +19,7 @@ typedef enum
     G_CLIENT_REQ_DISCOVERYSERVER, /**< найти серверы */
     G_CLIENT_REQ_CONNECT,
     G_CLIENT_REQ_DISCONNECT,
-    G_CLIENT_REQ_JOIN,     /**< назначить игроку объект на карте */
+    G_CLIENT_REQ_SPAWN,     /**< назначить игроку объект на карте */
     G_CLIENT_REQ_PLAYER_ACTION,
     /** Привилегированные запросы */
 #define G_CLIENT_REQ_PRIVILEGED G_CLIENT_REQ_GAME_ABORT
@@ -35,7 +35,7 @@ typedef union
     struct
     {
         int players_num;
-    } JOIN;
+    } SPAWN;
     struct
     {
         int playerId;
@@ -65,7 +65,7 @@ typedef struct
 extern void client_req_send_discoveryserver(void);
 extern void client_req_send_connect(void);
 extern void client_req_send_disconnect(void);
-extern void client_req_send_join(void);
+extern void client_req_send_spawn(void);
 extern void client_req_send_player_action(int playerId, const char * action_name);
 extern void client_req_send_game_abort(void);
 extern void client_req_send_game_setmap(const char * mapname);

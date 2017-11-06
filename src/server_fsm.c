@@ -45,8 +45,27 @@
             game_console_send("SERVER: change gamestate to %s.", server_gamestate_to_str(gamestate)); \
         } while (0)
 
+#define FSM_CLIENT_CONNECT_CHECK() \
+                if(client) \
+                { \
+                    game_console_send("server: client from 0x%00000000x:%d  already connected.", \
+                        client->ns.addr_.addr_in, ntohs(client->ns.addr_.addr_in.sin_port)); \
+                    break; \
+                }
+
 #define FSM_WIN() \
-        FSM_GAMESTATE_SET(SERVER_GAMESTATE_4_INTERMISSION)
+        FSM_GAMESTATE_SET(SERVER_GAMESTATE_3_INTERMISSION)
+
+void server_fsm_client_connect(const game_server_event_t * event)
+{
+    server_client_t * client;
+    game_console_send("server: client request connection from 0x%00000000x:%d.",
+        event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
+    bool mainclient = true;
+    //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
+    client = server_client_create(server.ns->sock, event->sender, mainclient);
+    server_reply_send_connection_accepted(client);
+}
 
 void server_fsm_client_disconnect(const game_server_event_t * event, server_client_t * client)
 {
@@ -169,6 +188,8 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
+                FSM_CLIENT_CONNECT_CHECK();
+                server_fsm_client_connect(event);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT:
                 FSM_CLIENT_CHECK(client);
@@ -177,7 +198,6 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_REMOTE_CLIENT_JOIN:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
-                FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION:
                 break;
@@ -187,11 +207,13 @@ void server_fsm(const game_server_event_t * event)
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_SETMAP:
                 server_fsm_game_setmap(event);
+                FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_SAVE:
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_LOAD:
                 server_gamesave_load(event->data.REMOTE_GAME_LOAD.isave);
+                FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
                 break;
         }
         break;
@@ -208,20 +230,8 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
-                if(client)
-                {
-                    game_console_send("server: client from 0x%00000000x:%d  already connected.",
-                        client->ns.addr_.addr_in, ntohs(client->ns.addr_.addr_in.sin_port));
-                    break;
-                }
-                server_client_t * client;
-                game_console_send("server: client request connection from 0x%00000000x:%d.",
-                    event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
-                bool mainclient = true;
-                //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-                client = server_client_create(server.ns->sock, event->sender, mainclient);
-                server_reply_send_connection_accepted(client);
-                server_reply_send_players_join_awaiting(client);
+                FSM_CLIENT_CONNECT_CHECK();
+                server_fsm_client_connect(event);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT:
                 FSM_CLIENT_CHECK(client);
@@ -281,23 +291,25 @@ void server_fsm(const game_server_event_t * event)
                 {
                     //игра по выбору
                     sv_game_abort();
+                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_1_NOGAME);
+                    break;
                 }
-                else
+                server_unjoin_clients();
+                //игра по уровням
+                if(sv_game_nextmap() == true)
                 {
-                    server_unjoin_clients();
-                    //игра по уровням
-                    if(sv_game_nextmap() == true)
-                    {
-                        //gamestate = GAMESTATE_INTERMISSION;
-                    }
+                    //gamestate = GAMESTATE_INTERMISSION;
+                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
+                    break;
                 }
+                game_console_send("server: can't next map.");
                 FSM_GAMESTATE_SET(SERVER_GAMESTATE_1_NOGAME);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION:
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_ABORT:
                 FSM_CLIENT_CHECK_PRIVILEGED(client);
-                server_fsm_game_abort(event, client, &gamestate);
+                server_fsm_game_abort(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_SETMAP:
                 break;

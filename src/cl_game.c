@@ -23,6 +23,7 @@
 static void client_game_draw_nogame(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+    video_printf(160 - 6 * 10 , 8 * 5, "Ожидание соединения...");
 }
 
 /**
@@ -43,11 +44,11 @@ static void client_game_draw_missionbrief(void)
 /**
  * информация об уровне
  */
-static void client_game_draw_join_awaiting(void)
+static void client_game_draw_spawn_awaiting(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
-    video_printf(160 - 6 * 10 , 8 * 5, "Ожидание соединения...");
+    video_printf(160 - 6 * 10 , 8 * 5, "Перемещаемся в мир...");
 }
 
 /*
@@ -173,8 +174,8 @@ void client_game_draw(void)
     case CLIENT_GAMESTATE_2_MISSION_BRIEF:
         client_game_draw_missionbrief();
         break;
-    case CLIENT_GAMESTATE_3_JOIN_AWAITING:
-        client_game_draw_join_awaiting();
+    case CLIENT_GAMESTATE_3_SPAWN_AWAITING:
+        client_game_draw_spawn_awaiting();
         break;
     case CLIENT_GAMESTATE_4_GAMESAVE:
         break;

@@ -41,11 +41,11 @@ void client_req_send_disconnect(void)
     client_req_send(&req);
 }
 
-void client_req_send_join(void)
+void client_req_send_spawn(void)
 {
     game_client_request_t req;
-    req.type = G_CLIENT_REQ_JOIN;
-    req.data.JOIN.players_num = client.gstate.players_num;
+    req.type = G_CLIENT_REQ_SPAWN;
+    req.data.SPAWN.players_num = client.gstate.players_num;
     client_req_send(&req);
 }
 

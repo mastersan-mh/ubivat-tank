@@ -95,16 +95,12 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 event.type = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
                 break;
-            case G_SERVER_REPLY_PLAYERS_JOIN_AWAITING:
-                PDU_POP_BUF(&value16, sizeof(value16));
-                event.type = G_CLIENT_EVENT_REMOTE_PLAYERS_JOIN_AWAITING;
-                event.data.REMOTE_PLAYERS_JOIN_AWAITING.players_num = ntohs(value16);
-                break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
                 event.type = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
-                int player_num = client.gstate.players_num;
-                for(int i = 0; i < player_num; i++)
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_PLAYERS_ENTITY_SET.players_num = ntohs(value16);
+                for(int i = 0; i < event.data.REMOTE_PLAYERS_ENTITY_SET.players_num; i++)
                 {
                     PDU_POP_BUF(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
                     PDU_POP_BUF(&event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
@@ -143,8 +139,8 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
                 break;
             case G_CLIENT_REQ_DISCONNECT:
                 break;
-            case G_CLIENT_REQ_JOIN:
-                value16 = ntohs(req->data.JOIN.players_num);
+            case G_CLIENT_REQ_SPAWN:
+                value16 = ntohs(req->data.SPAWN.players_num);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
                 break;
             case G_CLIENT_REQ_PLAYER_ACTION:

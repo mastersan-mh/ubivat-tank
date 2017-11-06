@@ -42,19 +42,11 @@ void server_reply_send_connection_close(server_client_t * client)
     server_reply_send(client, &reply);
 }
 
-void server_reply_send_players_join_awaiting(server_client_t * client)
-{
-    game_server_reply_t reply;
-    reply.type = G_SERVER_REPLY_PLAYERS_JOIN_AWAITING;
-    reply.data.PLAYERS_JOIN_AWAITING.players_num = client->players_num;
-    server_reply_send(client, &reply);
-}
-
 void server_reply_send_players_entity_set(server_client_t * client)
 {
     game_server_reply_t reply;
     reply.type = G_SERVER_REPLY_PLAYERS_ENTITY_SET;
-
+    reply.data.PLAYERS_ENTITY_SET.players_num = client->players_num;
     int i = 0;
     server_player_t * player;
 

@@ -17,7 +17,6 @@ typedef enum
     G_SERVER_REPLY_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_SERVER_REPLY_CONNECTION_ACCEPTED,
     G_SERVER_REPLY_CONNECTION_CLOSE,
-    G_SERVER_REPLY_PLAYERS_JOIN_AWAITING,
     G_SERVER_REPLY_PLAYERS_ENTITY_SET,
 } game_server_reply_type_t;
 
@@ -30,9 +29,6 @@ typedef union
     struct
     {
         int players_num; /**< amount of client local players */
-    } PLAYERS_JOIN_AWAITING;
-    struct
-    {
         struct
         {
             char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];

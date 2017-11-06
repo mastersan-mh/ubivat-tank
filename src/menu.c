@@ -17,6 +17,7 @@
 #include "cl_input.h"
 #include "cl_game.h"
 #include "client_requests.h"
+#include "client_events.h"
 
 #include "g_gamesave.h"
 
@@ -499,8 +500,7 @@ static int menu_game_save(buffer_key_t scancode, menu_action_t action, void * ct
             break;
         case MENU_ACTION_LEAVE  :
             sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-            game_menu_hide();
-            client_req_send_ready();
+            client_event_local_entergame();
             return MENU_MAIN;
         case MENU_ACTION_SPACE  :break;
         }
