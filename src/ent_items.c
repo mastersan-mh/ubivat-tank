@@ -68,8 +68,8 @@ static const entityinfo_t item_scores_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t item_health_reginfo = {
@@ -81,8 +81,8 @@ static const entityinfo_t item_health_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t item_armor_reginfo = {
@@ -94,8 +94,8 @@ static const entityinfo_t item_armor_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t item_ammo_missile_reginfo = {
@@ -107,8 +107,8 @@ static const entityinfo_t item_ammo_missile_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t item_ammo_mine_reginfo = {
@@ -120,8 +120,8 @@ static const entityinfo_t item_ammo_mine_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 void entity_items_init(void)

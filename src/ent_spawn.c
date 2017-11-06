@@ -56,8 +56,8 @@ static const entityinfo_t spawn_player_reginfo = {
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 		.client_join = spawn_client_join,
-		.client_store = NULL,
-		.client_restore = NULL
+		.player_store = NULL,
+		.player_restore = NULL
 };
 
 static const entityinfo_t spawn_enemy_reginfo = {
@@ -68,8 +68,8 @@ static const entityinfo_t spawn_enemy_reginfo = {
 		.init = spawn_enemy_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL
+		.player_store = NULL,
+		.player_restore = NULL
 };
 
 static const entityinfo_t spawn_boss_reginfo = {
@@ -80,8 +80,8 @@ static const entityinfo_t spawn_boss_reginfo = {
 		.init = spawn_boss_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL
+		.player_store = NULL,
+		.player_restore = NULL
 };
 
 void entity_spawn_init(void)

@@ -18,8 +18,6 @@ typedef struct
 extern void server_init(void);
 extern void server_done(void);
 
-
-
 extern void server_start(int flags);
 extern void server_stop(void);
 

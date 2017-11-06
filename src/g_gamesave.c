@@ -52,7 +52,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
  * чтение игрока
  * @return true | false
  */
-static int g_gamesave_load_player(int fd, server_player_t * player)
+static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t * storage)
 {
     mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
     if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
@@ -61,16 +61,16 @@ static int g_gamesave_load_player(int fd, server_player_t * player)
     ssize_t c = read(fd, &savedata, sizeof(savedata));
     if(c != sizeof(savedata))return false;
 
-    server_client_vardata_get(player, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
-    server_client_vardata_get(player, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
-    server_client_vardata_get(player, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
-    server_client_vardata_get(player, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
-    server_client_vardata_get(player, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
-    server_client_vardata_get(player, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
-    server_client_vardata_get(player, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
-    server_client_vardata_get(player, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
+    server_storage_vardata_get(storage, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
+    server_storage_vardata_get(storage, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
+    server_storage_vardata_get(storage, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
+    server_storage_vardata_get(storage, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
+    server_storage_vardata_get(storage, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
+    server_storage_vardata_get(storage, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
+    server_storage_vardata_get(storage, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
+    server_storage_vardata_get(storage, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
 
-    vars_dump(player->vars, "==== LOADED:");
+    vars_dump(storage->vars, "==== LOADED:");
     return 0;
 };
 
@@ -129,7 +129,7 @@ int g_gamesave_save(int isave)
 
     GS_WRITE_V(header);
 
-    int clients_num = server_client_num_get();
+    int clients_num = server_clients_num_get();
     GS_WRITE_U16(clients_num);
     LIST2_FOREACHR(server.clients, client)
     {
@@ -148,16 +148,6 @@ int g_gamesave_save(int isave)
     close(fd);
     return 0;
 };
-
-void g_gamesave_load_close(gamesave_load_context_t * ctx)
-{
-    if(ctx->fd >= 0)
-    {
-        Z_FREE(ctx->clients_descr);
-        close(ctx->fd);
-        memset(ctx, 0, sizeof(gamesave_load_context_t));
-    }
-}
 
 /**
  * @brief чтение сохранённой игры
@@ -196,6 +186,16 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
         return -1;
     }
     return 0;
+}
+
+void g_gamesave_load_close(gamesave_load_context_t * ctx)
+{
+    if(ctx->fd >= 0)
+    {
+        Z_FREE(ctx->clients_descr);
+        close(ctx->fd);
+        memset(ctx, 0, sizeof(gamesave_load_context_t));
+    }
 }
 
 #define GS_READ(data, data_size) \
@@ -241,36 +241,15 @@ int g_gamesave_load_read_header(gamesave_load_context_t * ctx)
 
 }
 
-
-void g_gamesave_client_load(
+void g_gamesave_load_player(
     gamesave_load_context_t * ctx,
-    server_client_t * client)
+    server_player_vars_storage_t * storage)
 {
-/*
-    int player_num = ctx->players_num;
-
-    server_client_t * client;
-    LIST2_FOREACHR(server.clients, client)
-    {
-        server_player_t * player;
-        LIST2_FOREACHR(client->players, player)
-        {
-            g_gamesave_load_player(ctx->fd, player);
-            player_num--;
-            if(player_num <= 0) break;
-
-        }
-        if(player_num <= 0) break;
-    }
-*/
-
+    g_gamesave_load_player_internal(ctx->fd, storage);
 }
 
-
-
-
 /**
- * @description чтение заголовка записи
+ * @description кэширование заголовка записи
  * @return true | false
  */
 static int g_gamesave_cacheinfo(int isave, gamesave_descr_t * rec)

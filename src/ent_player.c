@@ -945,8 +945,8 @@ static const entityinfo_t player_reginfo = {
         .done = player_done,
         .spawn = player_spawn,
         .handle = player_handle,
-        .client_store = NULL,
-        .client_restore = player_restore,
+        .player_store = NULL,
+        .player_restore = player_restore,
         ENTITYINFO_TOUCHS(player_touchs),
         ENTITYINFO_ACTIONS(player_actions),
 };
@@ -961,8 +961,8 @@ static const entityinfo_t enemy_reginfo = {
         .init = enemy_init,
         .done = enemy_done,
         .handle = enemy_handle,
-        .client_store = NULL,
-        .client_restore = NULL,
+        .player_store = NULL,
+        .player_restore = NULL,
 };
 
 static const entityinfo_t boss_reginfo = {
@@ -975,8 +975,8 @@ static const entityinfo_t boss_reginfo = {
         .init = boss_init,
         .done = boss_done,
         .handle = boss_handle,
-        .client_store = NULL,
-        .client_restore = NULL,
+        .player_store = NULL,
+        .player_restore = NULL,
 };
 
 void entity_player_init(void)

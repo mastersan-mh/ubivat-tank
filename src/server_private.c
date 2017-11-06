@@ -10,8 +10,10 @@
 #include "server_private.h"
 #include "server_reply.h"
 #include "g_gamesave.h"
+#include "vars.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
 
 const char * server_gamestate_to_str(server_gamestate_t state)
@@ -23,6 +25,41 @@ const char * server_gamestate_to_str(server_gamestate_t state)
             "SERVER_GAMESTATE_3_INTERMISSION",
     };
     return list[state];
+}
+
+void server_storages_free()
+{
+    server_player_vars_storage_t * storage;
+    while(!LIST2_IS_EMPTY(server.storages))
+    {
+        storage = server.storages;
+        LIST2_UNLINK(server.storages, storage);
+        vars_delete(&storage->vars);
+        Z_free(storage);
+    }
+}
+
+server_player_vars_storage_t * server_storage_find(size_t clientId, size_t playerId)
+{
+    server_player_vars_storage_t * storage;
+    LIST2_FOREACH(server.storages, storage)
+    {
+        if(
+                storage->clientId == clientId &&
+                storage->playerId == playerId)
+            return storage;
+    }
+    return server_storage_create(clientId, playerId);
+}
+
+server_player_vars_storage_t * server_storage_create(size_t clientId, size_t playerId)
+{
+    server_player_vars_storage_t * storage = Z_malloc(sizeof(server_player_vars_storage_t));
+    storage->vars = NULL;
+    storage->clientId = clientId;
+    storage->playerId = playerId;
+    LIST2_PUSH(server.storages, storage);
+    return storage;
 }
 
 server_client_t * server_client_find_by_addr(const net_addr_t * addr)
@@ -44,19 +81,22 @@ void server_client_players_num_set(server_client_t * client, int players_num)
 
 void server_client_delete(server_client_t * client)
 {
+    size_t playerId = 0;
     server_player_t * player;
     while(!LIST2_IS_EMPTY(client->players))
     {
         player = client->players;
         LIST2_UNLINK(client->players, player);
         server_player_delete(player);
+        playerId++;
     }
     Z_free(client);
 }
 
-int server_client_join(server_client_t * client, int players_num)
+int server_client_spawn(server_client_t * client, int players_num)
 {
     client->players_num = players_num;
+    int playerId = players_num - 1;
     for(int i = 0; i < players_num; i++)
     {
         server_player_t * player = server_player_create();
@@ -69,18 +109,57 @@ int server_client_join(server_client_t * client, int players_num)
             return -1;
         }
         player->entity = entity;
-        server_client_player_info_store(player);
+        size_t clientId = server_client_id_get(client);
+        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+        server_player_info_restore(player, storage);
+        playerId--;
     }
     client->joined = true;
     return 0;
 }
 
-int server_client_num_get(void)
+/**
+ * @brif убирание клиентов из игры (не дисконект!), сохранение информации о клиентах
+ */
+void server_clients_unspawn(void)
+{
+    server_client_t * client;
+    size_t clientId = 0;
+    LIST2_FOREACHR(server.clients, client)
+    {
+        server_player_t * player;
+        size_t playerId = 0;
+        LIST2_FOREACHR(client->players, player)
+        {
+            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+            server_player_info_store(storage, player);
+            player->entity = NULL;
+            playerId++;
+        }
+        clientId++;
+    }
+}
+
+int server_clients_num_get(void)
 {
     server_client_t * client;
     int num;
     LIST2_FOREACH_I(server.clients, client, num);
     return num;
+}
+
+size_t server_client_id_get(server_client_t * client)
+{
+    server_client_t * cl;
+    ssize_t id = 0;
+    LIST2_FOREACH(server.clients, cl)
+    {
+        if(cl == client)
+            return id;
+        id++;
+    }
+    assert(0 && "server_client_id_get(): client not found.");
+    return -1;
 }
 
 int server_client_players_num_get(const server_client_t * client)
@@ -94,7 +173,7 @@ int server_client_players_num_get(const server_client_t * client)
 /**
  * brief получить данные переменной
  */
-vardata_t * server_client_vardata_get(server_player_t * player, const char * varname, vartype_t vartype)
+vardata_t * server_storage_vardata_get(server_player_vars_storage_t * storage, const char * varname, vartype_t vartype)
 {
     static const char * list[] =
     {
@@ -102,10 +181,10 @@ vardata_t * server_client_vardata_get(server_player_t * player, const char * var
             "FLOAT",
             "STRING",
     };
-    var_t * var = var_find(player->vars, varname);
+    var_t * var = var_find(storage->vars, varname);
     if(!var)
     {
-        var = var_create(&player->vars, varname, vartype);
+        var = var_create(&storage->vars, varname, vartype);
     }
     vardata_t * vardata = var->data;
     if( (int)vartype >= 0 && vardata->type != vartype )
@@ -118,10 +197,10 @@ vardata_t * server_client_vardata_get(server_player_t * player, const char * var
 /**
  * @brief сохранение информации о entity игрока в хранилище игрока
  */
-void server_client_player_info_store(server_player_t * player)
+void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player)
 {
-    if(player->entity->info->client_store)
-        player->userstoredata = player->entity->info->client_store(
+    if(player->entity->info->player_store)
+        player->userstoredata = player->entity->info->player_store(
                 player->entity->edata
         );
 
@@ -132,7 +211,7 @@ void server_client_player_info_store(server_player_t * player)
     size_t i;
     for(i = 0; i < vars_num; i++)
     {
-        var_t * var = var_create(&player->vars, vars[i].name, vars[i].type);
+        var_t * var = var_create(&storage->vars, vars[i].name, vars[i].type);
         vardata_t * clientvardata = (vardata_t*)var->data;
         vardata_t * entityvardata = entity_vardata_get(entity, vars[i].name, -1);
         strncpy(clientvardata->name, vars[i].name, VARNAME_SIZE);
@@ -156,7 +235,7 @@ server_player_t * server_client_player_get_by_id(const server_client_t * client,
 
 server_client_t * server_client_get(int id)
 {
-    int clients_num = server_client_num_get();
+    int clients_num = server_clients_num_get();
     if(id < 0 || id >= clients_num)
         return NULL;
     server_client_t * client = server.clients;
@@ -166,24 +245,6 @@ server_client_t * server_client_get(int id)
     return client;
 }
 
-/**
- * @brif убирание клиентов из игры (не дисконект!), сохранение информации о клиентах
- */
-void server_unjoin_clients(void)
-{
-    server_client_t * client;
-    LIST2_FOREACHR(server.clients, client)
-    {
-        server_player_t * player;
-        LIST2_FOREACHR(client->players, player)
-        {
-            server_client_player_info_store(player);
-            player->entity = NULL;
-        }
-    }
-}
-
-
 int server_gamesave_load(int isave)
 {
     /* игра уже создана */
@@ -191,17 +252,36 @@ int server_gamesave_load(int isave)
     if(g_gamesave_load_open(isave, &ctx))
         return -1;
 
+    int res = g_gamesave_load_read_header(&ctx);
+    if(res)
+    {
+        game_console_send("server: Error: Could not load gamesave.");
+        return -1;
+    }
+
     map_clear();
 
     //прочитаем карту
     if(map_load(ctx.mapfilename))
     {
-        game_console_send("Error: Could not load map \"%s\".", ctx.mapfilename);
+        game_console_send("server: Error: Could not load map \"%s\".", ctx.mapfilename);
         //game_abort();
 
         g_gamesave_load_close(&ctx);
         return -1;
     }
+
+    for(size_t clientId = 0; clientId < ctx.clients_num; clientId++)
+    {
+        size_t players_num = ctx.clients_descr[clientId];
+        for(size_t playerId = 0; playerId < players_num; playerId++)
+        {
+            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+            g_gamesave_load_player(&ctx, storage);
+        }
+    }
+
+
 
     server.flags.localgame = ctx.flag_localgame;
     server.flags.allow_respawn = ctx.flag_allow_respawn;
@@ -300,11 +380,11 @@ void server_player_delete(server_player_t * player)
  * @brief восстановление информации о entity игрока из хранилища игрока в entity
  * @brief (при переходе на следующий уровень и при чтении gamesave)
  */
-void server_client_player_info_restore(server_player_t * player)
+void server_player_info_restore(server_player_t * player, server_player_vars_storage_t * storage)
 {
     if(player->userstoredata)
     {
-        player->entity->info->client_restore(
+        player->entity->info->player_restore(
             player->entity,
             player->entity->edata,
             player->userstoredata
@@ -313,7 +393,7 @@ void server_client_player_info_restore(server_player_t * player)
         player->userstoredata = NULL;
     }
 
-    if(player->vars)
+    if(storage->vars)
     {
         entity_t * entity = player->entity;
 
@@ -337,12 +417,10 @@ void server_client_player_info_restore(server_player_t * player)
             }
         }
 
-        vars_dump(player->vars, "==== Client vars:");
+        vars_dump(storage->vars, "==== vars in storage:");
 
-        vars_foreach(player->vars, var_restore, NULL);
+        vars_foreach(storage->vars, var_restore, NULL);
         vars_dump(player->entity->vars, "==== Entity vars:");
-
-        vars_delete(&player->vars);
     }
 
 }

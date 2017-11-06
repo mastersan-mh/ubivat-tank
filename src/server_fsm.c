@@ -108,7 +108,9 @@ void server_fsm_game_setmap(const game_server_event_t * event)
 
 static void server_client_fsm_control_handle(const game_server_event_t * event, server_client_t * client)
 {
-    server_player_t * player = server_client_player_get_by_id(client, event->data.REMOTE_PLAYER_ACTION.playerId);
+    size_t clientId = server_client_id_get(client);
+    size_t playerId = event->data.REMOTE_PLAYER_ACTION.playerId;
+    server_player_t * player = server_client_player_get_by_id(client, playerId);
 
     /* TODO
     game_console_send("server: from 0x%00000000x:%d received player action %s.", sender.addr_in.sin_addr, ntohs(sender.addr_in.sin_port),
@@ -118,7 +120,7 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
 
     if(!player)
         return;
-    game_console_send("server: player %d received action %s.",
+    game_console_send("server: from player %d received action \"%s.\"",
         event->data.REMOTE_PLAYER_ACTION.playerId,
         event->data.REMOTE_PLAYER_ACTION.action);
 
@@ -134,7 +136,7 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
 
     if(!action)
     {
-        game_console_send("server: unknown action :%d.", event->data.REMOTE_PLAYER_ACTION.action);
+        game_console_send("server: unknown action \"%d.\"", event->data.REMOTE_PLAYER_ACTION.action);
         return;
     }
 
@@ -144,7 +146,8 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
                 info->spawn)
         {
             game_console_send("server: spawn client.");
-            server_client_player_info_restore(player);
+            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+            server_player_info_restore(player, storage);
             info->spawn(ent, ent->edata);
             ent->spawned = true;
             ent->alive = true;
@@ -191,7 +194,7 @@ void server_fsm(const game_server_event_t * event)
                 FSM_CLIENT_CHECK(client);
                 server_fsm_client_disconnect(event, client);
                 break;
-            case G_SERVER_EVENT_REMOTE_CLIENT_JOIN:
+            case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
                 break;
@@ -233,16 +236,16 @@ void server_fsm(const game_server_event_t * event)
                 FSM_CLIENT_CHECK(client);
                 server_fsm_client_disconnect(event, client);
                 break;
-            case G_SERVER_EVENT_REMOTE_CLIENT_JOIN:
+            case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
                 FSM_CLIENT_CHECK(client);
                 if(client->joined)
                 {
                     game_console_send("server: client already joined.");
                     break;
                 }
-                if(server_client_join(client, event->data.REMOTE_JOIN.players_num) != 0)
+                if(server_client_spawn(client, event->data.REMOTE_JOIN.players_num) != 0)
                 {
-                    game_console_send("server: can not join client, no entities to spawn.");
+                    game_console_send("server: can not spawn players, no entities to spawn.");
                     break;
                 }
                 FSM_GAMESTATE_SET(gamestate);
@@ -280,7 +283,7 @@ void server_fsm(const game_server_event_t * event)
                 FSM_CLIENT_CHECK(client);
                 server_fsm_client_disconnect(event, client);
                 break;
-            case G_SERVER_EVENT_REMOTE_CLIENT_JOIN:
+            case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
                 if(!server.flags.localgame)
@@ -290,7 +293,7 @@ void server_fsm(const game_server_event_t * event)
                     FSM_GAMESTATE_SET(SERVER_GAMESTATE_1_NOGAME);
                     break;
                 }
-                server_unjoin_clients();
+                server_clients_unspawn();
                 //игра по уровням
                 if(sv_game_nextmap() == true)
                 {

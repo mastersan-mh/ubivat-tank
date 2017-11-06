@@ -58,16 +58,6 @@ void server_done(void)
 
 }
 
-
-
-
-
-
-
-
-
-
-
 void server_start(int flags)
 {
     server.state = SERVER_STATE_INIT;
@@ -80,13 +70,6 @@ void server_stop(void)
 {
     server.state = SERVER_STATE_DONE;
 }
-
-
-
-
-
-
-
 
 static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {
@@ -116,7 +99,7 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
             break;
         case G_CLIENT_REQ_SPAWN:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_JOIN;
+            event.type = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
             PDU_POP_BUF(&value16, sizeof(value16));
             event.data.REMOTE_JOIN.players_num = ntohs(value16);
             break;
@@ -276,6 +259,7 @@ void server_handle()
         server.gstate.paused = false;
         server.gstate.allow_state_gamesave = true;
         server.state = SERVER_STATE_RUN;
+        server.storages = NULL;
         break;
     case SERVER_STATE_RUN :
         server_net_io();
@@ -291,6 +275,7 @@ void server_handle()
         map_clear();
         server.gamestate = SERVER_GAMESTATE_1_NOGAME;
         server.state = SERVER_STATE_IDLE;
+        server_storages_free();
         break;
     }
 }

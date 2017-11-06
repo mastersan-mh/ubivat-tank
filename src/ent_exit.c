@@ -32,8 +32,8 @@ static const entityinfo_t exit_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 void entity_exit_init(void)

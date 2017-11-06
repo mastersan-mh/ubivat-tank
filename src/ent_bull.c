@@ -162,8 +162,8 @@ static const entityinfo_t bull_artillery_reginfo = {
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle   = bull_artillery_handle,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 		ENTITYINFO_TOUCHS(bull_artillery_touchs)
 };
 
@@ -228,8 +228,8 @@ static const entityinfo_t bull_missile_reginfo = {
 		.init = bull_missile_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = bull_missile_handle,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 		ENTITYINFO_TOUCHS(bull_missile_touchs)
 };
 
@@ -291,8 +291,8 @@ static const entityinfo_t bull_mine_reginfo = {
 		.init = bull_mine_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = bull_mine_handle,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 		ENTITYINFO_TOUCHS(bull_mine_touchs)
 };
 

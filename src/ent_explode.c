@@ -188,8 +188,8 @@ static const entityinfo_t explode_artillery_reginfo = {
 		.init = explode_artillery_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t explode_missile_reginfo = {
@@ -200,8 +200,8 @@ static const entityinfo_t explode_missile_reginfo = {
 		.init = explode_missile_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 static const entityinfo_t explode_mine_reginfo = {
@@ -212,8 +212,8 @@ static const entityinfo_t explode_mine_reginfo = {
 		.init = explode_mine_entity_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_store = NULL,
-		.client_restore = NULL,
+		.player_store = NULL,
+		.player_restore = NULL,
 };
 
 void entity_explode_init(void)

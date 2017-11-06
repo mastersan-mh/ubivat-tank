@@ -514,7 +514,8 @@ int map_load(const char * mapname)
  */
 void map_clear(void)
 {
-	if(!map.loaded)return;
+	if(!map.loaded)
+	    return;
 	Z_FREE(map._file);
 	Z_FREE(map.name);
 	Z_FREE(map.brief);

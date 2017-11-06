@@ -14,7 +14,7 @@
 
 #include "types.h"
 #include "map.h"
-#include "server.h"
+#include "server_private.h"
 
 typedef struct
 {
@@ -65,13 +65,14 @@ typedef struct
 
 extern gamesave_descr_t gamesaves[G_GAMESAVES_NUM];
 
-extern void g_gamesave_cacheinfos(void);
 extern int g_gamesave_save(int isave);
 
-extern void g_gamesave_load_close(gamesave_load_context_t * ctx);
-extern void g_gamesave_load_read(gamesave_load_context_t * ctx);
+extern void g_gamesave_cacheinfos(void);
 
 extern int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx);
+extern void g_gamesave_load_close(gamesave_load_context_t * ctx);
+extern int g_gamesave_load_read_header(gamesave_load_context_t * ctx);
+void g_gamesave_load_player(gamesave_load_context_t * ctx, server_player_vars_storage_t * storage);
 
 //extern int g_gamesave_load(int isave);
 
