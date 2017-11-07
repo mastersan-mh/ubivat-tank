@@ -105,9 +105,6 @@ typedef struct
 
         maplist_t * gamemap;
         maplist_t * custommap;
-        /* Разрешить переход на состояние сохранения игры.
-       Если игра была только что прочитана, её не нужно сохранять */
-        bool allow_state_gamesave;
     } gstate;
 
     net_socket_t * ns;

@@ -108,6 +108,11 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
                 }
                 break;
             }
+            case G_SERVER_REPLY_GAME_ENDMAP:
+                event.type = G_CLIENT_EVENT_REMOTE_GAME_ENDMAP;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_GAME_ENDMAP.win = (ntohs(value16) != 0);
+                break;
         }
         client_fsm(&event);
     }

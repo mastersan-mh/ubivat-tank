@@ -30,7 +30,6 @@ void server_event_send(const game_server_event_t * event)
 void server_event_local_win()
 {
     game_server_event_t event;
-    event.sender;
     event.type = G_SERVER_EVENT_LOCAL_WIN;
     server_event_send(&event);
 }

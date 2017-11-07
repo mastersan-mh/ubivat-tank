@@ -10,7 +10,7 @@
 
 extern void sv_game_abort(void);
 extern void sv_game_gameTick(void);
-extern bool sv_game_nextmap(void);
+extern int sv_game_nextmap(void);
 
 extern void sv_game_message_send(const char * mess);
 

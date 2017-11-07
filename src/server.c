@@ -46,6 +46,8 @@
 
 server_t server = {};
 
+bool sv_entity_valid = false;
+
 void server_init(void)
 {
     server.gstate.custommap = mapList;
@@ -89,48 +91,48 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
         game_client_request_type_t type = htons(value16);
         switch(type)
         {
-        /** Непривилегированые запросы */
-        case G_CLIENT_REQ_DISCOVERYSERVER:
-            event.type = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
-            break;
-        case G_CLIENT_REQ_CONNECT:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
-            break;
-        case G_CLIENT_REQ_DISCONNECT:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
-            break;
-        case G_CLIENT_REQ_SPAWN:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
-            PDU_POP_BUF(&value16, sizeof(value16));
-            event.data.REMOTE_JOIN.players_num = ntohs(value16);
-            break;
-        case G_CLIENT_REQ_PLAYER_ACTION:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
-            PDU_POP_BUF(&value16, sizeof(value16));
-            event.data.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
-            PDU_POP_BUF(event.data.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
-            break;
-            /** Привилегированные запросы */
-        case G_CLIENT_REQ_GAME_ABORT:
-            event.type = G_SERVER_EVENT_REMOTE_GAME_ABORT;
-            break;
-        case G_CLIENT_REQ_GAME_SETMAP:
-            event.type = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
-            PDU_POP_BUF(event.data.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
-            break;
-        case G_CLIENT_REQ_READY:
-            event.type = G_SERVER_EVENT_REMOTE_CLIENT_READY;
-            break;
-        case G_CLIENT_REQ_GAME_SAVE:
-            event.type = G_SERVER_EVENT_REMOTE_GAME_SAVE;
-            PDU_POP_BUF(&value16, sizeof(value16));
-            event.data.REMOTE_GAME_SAVE.isave = ntohs(value16);
-            break;
-        case G_CLIENT_REQ_GAME_LOAD:
-            event.type = G_SERVER_EVENT_REMOTE_GAME_LOAD;
-            PDU_POP_BUF(&value16, sizeof(value16));
-            event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
-            break;
+            /** Непривилегированые запросы */
+            case G_CLIENT_REQ_DISCOVERYSERVER:
+                event.type = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
+                break;
+            case G_CLIENT_REQ_CONNECT:
+                event.type = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
+                break;
+            case G_CLIENT_REQ_DISCONNECT:
+                event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
+                break;
+            case G_CLIENT_REQ_SPAWN:
+                event.type = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_JOIN.players_num = ntohs(value16);
+                break;
+            case G_CLIENT_REQ_PLAYER_ACTION:
+                event.type = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
+                PDU_POP_BUF(event.data.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
+                break;
+                /** Привилегированные запросы */
+            case G_CLIENT_REQ_GAME_ABORT:
+                event.type = G_SERVER_EVENT_REMOTE_GAME_ABORT;
+                break;
+            case G_CLIENT_REQ_GAME_SETMAP:
+                event.type = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
+                PDU_POP_BUF(event.data.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
+                break;
+            case G_CLIENT_REQ_READY:
+                event.type = G_SERVER_EVENT_REMOTE_CLIENT_READY;
+                break;
+            case G_CLIENT_REQ_GAME_SAVE:
+                event.type = G_SERVER_EVENT_REMOTE_GAME_SAVE;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_GAME_SAVE.isave = ntohs(value16);
+                break;
+            case G_CLIENT_REQ_GAME_LOAD:
+                event.type = G_SERVER_EVENT_REMOTE_GAME_LOAD;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
+                break;
         }
 
         server_event_send(&event);
@@ -154,29 +156,33 @@ static int server_pdu_build(server_client_t * client, char * buf, size_t * buf_l
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(event->type)
         {
-        case G_SERVER_REPLY_INFO:
-            /*
+            case G_SERVER_REPLY_INFO:
+                /*
             nvalue32 = htonl( (uint32_t) event->info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
             buflen += sizeof(nvalue32);
-             */
-            break;
-        case G_SERVER_REPLY_CONNECTION_ACCEPTED:
-            break;
-        case G_SERVER_REPLY_CONNECTION_CLOSE:
-            break;
-        case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
-        {
-            int player_num = event->data.PLAYERS_ENTITY_SET.players_num;
-            value16 = htons(player_num);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            for(int i = 0; i < player_num; i++)
+                 */
+                break;
+            case G_SERVER_REPLY_CONNECTION_ACCEPTED:
+                break;
+            case G_SERVER_REPLY_CONNECTION_CLOSE:
+                break;
+            case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
-                PDU_PUSH_BUF(event->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                PDU_PUSH_BUF(&event->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYERS_ENTITY_SET.ent[i].entity));
+                int player_num = event->data.PLAYERS_ENTITY_SET.players_num;
+                value16 = htons(player_num);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
+                for(int i = 0; i < player_num; i++)
+                {
+                    PDU_PUSH_BUF(event->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                    PDU_PUSH_BUF(&event->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYERS_ENTITY_SET.ent[i].entity));
+                }
+                break;
             }
-            break;
-        }
+            case G_SERVER_REPLY_GAME_ENDMAP:
+                value16 = htons(event->data.GAME_ENDMAP.win ? -1 : 0);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
+                break;
         }
     }
     client->tx_queue_num = 0;
@@ -241,44 +247,44 @@ void server_handle()
 
     switch(server.state)
     {
-    case SERVER_STATE_IDLE:
-        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
-        server.gamestate_prev = SERVER_GAMESTATE_3_INTERMISSION;
-        break;
-    case SERVER_STATE_INIT:
-        server.ns = net_socket_create(NET_PORT, "127.0.0.1");
+        case SERVER_STATE_IDLE:
+            server.gamestate = SERVER_GAMESTATE_1_NOGAME;
+            server.gamestate_prev = SERVER_GAMESTATE_3_INTERMISSION;
+            sv_entity_valid = false;
+            break;
+        case SERVER_STATE_INIT:
+            server.ns = net_socket_create(NET_PORT, "127.0.0.1");
 
-        if(server.ns == NULL)
-        {
-            game_halt("socket() failed");
-        }
-        if(net_socket_bind(server.ns) < 0)
-        {
-            game_halt("server bind() failed");
-        }
+            if(server.ns == NULL)
+            {
+                game_halt("socket() failed");
+            }
+            if(net_socket_bind(server.ns) < 0)
+            {
+                game_halt("server bind() failed");
+            }
 
-        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
-        server.gstate.paused = false;
-        server.gstate.allow_state_gamesave = true;
-        server.state = SERVER_STATE_RUN;
-        server.storages = NULL;
-        break;
-    case SERVER_STATE_RUN :
-        server_net_io();
-        server_events_handle();
-        if(server.gamestate == SERVER_GAMESTATE_2_INGAME)
-            sv_game_gameTick();
-        break;
-    case SERVER_STATE_DONE:
-        // удалить оставшихся игроков
-        server_clients_delete();
-        net_socket_close(server.ns);
-        server.ns = NULL;
-        //закроем карту
-        map_clear();
-        server.gamestate = SERVER_GAMESTATE_1_NOGAME;
-        server.state = SERVER_STATE_IDLE;
-        server_storages_free();
-        break;
+            server.gamestate = SERVER_GAMESTATE_1_NOGAME;
+            server.gstate.paused = false;
+            server.state = SERVER_STATE_RUN;
+            server.storages = NULL;
+            break;
+        case SERVER_STATE_RUN :
+            server_net_io();
+            server_events_handle();
+            if(server.gamestate == SERVER_GAMESTATE_2_INGAME)
+                sv_game_gameTick();
+            break;
+        case SERVER_STATE_DONE:
+            // удалить оставшихся игроков
+            server_clients_delete();
+            net_socket_close(server.ns);
+            server.ns = NULL;
+            //закроем карту
+            map_clear();
+            server.gamestate = SERVER_GAMESTATE_1_NOGAME;
+            server.state = SERVER_STATE_IDLE;
+            server_storages_free();
+            break;
     }
 }

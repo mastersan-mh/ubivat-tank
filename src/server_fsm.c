@@ -23,6 +23,8 @@
 
 #include <stddef.h>
 
+extern bool sv_entity_valid;
+
 #define FSM_CLIENT_CHECK(client) \
         if(!client) \
         { \
@@ -48,9 +50,6 @@
                         client->ns.addr_.addr_in, ntohs(client->ns.addr_.addr_in.sin_port)); \
                     break; \
                 }
-
-#define FSM_WIN() \
-        FSM_GAMESTATE_SET(SERVER_GAMESTATE_3_INTERMISSION)
 
 void server_fsm_client_connect(const game_server_event_t * event)
 {
@@ -217,15 +216,32 @@ void server_fsm(const game_server_event_t * event)
         }
         break;
     case SERVER_GAMESTATE_2_INGAME:
-        if(statechanged)
-        {
-            server.gstate.allow_state_gamesave = true;
-        }
         switch(event->type)
         {
             case G_SERVER_EVENT_LOCAL_WIN:
-                FSM_WIN();
+            {
+                sv_entity_valid = false;
+
+                server_client_t * client;
+                LIST2_FOREACH(server.clients, client)
+                {
+                    server_reply_send_game_endmap(client, true);
+                }
+                server_clients_unspawn();
+                if(!server.flags.localgame)
+                {
+                    //игра по выбору
+                    sv_game_abort();
+                    break;
+                }
+                //игра по уровням
+                if(sv_game_nextmap())
+                    game_console_send("server: can't next map.");
+                else
+                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
+                //FSM_GAMESTATE_SET(SERVER_GAMESTATE_3_INTERMISSION);
                 break;
+            }
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
@@ -237,6 +253,7 @@ void server_fsm(const game_server_event_t * event)
                 server_fsm_client_disconnect(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
+                sv_entity_valid = true;
                 FSM_CLIENT_CHECK(client);
                 if(client->joined)
                 {
@@ -286,22 +303,6 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
-                if(!server.flags.localgame)
-                {
-                    //игра по выбору
-                    sv_game_abort();
-                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_1_NOGAME);
-                    break;
-                }
-                server_clients_unspawn();
-                //игра по уровням
-                if(sv_game_nextmap() == true)
-                {
-                    //gamestate = GAMESTATE_INTERMISSION;
-                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
-                    break;
-                }
-                game_console_send("server: can't next map.");
                 FSM_GAMESTATE_SET(SERVER_GAMESTATE_1_NOGAME);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION:

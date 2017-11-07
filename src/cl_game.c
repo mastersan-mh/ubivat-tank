@@ -20,6 +20,8 @@
 #include "ui.h"
 #include "game.h"
 
+extern bool sv_entity_valid;
+
 static void client_game_draw_nogame(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
@@ -107,6 +109,8 @@ static void cl_draw(void)
 {
     client_player_t * player;
 
+    if(!sv_entity_valid)
+        return;
 
 
     LIST2_FOREACH(client.players, player)

@@ -82,7 +82,7 @@ void sv_game_gameTick(void)
 /*
  * сообщения об ошибках
  */
-bool sv_game_nextmap(void)
+int sv_game_nextmap(void)
 {
     int ret;
 
@@ -94,15 +94,15 @@ bool sv_game_nextmap(void)
     {
         // конец игры, последняя карта
         sv_game_abort();
-        return false;
+        return -1;
     }
     ret = map_load(server.gstate.gamemap->map);
     if(ret)
     {
         game_msg_error(ret);
         sv_game_abort();
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }

@@ -8,6 +8,8 @@
 #ifndef SRC_SERVER_REPLY_H_
 #define SRC_SERVER_REPLY_H_
 
+#include "types.h"
+
 #include "game.h"
 #include "g_events.h"
 
@@ -18,6 +20,7 @@ typedef enum
     G_SERVER_REPLY_CONNECTION_ACCEPTED,
     G_SERVER_REPLY_CONNECTION_CLOSE,
     G_SERVER_REPLY_PLAYERS_ENTITY_SET,
+    G_SERVER_REPLY_GAME_ENDMAP, /* карта завершена */
 } game_server_reply_type_t;
 
 typedef union
@@ -35,6 +38,10 @@ typedef union
             void /*entity_t */ * entity;
         } ent[2];
     } PLAYERS_ENTITY_SET;
+    struct
+    {
+        bool win; /**< win / lose */
+    } GAME_ENDMAP;
 } game_server_reply_data_t;
 
 

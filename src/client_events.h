@@ -22,6 +22,7 @@ typedef enum
     G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
+    G_CLIENT_EVENT_REMOTE_GAME_ENDMAP,
 } game_client_event_type_t;
 
 typedef union
@@ -48,6 +49,10 @@ typedef union
             void /*entity_t */ * entity;
         } ent[2];
     } REMOTE_PLAYERS_ENTITY_SET;
+    struct
+    {
+        bool win; /**< win / lose */
+    } REMOTE_GAME_ENDMAP;
 } game_client_event_data_t;
 
 typedef struct

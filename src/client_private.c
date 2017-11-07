@@ -15,7 +15,7 @@ const char * client_gamestate_to_str(client_gamestate_t state)
     {
             "CLIENT_GAMESTATE_1_NOGAME",
             "CLIENT_GAMESTATE_2_MISSION_BRIEF",
-            "CLIENT_GAMESTATE_3_JOIN_AWAITING",
+            "CLIENT_GAMESTATE_3_SPAWN_AWAITING",
             "CLIENT_GAMESTATE_4_GAMESAVE",
             "CLIENT_GAMESTATE_5_INGAME",
             "CLIENT_GAMESTATE_6_INTERMISSION",

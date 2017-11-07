@@ -127,13 +127,19 @@ void server_clients_unspawn(void)
     LIST2_FOREACHR(server.clients, client)
     {
         server_player_t * player;
-        size_t playerId = 0;
-        LIST2_FOREACHR(client->players, player)
+        client->joined = false;
+        size_t playerId = client->players_num - 1;
+        while(!LIST2_IS_EMPTY(client->players))
         {
+            player = client->players;
+            LIST2_UNLINK(client->players, player);
+
             server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
             server_player_info_store(storage, player);
             player->entity = NULL;
-            playerId++;
+            server_player_delete(player);
+
+            playerId--;
         }
         clientId++;
     }
@@ -210,7 +216,10 @@ void server_player_info_store(server_player_vars_storage_t * storage, server_pla
     size_t i;
     for(i = 0; i < vars_num; i++)
     {
-        var_t * var = var_create(&storage->vars, vars[i].name, vars[i].type);
+        var_t * var;
+        var = var_find(storage->vars, vars[i].name);
+        if(!var)
+            var = var_create(&storage->vars, vars[i].name, vars[i].type);
         vardata_t * clientvardata = (vardata_t*)var->data;
         vardata_t * entityvardata = entity_vardata_get(entity, vars[i].name, -1);
         strncpy(clientvardata->name, vars[i].name, VARNAME_SIZE);
@@ -280,24 +289,11 @@ int server_gamesave_load(int isave)
         }
     }
 
-
-
     server.flags.localgame = ctx.flag_localgame;
     server.flags.allow_respawn = ctx.flag_allow_respawn;
 
     g_gamesave_load_close(&ctx);
 
-    server.gstate.allow_state_gamesave = false;
-/* TODO:
-    foreach_loaded_client()
-    {
-    server.loaded_client[i] = ctx.loadedclient[i];
-
-    exiting_client_get(i).settings = server.loaded_client[i].settings;
-//       server_client_players_num_set(client, players_num);
-
-    }
-    */
     return 0;
 }
 

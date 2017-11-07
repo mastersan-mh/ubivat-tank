@@ -61,6 +61,8 @@ void client_fsm(const game_client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
                     game_console_send("client: server accept connection.");
+                    sound_play_stop(NULL, GAME_SOUND_MENU);
+                    sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
                     client_req_send_ready();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
                     break;
@@ -68,17 +70,13 @@ void client_fsm(const game_client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
                     break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
+                    break;
             }
             break;
         }
         case CLIENT_GAMESTATE_2_MISSION_BRIEF:
         {
-            if(statechanged)
-            {
-                if(sound_started(NULL, GAME_SOUND_MENU))
-                    sound_play_stop(NULL, GAME_SOUND_MENU);
-                sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-            }
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -99,6 +97,8 @@ void client_fsm(const game_client_event_t * event)
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_1_NOGAME);
                     break;
                 case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
                     break;
             }
             break;
@@ -150,6 +150,8 @@ void client_fsm(const game_client_event_t * event)
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_4_GAMESAVE);
                     break;
                 }
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
+                    break;
             }
             break;
         }
@@ -161,6 +163,7 @@ void client_fsm(const game_client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     game_menu_hide();
+                    sound_play_stop(NULL, GAME_SOUND_MENU);
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_5_INGAME);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
@@ -174,15 +177,13 @@ void client_fsm(const game_client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
                     break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
+                    break;
             }
             break;
         }
         case CLIENT_GAMESTATE_5_INGAME:
         {
-            if(statechanged)
-            {
-                sound_play_stop(NULL, GAME_SOUND_MENU);
-            }
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -202,25 +203,26 @@ void client_fsm(const game_client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
                     break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
+                    client.gstate.win = event->data.REMOTE_GAME_ENDMAP.win;
+
+                    sound_play_stop(NULL, GAME_SOUND_MENU);
+                    sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+                    game_console_send("client: server say: PLAYER WIN!");
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_6_INTERMISSION);
+                    break;
             }
             break;
         }
         case CLIENT_GAMESTATE_6_INTERMISSION:
         {
-            if(statechanged)
-            {
-                if(sound_started(NULL, GAME_SOUND_MENU))
-                    sound_play_stop(NULL, GAME_SOUND_MENU);
-                sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-                game_console_send("client: server say: PLAYER WIN!");
-                client.gstate.win = true;
-            }
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    client_req_send_ready();
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_1_NOGAME);
+                    client_req_send_ready();
+                    client_players_delete();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
@@ -234,6 +236,8 @@ void client_fsm(const game_client_event_t * event)
                     FSM_CLIENT_DISCONECT();
                     break;
                 case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
                     break;
             }
             break;

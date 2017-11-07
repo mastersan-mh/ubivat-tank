@@ -62,3 +62,10 @@ void server_reply_send_players_entity_set(server_client_t * client)
 
 }
 
+void server_reply_send_game_endmap(server_client_t * client, bool win)
+{
+    game_server_reply_t reply;
+    reply.type = G_SERVER_REPLY_GAME_ENDMAP;
+    reply.data.GAME_ENDMAP.win = win;
+    server_reply_send(client, &reply);
+}
