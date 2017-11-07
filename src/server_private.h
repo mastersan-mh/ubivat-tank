@@ -14,7 +14,16 @@
 #include "g_events.h"
 #include "entity.h"
 #include "server_reply.h"
+#include "server_events.h"
 #include "server_fsm.h"
+
+#include <sys/queue.h>
+
+typedef struct game_server_event_entry_s
+{
+    TAILQ_ENTRY(game_server_event_entry_s) entry;
+    game_server_event_t ev;
+} game_server_event_entry_t;
 
 #define SERVER_CLIENT_TX_QUEUE_SIZE 16
 
@@ -80,6 +89,8 @@ typedef enum
 
 typedef struct
 {
+    TAILQ_HEAD(event_s, game_server_event_entry_s) events;
+
     server_state_t state;
     server_gameflags_t flags;
 

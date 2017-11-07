@@ -27,7 +27,7 @@
         if(!client) \
         { \
             game_console_send("server: no client 0x%00000000x:%d.", \
-                event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port)); \
+                event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port)); \
                 break; \
         }
 
@@ -56,10 +56,10 @@ void server_fsm_client_connect(const game_server_event_t * event)
 {
     server_client_t * client;
     game_console_send("server: client request connection from 0x%00000000x:%d.",
-        event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
+        event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port));
     bool mainclient = true;
-    //net_socket_t * ns = net_socket_create_sockaddr(sender.addr);
-    client = server_client_create(server.ns->sock, event->sender, mainclient);
+    //net_socket_t * ns = net_socket_create_sockaddr(event->sender.addr);
+    client = server_client_create(server.ns->sock, &event->sender, mainclient);
     server_reply_send_connection_accepted(client);
 }
 
@@ -68,11 +68,11 @@ void server_fsm_client_disconnect(const game_server_event_t * event, server_clie
     if(!client)
     {
         game_console_send("SERVER: client 0x%00000000x:%d not found.",
-            event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
+            event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port));
         return;
     }
     game_console_send("SERVER: client 0x%00000000x:%d require disconnection.",
-        event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
+        event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port));
 
     server_reply_send_connection_close(client);
     server_client_delete(client);
@@ -81,7 +81,7 @@ void server_fsm_client_disconnect(const game_server_event_t * event, server_clie
 void server_fsm_game_abort(const game_server_event_t * event, server_client_t * client)
 {
     game_console_send("server: client 0x%00000000x:%d aborted game.",
-        event->sender->addr_in.sin_addr, ntohs(event->sender->addr_in.sin_port));
+        event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port));
     LIST2_FOREACH(server.clients, client)
     {
         server_fsm_client_disconnect(event, client);
@@ -172,10 +172,10 @@ void server_fsm(const game_server_event_t * event)
     server_gamestate_t gamestate = server.gamestate;
 
     server_client_t * client;
-    if(event->type < G_SERVER_EVENT_REMOTE || event->sender == NULL)
+    if(event->type < G_SERVER_EVENT_REMOTE)
         client = NULL;
     else
-        client = server_client_find_by_addr(event->sender);
+        client = server_client_find_by_addr(&event->sender);
 
     switch(server.gamestate)
     {

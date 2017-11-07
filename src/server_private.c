@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-
 const char * server_gamestate_to_str(server_gamestate_t state)
 {
     static const char *list[] =

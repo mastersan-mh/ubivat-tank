@@ -55,14 +55,15 @@ typedef union
     } REMOTE_GAME_SETMAP;
 } game_server_event_data_t;
 
-typedef struct
+typedef struct server_event_s
 {
-    const net_addr_t * sender; /* NULL = local */
+    net_addr_t sender;
     game_server_event_type_t type;
     game_server_event_data_t data;
-
 } game_server_event_t;
 
-void server_event_local_win();
+extern void server_events_handle(void);
+extern void server_event_send(const game_server_event_t * event);
+extern void server_event_local_win(void);
 
 #endif /* SRC_SERVER_EVENTS_H_ */

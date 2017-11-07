@@ -23,7 +23,6 @@
 
 #include "server.h"
 #include "sv_game.h"
-#include "server_fsm.h"
 #include "server_private.h"
 #include "server_events.h"
 
@@ -51,6 +50,8 @@ void server_init(void)
 {
     server.gstate.custommap = mapList;
     server.gstate.gamemap   = mapList;
+    TAILQ_INIT(&server.events);
+
 }
 
 void server_done(void)
@@ -75,7 +76,7 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
 {
     size_t sv_req_queue_num;
     game_server_event_t event;
-    event.sender = sender;
+    event.sender = *sender;
 
     size_t ofs = 0;
     int16_t value16;
@@ -131,7 +132,8 @@ static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
             break;
         }
-        server_fsm(&event);
+
+        server_event_send(&event);
     }
     return 0;
 }
@@ -263,6 +265,7 @@ void server_handle()
         break;
     case SERVER_STATE_RUN :
         server_net_io();
+        server_events_handle();
         if(server.gamestate == SERVER_GAMESTATE_2_INGAME)
             sv_game_gameTick();
         break;
