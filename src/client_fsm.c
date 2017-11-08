@@ -5,6 +5,7 @@
  *      Author: mastersan
  */
 
+#include "client.h"
 #include "client_fsm.h"
 
 #include "types.h"
@@ -64,6 +65,8 @@ void client_fsm(const game_client_event_t * event)
                     sound_play_stop(NULL, GAME_SOUND_MENU);
                     sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
                     client_req_send_ready();
+                    client.gstate.win = false;
+                    client.gstate.endgame = false;
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
@@ -205,6 +208,7 @@ void client_fsm(const game_client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
                     client.gstate.win = event->data.REMOTE_GAME_ENDMAP.win;
+                    client.gstate.endgame = event->data.REMOTE_GAME_ENDMAP.endgame;
 
                     sound_play_stop(NULL, GAME_SOUND_MENU);
                     sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
@@ -222,7 +226,37 @@ void client_fsm(const game_client_event_t * event)
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
                     client_req_send_ready();
                     client_players_delete();
-                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
+                    if(client.gstate.endgame)
+                    {
+                        FSM_GAMESTATE_SET(CLIENT_GAMESTATE_7_ENDGAME);
+                    }
+                    else
+                        FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
+                    break;
+                case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_ENTERGAME:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_INFO:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
+                    FSM_CLIENT_DISCONECT();
+                    break;
+                case G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET:
+                    break;
+                case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
+                    break;
+            }
+            break;
+        }
+        case CLIENT_GAMESTATE_7_ENDGAME:
+        {
+            switch(event->type)
+            {
+                case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
+                    client_stop();
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;

@@ -15,6 +15,7 @@
 /** @brief События сервер */
 typedef enum
 {
+    G_SERVER_EVENT_LOCAL_STOP, /* Остановить сервер */
     G_SERVER_EVENT_LOCAL_WIN,
     /** удалённые события */
 #define G_SERVER_EVENT_REMOTE G_SERVER_EVENT_REMOTE_DISCOVERYSERVER
@@ -64,6 +65,7 @@ typedef struct server_event_s
 
 extern void server_events_handle(void);
 extern void server_event_send(const game_server_event_t * event);
+extern void server_event_local_stop(void);
 extern void server_event_local_win(void);
 
 #endif /* SRC_SERVER_EVENTS_H_ */

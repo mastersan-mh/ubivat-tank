@@ -74,122 +74,6 @@ void server_stop(void)
     server.state = SERVER_STATE_DONE;
 }
 
-static int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
-{
-    size_t sv_req_queue_num;
-    game_server_event_t event;
-    event.sender = *sender;
-
-    size_t ofs = 0;
-    int16_t value16;
-
-    PDU_POP_BUF(&value16, sizeof(value16));
-    sv_req_queue_num = ntohs(value16);
-    for(size_t i = 0; i < sv_req_queue_num; i++)
-    {
-        PDU_POP_BUF(&value16, sizeof(value16));
-        game_client_request_type_t type = htons(value16);
-        switch(type)
-        {
-            /** Непривилегированые запросы */
-            case G_CLIENT_REQ_DISCOVERYSERVER:
-                event.type = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
-                break;
-            case G_CLIENT_REQ_CONNECT:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
-                break;
-            case G_CLIENT_REQ_DISCONNECT:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
-                break;
-            case G_CLIENT_REQ_SPAWN:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
-                PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_JOIN.players_num = ntohs(value16);
-                break;
-            case G_CLIENT_REQ_PLAYER_ACTION:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
-                PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
-                PDU_POP_BUF(event.data.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
-                break;
-                /** Привилегированные запросы */
-            case G_CLIENT_REQ_GAME_ABORT:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_ABORT;
-                break;
-            case G_CLIENT_REQ_GAME_SETMAP:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
-                PDU_POP_BUF(event.data.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
-                break;
-            case G_CLIENT_REQ_READY:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_READY;
-                break;
-            case G_CLIENT_REQ_GAME_SAVE:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_SAVE;
-                PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_SAVE.isave = ntohs(value16);
-                break;
-            case G_CLIENT_REQ_GAME_LOAD:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_LOAD;
-                PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
-                break;
-        }
-
-        server_event_send(&event);
-    }
-    return 0;
-}
-
-static int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size)
-{
-    int16_t value16;
-    size_t i;
-    size_t ofs = 0;
-
-    value16 = htons(client->tx_queue_num);
-    PDU_PUSH_BUF(&value16, sizeof(value16));
-
-    for(i = 0; i < client->tx_queue_num; i++)
-    {
-        game_server_reply_t *event = &client->tx_queue[i].req;
-        value16 = htons(event->type);
-        PDU_PUSH_BUF(&value16, sizeof(value16));
-        switch(event->type)
-        {
-            case G_SERVER_REPLY_INFO:
-                /*
-            nvalue32 = htonl( (uint32_t) event->info.clients_num );
-            memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
-            buflen += sizeof(nvalue32);
-                 */
-                break;
-            case G_SERVER_REPLY_CONNECTION_ACCEPTED:
-                break;
-            case G_SERVER_REPLY_CONNECTION_CLOSE:
-                break;
-            case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
-            {
-                int player_num = event->data.PLAYERS_ENTITY_SET.players_num;
-                value16 = htons(player_num);
-                PDU_PUSH_BUF(&value16, sizeof(value16));
-                for(int i = 0; i < player_num; i++)
-                {
-                    PDU_PUSH_BUF(event->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_PUSH_BUF(&event->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYERS_ENTITY_SET.ent[i].entity));
-                }
-                break;
-            }
-            case G_SERVER_REPLY_GAME_ENDMAP:
-                value16 = htons(event->data.GAME_ENDMAP.win ? -1 : 0);
-                PDU_PUSH_BUF(&value16, sizeof(value16));
-                break;
-        }
-    }
-    client->tx_queue_num = 0;
-    return 0;
-}
-
-
 static void server_net_io(void)
 {
     static char buf[PDU_BUF_SIZE];
@@ -220,21 +104,7 @@ static void server_net_io(void)
 
     }
 
-    server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
-    {
-        err = server_pdu_build(client, buf, &buf_len, PDU_BUF_SIZE);
-        if(err)
-        {
-            game_console_send("SERVER: client TX buffer overflow");
-            return;
-        }
-        if(buf_len > 0)
-        {
-            net_send(&client->ns, buf, buf_len);
-        }
-
-    }
+    server_tx();
 }
 
 bool server_running(void)

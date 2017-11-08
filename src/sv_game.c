@@ -19,14 +19,6 @@
 
 extern server_t server;
 
-/*
- * прерывание игры
- */
-void sv_game_abort(void)
-{
-    server_stop();
-}
-
 void sv_game_message_send(const char * mess)
 {
     server.gstate.msg = (char*)mess;
@@ -93,14 +85,14 @@ int sv_game_nextmap(void)
     if(!server.gstate.gamemap)
     {
         // конец игры, последняя карта
-        sv_game_abort();
+        server_event_local_stop();
         return -1;
     }
     ret = map_load(server.gstate.gamemap->map);
     if(ret)
     {
         game_msg_error(ret);
-        sv_game_abort();
+        server_event_local_stop();
         return -1;
     }
 

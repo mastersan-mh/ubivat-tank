@@ -56,6 +56,7 @@ typedef struct
         char * msg;
         /* игрок победил */
         bool win;
+        bool endgame;
     } gstate;
 
     net_socket_t * ns;

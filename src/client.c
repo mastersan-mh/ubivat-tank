@@ -112,6 +112,8 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
                 event.type = G_CLIENT_EVENT_REMOTE_GAME_ENDMAP;
                 PDU_POP_BUF(&value16, sizeof(value16));
                 event.data.REMOTE_GAME_ENDMAP.win = (ntohs(value16) != 0);
+                PDU_POP_BUF(&value16, sizeof(value16));
+                event.data.REMOTE_GAME_ENDMAP.endgame = (ntohs(value16) != 0);
                 break;
         }
         client_fsm(&event);
@@ -254,6 +256,7 @@ void client_handle(void)
             client.tx_queue_num = 0;
             client.state = CLIENT_STATE_IDLE;
             client.gamestate = CLIENT_GAMESTATE_1_NOGAME;
+            game_menu_show(MENU_MAIN);
             break;
     }
 }

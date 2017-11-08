@@ -151,6 +151,10 @@ server_player_t * server_client_player_get_by_id(const server_client_t * client,
 
 extern int server_gamesave_load(int isave);
 
+extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);
+extern int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);
+
+extern void server_tx(void);
 
 
 

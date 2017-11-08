@@ -41,6 +41,7 @@ typedef union
     struct
     {
         bool win; /**< win / lose */
+        bool endgame; /* end of map / end of map and game*/
     } GAME_ENDMAP;
 } game_server_reply_data_t;
 

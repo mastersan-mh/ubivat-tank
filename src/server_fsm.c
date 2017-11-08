@@ -25,6 +25,12 @@
 
 extern bool sv_entity_valid;
 
+#define FSM_LOCAL_STOP() \
+        do { \
+            server_tx(); \
+            server_stop(); \
+        } while (0)
+
 #define FSM_CLIENT_CHECK(client) \
         if(!client) \
         { \
@@ -85,7 +91,7 @@ void server_fsm_game_abort(const game_server_event_t * event, server_client_t * 
     {
         server_fsm_client_disconnect(event, client);
     }
-    sv_game_abort();
+    server_event_local_stop();
 }
 
 void server_fsm_game_setmap(const game_server_event_t * event)
@@ -181,6 +187,9 @@ void server_fsm(const game_server_event_t * event)
     case SERVER_GAMESTATE_1_NOGAME:
         switch(event->type)
         {
+            case G_SERVER_EVENT_LOCAL_STOP:
+                FSM_LOCAL_STOP();
+                break;
             case G_SERVER_EVENT_LOCAL_WIN:
                 break;
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
@@ -218,27 +227,41 @@ void server_fsm(const game_server_event_t * event)
     case SERVER_GAMESTATE_2_INGAME:
         switch(event->type)
         {
+            case G_SERVER_EVENT_LOCAL_STOP:
+                FSM_LOCAL_STOP();
+                break;
             case G_SERVER_EVENT_LOCAL_WIN:
             {
                 sv_entity_valid = false;
 
                 server_client_t * client;
-                LIST2_FOREACH(server.clients, client)
-                {
-                    server_reply_send_game_endmap(client, true);
-                }
                 server_clients_unspawn();
                 if(!server.flags.localgame)
                 {
                     //игра по выбору
-                    sv_game_abort();
+                    LIST2_FOREACH(server.clients, client)
+                    {
+                        server_reply_send_game_endmap(client, true, true);
+                    }
+                    server_event_local_stop();
                     break;
                 }
                 //игра по уровням
                 if(sv_game_nextmap())
+                {
+                    LIST2_FOREACH(server.clients, client)
+                    {
+                        server_reply_send_game_endmap(client, true, true);
+                    }
                     game_console_send("server: can't next map.");
-                else
-                    FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
+                    server_event_local_stop();
+                    break;
+                }
+                LIST2_FOREACH(server.clients, client)
+                {
+                    server_reply_send_game_endmap(client, true, false);
+                }
+                FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
                 //FSM_GAMESTATE_SET(SERVER_GAMESTATE_3_INTERMISSION);
                 break;
             }
@@ -290,6 +313,9 @@ void server_fsm(const game_server_event_t * event)
     case SERVER_GAMESTATE_3_INTERMISSION:
         switch(event->type)
         {
+            case G_SERVER_EVENT_LOCAL_STOP:
+                FSM_LOCAL_STOP();
+                break;
             case G_SERVER_EVENT_LOCAL_WIN:
                 break;
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:

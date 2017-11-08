@@ -18,6 +18,7 @@ typedef enum
     CLIENT_GAMESTATE_4_GAMESAVE,
     CLIENT_GAMESTATE_5_INGAME,
     CLIENT_GAMESTATE_6_INTERMISSION,
+    CLIENT_GAMESTATE_7_ENDGAME,
 } client_gamestate_t;
 
 extern void client_fsm(const game_client_event_t * event);

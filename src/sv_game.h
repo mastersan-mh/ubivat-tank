@@ -8,7 +8,6 @@
 #ifndef SRC_SV_GAME_H_
 #define SRC_SV_GAME_H_
 
-extern void sv_game_abort(void);
 extern void sv_game_gameTick(void);
 extern int sv_game_nextmap(void);
 

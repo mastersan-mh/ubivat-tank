@@ -27,6 +27,16 @@ void server_event_send(const game_server_event_t * event)
     TAILQ_INSERT_TAIL(&server.events, ev, entry);
 }
 
+/*
+ * прерывание игры
+ */
+void server_event_local_stop(void)
+{
+    game_server_event_t event;
+    event.type = G_SERVER_EVENT_LOCAL_STOP;
+    server_event_send(&event);
+}
+
 void server_event_local_win()
 {
     game_server_event_t event;

@@ -100,6 +100,13 @@ static void cl_game_state_intermission_draw(void)
 */
 }
 
+static void cl_game_state_endgame_draw(void)
+{
+    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+    video_printf(160 - 6 * 10 , 8 * 5, "КОНЕЦ.");
+}
+
+
 static void client_game_draw_cam(camera_t * cam)
 {
     map_draw(cam);
@@ -188,6 +195,9 @@ void client_game_draw(void)
         break;
     case CLIENT_GAMESTATE_6_INTERMISSION:
         cl_game_state_intermission_draw();
+        break;
+    case CLIENT_GAMESTATE_7_ENDGAME:
+        cl_game_state_endgame_draw();
         break;
     }
 }
