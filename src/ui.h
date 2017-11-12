@@ -9,7 +9,7 @@
 #define SRC_UI_H_
 
 #include "types.h"
-#include "entity.h"
+#include "entity_internal.h"
 
 extern void ui_init();
 
@@ -18,7 +18,7 @@ extern void ui_done();
 extern void ui_draw(camera_t * cam, entity_t * entity);
 
 extern void ui_register(
-	void (*cb)(camera_t * cam, entity_t * entity)
+	void (*cb)(camera_t * cam, ENTITY entity)
 );
 
 extern void ui_drawimage(camera_t * cam, int x, int y, image_index_t iimage);

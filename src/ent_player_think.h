@@ -22,13 +22,13 @@ typedef struct
 	bool attack;
 	weapontype_t weap;
 	//цель
-	entity_t * target;
+	ENTITY target;
 	//счетчик
 	long count;
 } think_t;
 
 extern void ctrl_AI_init(think_t * brain);
 extern void ctrl_AI_done(think_t * brain);
-extern void think_enemy(entity_t * player);
+extern void think_enemy(ENTITY player);
 
 #endif /* SRC_ENT_PLAYER_THINK_H_ */

@@ -9,14 +9,15 @@
 #include "system.h"
 #include "entity_helpers.h"
 #include "game.h"
+#include "entity_internal.h"
 
 /**
  * получить любой объект из заданной группы
  */
-entity_t * entity_get_random(const char * entityname)
+ENTITY entity_get_random(const char * entityname)
 {
 	size_t count = 0;
-	entity_t * entity;
+	ENTITY entity;
 	/* считаем количество */
 	ENTITIES_FOREACH(entityname, entity)
 	{
@@ -50,11 +51,12 @@ direction_t entity_direction_invert(direction_t dir)
 /*
  * передвижение игрока
  */
-void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
+void entity_move(ENTITY this, direction_t dir, vec_t speed, bool check_clip)
 {
-    entity_common_t * common = this->common;
+    entity_t * ent = (entity_t *)this;
+    entity_common_t * common = ent->vars;
 	vec_t dway = speed * dtimed1000;
-	vec_t bodybox = this->info->bodybox;
+	vec_t bodybox = ent->info->bodybox;
 	vec_t halfbox = bodybox/2;
 	vec_t dist;
 

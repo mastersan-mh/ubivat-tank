@@ -152,9 +152,8 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
         return;
     }
 
-    entity_common_t * common = entity->common;
     if(action->action_f)
-        action->action_f(entity, common, action->action);
+        action->action_f((ENTITY)entity, action->action);
 
 }
 

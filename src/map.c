@@ -5,7 +5,7 @@
  */
 
 #include "map.h"
-#include "entity.h"
+#include "entity_internal.h"
 #include "video.h"
 #include "game.h"
 #include "img.h"
@@ -107,7 +107,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
                         VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
                 };
-                entity = entity_new("spawn_player", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("spawn_player", NULL, values, ARRAYSIZE(values));
             }
             break;
         case MAPDATA_MOBJ_SPAWN_ENEMY:
@@ -122,7 +122,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                     VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
                     VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
             };
-            entity = entity_new("spawn_enemy", NULL, values, ARRAYSIZE(values));
+            entity = entity_new_("spawn_enemy", NULL, values, ARRAYSIZE(values));
             break;
         }
         case MAPDATA_MOBJ_SPAWN_BOSS:
@@ -137,7 +137,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
                         VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
                 };
-                entity = entity_new("spawn_boss", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("spawn_boss", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_ITEM_HEALTH :
@@ -148,7 +148,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_INTEGER("amount", data->item.amount),
                 };
-                entity = entity_new("item_health", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("item_health", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_ITEM_ARMOR:
@@ -159,7 +159,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_INTEGER("amount", data->item.amount),
                 };
-                entity = entity_new("item_armor", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("item_armor", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_ITEM_STAR:
@@ -170,7 +170,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_INTEGER("amount", data->item.amount),
                 };
-                entity = entity_new("item_scores", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("item_scores", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_ITEM_ROCKET:
@@ -181,7 +181,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_INTEGER("amount", data->item.amount),
                 };
-                entity = entity_new("item_ammo_missile", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("item_ammo_missile", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_ITEM_MINE:
@@ -192,7 +192,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_INTEGER("amount", data->item.amount),
                 };
-                entity = entity_new("item_ammo_mine", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("item_ammo_mine", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_OBJ_EXIT:
@@ -206,7 +206,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_STRING("text", text),
                 };
-                entity = entity_new("exit", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("exit", NULL, values, ARRAYSIZE(values));
                 break;
             }
         case MAPDATA_MOBJ_OBJ_MESS:
@@ -220,7 +220,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
                         VAR_VALUE_DIRECTION("dir", DIR_UP),
                         VAR_VALUE_STRING("text", text),
                 };
-                entity = entity_new("message", NULL, values, ARRAYSIZE(values));
+                entity = entity_new_("message", NULL, values, ARRAYSIZE(values));
                 break;
             }
         default: ;

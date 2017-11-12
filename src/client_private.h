@@ -13,7 +13,7 @@
 #include "client_requests.h"
 #include "client_fsm.h"
 
-#include "entity.h"
+#include "entity_internal.h"
 
 typedef enum
 {

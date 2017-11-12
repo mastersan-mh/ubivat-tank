@@ -12,7 +12,7 @@
 #include "types.h"
 #include "vars.h"
 #include "g_events.h"
-#include "entity.h"
+#include "entity_internal.h"
 #include "server_reply.h"
 #include "server_events.h"
 #include "server_fsm.h"

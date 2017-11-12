@@ -83,7 +83,7 @@ typedef struct
 	//ширина и высота
 	float sx;
 	float sy;
-}camera_t;
+} camera_t;
 
 #define ARRAYSIZE( x ) ( sizeof( (x) )/sizeof( *(x) ) )
 #define SIZEOF_MEMBER(type, member) sizeof( ((type *)0)->member )

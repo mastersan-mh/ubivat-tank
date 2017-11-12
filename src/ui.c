@@ -16,7 +16,7 @@ typedef struct uient_s
 {
 	struct uient_s * prev;
 	struct uient_s * next;
-	void (*cb)(camera_t * cam, entity_t * entity);
+	void (*cb)(camera_t * cam, ENTITY entity);
 
 } uient_t;
 
@@ -42,13 +42,13 @@ void ui_draw(camera_t * cam, entity_t * entity)
 	uient_t * uient;
 	LIST2_FOREACH(uients, uient)
 	{
-		uient->cb(cam, entity);
+		uient->cb(cam, (ENTITY)entity);
 	}
 
 }
 
 void ui_register(
-	void (*cb)(camera_t * cam, entity_t * entity)
+	void (*cb)(camera_t * cam, ENTITY entity)
 )
 {
 	uient_t * uient = Z_malloc(sizeof(uient_t));

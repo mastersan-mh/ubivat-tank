@@ -195,7 +195,7 @@ void server_player_info_store(server_player_vars_storage_t * storage, server_pla
     for(size_t i = 0; i < info_vars_num; i++)
     {
         intptr_t ofs = info_vars[i].ofs;
-        memcpy(vars + ofs, entity->common + ofs, info_vars[i].size);
+        memcpy(vars + ofs, entity->vars + ofs, info_vars[i].size);
     }
 }
 

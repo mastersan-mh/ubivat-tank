@@ -119,7 +119,7 @@ typedef struct
     INTEGER item_ammo_mine;
 
     //для управляемой ракеты
-    struct entity_s * bull;
+    ENTITY bull;
 
     //передвижения
     move_t move;
@@ -135,14 +135,14 @@ typedef struct
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
-extern void player_spawn_init(void * player , void * spawn);
+extern void player_spawn_init(ENTITY player , ENTITY spawn);
 
 
 extern void entity_player_init(void);
 
-extern void player_getdamage(void * player, void * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
+extern void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
 
-extern void player_class_init(void * player, player_vars_t * pl);
+extern void player_class_init(ENTITY player, player_vars_t * pl);
 
 
 #endif /* SRC_ENT_PLAYER_H_ */

@@ -46,12 +46,13 @@ static const bullinfo_t bullinfo_table[BULL_NUM] =
 		{200, 100, 100,  80 }
 };
 
-static void bull_artillery_detonate(void * this, entity_t * that)
+static void bull_artillery_detonate(void * this, void * that)
 {
-    if(that && entity_parent(this) == that)
+    ENTITY player = entity_parent(this);
+    if(that && player == that)
         return;
 
-    void * explode = entity_new("explode_artillery", entity_parent(this), NULL, 0);
+    void * explode = entity_new("explode_artillery", player);
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(explode);
     VEC2_COPY(explode_vars->origin, this_vars->origin);
@@ -60,31 +61,34 @@ static void bull_artillery_detonate(void * this, entity_t * that)
     ENTITY_ERASE(this);
 }
 
-static void bull_missile_detonate(void * this, entity_t * that)
+static void bull_missile_detonate(void * this, void * that)
 {
-    if(that && entity_parent(this) == that)
+    ENTITY player = entity_parent(this);
+    if(that && player == that)
         return;
 
-    void * e = entity_new("explode_missile", entity_parent(this), NULL, 0);
+    void * e = entity_new("explode_missile", player);
 
-    entity_common_t * this_vars = entity_vars(this);
+    bull_vars_t * bull_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
-    VEC2_COPY(explode_vars->origin, this_vars->origin);
-    explode_vars->dir = this_vars->dir;
+    VEC2_COPY(explode_vars->origin, bull_vars->origin);
+    explode_vars->dir = bull_vars->dir;
 
+    player_vars_t * player_vars = entity_vars(player);
+    player_vars->bull = e;
 
-    ((player_vars_t*)entity_parent(this))->bull = e;
-    entity_cam_set(entity_parent(this), e);
+    entity_cam_set(player, e);
 
     entity_erase(this);
 }
 
-static void bull_mine_detonate(entity_t * this, entity_t * that)
+static void bull_mine_detonate(void * this, void * that)
 {
-    if(that && this->parent == that)
+    ENTITY player = entity_parent(this);
+    if(that && player == that)
         return;
 
-    void * e = entity_new("explode_mine", this->parent, NULL, 0);
+    void * e = entity_new("explode_mine", player);
 
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
@@ -99,7 +103,7 @@ static void bull_mine_detonate(entity_t * this, entity_t * that)
  * @return true  = сдетонировала
  * @return false = полёт продолжается
  */
-static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
+static bool bull_common_handle(void * this, const bullinfo_t * bullinfo)
 {
     bull_vars_t * bull = entity_vars(this);
 	entity_move(this, bull->dir, bullinfo->speed, false);
@@ -112,7 +116,7 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
 	map_clip_find(
 	    bull->origin,
-		this->info->bodybox,
+		entity_info_bodybox(this),
 		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
 		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
 	);
@@ -121,7 +125,7 @@ static bool bull_common_handle(entity_t * this, const bullinfo_t * bullinfo)
 	return false;
 }
 
-static void bull_common_modelaction_startplay(void * this, unsigned int imodel, char * actionname)
+static void bull_common_modelaction_startplay(ENTITY this, unsigned int imodel, char * actionname)
 {
 	entity_model_play_start(this, imodel, actionname);
 }
@@ -200,8 +204,9 @@ static entitymodel_t bull_missile_models[] =
 static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 {
     bull_common_modelaction_startplay(this, 0, "fly");
-    ((player_vars_t *)((entity_t *)parent)->common )->bull = this;
-    ((entity_t *)this)->parent->cam_entity = this;
+    player_vars_t * parent_vars = entity_vars(parent);
+    parent_vars->bull = this;
+    entity_cam_set(parent, this);
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)

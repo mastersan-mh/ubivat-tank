@@ -36,7 +36,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
 
     size_t vars_num = player->info->vars_descr_num;
     var_descr_t * vars_descr = player->info->vars_descr;
-    char * vars = player->common;
+    char * vars = player->vars;
 
     /* buffer prepare */
     size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);

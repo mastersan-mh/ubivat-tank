@@ -58,7 +58,7 @@ void ctrl_AI_done(think_t * thinker)
 /*
  * уворачивание от снарядов
  */
-static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
+static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 {
 	vec_t Udist;
 	vec_t Ddist;
@@ -69,16 +69,16 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 	vec_t Ld;
 	vec_t Rd;
 
-	player_vars_t * pl = player->common;
-    player_vars_t * dng = dangerous->common;
+	player_vars_t * pl = entity_vars(player);
+    player_vars_t * dng = entity_vars(dangerous);
 
 	bool danger = false;
 	if(pl->bull)
 		return false;
-	if(dangerous->parent == player)
+	if(entity_parent(dangerous) == player)
 		return false;
 
-	vec_t radius = dangerous->info->bodybox * 0.5f;
+	vec_t radius = entity_info_bodybox(dangerous) * 0.5f;
 
 	vec_t halfbox = ENTITY_HALFBODYBOX(player);
 
@@ -200,11 +200,11 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 /*
  * уворачивание от снарядов
  */
-static void ctrl_AI_checkdangers(entity_t * player)
+static void ctrl_AI_checkdangers(ENTITY player)
 {
-	player_vars_t * pl = player->common;
+	player_vars_t * pl = entity_vars(player);
 	bool danger = false;
-	entity_t * dangerous;
+	ENTITY dangerous;
 
 	ENTITIES_FOREACH("bull_artillery", dangerous)
 	{
@@ -239,10 +239,10 @@ static void ctrl_AI_checkdangers(entity_t * player)
  * @return true - успешно
  * @return false - не можем повернуться к цели
  */
-static bool turn_to_target(entity_t * player, entity_t * target)
+static bool turn_to_target(ENTITY player, ENTITY target)
 {
-    player_vars_t * pl = player->common;
-    entity_common_t * trg = target->common;
+    player_vars_t * pl = entity_vars(player);
+    entity_common_t * trg = entity_vars(target);
 	/* повернёмся к противнику */
 	if( (pl->origin_x - ENTITY_HALFBODYBOX(player) < trg->origin_x) && (trg->origin_x < pl->origin_x + ENTITY_HALFBODYBOX(player)) )
 	{
@@ -267,13 +267,13 @@ static bool turn_to_target(entity_t * player, entity_t * target)
 /*
  * атака
  */
-static void ctrl_AI_attack(entity_t * player, entity_t * target)
+static void ctrl_AI_attack(ENTITY player, ENTITY target)
 {
 
 	/* противник в прямой видимости */
-	void P_weapon_select_direct_view(entity_t *player)
+	void P_weapon_select_direct_view(ENTITY player)
 	{
-		player_vars_t * pl = player->common;
+		player_vars_t * pl = entity_vars(player);
 		if(pl->item_ammo_mine > 0)
 		{
 			//выбираем наугад ракету или мину
@@ -292,7 +292,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 
 	/* противник за стеной, пытаемся пробиться через стену */
-	void P_weapon_select_behind_wall(entity_t* player, player_vars_t* pl, char wall, vec_t dist, vec_t explode_radius)
+	void P_weapon_select_behind_wall(ENTITY player, player_vars_t* pl, char wall, vec_t dist, vec_t explode_radius)
 	{
 		if (MAP_WALL_TEXTURE(wall) == MAP_WALL_W0)
 			pl->brain.attack = false; //сильная броня, не стреляем
@@ -320,7 +320,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 
 
-	player_vars_t * pl = player->common;
+	player_vars_t * pl = entity_vars(player);
 
 	vec_t dist;
 	char wall;
@@ -359,7 +359,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 		return;
 	}
 
-    entity_common_t * trg = target->common;
+    entity_common_t * trg = entity_vars(target);
 
 	if
 	(
@@ -421,10 +421,10 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 /*
  * поиск врага
  */
-static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
+static void ctrl_AI_findenemy(ENTITY player, ENTITY target)
 {
-    player_vars_t * pl = player->common;
-    entity_common_t * trg = target->common;
+    player_vars_t * pl = entity_vars(player);
+    entity_common_t * trg = entity_vars(target);
 
 	if(
 			(160<VEC_ABS(pl->origin_x-trg->origin_x))||
@@ -473,9 +473,10 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 /*
  * управление вражеским игроком
  */
-void think_enemy(entity_t * player)
+void think_enemy(ENTITY player)
 {
-    player_vars_t * pl = player->common;
+
+    player_vars_t * pl = entity_vars(player);
 
 	if(debug_noAI)
 		return;
@@ -484,12 +485,12 @@ void think_enemy(entity_t * player)
 	ctrl_AI_checkdangers(player);
 	if(pl->brain.danger)
 		return;
-	entity_t * target = entity_get_random("player");
+	ENTITY target = entity_get_random("player");
 
 	if(!target)
 		return;
 
-    entity_common_t * trg = target->common;
+    entity_common_t * trg = entity_vars(target);
 
 	if(!trg->alive)
 		pl->attack = false;

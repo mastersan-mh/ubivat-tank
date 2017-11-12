@@ -135,7 +135,7 @@ static void cl_draw(void)
             );
             if(entity->cam_entity)
             {
-                VEC2_COPY(cam->origin, ((entity_common_t*)(entity->cam_entity->common))->origin);
+                VEC2_COPY(cam->origin, ((entity_common_t*)(entity->cam_entity->vars))->origin);
             }
             else
             {

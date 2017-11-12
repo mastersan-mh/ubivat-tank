@@ -26,32 +26,27 @@ static ENTITY_FUNCTION_INIT(spawn_player_init)
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
-    spawn_vars_t * sp = ((entity_t *)this)->common;
-    var_value_t vars_values[] =
-    {
-            VAR_VALUE_VECTOR2("origin", sp->origin[0], sp->origin[1]),
-            VAR_VALUE_DIRECTION("dir", sp->dir),
-    };
-    entity_new("enemy", this, vars_values, ARRAYSIZE(vars_values));
+    spawn_vars_t * sp = entity_vars(this);
+    void * ent = entity_new("enemy", this);
+    player_vars_t * vars = entity_vars(ent);
+    VEC2_COPY(vars->origin, sp->origin);
+    vars->dir = sp->dir;
 }
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
-    spawn_vars_t * sp = ((entity_t *)this)->common;
-    var_value_t vars_values[] =
-    {
-            VAR_VALUE_VECTOR2("origin", sp->origin[0], sp->origin[1]),
-            VAR_VALUE_DIRECTION("dir", sp->dir),
-    };
-    entity_new("boss", this, vars_values, ARRAYSIZE(vars_values));
+    spawn_vars_t * sp = entity_vars(this);
+    void * ent = entity_new("boss", this);
+    player_vars_t * vars = entity_vars(ent);
+    VEC2_COPY(vars->origin, sp->origin);
+    vars->dir = sp->dir;
 }
 
 static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
 {
-    void * spawn = entity_get_random("spawn_player");
-    spawn_vars_t * sp = entity_vars(spawn);
+    ENTITY spawn = entity_get_random("spawn_player");
 
-    void * player = entity_new("player", spawn, NULL, 0);
+    ENTITY player = entity_new("player", spawn);
 
     if(!player)
         return NULL;
@@ -59,6 +54,7 @@ static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
     entity_restore(player, storage);
 
     /*
+    spawn_vars_t * sp = entity_vars(spawn);
     player_vars_t * vars = entity_vars(player);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
