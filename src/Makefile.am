@@ -8,7 +8,6 @@ ubivat_tank_CFLAGS = -std=c99 -Wall -D_DEFAULT_SOURCE -I/usr/include/freetype2
 ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
-common/common_bstree.c \
 common/common_hash.c \
 ent_exit.c \
 ent_message.c \

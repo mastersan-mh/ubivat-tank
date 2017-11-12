@@ -119,7 +119,6 @@ void server_handle()
     {
         case SERVER_STATE_IDLE:
             server.gamestate = SERVER_GAMESTATE_1_NOGAME;
-            server.gamestate_prev = SERVER_GAMESTATE_3_INTERMISSION;
             sv_entity_valid = false;
             break;
         case SERVER_STATE_INIT:

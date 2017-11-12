@@ -38,38 +38,39 @@ void model_register(const model_t * model)
 	const model_t ** tmp;
 	if(model == NULL)
 	{
-		game_console_send("Model registration failed: model data is NULL.");
+		game_console_send("Model registration failed: Model data is NULL.");
 		return;
 	}
 
 	if(model->name == NULL || strlen(model->name) == 0)
 	{
-		game_console_send("Model registration failed: entity name is empty.");
+		game_console_send("Model registration failed: Model name is empty.");
 		return;
 	}
 
 	if(model_get(model->name) != NULL)
 	{
-			game_console_send("Model registration failed: duplicate name \"%s\"", model->name);
+			game_console_send("Model \"%s\" registration failed: Duplicate model name.", model->name);
 			return;
 	}
 
 	if(model->frames_num == 0)
-		game_console_send("Model registration error: model \"%s\": .frames_num == 0.", model->name);
+		game_console_send("Model \"%s\" registration warning: .frames_num == 0.", model->name);
 
-	if(models_size < models_num + 1)
-	{
-		if(models_size == 0)
-			models_size = 1;
-		else
-			models_size *= 2;
-		tmp = Z_realloc(models, sizeof(model_t*) * models_size);
-		if(!tmp)game_halt("Model registration failed: out of memory");
-		models = tmp;
-	}
-	models[models_num] = model;
-	models_num++;
-	game_console_send("Model registered: \"%s\".", model->name);
+    if(models_size < models_num + 1)
+    {
+        if(models_size == 0)
+            models_size = 1;
+        else
+            models_size *= 2;
+        tmp = Z_realloc(models, sizeof(model_t*) * models_size);
+        if(!tmp)
+            game_halt("Model registration failed: Out of memory");
+        models = tmp;
+    }
+    models[models_num] = model;
+    models_num++;
+    game_console_send("Model \"%s\" registered.", model->name);
 }
 
 void model_render(

@@ -9,9 +9,10 @@
 #include "entity.h"
 #include "model.h"
 
-static entityvarinfo_t exit_vars[] =
+static var_descr_t exit_vars[] =
 {
-		{ VARTYPE_STRING, "text" }
+        ENTITY_COMMON_VARS,
+        VAR_DESCR( VARTYPE_STRING, entity_exit_t, text)
 };
 
 static entitymodel_t exit_models[] =
@@ -25,15 +26,12 @@ static entitymodel_t exit_models[] =
 
 static const entityinfo_t exit_reginfo = {
 		.name = "exit",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(exit_vars),
+		ENTITYINFO_VARS(entity_exit_t, exit_vars),
 		ENTITYINFO_ENTMODELS(exit_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 void entity_exit_init(void)

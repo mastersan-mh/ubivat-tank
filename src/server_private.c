@@ -37,7 +37,8 @@ void server_storages_free()
     {
         storage = server.storages;
         LIST2_UNLINK(server.storages, storage);
-        vars_delete(&storage->vars);
+        storage->info = NULL;
+        Z_free(storage->vars);
         Z_free(storage);
     }
 }
@@ -105,16 +106,16 @@ int server_client_spawn(server_client_t * client, int players_num)
         server_player_t * player = server_player_create();
         LIST2_PUSH(client->players, player);
 
-        entity_t * entity = entries_client_join();
+        size_t clientId = server_client_id_get(client);
+        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+
+        entity_t * entity = entity_player_spawn_random(storage ? storage->vars : NULL);
         if(!entity)
         {
             game_console_send("Error: No entity to spawn client.");
             return -1;
         }
         player->entity = entity;
-        size_t clientId = server_client_id_get(client);
-        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-        server_player_info_restore(player, storage);
         playerId--;
     }
     client->joined = true;
@@ -180,57 +181,22 @@ int server_client_players_num_get(const server_client_t * client)
 }
 
 /**
- * brief получить данные переменной
- */
-vardata_t * server_storage_vardata_get(server_player_vars_storage_t * storage, const char * varname, vartype_t vartype)
-{
-    static const char * list[] =
-    {
-            "INTEGER",
-            "FLOAT",
-            "STRING",
-    };
-    var_t * var = var_find(storage->vars, varname);
-    if(!var)
-    {
-        var = var_create(&storage->vars, varname, vartype);
-    }
-    vardata_t * vardata = var->data;
-    if( (int)vartype >= 0 && vardata->type != vartype )
-    {
-        game_console_send("Warning: Host client variable \"%s\" has type %s, but used as %s.", varname, list[vardata->type], list[vartype]);
-    }
-    return vardata;
-}
-
-/**
  * @brief сохранение информации о entity игрока в хранилище игрока
  */
 void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player)
 {
-    if(player->entity->info->player_store)
-        player->userstoredata = player->entity->info->player_store(
-                player->entity->edata
-        );
-
     entity_t * entity = player->entity;
-    size_t vars_num = entity->info->vars_num;
-    entityvarinfo_t * vars = entity->info->vars;
-
-    size_t i;
-    for(i = 0; i < vars_num; i++)
+    size_t info_vars_num = entity->info->vars_descr_num;
+    var_descr_t * info_vars = entity->info->vars_descr;
+    if(!storage->vars)
+        storage->vars = Z_malloc(entity->info->vars_size);
+    storage->info = player->entity->info;
+    char * vars = storage->vars;
+    for(size_t i = 0; i < info_vars_num; i++)
     {
-        var_t * var;
-        var = var_find(storage->vars, vars[i].name);
-        if(!var)
-            var = var_create(&storage->vars, vars[i].name, vars[i].type);
-        vardata_t * clientvardata = (vardata_t*)var->data;
-        vardata_t * entityvardata = entity_vardata_get(entity, vars[i].name, -1);
-        strncpy(clientvardata->name, vars[i].name, VARNAME_SIZE);
-        clientvardata->type  = entityvardata->type;
-        clientvardata->value = entityvardata->value;
+        intptr_t ofs = info_vars[i].ofs;
+        memcpy(vars + ofs, entity->common + ofs, info_vars[i].size);
     }
-
 }
 
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId)
@@ -363,67 +329,13 @@ server_player_t * server_player_create()
     if(!player)
         game_halt("server_player_create(): Can not alloc memory, failed");
     player->entity = NULL;
-    player->userstoredata = NULL;
     return player;
 }
 
 void server_player_delete(server_player_t * player)
 {
-    Z_free(player->userstoredata);
     Z_free(player);
 }
-
-
-
-/**
- * @brief восстановление информации о entity игрока из хранилища игрока в entity
- * @brief (при переходе на следующий уровень и при чтении gamesave)
- */
-void server_player_info_restore(server_player_t * player, server_player_vars_storage_t * storage)
-{
-    if(player->userstoredata)
-    {
-        player->entity->info->player_restore(
-            player->entity,
-            player->entity->edata,
-            player->userstoredata
-        );
-        Z_free(player->userstoredata);
-        player->userstoredata = NULL;
-    }
-
-    if(storage->vars)
-    {
-        entity_t * entity = player->entity;
-
-        void var_restore(vardata_t * clientvardata, void * args)
-        {
-            vardata_t * entityvardata = entity_vardata_get(entity, clientvardata->name, -1);
-            if(!entityvardata)
-                game_console_send("Error: Can not restore client entity info, entity has no variable \"%s\".", clientvardata->name);
-            else
-            {
-                if(entityvardata->type != clientvardata->type)
-                {
-                    game_console_send("Error: Can not restore client entity info, variable \"%s\" has different types.", clientvardata->name);
-                }
-                else
-                {
-                    strncpy(entityvardata->name, clientvardata->name, VARNAME_SIZE);
-                    entityvardata->type  = clientvardata->type;
-                    entityvardata->value = clientvardata->value;
-                }
-            }
-        }
-
-        vars_dump(storage->vars, "==== vars in storage:");
-
-        vars_foreach(storage->vars, var_restore, NULL);
-        vars_dump(player->entity->vars, "==== Entity vars:");
-    }
-
-}
-
 
 int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {

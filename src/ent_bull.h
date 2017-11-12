@@ -10,6 +10,13 @@
 #ifndef SRC_ENT_BULL_H_
 #define SRC_ENT_BULL_H_
 
+#include "entity.h"
+
+typedef struct
+{
+    ENTITY_COMMON_STRUCT;
+} bull_vars_t;
+
 void entity_bull_init(void);
 
 #endif /* SRC_ENT_BULL_H_ */

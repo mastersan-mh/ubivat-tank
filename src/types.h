@@ -86,6 +86,7 @@ typedef struct
 }camera_t;
 
 #define ARRAYSIZE( x ) ( sizeof( (x) )/sizeof( *(x) ) )
+#define SIZEOF_MEMBER(type, member) sizeof( ((type *)0)->member )
 
 extern char * c_strTITLE;
 extern char * c_strCORP;

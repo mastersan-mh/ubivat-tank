@@ -33,7 +33,6 @@ typedef struct server_player_s
     struct server_player_s * next;
 
     struct entity_s * entity;
-    void * userstoredata;
 
 } server_player_t;
 
@@ -49,8 +48,10 @@ typedef struct server_player_vars_storage_s
     struct server_player_vars_storage_s * next;
     size_t clientId;
     size_t playerId;
+
+    const entityinfo_t * info;
     /* сохраняемые переменные */
-    var_t * vars; /* vardata_t */
+    void * vars;
 } server_player_vars_storage_t;
 
 typedef struct server_client_s
@@ -95,7 +96,6 @@ typedef struct
     server_gameflags_t flags;
 
     server_gamestate_t gamestate;
-    server_gamestate_t gamestate_prev;
     //состояние игры
     struct
     {
@@ -142,9 +142,6 @@ extern server_client_t * server_client_get(int id);
 extern server_player_t * server_player_create();
 extern void server_player_delete(server_player_t * player);
 extern void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player);
-extern void server_player_info_restore(server_player_t * player, server_player_vars_storage_t * storage);
-
-extern vardata_t * server_storage_vardata_get(server_player_vars_storage_t * storage, const char * varname, vartype_t vartype);
 
 extern const entityaction_t * server_entity_action_find(const entity_t * ent, const char * action_str);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);

@@ -69,7 +69,8 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 	vec_t Ld;
 	vec_t Rd;
 
-	player_t * pl = player->edata;
+	player_vars_t * pl = player->common;
+    player_vars_t * dng = dangerous->common;
 
 	bool danger = false;
 	if(pl->bull)
@@ -82,27 +83,27 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 	vec_t halfbox = ENTITY_HALFBODYBOX(player);
 
 	//верхняя ближайшая стена
-	map_clip_find_near(player->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
+	map_clip_find_near(pl->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
 	//нижняя ближайшая стена
-	map_clip_find_near(player->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
+	map_clip_find_near(pl->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
 	//левая ближайшая стена
-	map_clip_find_near(player->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
+	map_clip_find_near(pl->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
 	//правая ближайшая стена
-	map_clip_find_near(player->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
-	Ud = (player->origin_y + Udist - halfbox) - (dangerous->origin_y + radius);
-	Dd = (dangerous->origin_y - radius) - (player->origin_y-Ddist + halfbox);
-	Rd = (player->origin_x + Rdist - halfbox) - (dangerous->origin_x + radius);
-	Ld = (dangerous->origin_x - radius) - (player->origin_x - Ldist + halfbox);
+	map_clip_find_near(pl->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
+	Ud = (pl->origin_y + Udist - halfbox) - (dng->origin_y + radius);
+	Dd = (dng->origin_y - radius) - (pl->origin_y-Ddist + halfbox);
+	Rd = (pl->origin_x + Rdist - halfbox) - (dng->origin_x + radius);
+	Ld = (dng->origin_x - radius) - (pl->origin_x - Ldist + halfbox);
 	if(
-			(player->origin_x - halfbox <= dangerous->origin_x + radius)&&
-			(dangerous->origin_x - radius <= player->origin_x + halfbox)&&
-			(VEC_ABS(player->origin_y-dangerous->origin_y) < 128)
+			(pl->origin_x - halfbox <= dng->origin_x + radius)&&
+			(dng->origin_x - radius <= pl->origin_x + halfbox)&&
+			(VEC_ABS(pl->origin_y-dng->origin_y) < 128)
 	)
 	{
 		if(
-				(dangerous->dir == DIR_UP) &&
-				(VEC_ABS(player->origin_y-dangerous->origin_y)<Ddist) &&
-				(dangerous->origin_y + radius < player->origin_y-halfbox)
+				(dng->dir == DIR_UP) &&
+				(VEC_ABS(pl->origin_y-dng->origin_y)<Ddist) &&
+				(dng->origin_y + radius < pl->origin_y-halfbox)
 		)
 		{
 			danger = true;
@@ -111,30 +112,30 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 				pl->move.go = true;
 				pl->brain.Fdanger = true;
 				if(0 <= Ld && 0 <= Rd)
-					player->dir = xrand(2) + 2;
+					pl->dir = xrand(2) + 2;
 				else
-					if(0 < Ld) player->dir = DIR_LEFT;
+					if(0 < Ld) pl->dir = DIR_LEFT;
 					else
-						if(0 < Rd) player->dir = DIR_RIGHT;
+						if(0 < Rd) pl->dir = DIR_RIGHT;
 			}
 		}
 		else
 		{
 			if(
-					(dangerous->dir == DIR_DOWN) &&
-					(VEC_ABS(player->origin_y-dangerous->origin_y)<Udist) &&
-					(player->origin_y+halfbox < dangerous->origin_y - radius)
+					(dng->dir == DIR_DOWN) &&
+					(VEC_ABS(pl->origin_y-dng->origin_y)<Udist) &&
+					(pl->origin_y+halfbox < dng->origin_y - radius)
 			)
 			{
 				danger = true;
 				if(!pl->brain.Fdanger) {
 					pl->move.go = true;
 					pl->brain.Fdanger = true;
-					if( 0 <= Ld && 0 <= Rd) player->dir = xrand(2)+2;
+					if( 0 <= Ld && 0 <= Rd) pl->dir = xrand(2)+2;
 					else
-						if(0 < Ld) player->dir = DIR_LEFT;
+						if(0 < Ld) pl->dir = DIR_LEFT;
 						else
-							if(0 < Rd) player->dir = DIR_RIGHT;
+							if(0 < Rd) pl->dir = DIR_RIGHT;
 				}
 			}
 		}
@@ -142,15 +143,15 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 	else
 	{
 		if(
-				(player->origin_y - halfbox <= dangerous->origin_y + radius) &&
-				(dangerous->origin_y - radius <= player->origin_y + halfbox) &&
-				(VEC_ABS(player->origin_x - dangerous->origin_x) < 128)
+				(pl->origin_y - halfbox <= dng->origin_y + radius) &&
+				(dng->origin_y - radius <= pl->origin_y + halfbox) &&
+				(VEC_ABS(pl->origin_x - dng->origin_x) < 128)
 		)
 		{
 			if (
-					(dangerous->dir == DIR_LEFT)&&
-					(VEC_ABS(player->origin_x-dangerous->origin_x)<Rdist)&&
-					(player->origin_x+halfbox < dangerous->origin_x- radius)
+					(dng->dir == DIR_LEFT)&&
+					(VEC_ABS(pl->origin_x-dng->origin_x)<Rdist)&&
+					(pl->origin_x+halfbox < dng->origin_x- radius)
 			)
 			{
 				danger = true;
@@ -159,21 +160,21 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 					pl->move.go = true;
 					pl->brain.Fdanger = true;
 					if(0 <= Ud && 0 <= Dd)
-						player->dir = xrand(2);
+						pl->dir = xrand(2);
 					else
 						if(0 < Ud)
-							player->dir = DIR_UP;
+							pl->dir = DIR_UP;
 						else
 							if(0 < Dd)
-								player->dir = DIR_DOWN;
+								pl->dir = DIR_DOWN;
 				}
 			}
 			else
 			{
 				if(
-						(dangerous->dir == DIR_RIGHT) &&
-						(VEC_ABS(player->origin_x - dangerous->origin_x)<Ldist) &&
-						(dangerous->origin_x + radius < player->origin_x - halfbox)
+						(dng->dir == DIR_RIGHT) &&
+						(VEC_ABS(pl->origin_x - dng->origin_x)<Ldist) &&
+						(dng->origin_x + radius < pl->origin_x - halfbox)
 				)
 				{
 					danger = true;
@@ -181,11 +182,11 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 					{
 						pl->move.go = true;
 						pl->brain.Fdanger = true;
-						if(0 <= Ud && 0 <= Dd) player->dir = xrand(2);
+						if(0 <= Ud && 0 <= Dd) pl->dir = xrand(2);
 						else
-							if(0 < Ud) player->dir = DIR_UP;
+							if(0 < Ud) pl->dir = DIR_UP;
 							else
-								if(0 < Dd) player->dir = DIR_DOWN;
+								if(0 < Dd) pl->dir = DIR_DOWN;
 					}
 				}
 			}
@@ -201,7 +202,7 @@ static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
  */
 static void ctrl_AI_checkdangers(entity_t * player)
 {
-	player_t * pl = player->edata;
+	player_vars_t * pl = player->common;
 	bool danger = false;
 	entity_t * dangerous;
 
@@ -240,21 +241,23 @@ static void ctrl_AI_checkdangers(entity_t * player)
  */
 static bool turn_to_target(entity_t * player, entity_t * target)
 {
+    player_vars_t * pl = player->common;
+    entity_common_t * trg = target->common;
 	/* повернёмся к противнику */
-	if( (player->origin_x - ENTITY_HALFBODYBOX(player) < target->origin_x) && (target->origin_x < player->origin_x + ENTITY_HALFBODYBOX(player)) )
+	if( (pl->origin_x - ENTITY_HALFBODYBOX(player) < trg->origin_x) && (trg->origin_x < pl->origin_x + ENTITY_HALFBODYBOX(player)) )
 	{
-		if(target->origin_y < player->origin_y)
-			player->dir = DIR_DOWN;
+		if(trg->origin_y < pl->origin_y)
+			pl->dir = DIR_DOWN;
 		else
-			player->dir = DIR_UP;
+			pl->dir = DIR_UP;
 		return true;
 	}
-	if( (player->origin_y - ENTITY_HALFBODYBOX(player) < target->origin_y) && (target->origin_y < player->origin_y + ENTITY_HALFBODYBOX(player)) )
+	if( (pl->origin_y - ENTITY_HALFBODYBOX(player) < trg->origin_y) && (trg->origin_y < pl->origin_y + ENTITY_HALFBODYBOX(player)) )
 	{
-		if(target->origin_x < player->origin_x)
-			player->dir = DIR_LEFT;
+		if(trg->origin_x < pl->origin_x)
+			pl->dir = DIR_LEFT;
 		else
-			player->dir = DIR_RIGHT;
+			pl->dir = DIR_RIGHT;
 		return true;
 	}
 	return false;
@@ -270,17 +273,17 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	/* противник в прямой видимости */
 	void P_weapon_select_direct_view(entity_t *player)
 	{
-		player_t * pl = player->edata;
-		if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine") > 0)
+		player_vars_t * pl = player->common;
+		if(pl->item_ammo_mine > 0)
 		{
 			//выбираем наугад ракету или мину
 			pl->brain.weap = 1 + xrand(2);
 			if(pl->brain.weap == WEAP_MINE)
-				player->dir = entity_direction_invert(player->dir);
+				pl->dir = entity_direction_invert(pl->dir);
 		}
 		else
 		{
-			if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
+			if(pl->item_ammo_missile > 0)
 				pl->brain.weap = WEAP_MISSILE;
 			else
 				pl->brain.weap = WEAP_ARTILLERY;
@@ -289,7 +292,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 
 	/* противник за стеной, пытаемся пробиться через стену */
-	void P_weapon_select_behind_wall(entity_t* player, player_t* pl, char wall, vec_t dist, vec_t explode_radius)
+	void P_weapon_select_behind_wall(entity_t* player, player_vars_t* pl, char wall, vec_t dist, vec_t explode_radius)
 	{
 		if (MAP_WALL_TEXTURE(wall) == MAP_WALL_W0)
 			pl->brain.attack = false; //сильная броня, не стреляем
@@ -317,7 +320,7 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	}
 
 
-	player_t * pl = player->edata;
+	player_vars_t * pl = player->common;
 
 	vec_t dist;
 	char wall;
@@ -334,30 +337,34 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	/* управляемый снаряд */
 	if( pl->bull && pl->brain.target )
 	{
+	    bull_vars_t * bull_vars = entity_vars(pl->bull);
+        player_vars_t * target_vars = entity_vars(pl->brain.target);
 		if(
-				VEC_ABS(pl->bull->origin_y - pl->brain.target->origin_y) <
-				VEC_ABS(pl->bull->origin_x - pl->brain.target->origin_x)
+				VEC_ABS(bull_vars->origin_y - target_vars->origin_y) <
+				VEC_ABS(bull_vars->origin_x - target_vars->origin_x)
 		)
 		{
-			if(pl->bull->origin_x < pl->brain.target->origin_x)
-				player->dir = DIR_RIGHT;
+			if(bull_vars->origin_x < target_vars->origin_x)
+				pl->dir = DIR_RIGHT;
 			else
-				player->dir = DIR_LEFT;
+				pl->dir = DIR_LEFT;
 		}
 		else
 		{
-			if(pl->bull->origin_y < pl->brain.target->origin_y)
-				player->dir = DIR_UP;
+			if(bull_vars->origin_y < target_vars->origin_y)
+				pl->dir = DIR_UP;
 			else
-				player->dir = DIR_DOWN;
+				pl->dir = DIR_DOWN;
 		}
 		return;
 	}
 
+    entity_common_t * trg = target->common;
+
 	if
 	(
-			VEC_ABS(player->origin_x - target->origin_x) > 160.0 ||
-			VEC_ABS(player->origin_y - target->origin_y) > 100.0
+			VEC_ABS(pl->origin_x - trg->origin_x) > 160.0 ||
+			VEC_ABS(pl->origin_y - trg->origin_y) > 100.0
 	)
 	{
 		pl->attack = false;
@@ -371,9 +378,9 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	vec_t halfbox = ENTITY_HALFBODYBOX(player);
 
 	pl->brain.target = NULL;
-	if(ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile") > 0)
+	if(pl->item_ammo_missile > 0)
 	{
-		map_clip_find_near_wall(player->origin, player->dir, &dist, &wall);
+		map_clip_find_near_wall(pl->origin, pl->dir, &dist, &wall);
 		if(
 				MAP_WALL_CLIPPED(wall) &&
 				(
@@ -392,10 +399,10 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
 	{
 		if(turn_to_target(player, target))
 		{
-			map_clip_find_near_wall(player->origin, player->dir, &dist, &wall);
+			map_clip_find_near_wall(pl->origin, pl->dir, &dist, &wall);
 			if(
-					( (player->dir == DIR_DOWN || player->dir == DIR_UP   ) && VEC_ABS(player->origin_y - target->origin_y) < dist ) ||
-					( (player->dir == DIR_LEFT || player->dir == DIR_RIGHT) && VEC_ABS(player->origin_x - target->origin_x) < dist ) ||
+					( (pl->dir == DIR_DOWN || pl->dir == DIR_UP   ) && VEC_ABS(pl->origin_y - trg->origin_y) < dist ) ||
+					( (pl->dir == DIR_LEFT || pl->dir == DIR_RIGHT) && VEC_ABS(pl->origin_x - trg->origin_x) < dist ) ||
 					!MAP_WALL_CLIPPED(wall) ||
 					MAP_WALL_TEXTURE(wall) == MAP_WALL_water
 			)
@@ -416,41 +423,42 @@ static void ctrl_AI_attack(entity_t * player, entity_t * target)
  */
 static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 {
-	player_t * pl = player->edata;
+    player_vars_t * pl = player->common;
+    entity_common_t * trg = target->common;
 
 	if(
-			(160<VEC_ABS(player->origin_x-target->origin_x))||
-			(100<VEC_ABS(player->origin_y-target->origin_y))
+			(160<VEC_ABS(pl->origin_x-trg->origin_x))||
+			(100<VEC_ABS(pl->origin_y-trg->origin_y))
 	)
 	{
 		pl->attack = false;
 		return;
 	}
 	if(pl->brain.count == 0) {
-		player->dir = xrand(4);
+		pl->dir = xrand(4);
 		pl->move.go = true;
 	}
 	else
 	{
 		if(BOT_THINK_TIME + xrand(BOT_THINK_TIME) < pl->brain.count)
 		{
-			if(VEC_ABS(player->origin_x-target->origin_x)>VEC_ABS(player->origin_y-target->origin_y))
+			if(VEC_ABS(pl->origin_x-trg->origin_x)>VEC_ABS(pl->origin_y-trg->origin_y))
 			{
-				if(player->origin_x < target->origin_x)
-					player->dir = DIR_RIGHT;
+				if(pl->origin_x < trg->origin_x)
+					pl->dir = DIR_RIGHT;
 				else
-					player->dir = DIR_LEFT;
+					pl->dir = DIR_LEFT;
 			}
 			else
 			{
-				if(player->origin_y < target->origin_y)
-					player->dir = DIR_UP;
+				if(pl->origin_y < trg->origin_y)
+					pl->dir = DIR_UP;
 				else
-					player->dir = DIR_DOWN;
+					pl->dir = DIR_DOWN;
 			}
 			if(
-					(VEC_ABS(player->origin_x - target->origin_x) < c_BOT_dist)&&
-					(VEC_ABS(player->origin_y - target->origin_y) < c_BOT_dist)
+					(VEC_ABS(pl->origin_x - trg->origin_x) < c_BOT_dist)&&
+					(VEC_ABS(pl->origin_y - trg->origin_y) < c_BOT_dist)
 			)
 				pl->move.go = false;
 			else
@@ -467,19 +475,23 @@ static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
  */
 void think_enemy(entity_t * player)
 {
-	player_t * pl = player->edata;
+    player_vars_t * pl = player->common;
+
 	if(debug_noAI)
 		return;
-	if(!player->alive)
+	if(!pl->alive)
 		return;
 	ctrl_AI_checkdangers(player);
 	if(pl->brain.danger)
 		return;
 	entity_t * target = entity_get_random("player");
+
 	if(!target)
 		return;
 
-	if(!target->alive)
+    entity_common_t * trg = target->common;
+
+	if(!trg->alive)
 		pl->attack = false;
 	else
 	{

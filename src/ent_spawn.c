@@ -10,13 +10,14 @@
 #include "ent_spawn.h"
 #include "ent_player.h"
 
-static entityvarinfo_t spawn_player_vars[] =
+static var_descr_t spawn_player_vars[] =
 {
-		{ VARTYPE_INTEGER, "item_scores" },
-		{ VARTYPE_INTEGER, "item_health" },
-		{ VARTYPE_INTEGER, "item_armor"  },
-		{ VARTYPE_INTEGER, "item_ammo_missile" },
-		{ VARTYPE_INTEGER, "item_ammo_mine"    },
+        ENTITY_COMMON_VARS,
+        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_scores ),
+        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_health ),
+        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_armor  ),
+        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_missile ),
+        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_mine    ),
 };
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
@@ -25,63 +26,79 @@ static ENTITY_FUNCTION_INIT(spawn_player_init)
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
-	entity_new("enemy", this->origin[0], this->origin[1], this->dir, this);
+    spawn_vars_t * sp = ((entity_t *)this)->common;
+    var_value_t vars_values[] =
+    {
+            VAR_VALUE_VECTOR2("origin", sp->origin[0], sp->origin[1]),
+            VAR_VALUE_DIRECTION("dir", sp->dir),
+    };
+    entity_new("enemy", this, vars_values, ARRAYSIZE(vars_values));
 }
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
-	entity_new("boss", this->origin[0], this->origin[1], this->dir, this);
+    spawn_vars_t * sp = ((entity_t *)this)->common;
+    var_value_t vars_values[] =
+    {
+            VAR_VALUE_VECTOR2("origin", sp->origin[0], sp->origin[1]),
+            VAR_VALUE_DIRECTION("dir", sp->dir),
+    };
+    entity_new("boss", this, vars_values, ARRAYSIZE(vars_values));
 }
 
-static ENTITY_FUNCTION_CLIENT_SPAWN(spawn_client_join)
+static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
 {
-	entity_t * spawn = entity_get_random("spawn_player");
+    void * spawn = entity_get_random("spawn_player");
+    spawn_vars_t * sp = entity_vars(spawn);
 
-	entity_t * player = entity_new(
-		"player",
-		spawn->origin[0],
-		spawn->origin[1],
-		spawn->dir,
-		spawn
-	);
-	return player;
+    void * player = entity_new("player", spawn, NULL, 0);
+
+    if(!player)
+        return NULL;
+
+    entity_restore(player, storage);
+
+    /*
+    player_vars_t * vars = entity_vars(player);
+    VEC2_COPY(sp->origin, vars->origin);
+    vars->dir = sp->dir;
+    vars->scores = sp->item_scores;
+    vars->item_health = sp->item_health;
+    vars->item_armor = sp->item_armor;
+    vars->item_ammo_missile = sp->item_ammo_missile;
+    vars->item_ammo_mine = sp->item_ammo_mine;
+*/
+    player_spawn_init(player , spawn);
+
+    return player;
 }
 
 static const entityinfo_t spawn_player_reginfo = {
 		.name = "spawn_player",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(spawn_player_vars),
+		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_player_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.client_join = spawn_client_join,
-		.player_store = NULL,
-		.player_restore = NULL
+		.player_spawn = spawn_player_spawn,
 };
 
 static const entityinfo_t spawn_enemy_reginfo = {
 		.name = "spawn_enemy",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(spawn_player_vars),
+		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_enemy_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL
 };
 
 static const entityinfo_t spawn_boss_reginfo = {
 		.name = "spawn_boss",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(spawn_player_vars),
+		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_boss_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL
 };
 
 void entity_spawn_init(void)

@@ -130,14 +130,21 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
         event->data.REMOTE_PLAYER_ACTION.action);
 
     /* execute action */
-    entity_t * ent = player->entity;
+    entity_t * entity = player->entity;
 
-    if(!ent)
+    if(!entity)
         return;
 
-    const entityinfo_t * info = ent->info;
+    if(server.flags.allow_respawn && !entity->spawned)
+    {
+        game_console_send("server: respawn player.");
+        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+        void * vars = storage ? storage->vars : NULL;
+        entity_respawn(entity, vars);
+        return;
+    }
 
-    const entityaction_t * action = server_entity_action_find(ent, event->data.REMOTE_PLAYER_ACTION.action);
+    const entityaction_t * action = server_entity_action_find(entity, event->data.REMOTE_PLAYER_ACTION.action);
 
     if(!action)
     {
@@ -145,35 +152,15 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
         return;
     }
 
-    if(!ent->spawned)
-    {
-        if(server.flags.allow_respawn &&
-                info->spawn)
-        {
-            game_console_send("server: spawn client.");
-            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-            server_player_info_restore(player, storage);
-            info->spawn(ent, ent->edata);
-            ent->spawned = true;
-            ent->alive = true;
-        }
-        return;
-    }
-
+    entity_common_t * common = entity->common;
     if(action->action_f)
-        action->action_f(ent, ent->edata, action->action);
+        action->action_f(entity, common, action->action);
 
 }
 
 
 void server_fsm(const game_server_event_t * event)
 {
-    bool statechanged = false;
-    if(server.gamestate_prev != server.gamestate)
-    {
-        server.gamestate_prev = server.gamestate;
-        statechanged = true;
-    }
     server_gamestate_t gamestate = server.gamestate;
 
     server_client_t * client;

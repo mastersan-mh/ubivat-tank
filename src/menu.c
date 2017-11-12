@@ -420,16 +420,6 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
             client_req_send_game_load(ctx->menu);
 
         }
-        /*
-			 TODO: move this to server
-			if(!ret)
-				return MENU_MAIN;
-			if(2<=ret)
-			{
-				game_msg_error(ret+10);
-				return MENU_ABORT;
-			}
-         */
         return MENU_MAIN;
     case MENU_ACTION_LEAVE  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);

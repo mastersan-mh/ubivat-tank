@@ -12,6 +12,11 @@
 #include "common/common_hash.h"
 #include "vars.h"
 
+var_descr_t entity_common_vars[] =
+{
+        ENTITY_COMMON_VARS,
+};
+
 typedef struct
 {
     /* информация о объектах в списках */
@@ -54,6 +59,11 @@ const entityinfo_t * entityinfo_get(const char * name)
 
 void entity_register(const entityinfo_t * info)
 {
+    static var_descr_t entity_common_vars[] =
+    {
+            ENTITY_COMMON_VARS
+    };
+
     ssize_t i;
     entity_registered_t * tmp;
     if(info == NULL)
@@ -62,7 +72,7 @@ void entity_register(const entityinfo_t * info)
         return;
     }
 
-    if(info->name == NULL || strlen(info->name) == 0)
+    if(info->name == NULL || strnlen(info->name, ENTITY_NAME_SIZE) == 0)
     {
         game_console_send("Entity registration failed: entity name is empty.");
         return;
@@ -70,39 +80,72 @@ void entity_register(const entityinfo_t * info)
 
     if(entityregisteredinfo_get(info->name) != NULL)
     {
-        game_console_send("Entity registration failed: duplicate name \"%s\"", info->name);
+        game_console_send("Entity \"%s\" registration failed: duplicate name \"%s\"", info->name);
         return;
     }
 
-    if(info->edatasize != 0 && info->init == NULL)
-        game_console_send("Entity registration warning: entity \"%s\" invalid register data: .entityinit == NULL.", info->name);
-    /*
-	if(info->datasize == 0 && info->init != NULL)
-		game_console_send("Entity registration warning: entity \"%s\" invalid register data: .datasize == 0.", info->name);
-     */
-
-    if(info->bodybox <= 0.0f)
-        game_console_send("Entity registration warning: entity \"%s\" invalid register data: .bodybox <= 0.0f.", info->name);
-
+    if(info->vars_size == 0)
     {
+        game_console_send("Entity \"%s\" registration failed: Invalid descriptor: .vars_size == 0.", info->name);
+        return;
+    }
+    if(info->vars_descr_num == 0)
+    {
+        game_console_send("Entity \"%s\" registration failed: Invalid descriptor: .vars_descr_num == 0.", info->name);
+        return;
+    }
+    if(info->vars_descr == NULL)
+    {
+        game_console_send("Entity \"%s\" registration failed: Invalid descriptor: .vars_descr == NULL.", info->name);
+        return;
+    }
+
+bool vars_descr_eq(const var_descr_t * vds1, const var_descr_t * vds2, size_t size)
+{
+    for(size_t i = 0; i < size; i++)
+    {
+        const var_descr_t * vd1 = &vds1[i];
+        const var_descr_t * vd2 = &vds2[i];
+        if(
+                vd1->type != vd2->type ||
+                vd1->ofs  != vd2->ofs  ||
+                vd1->size != vd2->size ||
+                strncmp(vd1->name, vd2->name, VARNAME_SIZE) != 0
+        )
+            return false;
+
+    }
+    return true;
+}
+
+    if(!vars_descr_eq(info->vars_descr, entity_common_vars , ARRAYSIZE(entity_common_vars)))
+    {
+        game_console_send("Entity \"%s\" registration failed: Invalid entity common part.", info->name);
+        return;
+    }
+
+    do {
         /* проверка переменных */
-        nodeId_t * nodeIds = calloc(info->vars_num, sizeof(nodeId_t));
-        for(i = 0; i < info->vars_num; i++)
+        uint32_t * varnames_hashs = calloc(info->vars_descr_num, sizeof(uint32_t));
+        for(i = 0; i < info->vars_descr_num; i++)
         {
-            nodeIds[i] = HASH32(info->vars[i].name);
+            varnames_hashs[i] = HASH32(info->vars_descr[i].name);
             ssize_t j;
             for(j = 0; j < i; j++)
             {
-                if(nodeIds[i] == nodeIds[j])
+                if(varnames_hashs[i] == varnames_hashs[j])
                 {
-                    game_console_send("Entity registration failed: entity \"%s\" duplicate variable name \"%s\".", info->name, info->vars[i].name);
-                    free(nodeIds);
+                    game_console_send("Entity \"%s\" registration failed: Duplicate variable name \"%s\".", info->name, info->vars_descr[i].name);
+                    free(varnames_hashs);
                     return;
                 }
             }
         }
-        free(nodeIds);
-    }
+        free(varnames_hashs);
+    } while(0);
+
+    if(info->bodybox <= 0.0f)
+        game_console_send("Entity \"%s\" registration warning: Invalid descriptor: .bodybox <= 0.0f.", info->name);
 
     if(entityregs_size < entityregs_num + 1)
     {
@@ -111,7 +154,7 @@ void entity_register(const entityinfo_t * info)
         else
             entityregs_size *= 2;
         tmp = Z_realloc(entityregs, sizeof(entity_registered_t) * entityregs_size);
-        if(!tmp)game_halt("Entity registration failed: out of memory");
+        if(!tmp)game_halt("Entity \"%s\" registration failed: Out of memory", info->name);
         entityregs = tmp;
     }
     entityregs[entityregs_num].info = info;
@@ -119,7 +162,7 @@ void entity_register(const entityinfo_t * info)
     entityregs[entityregs_num].entities_erased = NULL;
     entityregs_num++;
 
-    game_console_send("Entity registered: \"%s\".", info->name);
+    game_console_send("Entity \"%s\" registered.", info->name);
 
 }
 
@@ -141,9 +184,131 @@ int entity_model_set(entity_t * entity, unsigned int imodel, const char * modeln
 }
 
 /**
+ * @brief восстановление информации о entity игрока из хранилища игрока в entity
+ * @brief (при переходе на следующий уровень и при чтении gamesave)
+ */
+void entity_restore(entity_t * entity, const void * vars)
+{
+    if(!vars)
+        return;
+    size_t info_vars_num = entity->info->vars_descr_num;
+    var_descr_t * info_vars = entity->info->vars_descr;
+
+    for(size_t i = 0; i < info_vars_num; i++)
+    {
+        intptr_t ofs = info_vars[i].ofs;
+        memcpy(entity->common + ofs, vars + ofs, info_vars[i].size);
+    }
+
+    char title[128];
+    sprintf(title, "==== Entity \"%s\" vars:", entity->info->name);
+    vars_dump(entity->common, entity->info->vars_descr, entity->info->vars_descr_num, title);
+
+}
+/**
+ * @params vars     Буфер хранилища переменных
+ */
+void entity_respawn(entity_t * entity, const void * vars)
+{
+    if(entity->spawned)
+        return;
+    entity_restore(entity, vars);
+    const entityinfo_t * info = entity->info;
+    entity_common_t * common = entity->common;
+    if(info->spawn)
+        info->spawn(entity, common);
+    entity->spawned = true;
+    common->alive = true;
+}
+
+void entity_erase(void * entity)
+{
+    ((entity_t*)entity)->erase = true;
+}
+
+bool entity_is_spawned(void * entity)
+{
+    return ((entity_t*)entity)->spawned;
+}
+
+void entity_unspawn(void * entity)
+{
+    ((entity_t*)entity)->spawned = false;
+}
+
+void entity_show(void * entity)
+{
+    ((entity_t*)entity)->allow_draw = true;
+}
+
+void entity_hide(void * entity)
+{
+    ((entity_t*)entity)->allow_draw = false;
+}
+
+void * entity_parent(void * entity)
+{
+    return ((entity_t*)entity)->parent;
+}
+
+void * entity_vars(void * entity)
+{
+    return ((entity_t*)entity)->common;
+}
+
+void entity_cam_set(void * entity, void * cam_entity)
+{
+    ((entity_t*)entity)->cam_entity = cam_entity;
+}
+
+void entity_cam_reset(void * entity)
+{
+    ((entity_t*)entity)->cam_entity = entity;
+}
+
+
+void * entity_build_storage(const char * name, const var_value_t * vars_values, size_t vars_values_num)
+{
+    entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
+    if(!entityinfo_reg)
+    {
+        game_console_send("Error: Build storage unknown entity \"%s\".", name);
+        return NULL;
+    }
+
+    if(vars_values_num == 0)
+        return NULL;
+
+    const entityinfo_t * info = entityinfo_reg->info;
+
+    size_t bufsize = var_buffersize_calculate(info->vars_descr, info->vars_descr_num);
+    void * buf = Z_malloc(bufsize);
+    for(size_t i = 0; i < vars_values_num; i++)
+    {
+        const var_value_t * var_value = &vars_values[i];
+
+        const var_descr_t * vd = var_find(info->vars_descr, info->vars_descr_num, var_value->name);
+        if(!vd)
+        {
+            game_console_send("Warning: While entity \"%s\" creation, variable \"%s\" not found.", name, var_value->name);
+            continue;
+        }
+        if(var_value->type != vd->type)
+        {
+            game_console_send("Warning: While entity \"%s\" creation, variable \"%s\" has other type.", name, var_value->name);
+            continue;
+        }
+
+        memcpy(buf + vd->ofs, &var_value->blob, vd->size);
+
+    }
+    return buf;
+}
+
+/**
  * @description добавление объекта
  */
-entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent)
+entity_t * entity_new(const char * name, entity_t * parent, const var_value_t * vars_values, size_t vars_values_num)
 {
     size_t i;
     entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
@@ -153,29 +318,18 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
         return NULL;
     }
 
+    const entityinfo_t * entityinfo = entityinfo_reg->info;
+
     entity_t * entity = Z_malloc(sizeof(entity_t));
+    entity->info = entityinfo;
+
+    entity->common = Z_malloc(entityinfo->vars_size);
 
     entity->parent = (entity_t*)parent;
     entity->cam_entity = entity;
     entity->erase = false;
-    VEC2_SET(entity->origin, x, y);
-    entity->dir   = dir;
-    entity->alive = true;
-    entity->allow_handle = true;
+    entity->freezed = false;
     entity->allow_draw = true;
-    entity->stat_traveled_distance = 0.0f;
-
-    const entityinfo_t * entityinfo = entityinfo_reg->info;
-    entity->info = entityinfo;
-
-    {
-        /* сформировать переменные объекта */
-        entityvarinfo_t * evars = entityinfo->vars;
-        for(i = 0; i < entityinfo->vars_num; i++)
-        {
-            var_create(&entity->vars, evars[i].name, evars[i].type);
-        }
-    }
 
     LIST2_PUSH(entityinfo_reg->entities, entity);
 
@@ -189,42 +343,40 @@ entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, cons
         }
     }
 
-    if(entityinfo->edatasize == 0)
-        entity->edata = NULL;
-    else
-        entity->edata = Z_malloc(entityinfo->edatasize);
-    if(entityinfo->init)
-        entityinfo->init(entity, entity->edata, parent);
+    entity->spawned = false;
 
-    if(entityinfo->spawn == NULL)
-    {
-        entity->spawned = true;
-    }
-    else
-    {
-        entity->spawned = false;
-        entityinfo->spawn(entity, entity->edata);
-        entity->spawned = true;
-    }
+    entity_common_t * common = entity->common;
+    void * storage = entity_build_storage(name, vars_values, vars_values_num);
+    entity_restore(entity, storage);
+    if(entityinfo->init)
+        entityinfo->init(entity, common, parent);
+    if(entityinfo->spawn)
+        entityinfo->spawn(entity, common);
+
+    entity->spawned = true;
+    common->alive = true;
+
+    Z_free(storage);
 
     return entity;
 }
 
-/*
- *
+/**
+ * @brief Очистка памяти entity
  */
 static void entity_freemem(entity_t * entity)
 {
-    if(entity->info != NULL)
+    const entityinfo_t * info = entity->info;
+    if(info != NULL)
     {
-        if(entity->info->done != NULL)
-            entity->info->done(entity, entity->edata);
-        if(entity->info->edatasize)
-            Z_free(entity->edata);
+        if(info->done != NULL)
+            info->done(entity, entity->common);
     }
-    Z_free(entity->modelplayers);
 
-    vars_delete(&entity->vars);
+    vars_free(entity->common, info->vars_descr, info->vars_descr_num);
+
+    Z_free(entity->modelplayers);
+    Z_free(entity->common);
     Z_free(entity);
 }
 
@@ -254,32 +406,6 @@ void entities_erase(void)
         }
 
     }
-}
-
-/**
- * @brief получить данные переменной
- * @param vartype   тип переменной: -1 - тип выбрать автоматически
- */
-vardata_t * entity_vardata_get(const entity_t * entity, const char * varname, vartype_t vartype)
-{
-    static const char * list[] =
-    {
-            "INTEGER",
-            "FLOAT",
-            "STRING",
-    };
-    var_t * node = var_find(entity->vars, varname);
-    if(!node)
-    {
-        game_console_send("Error: Entity \"%s\" has no variable \"%s\"", entity->info->name, varname);
-        return NULL;
-    }
-    vardata_t * vardata = node->data;
-    if( (int)vartype >= 0 && vardata->type != vartype )
-    {
-        game_console_send("Warning: Entity \"%s\" variable \"%s\" has type %s, but used as %s.", entity->info->name, varname, list[vardata->type], list[vartype]);
-    }
-    return vardata;
 }
 
 /**
@@ -322,13 +448,16 @@ static bool model_nextframe(float * frame, unsigned int fps, unsigned int startf
 
 static bool is_touched(entity_t * this, entity_t * that)
 {
+    entity_common_t * thisc = this->common;
+    entity_common_t * thatc = that->common;
+
     vec_t this_halfbox = this->info->bodybox * 0.5;
     vec_t that_halfbox = that->info->bodybox * 0.5;
     return
-            ( this->origin[0] - this_halfbox <= that->origin[0] + that_halfbox ) &&
-            ( that->origin[0] - that_halfbox <= this->origin[0] + this_halfbox ) &&
-            ( this->origin[1] - this_halfbox <= that->origin[1] + that_halfbox ) &&
-            ( that->origin[1] - that_halfbox <= this->origin[1] + this_halfbox )
+            ( thisc->origin[0] - this_halfbox <= thatc->origin[0] + that_halfbox ) &&
+            ( thatc->origin[0] - that_halfbox <= thisc->origin[0] + this_halfbox ) &&
+            ( thisc->origin[1] - this_halfbox <= thatc->origin[1] + that_halfbox ) &&
+            ( thatc->origin[1] - that_halfbox <= thisc->origin[1] + this_halfbox )
             ;
 }
 
@@ -337,10 +466,11 @@ static bool is_touched(entity_t * this, entity_t * that)
  */
 static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
 {
+    entity_common_t * common = entity->common;
     if(
-            !entity->allow_handle ||
-            !entity->alive ||
-            !entity->spawned
+            entity->freezed ||
+            !entity->spawned ||
+            !common->alive
     )
         return;
 
@@ -364,11 +494,12 @@ static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
             entity_t * that;
             for(that = entityreg->entities; that; that = that->next)
             {
+                entity_common_t * thatc = entity->common;
                 if(
-                        that->allow_handle &&
-                        that->alive &&
-                        that->spawned &&
                         !that->erase &&
+                        !that->freezed &&
+                        that->spawned &&
+                        thatc->alive &&
                         is_touched(entity, that)
                 )
                     entitytouchs[i].touch(entity, that);
@@ -386,35 +517,33 @@ static void P_entity_modelplay(const entityinfo_t * info, entity_t * entity)
     size_t ientmodel;
     for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
     {
+        ent_modelplayer_t * modelplayer = &entity->modelplayers[ientmodel];
+        if(!(
+                modelplayer->model != NULL &&
+                modelplayer->model->frames != NULL &&
+                modelplayer->model->fps > 0 &&
+                modelplayer->action != NULL
+        ))
+            continue;
 
-        if(
-                entity->modelplayers[ientmodel].model != NULL &&
-                entity->modelplayers[ientmodel].model->frames > 0 &&
-                entity->modelplayers[ientmodel].model->fps > 0 &&
-                entity->modelplayers[ientmodel].action != NULL
-        )
+        bool end = model_nextframe(
+            &modelplayer->frame,
+            modelplayer->model->fps,
+            modelplayer->action->startframe,
+            modelplayer->action->endframe
+        );
+        if(!end)
+            return;
+
+        const ent_modelaction_t * action = modelplayer->action;
+        if(action != NULL && action->endframef != NULL)
         {
-
-            bool end = model_nextframe(
-                &entity->modelplayers[ientmodel].frame,
-                entity->modelplayers[ientmodel].model->fps,
-                entity->modelplayers[ientmodel].action->startframe,
-                entity->modelplayers[ientmodel].action->endframe
+            modelplayer->action = NULL;
+            action->endframef(
+                entity,
+                ientmodel,
+                action->name
             );
-            if(end)
-            {
-                const ent_modelaction_t * action = entity->modelplayers[ientmodel].action;
-                if(action != NULL && action->endframef != NULL)
-                {
-                    entity->modelplayers[ientmodel].action = NULL;
-                    action->endframef(
-                        entity,
-                        ientmodel,
-                        action->name
-                    );
-                }
-            }
-
         }
 
     }
@@ -472,7 +601,7 @@ void entities_handle(void)
         entity_t * entity = entreg->entities;
         while(entity)
         {
-
+            entity_common_t * common = entity->common;
             if(entity->erase)
             {
 
@@ -495,7 +624,7 @@ void entities_handle(void)
             }
 
             if(
-                    !entity->allow_handle ||
+                    entity->freezed ||
                     !entity->spawned
             )
             {
@@ -503,10 +632,10 @@ void entities_handle(void)
                 continue;
             }
 
-            VEC2_COPY(entity->origin, entity->origin_prev);
+            VEC2_COPY(common->origin, common->origin_prev);
             if(info->handle != NULL)
             {
-                (*info->handle)(entity, entity->edata);
+                info->handle(entity, common);
             }
 
             if(!entity->erase)
@@ -523,26 +652,27 @@ void entities_handle(void)
     }
 }
 
-/*
- * обработка событий объектов присоедениения клиента к игре.
+/**
+ * @brief
+ * @descrition Обработка событий объектов присоедениения клиента к игре.
  * Как только обработчик объекта возвращает объект (не NULL),
  * этот возвращённый объект становится "телом" клиента.
+ * @param vars  Буфер, в котором хранятся значения переменных entity, которые необходимо восстановить
  */
-entity_t * entries_client_join(void)
+entity_t * entity_player_spawn_random(void * storage)
 {
     size_t ientreg;
     for(ientreg = 0; ientreg < entityregs_num; ientreg++)
     {
         entity_registered_t * entreg = &entityregs[ientreg];
         const entityinfo_t * info = entreg->info;
-        if(!info->client_join)
+        if(!info->player_spawn)
             continue;
         entity_t * entity;
         for(entity = entreg->entities; entity; entity = entity->next)
         {
-            entity_t * client_entity = (*info->client_join)(entity);
-            if(client_entity != NULL)
-                return client_entity;
+            entity_t * entity = info->player_spawn(entity, storage);
+            return entity;
         }
     }
     return NULL;
@@ -661,7 +791,8 @@ static void ent_models_render(
             90.0f,  /* E */
     };
 
-    vec2_t * pos = &entity->origin;
+    entity_common_t * common = entity->common;
+    vec2_t * pos = &common->origin;
     const struct entityinfo_s * info = entity->info;
     entitymodel_t * ent_models = info->entmodels;
     size_t models_num = info->entmodels_num;
@@ -681,7 +812,7 @@ static void ent_models_render(
             continue;
         }
         int frame = VEC_TRUNC(modelplayer->frame);
-        direction_t dir = entity->dir;
+        direction_t dir = common->dir;
         model_render(
             cam,
             *pos,
@@ -713,20 +844,21 @@ void entities_render(camera_t * cam)
         for(entity = entreg->entities; entity; entity = entity->next)
         {
             if(entity->erase) continue;
-            if(!entity->allow_handle) continue;
+            if(entity->freezed) continue;
             if(!entity->spawned) continue;
 
 
             //int viewbox_half = entity->img->img_sx;
             int viewbox_half = 16;
 
+            entity_common_t * common = entity->common;
 
             if(
                     entity->allow_draw &&
-                    ( cam->origin[0]    - cam_sx_half  <= entity->origin[0] + viewbox_half ) &&
-                    ( entity->origin[0] - viewbox_half <= cam->origin[0]    + cam_sx_half  ) &&
-                    ( cam->origin[1]    - cam_sy_half  <= entity->origin[1] + viewbox_half ) &&
-                    ( entity->origin[1] - viewbox_half <= cam->origin[1]    + cam_sy_half  )
+                    ( cam->origin[0]    - cam_sx_half  <= common->origin[0] + viewbox_half ) &&
+                    ( common->origin[0] - viewbox_half <= cam->origin[0]    + cam_sx_half  ) &&
+                    ( cam->origin[1]    - cam_sy_half  <= common->origin[1] + viewbox_half ) &&
+                    ( common->origin[1] - viewbox_half <= cam->origin[1]    + cam_sy_half  )
             )
             {
                 ent_models_render(cam, entity);

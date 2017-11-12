@@ -33,18 +33,24 @@ static char * make_filename(char * filename, int i)
 static int g_gamesave_save_player(int fd, entity_t * player)
 {
     write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
-    gamesave_data_player_t savedata =
+
+    size_t vars_num = player->info->vars_descr_num;
+    var_descr_t * vars_descr = player->info->vars_descr;
+    char * vars = player->common;
+
+    /* buffer prepare */
+    size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);
+
+    char * buf = Z_malloc(bufsize);
+
+    for(size_t i = 0; i < vars_num; i++)
     {
-            .fragstotal = ENTITY_VARIABLE_INTEGER(player, "fragstotal"),
-            .frags      = ENTITY_VARIABLE_INTEGER(player, "frags"),
-            .scores     = ENTITY_VARIABLE_INTEGER(player, "scores"),
-            .health     = ENTITY_VARIABLE_INTEGER(player, "item_health"),
-            .armor      = ENTITY_VARIABLE_INTEGER(player, "item_armor"),
-            .ammo1      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_artillery"),
-            .ammo2      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_missile"),
-            .ammo3      = ENTITY_VARIABLE_INTEGER(player, "item_ammo_mine")
-    };
-    write(fd, &savedata, sizeof(savedata));
+        memcpy(buf + vars_descr[i].ofs, vars + vars_descr[i].ofs, vars_descr[i].size);
+    }
+
+    write(fd, buf, bufsize);
+
+    Z_free(buf);
     return 0;
 };
 
@@ -57,20 +63,35 @@ static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t 
     mapdata_entity_type_t mapdata_mobj_type = map_file_class_get(fd);
     if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
         return -1;
-    gamesave_data_player_t savedata;
-    ssize_t c = read(fd, &savedata, sizeof(savedata));
-    if(c != sizeof(savedata))return false;
 
-    server_storage_vardata_get(storage, "fragstotal", VARTYPE_INTEGER)->value.i64  = savedata.fragstotal;
-    server_storage_vardata_get(storage, "frags", VARTYPE_INTEGER)->value.i64       = savedata.frags;
-    server_storage_vardata_get(storage, "scores", VARTYPE_INTEGER)->value.i64      = savedata.scores;
-    server_storage_vardata_get(storage, "item_health", VARTYPE_INTEGER)->value.i64         = savedata.health;
-    server_storage_vardata_get(storage, "item_armor", VARTYPE_INTEGER)->value.i64          = savedata.armor;
-    server_storage_vardata_get(storage, "item_ammo_artillery", VARTYPE_INTEGER)->value.i64 = savedata.ammo1;
-    server_storage_vardata_get(storage, "item_ammo_missile", VARTYPE_INTEGER)->value.i64   = savedata.ammo2;
-    server_storage_vardata_get(storage, "item_ammo_mine", VARTYPE_INTEGER)->value.i64      = savedata.ammo3;
 
-    vars_dump(storage->vars, "==== LOADED:");
+    size_t vars_num = storage->info->vars_descr_num;
+    var_descr_t * vars_descr = storage->info->vars_descr;
+    char * vars = storage->vars;
+
+    size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);
+
+    char * buf = Z_malloc(bufsize);
+
+    ssize_t c = read(fd, buf, bufsize);
+    if(c != bufsize)
+    {
+        Z_free(buf);
+        return -1;
+    }
+
+
+    for(size_t i = 0; i < vars_num; i++)
+    {
+        memcpy(vars + vars_descr[i].ofs, buf + vars_descr[i].ofs, vars_descr[i].size);
+    }
+
+    vars_dump(storage->vars, vars_descr, vars_num, "==== LOADED:");
+
+    Z_free(buf);
+
+
+
     return 0;
 };
 

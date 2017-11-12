@@ -74,19 +74,19 @@ enum
 /* инвентарь */
 typedef enum
 {
-	ITEM_SCORES,
-	ITEM_HEALTH,
-	ITEM_ARMOR,
-	ITEM_AMMO_ARTILLERY,
-	ITEM_AMMO_MISSILE,
-	ITEM_AMMO_MINE,
-	ITEM_NUM
+    ITEM_SCORES,
+    ITEM_HEALTH,
+    ITEM_ARMOR,
+    ITEM_AMMO_ARTILLERY,
+    ITEM_AMMO_MISSILE,
+    ITEM_AMMO_MINE,
+    ITEM_NUM
 } player_invitemtype_t;
 
 typedef struct
 {
-	int items[ITEM_NUM];
-	vec_t speed;
+	INTEGER items[ITEM_NUM];
+	VECTOR1 speed;
 	char * modelname;
 } playerinfo_t;
 
@@ -103,35 +103,46 @@ typedef struct
 	//направление движения
 } move_t;
 
-
 typedef struct
 {
-	//для управляемой ракеты
-	struct entity_s * bull;
+    ENTITY_COMMON_STRUCT;
 
-	//передвижения
-	move_t move;
-	bool attack;
-	weapontype_t weap;
-	//время на перезарядку
-	long reloadtime_d;
+    INTEGER fragstotal; /* фрагов за пройденые карты */
+    INTEGER frags;      /* фрагов за карту */
+    INTEGER scores;     /* набрано очков */
+    INTEGER level;      /* уровень игрока */
 
-	// мозг
-	think_t brain;
-} player_t;
+    INTEGER item_health;
+    INTEGER item_armor;
+    INTEGER item_ammo_artillery;
+    INTEGER item_ammo_missile;
+    INTEGER item_ammo_mine;
 
-#define ENT_PLAYER(entity) ((player_t *) (entity)->edata)
+    //для управляемой ракеты
+    struct entity_s * bull;
+
+    //передвижения
+    move_t move;
+    bool attack;
+    weapontype_t weap;
+    //время на перезарядку
+    long reloadtime_d;
+
+    // мозг
+    think_t brain;
+
+} player_vars_t;
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
+
+extern void player_spawn_init(void * player , void * spawn);
 
 
 extern void entity_player_init(void);
 
-extern void player_spawn_init(entity_t * player, player_t * pl, const entity_t * spawn);
+extern void player_getdamage(void * player, void * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
 
-extern void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
-
-extern void player_class_init(entity_t * player, player_t * pl);
+extern void player_class_init(void * player, player_vars_t * pl);
 
 
 #endif /* SRC_ENT_PLAYER_H_ */

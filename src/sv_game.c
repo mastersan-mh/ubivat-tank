@@ -48,7 +48,8 @@ void sv_game_win(void)
         server_player_t * player;
         LIST2_FOREACHR(client->players, player)
         {
-            if( !player->entity->alive )
+            entity_common_t * common = player->entity->common;
+            if( !common->alive )
             {
                 alive = false;
                 break;

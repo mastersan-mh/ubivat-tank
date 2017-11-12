@@ -14,15 +14,40 @@
 #include "model.h"
 #include "img.h"
 #include "server.h"
-#include "common/common_bstree.h"
 #include "vars.h"
+
+/* common */
+#define ENTITY_COMMON_STRUCT \
+        /* объект живой. влияет на победу игроков и на взаимодействие (touch). */ \
+        BOOL alive; \
+        /* позиция */ \
+        VECTOR2 origin_prev; \
+        VECTOR2 origin; \
+        /* направление взгляда/движения */ \
+        DIRECTION dir; \
+        /* статистика */ \
+        /* пройденое расстояние */ \
+        VECTOR1 stat_traveled_distance;
+
+#define ENTITY_COMMON_VARS \
+        VAR_DESCR( VARTYPE_BOOL     , entity_common_t, alive  ), \
+        VAR_DESCR( VARTYPE_VECTOR2  , entity_common_t, origin_prev), \
+        VAR_DESCR( VARTYPE_VECTOR2  , entity_common_t, origin     ), \
+        VAR_DESCR( VARTYPE_DIRECTION, entity_common_t, dir        ), \
+        VAR_DESCR( VARTYPE_VECTOR1  , entity_common_t, stat_traveled_distance)
+
+
+typedef struct entity_common_s
+{
+    ENTITY_COMMON_STRUCT;
+} entity_common_t;
 
 #define ENTITY_NAME_SIZE (64)
 
 #define origin_x origin[0]
 #define origin_y origin[1]
 
-#define ENTITY_HALFBODYBOX(entity) ((entity)->info->bodybox * 0.5)
+#define ENTITY_HALFBODYBOX(ENTITY) (((entity_t *)ENTITY)->info->bodybox * 0.5)
 
 /*
  * цикл по объектам одного определённого типа
@@ -34,19 +59,19 @@
         void x (struct entity_s * this, struct entity_s * that)
 
 #define ENTITY_FUNCTION_INIT(x) \
-        void x (entity_t * this, void * thisdata, const entity_t * parent)
+        void x (void /* entity_t */ * this, void * thisdata, void /* entity_t */ * parent)
 
 #define ENTITY_FUNCTION_DONE(x) \
-        void x (entity_t * this, void * thisdata)
+        void x (void /* entity_t */ * this, void * thisdata)
 
 #define ENTITY_FUNCTION_SPAWN(x) \
-        void x (entity_t * this, void * thisdata)
+        void x (void /* entity_t */ * this, void * thisdata)
 
 #define ENTITY_FUNCTION_HANDLE(x) \
-        void x (entity_t * this, void * thisdata)
+        void x (void /* entity_t */ * this, void * thisdata)
 
-#define ENTITY_FUNCTION_CLIENT_SPAWN(x) \
-        entity_t * x (const entity_t * this)
+#define ENTITY_FUNCTION_PLAYER_SPAWN(x) \
+        entity_t * x (void /* entity_t */ * this, void * storage)
 
 #define ENTITY_FUNCTION_NONE NULL
 
@@ -54,27 +79,28 @@
         void x (entity_t * this, void * thisdata, const char * action)
 
 
-#define ENTITY_ERASE(ent) (ent)->erase = true
+#define ENTITY_ERASE(ENTITY) entity_erase((ENTITY))
 
 /* entity является объектом типа entity_name */
 #define ENTITY_IS(entity, entity_name) \
-        ( strncmp( (entity)->info->name, (entity_name), ENTITY_NAME_SIZE ) == 0 )
+        ( strncmp( ((entity_t*)entity)->info->name, (entity_name), ENTITY_NAME_SIZE ) == 0 )
 
-#define ENTITY_ALLOW_HANDLE_SET(ent, bool_value) \
-        (ent)->allow_handle = (bool_value)
+#define ENTITY_IS_SPAWNED(ENTITY) \
+        entity_is_spawned((ENTITY))
 
-#define ENTITY_ALLOW_DRAW_SET(ent, bool_value) \
-        (ent)->allow_draw = (bool_value)
+#define ENTITY_UNSPAWN(ENTITY) \
+        entity_unspawn((ENTITY))
 
-#define ENTITY_IS_SPAWNED(ent) \
-        ((ent)->spawned == true)
+#define ENTITY_SHOW(ENTITY) \
+        entity_show((ENTITY))
 
-#define ENTITY_UNSPAWN(ent) \
-        (ent)->spawned = false
+#define ENTITY_HIDE(ENTITY) \
+        entity_hide((ENTITY))
 
-#define ENTITYINFO_VARS(xvars) \
-        .vars_num = ARRAYSIZE(xvars), \
-        .vars = xvars
+#define ENTITYINFO_VARS(TYPE, xvars) \
+        .vars_size = sizeof(TYPE), \
+        .vars_descr_num = ARRAYSIZE(xvars), \
+        .vars_descr = xvars
 
 #define ENTITYINFO_TOUCHS(xtouchs) \
         .entitytouchs_num = ARRAYSIZE(xtouchs), \
@@ -96,52 +122,43 @@ enum
 
 /*
  * список объектов одного типа, у которых
- * .erased == false и allow_handle == true
+ * .erased == false
  */
 typedef struct entity_s
 {
     struct entity_s * prev;
     struct entity_s * next;
 
+    const struct entityinfo_s * info;
+
     /* объект, за которым следит камера данного объекта, обычно равен this */
     struct entity_s * cam_entity;
 
     /* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
     struct entity_s * parent;
-    /* переменные */
-    var_t * vars; /* vardata_t */
-    /* удалить объект */
-    bool erase;
-    //позиция
-    vec2_t origin_prev;
-    vec2_t origin;
-    /* направление взгляда/движения */
-    direction_t dir;
-    /* объект показывать и обрабатывать */
-    bool allow_handle;
-    /* объект живой. влияет на победу игроков и на взаимодействие (touch). */
-    bool alive;
-    /* объект разрешено показывать. влияет только на рендер. */
-    bool allow_draw;
-    /*
-	Объект находится на карте, с ним можно взаимодействовать, он отрисовывается.
-	Ели функция info->spawn() не задана, объект всегда spawned.
-	При этом, если принудительно сделать объект не spawned, он никогда не появится,
-	потому-что info->handle() никогда не вызовется.
-	Ели функция info->spawn() задана, тогда изначально spawned = false
-     */
-    bool spawned;
 
-    /* статистика */
-    /* пройденое расстояние */
-    vec_t stat_traveled_distance;
-
-    const struct entityinfo_s * info;
     /* структура для проигрывания кардов моделей, связанных с объектом */
     struct ent_modelplayer_s * modelplayers;
 
-    /* extended data */
-    void * edata;
+    /* удалить объект */
+    bool erase;
+    /* объект "существует" */
+    bool exist;
+    /* объект "заморожен" */
+    bool freezed; /* temporary unused and not tested */
+    /*
+    Объект находится на карте, с ним можно взаимодействовать, он отрисовывается.
+    Если функция info->spawn() не задана, объект всегда spawned.
+    При этом, если принудительно сделать объект не spawned, он никогда не появится,
+    потому-что info->handle() никогда не вызовется.
+    Ели функция info->spawn() задана, тогда изначально spawned = false
+    */
+    bool spawned;
+    /* объект разрешено показывать. влияет только на рендер. */
+    bool allow_draw;
+
+    /* vars */
+    void * common; /* entity_common_t */
 } entity_t;
 
 typedef struct
@@ -149,7 +166,7 @@ typedef struct
     char * name;
     unsigned int startframe;
     unsigned int endframe;
-    void (*endframef)(entity_t * this, unsigned int imodel, char * actionname);
+    void (*endframef)(void * this, unsigned int imodel, char * actionname);
 } ent_modelaction_t;
 
 typedef struct
@@ -174,15 +191,6 @@ typedef struct ent_modelplayer_s
     float frame;
 } ent_modelplayer_t;
 
-/* описатель дополнительной переменной entity, используются в handler, передаются клиенту */
-typedef struct
-{
-    /* тип переменной */
-    vartype_t type;
-    /* имя переменной */
-    char * name;
-} entityvarinfo_t;
-
 typedef struct
 {
     const char * entityname;
@@ -199,37 +207,35 @@ typedef struct entityaction_s
 typedef struct entityinfo_s
 {
     char * name;
-    size_t edatasize;
 
     /* entity flags */
     int flags;
     /* для простоты все объекты квадратные */
     vec_t bodybox;
 
-    /* массив дополнительных переменных */
-    size_t vars_num;
-    entityvarinfo_t * vars;
+    /* размер буфера переменных */
+    size_t vars_size;
+    /* массив описателей переменных */
+    size_t vars_descr_num;
+    var_descr_t * vars_descr;
 
     /* размер массива моделей */
     size_t entmodels_num;
     /* массив моделей, связанных с объектом*/
     entitymodel_t * entmodels;
 
-    void (*init)(entity_t * this, void * thisdata, const entity_t * parent);
-    void (*done)(entity_t * this, void * thisdata);
+    void (*init)(void /* entity_t */ * this, void * thisdata, void /* entity_t */ * parent);
+    void (*done)(void /* entity_t */ * this, void * thisdata);
 
-    void (*spawn)(entity_t * this, void * thisdata);
+    void (*spawn)(void /* entity_t */ * this, void * thisdata);
 
-    void (*handle)(entity_t * this, void * thisdata);
+    void (*handle)(void /* entity_t */ * this, void * thisdata);
 
     /* соприкосновения объекта с другими объектами */
     size_t entitytouchs_num;
     entitytouch_t * entitytouchs;
 
-    entity_t * (*client_join)(const entity_t * this);
-
-    void * (*player_store)(const void * this_edata);
-    void (*player_restore)(entity_t * this, void * thisdata, const void * userstoredata);
+    ENTITY_FUNCTION_PLAYER_SPAWN((*player_spawn));
 
     /* массив действий, допустимых для entity */
     unsigned int actions_num;
@@ -243,25 +249,31 @@ extern void entity_register(const entityinfo_t * info);
 extern entity_t * entity_getfirst(const char * name);
 
 extern void entities_handle(void);
-extern entity_t * entries_client_join(void);
+extern entity_t * entity_player_spawn_random(void * storage);
 
 extern void entities_render(camera_t * cam);
 
-extern entity_t * entity_new(const char * name, vec_t x, vec_t y, direction_t dir, const entity_t * parent);
+extern void entity_respawn(entity_t * entity, const void * vars);
+
+extern void entity_erase(void * entity);
+extern bool entity_is_spawned(void * entity);
+extern void entity_unspawn(void * entity);
+extern void entity_show(void * entity);
+extern void entity_hide(void * entity);
+extern void * entity_parent(void * entity);
+extern void * entity_vars(void * entity);
+extern void entity_cam_set(void * entity, void * cam_entity);
+extern void entity_cam_reset(void * entity);
+
+extern entity_t * entity_new(const char * name, entity_t * parent, const var_value_t * vars_values, size_t vars_values_num);
+
 extern void entities_erase(void);
-
-extern vardata_t * entity_vardata_get(const entity_t * entity, const char * varname, vartype_t vartype);
-
-#define ENTITY_VARIABLE_INTEGER(entity, varname) \
-        entity_vardata_get((entity), (varname), VARTYPE_INTEGER)->value.i64
-#define ENTITY_VARIABLE_FLOAT(entity, varname) \
-        entity_vardata_get((entity), (varname), VARTYPE_FLOAT)->value.f
-#define ENTITY_VARIABLE_STRING(entity, varname) \
-        entity_vardata_get((entity), (varname), VARTYPE_STRING)->value.string
 
 extern void entity_model_play_start(entity_t * entity, unsigned int imodel, char * actionname);
 extern void entity_model_play_pause(entity_t * entity, unsigned int imodel);
 extern void entity_model_play_pause_all(entity_t * entity);
+
+extern void entity_restore(entity_t * entity, const void * vars);
 
 extern int entity_model_set(entity_t * entity, unsigned int imodel, const char * modelname);
 

@@ -10,104 +10,139 @@
 #include "common/common_hash.h"
 #include "game.h"
 
+#include <stddef.h>
 #include <string.h>
 
-/*
-static vardata_t defaultvardata_int = {
-		.name = "(null)",
-		.type = VARTYPE_INTEGER,
-		.value = {.i64 = 0}
-};
-static vardata_t defaultvardata_float = {
-		.name = "(null)",
-		.type = VARTYPE_FLOAT,
-		.value = {.f = 0.0f}
-};
-static vardata_t defaultvardata_string = {
-		.name = "(null)",
-		.type = VARTYPE_STRING,
-		.value = {.string = ""}
-};
-*/
-
-var_t * var_create(var_t ** root, const char *varname, vartype_t vartype)
+const var_descr_t * var_find(const var_descr_t * vars_descr, size_t vars_descr_num, const char * name)
 {
-	vardata_t * vardata = Z_malloc(sizeof(vardata_t));
-	strncpy(vardata->name, varname, VARNAME_SIZE);
-	vardata->type = vartype;
-	switch(vardata->type)
-	{
-		case VARTYPE_INTEGER: vardata->value.i64 = 0; break;
-		case VARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
-		case VARTYPE_STRING : vardata->value.string = NULL; break;
-	}
-	return (var_t *)tree_node_insert(root, HASH32(varname), vardata);
+    for(size_t i = 0; i < vars_descr_num; i++)
+    {
+        const var_descr_t * var_descr = &vars_descr[i];
+        if(strncmp(var_descr->name, name, VARNAME_SIZE) == 0)
+            return var_descr;
+    }
+    return NULL;
 }
 
-var_t * var_find(const var_t * root, const char * varname)
+/**
+ * @brief Очистка памяти переменных
+ */
+void vars_free(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num)
 {
-	return (var_t *)tree_node_find(root, HASH32(varname));
+    vars_dump(vars, vars_descr, vars_descr_num, "==== vars_free():");
+
+    for(size_t i = 0; i < vars_descr_num; i++)
+    {
+        const var_descr_t * var_descr = &vars_descr[i];
+        if(var_descr->type == VARTYPE_STRING)
+        {
+            char * str;
+            memcpy(&str, vars + var_descr->ofs, var_descr->size);
+            Z_free(str);
+        }
+    }
 }
 
-static void vardata_delete(void * data)
+/**
+ * @brief Вычислить размер буфера для сохранения переменых в двоичном виде
+ */
+size_t var_buffersize_calculate(const var_descr_t * vars_descr, size_t vars_descr_num)
 {
-	vardata_t * vardata = data;
-	switch(vardata->type)
-	{
-		case VARTYPE_INTEGER: vardata->value.i64 = 0; break;
-		case VARTYPE_FLOAT  : vardata->value.f   = 0.0f; break;
-		case VARTYPE_STRING   :
-			VARIABLE_STRING_ERASE(vardata->value.string);
-			break;
-	}
-	Z_free(data);
+    size_t bufsize = 0;
+    for(size_t i = 0; i < vars_descr_num; i++)
+    {
+        bufsize += vars_descr[i].size;
+    }
+    return bufsize;
 }
 
-void vars_delete(var_t ** root)
+
+void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num, const char * title)
 {
-	tree_delete((*root), vardata_delete);
-	(*root) = NULL;
-}
+    if(title)
+    {
+        game_console_send(title);
+    }
 
-void vars_foreach(var_t * root, void (*action_cb)(vardata_t * vardata, void * args), void * args)
-{
-	tree_foreach(root, (void (*)(void *, void *)) action_cb, args);
-}
+    static const char * list[] =
+    {
+            "BOOL",
+            "INTEGER",
+            "FLOAT",
+            "VECTOR1",
+            "VECTOR2",
+            "DIRECTION",
+            "STRING",
+    };
 
-void vars_dump(var_t * root, const char * title)
-{
-	if(title)
-	{
-		game_console_send(title);
-	}
+    size_t i;
+    for( i = 0; i < vars_descr_num; i++)
+    {
+        char buf[64];
+        const var_descr_t * var_descr = &vars_descr[i];
 
-	static const char * list[] =
-	{
-			"INTEGER",
-			"FLOAT",
-			"STRING",
-	};
+        char * value = (char*)vars + var_descr->ofs;
 
-	void var_dump(vardata_t * vardata, void * args)
-	{
-		switch(vardata->type)
-		{
-			case VARTYPE_INTEGER:
-				game_console_send("  var dump: (%s)%s = %ld",
-					list[vardata->type], vardata->name, (long)vardata->value.i64);
-				break;
-			case VARTYPE_FLOAT:
-				game_console_send("  var dump: (%s)%s = %f",
-					list[vardata->type], vardata->name, vardata->value.f);
-				break;
-			case VARTYPE_STRING:
-				game_console_send("  var dump: (%s)%s = %s",
-					list[vardata->type], vardata->name, vardata->value.string);
-				break;
-		}
-	}
+#define MIN(a, b) ((a)<(b) ? (a) : (b))
 
-	vars_foreach(root, var_dump, NULL);
+        switch(var_descr->type)
+        {
+            case VARTYPE_BOOL:
+                strcpy(buf, value != 0 ? "TRUE" : "FALSE");
+                break;
+            case VARTYPE_INTEGER:
+            {
+                INTEGER v;
+                memcpy(&v, value, MIN(var_descr->size, sizeof(INTEGER)));
+                sprintf(buf, "%lld", (long long)v);
+                break;
+            }
+            case VARTYPE_FLOAT:
+            {
+                FLOAT v;
+                memcpy(&v, value, MIN(var_descr->size, sizeof(FLOAT)));
+                sprintf(buf, "%lf", (double)v);
+                break;
+            }
+            case VARTYPE_VECTOR1:
+            {
+                VECTOR1 v;
+                memcpy(&v, value, MIN(var_descr->size, sizeof(VECTOR1)));
+                sprintf(buf, "%lf", (double)v);
+                break;
+            }
+            case VARTYPE_VECTOR2:
+            {
+                VECTOR2 v;
+                memcpy(&v, value, MIN(var_descr->size, sizeof(VECTOR2)));
+                sprintf(buf, "%lf %lf", v[0], v[1]);
+                break;
+            }
+            case VARTYPE_DIRECTION:
+            {
+                DIRECTION v;
+                memcpy(&v, value, MIN(var_descr->size, sizeof(DIRECTION)));
+                switch(v)
+                {
+                    case DIR_UP   : strcpy(buf, "UP"   ); break;
+                    case DIR_DOWN : strcpy(buf, "DOWN" ); break;
+                    case DIR_LEFT : strcpy(buf, "LEFT" ); break;
+                    case DIR_RIGHT: strcpy(buf, "RIGHT"); break;
+                    default: strcpy(buf, "???");
+                }
+                break;
+            }
+            case VARTYPE_STRING:
+            {
+                char * str;
+                memcpy(&str, value, MIN(var_descr->size, sizeof(STRING)));
+                strncpy(buf, str, 64);
+                break;
+            }
+        }
+        game_console_send("  var dump: (%s)%s = %s", list[var_descr->type], var_descr->name, buf);
+    }
+
 }
 
 

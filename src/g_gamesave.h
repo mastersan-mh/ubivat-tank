@@ -26,18 +26,6 @@ typedef struct
 
 } ATTR_PACKED gamesave_data_header_t;
 
-typedef struct
-{
-	uint32_t fragstotal;
-	uint32_t frags;
-	uint32_t scores;
-	int16_t health;
-	int16_t armor;
-	int16_t ammo1;
-	int16_t ammo2;
-	int16_t ammo3;
-} ATTR_PACKED gamesave_data_player_t;
-
 /* сохранение иры */
 typedef struct
 {

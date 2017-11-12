@@ -5,13 +5,13 @@
  *      Author: mastersan
  */
 
-#include "entity.h"
 #include "model.h"
 #include "ent_items.h"
 
-static entityvarinfo_t item_vars[] =
+static var_descr_t item_vars[] =
 {
-		{ VARTYPE_INTEGER, "amount" }
+        ENTITY_COMMON_VARS,
+        VAR_DESCR( VARTYPE_INTEGER, entity_item_t, amount )
 };
 
 static entitymodel_t item_scores_models[] =
@@ -61,67 +61,52 @@ static entitymodel_t item_ammo_mine_models[] =
 
 static const entityinfo_t item_scores_reginfo = {
 		.name = "item_scores",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(item_vars),
+		ENTITYINFO_VARS(entity_item_t, item_vars),
 		ENTITYINFO_ENTMODELS(item_scores_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 static const entityinfo_t item_health_reginfo = {
 		.name = "item_health",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(item_vars),
+		ENTITYINFO_VARS(entity_item_t, item_vars),
 		ENTITYINFO_ENTMODELS(item_health_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 static const entityinfo_t item_armor_reginfo = {
 		.name = "item_armor",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(item_vars),
+		ENTITYINFO_VARS(entity_item_t, item_vars),
 		ENTITYINFO_ENTMODELS(item_armor_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 static const entityinfo_t item_ammo_missile_reginfo = {
 		.name = "item_ammo_missile",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(item_vars),
+		ENTITYINFO_VARS(entity_item_t, item_vars),
 		ENTITYINFO_ENTMODELS(item_ammo_missile_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 static const entityinfo_t item_ammo_mine_reginfo = {
 		.name = "item_ammo_mine",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(item_vars),
+		ENTITYINFO_VARS(entity_item_t, item_vars),
 		ENTITYINFO_ENTMODELS(item_ammo_mine_models),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL,
 };
 
 void entity_items_init(void)

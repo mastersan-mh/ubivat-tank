@@ -52,6 +52,7 @@ direction_t entity_direction_invert(direction_t dir)
  */
 void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
 {
+    entity_common_t * common = this->common;
 	vec_t dway = speed * dtimed1000;
 	vec_t bodybox = this->info->bodybox;
 	vec_t halfbox = bodybox/2;
@@ -60,18 +61,18 @@ void entity_move(entity_t * this, direction_t dir, vec_t speed, bool check_clip)
 	if(check_clip) /* FIXME: костыль */
 	{
 		/* найдем препятствия */
-		map_clip_find_near(this->origin, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
+		map_clip_find_near(common->origin, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
 		if(dist < dway + halfbox)
 			dway = dist - halfbox;
 	}
 
 	switch(dir)
 	{
-	case DIR_UP   : this->origin[1] += dway; break;
-	case DIR_DOWN : this->origin[1] -= dway; break;
-	case DIR_LEFT : this->origin[0] -= dway; break;
-	case DIR_RIGHT: this->origin[0] += dway; break;
+	case DIR_UP   : common->origin[1] += dway; break;
+	case DIR_DOWN : common->origin[1] -= dway; break;
+	case DIR_LEFT : common->origin[0] -= dway; break;
+	case DIR_RIGHT: common->origin[0] += dway; break;
 	}
 	//подсчитываем пройденный путь
-	this->stat_traveled_distance += VEC_ABS(dway);
+	common->stat_traveled_distance += VEC_ABS(dway);
 }

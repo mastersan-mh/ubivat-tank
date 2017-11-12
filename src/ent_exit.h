@@ -10,6 +10,14 @@
 #ifndef SRC_ENT_EXIT_H_
 #define SRC_ENT_EXIT_H_
 
-void entity_exit_init(void);
+#include "entity.h"
+
+typedef struct
+{
+    ENTITY_COMMON_STRUCT;
+    STRING text;
+} entity_exit_t;
+
+extern void entity_exit_init(void);
 
 #endif /* SRC_ENT_EXIT_H_ */

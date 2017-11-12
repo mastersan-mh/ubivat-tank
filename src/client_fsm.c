@@ -36,12 +36,6 @@
 
 void client_fsm(const game_client_event_t * event)
 {
-    bool statechanged = false;
-    if(client.gamestate_prev != client.gamestate)
-    {
-        client.gamestate_prev = client.gamestate;
-        statechanged = true;
-    }
     client_gamestate_t gamestate = client.gamestate;
 
     switch(client.gamestate)

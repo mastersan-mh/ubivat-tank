@@ -46,7 +46,6 @@ typedef struct
     client_state_t state;
 
     client_gamestate_t gamestate;
-    client_gamestate_t gamestate_prev;
 
     //состояние игры
     struct

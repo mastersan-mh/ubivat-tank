@@ -228,7 +228,6 @@ void client_handle(void)
     {
         case CLIENT_STATE_IDLE:
             client.gamestate = CLIENT_GAMESTATE_1_NOGAME;
-            client.gamestate_prev = CLIENT_GAMESTATE_6_INTERMISSION;
             break;
         case CLIENT_STATE_INIT:
 

@@ -10,8 +10,12 @@
 #ifndef SRC_ENT_EXPLODE_H_
 #define SRC_ENT_EXPLODE_H_
 
-#include "vec.h"
 #include "sound.h"
+
+typedef struct
+{
+    ENTITY_COMMON_STRUCT;
+} entity_explode_t;
 
 typedef enum
 {

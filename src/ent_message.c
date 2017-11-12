@@ -8,21 +8,19 @@
 #include "entity.h"
 #include "ent_message.h"
 
-static entityvarinfo_t message_vars[] =
+static var_descr_t message_vars[] =
 {
-		{ VARTYPE_STRING, "text" }
+        ENTITY_COMMON_VARS,
+        VAR_DESCR( VARTYPE_STRING, entity_message_t, text )
 };
 
 static const entityinfo_t message_reginfo = {
 		.name = "message",
-		.edatasize = 0,
 		.bodybox = 16.0f,
-		ENTITYINFO_VARS(message_vars),
+		ENTITYINFO_VARS(entity_message_t, message_vars),
 		.init = ENTITY_FUNCTION_NONE,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
-		.player_store = NULL,
-		.player_restore = NULL
 };
 
 void entity_message_init(void)

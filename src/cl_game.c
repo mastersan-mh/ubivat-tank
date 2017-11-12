@@ -69,7 +69,7 @@ static void cl_game_state_intermission_draw(void)
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
     video_printf(108,191,"НАЖМИ ПРОБЕЛ");
-/* TODO
+/* TODO cl_game_state_intermission_draw
     int i;
     int num = server_client_num_get();
 
@@ -135,7 +135,7 @@ static void cl_draw(void)
             );
             if(entity->cam_entity)
             {
-                VEC2_COPY(entity->cam_entity->origin, cam->origin);
+                VEC2_COPY( ((entity_common_t*)(entity->cam_entity->common))->origin, cam->origin);
             }
             else
             {
