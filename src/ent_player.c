@@ -67,7 +67,7 @@ void player_spawn_init(void * player , void * spawn)
 
     spawn_vars_t * sp = entity_vars(spawn);
 
-    VEC2_COPY(sp->origin, pvars->origin);
+    VEC2_COPY(pvars->origin, sp->origin);
 
     var_int_t spawn_scores = sp->item_scores;
     if(0 <= spawn_scores && spawn_scores <= PLAYER_SCORES_MAX)
@@ -721,10 +721,10 @@ static void player_handle_common(void * player, player_vars_t * pl)
         {
         case DIR_UP:
         case DIR_DOWN:
-            VEC2_COPY(pl->origin, Sorig);
+            VEC2_COPY(Sorig, pl->origin);
             Sorig[0] -= quarterbox;
             map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &L);
-            VEC2_COPY(pl->origin, Sorig);
+            VEC2_COPY(Sorig, pl->origin);
             Sorig[0] += quarterbox;
             map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &R);
             if((halfbox<L) && (R-1<=halfbox)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
@@ -732,10 +732,10 @@ static void player_handle_common(void * player, player_vars_t * pl)
             break;
         case DIR_LEFT:
         case DIR_RIGHT:
-            VEC2_COPY(pl->origin, Sorig);
+            VEC2_COPY(Sorig, pl->origin);
             Sorig[1] -= quarterbox;
             map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &D);
-            VEC2_COPY(pl->origin, Sorig);
+            VEC2_COPY(Sorig, pl->origin);
             Sorig[1] += quarterbox;
             map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &U);
             if((halfbox < U)&&(D-1 <= halfbox)) entity_move(player, DIR_UP  , speed_s, true);//strafe up

@@ -65,7 +65,7 @@ static void explode_touch_common(entity_t * this, entity_t * that, const explode
     entity_explode_t * this_vars = entity_vars(this);
     entity_common_t  * that_vars = entity_vars(that);
 
-    VEC2_SUB(that_vars->origin, this_vars->origin, d);
+    VEC2_SUB(d, that_vars->origin, this_vars->origin);
     if(
             (VEC_ABS(d[0]) <= that_halfbox) &&
             (VEC_ABS(d[1]) <= that_halfbox)

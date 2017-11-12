@@ -60,7 +60,7 @@ static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
 
     /*
     player_vars_t * vars = entity_vars(player);
-    VEC2_COPY(sp->origin, vars->origin);
+    VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
     vars->scores = sp->item_scores;
     vars->item_health = sp->item_health;

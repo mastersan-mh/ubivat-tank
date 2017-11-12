@@ -632,7 +632,7 @@ void entities_handle(void)
                 continue;
             }
 
-            VEC2_COPY(common->origin, common->origin_prev);
+            VEC2_COPY(common->origin_prev, common->origin);
             if(info->handle != NULL)
             {
                 info->handle(entity, common);

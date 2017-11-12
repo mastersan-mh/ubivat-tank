@@ -135,12 +135,12 @@ static void cl_draw(void)
             );
             if(entity->cam_entity)
             {
-                VEC2_COPY( ((entity_common_t*)(entity->cam_entity->common))->origin, cam->origin);
+                VEC2_COPY(cam->origin, ((entity_common_t*)(entity->cam_entity->common))->origin);
             }
             else
             {
                 static vec2_t cam_origin_default = {0.0, 0.0};
-                VEC2_COPY(cam_origin_default, cam->origin);
+                VEC2_COPY(cam->origin, cam_origin_default);
             }
             client_game_draw_cam(cam);
             ui_draw(cam, entity);

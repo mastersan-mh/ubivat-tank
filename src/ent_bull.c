@@ -54,7 +54,7 @@ static void bull_artillery_detonate(void * this, entity_t * that)
     void * explode = entity_new("explode_artillery", entity_parent(this), NULL, 0);
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(explode);
-    VEC2_COPY(this_vars->origin, explode_vars->origin);
+    VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
 
     ENTITY_ERASE(this);
@@ -69,7 +69,7 @@ static void bull_missile_detonate(void * this, entity_t * that)
 
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
-    VEC2_COPY(this_vars->origin, explode_vars->origin);
+    VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
 
 
@@ -88,7 +88,7 @@ static void bull_mine_detonate(entity_t * this, entity_t * that)
 
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
-    VEC2_COPY(this_vars->origin, explode_vars->origin);
+    VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
 
     ENTITY_ERASE(this);
