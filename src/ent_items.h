@@ -12,7 +12,7 @@
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
     INTEGER amount;
 } entity_item_t;
 

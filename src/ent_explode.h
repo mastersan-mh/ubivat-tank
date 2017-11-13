@@ -14,7 +14,7 @@
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
 } entity_explode_t;
 
 typedef enum

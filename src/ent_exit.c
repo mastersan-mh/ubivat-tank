@@ -11,11 +11,11 @@
 
 static var_descr_t exit_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
         VAR_DESCR( VARTYPE_STRING, entity_exit_t, text)
 };
 
-static entitymodel_t exit_models[] =
+static entity_model_t exit_models[] =
 {
 		{
 				.modelname = "exit",

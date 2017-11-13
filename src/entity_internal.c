@@ -68,8 +68,8 @@ static void reparent(const entity_t * oldparent, const entity_t * newparent)
 
 static bool is_touched(entity_t * this, entity_t * that)
 {
-    entity_common_t * thisc = this->vars;
-    entity_common_t * thatc = that->vars;
+    entity_vars_common_t * thisc = this->vars;
+    entity_vars_common_t * thatc = that->vars;
 
     vec_t this_halfbox = this->info->bodybox * 0.5;
     vec_t that_halfbox = that->info->bodybox * 0.5;
@@ -86,7 +86,7 @@ static bool is_touched(entity_t * this, entity_t * that)
  */
 static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
 {
-    entity_common_t * common = entity->vars;
+    entity_vars_common_t * common = entity->vars;
     if(
             entity->freezed ||
             !entity->spawned ||
@@ -114,7 +114,7 @@ static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
             entity_t * that;
             for(that = entityreg->entities; that; that = that->next)
             {
-                entity_common_t * thatc = entity->vars;
+                entity_vars_common_t * thatc = entity->vars;
                 if(
                         !that->erase &&
                         !that->freezed &&
@@ -166,41 +166,41 @@ static void P_entity_modelplay(const entityinfo_t * info, entity_t * entity)
     size_t ientmodel;
     for(ientmodel = 0; ientmodel < info->entmodels_num; ientmodel++)
     {
-        ent_modelplayer_t * modelplayer = &entity->modelplayers[ientmodel];
+        entity_modelplayer_t * modelplayer = &entity->modelplayers[ientmodel];
         if(!(
                 modelplayer->model != NULL &&
                 modelplayer->model->frames != NULL &&
                 modelplayer->model->fps > 0 &&
-                modelplayer->action != NULL
+                modelplayer->framesseq != NULL
         ))
             continue;
 
-        const ent_modelaction_t * action = modelplayer->action;
+        const entity_framessequence_t * action = modelplayer->framesseq;
         bool start;
         bool end;
         model_nextframe(
             &modelplayer->frame,
             modelplayer->model->fps,
-            modelplayer->action->startframe,
-            modelplayer->action->endframe,
+            modelplayer->framesseq->firstframe,
+            modelplayer->framesseq->lastframe,
             &start, &end
         );
-        if(start && action != NULL && action->startframef != NULL)
+        if(start && action != NULL && action->firstframef != NULL)
         {
-            action->startframef(
+            action->firstframef(
                 (ENTITY)entity,
                 ientmodel,
-                action->name
+                action->seqname
             );
         }
 
-        if(end && action != NULL && action->endframef != NULL)
+        if(end && action != NULL && action->lastframef != NULL)
         {
-            modelplayer->action = NULL;
-            action->endframef(
+            modelplayer->framesseq = NULL;
+            action->lastframef(
                 (ENTITY)entity,
                 ientmodel,
-                action->name
+                action->seqname
             );
         }
 
@@ -245,18 +245,20 @@ static void P_entity_move(const entityinfo_t * info, entity_t * entity)
      */
 }
 
-const ent_modelaction_t * entity_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname)
+const entity_framessequence_t * entity_reginfo_framessequence_get(const entityinfo_t * info, unsigned int modelId, const char * seqname)
 {
-    if(info->entmodels == NULL)
+    if(!info->framessequences)
         return NULL;
-    entitymodel_t * entmodel = &info->entmodels[imodel];
-    if(entmodel == NULL)
-        return NULL;
-    int i;
-    for(i = 0; i < entmodel->actions_num; i++)
+    size_t i;
+    for(i = 0; i < info->framessequences_num; i++)
     {
-        if(!strcmp(entmodel->actions[i].name, actionname))
-            return &entmodel->actions[i];
+        const entity_framessequence_t * modelaction = &info->framessequences[i];
+        if(
+                modelaction->modelId == modelId &&
+                strcmp(modelaction->seqname, seqname) == 0
+        )
+            return modelaction;
+
     }
     return NULL;
 }
@@ -276,7 +278,7 @@ void entities_handle(void)
         entity_t * entity = entreg->entities;
         while(entity)
         {
-            entity_common_t * vars = entity->vars;
+            entity_vars_common_t * vars = entity->vars;
             if(entity->erase)
             {
 
@@ -340,10 +342,10 @@ static void ent_models_render(
             90.0f,  /* E */
     };
 
-    entity_common_t * common = entity->vars;
+    entity_vars_common_t * common = entity->vars;
     vec2_t * pos = &common->origin;
     const struct entityinfo_s * info = entity->info;
-    entitymodel_t * ent_models = info->entmodels;
+    entity_model_t * ent_models = info->entmodels;
     size_t models_num = info->entmodels_num;
 
 
@@ -353,8 +355,8 @@ static void ent_models_render(
 
     for( i = 0; i < models_num; i++ )
     {
-        entitymodel_t * ent_model = &ent_models[i];
-        ent_modelplayer_t * modelplayer = &entity->modelplayers[i];
+        entity_model_t * ent_model = &ent_models[i];
+        entity_modelplayer_t * modelplayer = &entity->modelplayers[i];
         if(!modelplayer)
         {
             game_console_send("Error: entity \"%s\", imodel %d, modelplayer == NULL.", info->name, (int)i);
@@ -399,7 +401,7 @@ void entities_render(camera_t * cam)
             //int viewbox_half = entity->img->img_sx;
             int viewbox_half = 16;
 
-            entity_common_t * common = entity->vars;
+            entity_vars_common_t * common = entity->vars;
 
             if(
                     entity->allow_draw &&
@@ -513,7 +515,7 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
 
     if(entityinfo->entmodels_num > 0)
     {
-        entity->modelplayers = Z_malloc(entityinfo->entmodels_num * sizeof(ent_modelplayer_t));
+        entity->modelplayers = Z_malloc(entityinfo->entmodels_num * sizeof(entity_modelplayer_t));
 
         for( i = 0; i < entityinfo->entmodels_num; i++)
         {
@@ -523,7 +525,7 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
 
     entity->spawned = false;
 
-    entity_common_t * common = entity->vars;
+    entity_vars_common_t * common = entity->vars;
     void * storage = entity_build_storage(name, vars_values, vars_values_num);
     entity_restore((ENTITY)entity, storage);
     if(entityinfo->init)
@@ -578,7 +580,7 @@ void entity_respawn(entity_t * entity, const void * vars)
     if(info->spawn)
         info->spawn((ENTITY)entity);
     entity->spawned = true;
-    entity_common_t * common = entity->vars;
+    entity_vars_common_t * common = entity->vars;
     common->alive = true;
 }
 

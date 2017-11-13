@@ -143,7 +143,7 @@ extern server_player_t * server_player_create();
 extern void server_player_delete(server_player_t * player);
 extern void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player);
 
-extern const entityaction_t * server_entity_action_find(const entity_t * ent, const char * action_str);
+extern const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
 
 extern int server_gamesave_load(int isave);

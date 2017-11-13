@@ -14,7 +14,7 @@
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
 } bull_vars_t;
 
 void entity_bull_init(void);

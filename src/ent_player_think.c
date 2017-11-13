@@ -242,7 +242,7 @@ static void ctrl_AI_checkdangers(ENTITY player)
 static bool turn_to_target(ENTITY player, ENTITY target)
 {
     player_vars_t * pl = entity_vars(player);
-    entity_common_t * trg = entity_vars(target);
+    entity_vars_common_t * trg = entity_vars(target);
 	/* повернёмся к противнику */
 	if( (pl->origin_x - ENTITY_HALFBODYBOX(player) < trg->origin_x) && (trg->origin_x < pl->origin_x + ENTITY_HALFBODYBOX(player)) )
 	{
@@ -359,7 +359,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 		return;
 	}
 
-    entity_common_t * trg = entity_vars(target);
+    entity_vars_common_t * trg = entity_vars(target);
 
 	if
 	(
@@ -424,7 +424,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 static void ctrl_AI_findenemy(ENTITY player, ENTITY target)
 {
     player_vars_t * pl = entity_vars(player);
-    entity_common_t * trg = entity_vars(target);
+    entity_vars_common_t * trg = entity_vars(target);
 
 	if(
 			(160<VEC_ABS(pl->origin_x-trg->origin_x))||
@@ -490,7 +490,7 @@ void think_enemy(ENTITY player)
 	if(!target)
 		return;
 
-    entity_common_t * trg = entity_vars(target);
+    entity_vars_common_t * trg = entity_vars(target);
 
 	if(!trg->alive)
 		pl->attack = false;

@@ -12,7 +12,7 @@
 
 static var_descr_t spawn_player_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
         VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_scores ),
         VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_health ),
         VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_armor  ),

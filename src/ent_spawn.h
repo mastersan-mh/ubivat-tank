@@ -14,13 +14,13 @@
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
     INTEGER item_scores;
     INTEGER item_health;
     INTEGER item_armor ;
     INTEGER item_ammo_missile;
     INTEGER item_ammo_mine   ;
-}spawn_vars_t;
+} spawn_vars_t;
 
 extern void entity_spawn_init(void);
 

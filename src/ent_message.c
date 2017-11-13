@@ -10,7 +10,7 @@
 
 static var_descr_t message_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
         VAR_DESCR( VARTYPE_STRING, entity_message_t, text )
 };
 

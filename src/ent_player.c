@@ -139,71 +139,61 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
         { { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"}  /* BOSS */
 };
 
-static void tank_common_modelaction_endframef(ENTITY entity, unsigned int imodel, char * actionname)
+static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int modelId, const char * actionname)
 {
-    entity_model_play_start(entity, imodel, actionname);
+    entity_model_play_start(entity, modelId, actionname);
 }
-static const ent_modelaction_t tank_modelactions[] =
+static const entity_framessequence_t tank_modelactions[] =
 {
         {
-                .name = "run",
-                .startframe = 0,
-                .endframe = 3,
-                .endframef = tank_common_modelaction_endframef
+                .modelId = 0,
+                .seqname = "run",
+                .firstframe = 0,
+                .firstframef = NULL,
+                .lastframe = 3,
+                .lastframef = tank_common_modelaction_lastframef
         }
 };
 
-static entitymodel_t tank_player_models[] =
+static entity_model_t tank_player_models[] =
 {
         {
                 .modelname = "tank1",
                 .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-                .actions_num = 1,
-                .actions = tank_modelactions
+                .translation = { 0.0, 0.0 }
         },
         {
                 .modelname = "flag_player",
                 .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-                .actions_num = 0,
-                .actions = NULL
+                .translation = { 0.0, 0.0 }
         }
 };
 
-static entitymodel_t tank_enemy_models[] =
+static entity_model_t tank_enemy_models[] =
 {
         {
                 .modelname = "tank1",
                 .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-                .actions_num = 1,
-                .actions = tank_modelactions
+                .translation = { 0.0, 0.0 }
         },
         {
                 .modelname = "flag_enemy",
                 .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-                .actions_num = 0,
-                .actions = NULL
+                .translation = { 0.0, 0.0 }
         }
 };
 
-static entitymodel_t tank_boss_models[] =
+static entity_model_t tank_boss_models[] =
 {
         {
                 .modelname = "tank1",
                 .modelscale = 16.0f / 2.0f,
                 .translation = { 0.0, 0.0 },
-                .actions_num = 1,
-                .actions = tank_modelactions
         },
         {
                 .modelname = "flag_boss",
                 .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-                .actions_num = 0,
-                .actions = NULL
+                .translation = { 0.0, 0.0 }
         }
 };
 
@@ -351,7 +341,7 @@ ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 static var_descr_t player_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
         VAR_DESCR( VARTYPE_INTEGER, player_vars_t, fragstotal), /* фрагов за пройденые карты */
         VAR_DESCR( VARTYPE_INTEGER, player_vars_t, frags      ), /* фрагов за карту */
         VAR_DESCR( VARTYPE_INTEGER, player_vars_t, scores     ), /* набрано очков */
@@ -375,7 +365,7 @@ static entitytouch_t player_touchs[] =
         { "exit"   , player_touch_exit    },
 };
 
-static entityaction_t player_actions[] =
+static entity_action_t player_actions[] =
 {
         {"+move_north", player_action_move_north_on },
         {"-move_north", player_action_move_north_off},
@@ -458,111 +448,6 @@ ENTITY_FUNCTION_HANDLE(boss_handle)
 {
     think_enemy(this);
     player_handle_common(this);
-}
-
-/*
- * набор и проверка кодов (добавление 10.05.2006)
- */
-void player_checkcode(void)
-{
-    /*
-
-	static char codebuf[17];
-	static int codecount = 0;
-	static long codetimer = 0;
-
-	bool allow;
-	char key;
-
-	if(codetimer<10)
-	{
-		codetimer += game.P0->time.delta;
-	}
-	else
-	{
-		if(!keypressed())
-		{
-			if(codetimer<100) codetimer += game.P0->time.delta;
-			else
-			{
-				codebuf[0] = 0;
-				codecount = 0;
-			}
-		}
-		else
-		{
-			key = readkey();
-			if(key == 0) readkey();
-			else {
-				allow = checkchar(key);
-				if(allow) {
-					codetimer = 0;
-					if(codecount<16) {
-						codebuf[codecount] = strZ_UPcheng(key);
-						codecount++;
-						codebuf[codecount] = 0;
-
-						if(strcmp(codebuf, code_levelup)==0) {
-							game.P0->charact.scores += 200;
-							if(c_score_max<game.P0->charact.scores) game.P0->charact.scores = c_score_max;
-							player_class_init(game.P0);
-							if(game.P1) {
-								game.P1->charact.scores += 200;
-								if(c_score_max<game.P1->charact.scores) game.P1->charact.scores = c_score_max;
-								player_class_init(game.P1);
-							};
-						};
-
-						if(strcmp(codebuf,code_health) == 0) {
-							game.P0->charact.health = game.P0->charact.healthmax;
-							if(game.P1) game.P1->charact.health = game.P1->charact.healthmax;
-						};
-
-						if(strcmp(codebuf,code_armor) == 0) {
-							game.P0->charact.armor = game.P0->charact.armormax;
-							if(game.P1) game.P1->charact.armor = game.P1->charact.armormax;
-						};
-
-						if(strcmp(codebuf,code_ammo) == 0) {
-							if(game.P0->w.ammo[1] != c_p_WEAP_notused)
-								game.P0->w.ammo[1] = wtable[1].ammo;
-							if(game.P0->w.ammo[2] != c_p_WEAP_notused)
-								game.P0->w.ammo[2] = wtable[2].ammo;
-							if(game.P1) {
-								if(game.P1->w.ammo[1] != c_p_WEAP_notused)
-									game.P1->w.ammo[1] = wtable[1].ammo;
-								if(game.P1->w.ammo[2] != c_p_WEAP_notused)
-									game.P1->w.ammo[2] = wtable[2].ammo;
-							};
-						};
-
-						if(strcmp(codebuf,code_all) == 0) {
-							game.P0->charact.health = game.P0->charact.healthmax;
-							game.P0->charact.armor = game.P0->charact.armormax;
-							if(game.P0->w.ammo[1] != c_p_WEAP_notused)
-								game.P0->w.ammo[1] = wtable[1].ammo;
-							if(game.P0->w.ammo[2] != c_p_WEAP_notused)
-								game.P0->w.ammo[2] = wtable[2].ammo;
-							if(game.P1) {
-								game.P1->charact.health = game.P1->charact.healthmax;
-								game.P1->charact.armor = game.P1->charact.armormax;
-								if(game.P1->w.ammo[1] != c_p_WEAP_notused)
-									game.P1->w.ammo[1] = wtable[1].ammo;
-								if(game.P1->w.ammo[2] != c_p_WEAP_notused)
-									game.P1->w.ammo[2] = wtable[2].ammo;
-							};
-						};
-
-					}
-					else {
-						codebuf[0] = 0;
-						codecount = 0;
-					}
-				}
-			}
-		}
-	}
-     */
 }
 
 /*
@@ -656,7 +541,7 @@ static void player_handle_common(ENTITY player)
         if(entity_is_SPAWNED(player))
         {
             ENTITY e = entity_new("explode_missile", player);
-            entity_common_t * vars = entity_vars(e);
+            entity_vars_common_t * vars = entity_vars(e);
             VEC2_COPY(vars->origin, pl->origin);
             vars->dir = pl->dir;
 
@@ -935,6 +820,7 @@ static const entityinfo_t player_reginfo = {
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars_t, player_vars),
+        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         ENTITYINFO_ENTMODELS(tank_player_models),
         .init = player_init,
         .done = player_done,
@@ -949,6 +835,7 @@ static const entityinfo_t enemy_reginfo = {
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars_t, player_vars),
+        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         ENTITYINFO_ENTMODELS(tank_enemy_models),
         .init = enemy_init,
         .done = enemy_done,
@@ -960,6 +847,7 @@ static const entityinfo_t boss_reginfo = {
         .flags = ENTITYFLAG_SOLIDWALL,
         .bodybox = 16,
         ENTITYINFO_VARS(player_vars_t, player_vars),
+        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         ENTITYINFO_ENTMODELS(tank_boss_models),
         .init = boss_init,
         .done = boss_done,

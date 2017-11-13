@@ -16,34 +16,34 @@
 
 static var_descr_t bull_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
 };
 
 typedef enum
 {
-	BULL_ARTILLERY,
-	BULL_MISSILE,
-	BULL_MINE,
-	BULL_NUM
+    BULL_ARTILLERY,
+    BULL_MISSILE,
+    BULL_MINE,
+    BULL_NUM
 } bulltype_t;
 
 typedef struct
 {
-	//повреждение
-	int damage;
-	//повреждение
-	int selfdamage;
-	//дальность
-	vec_t range;
-	//начальная скорость пули
-	vec_t speed;
+    //повреждение
+    int damage;
+    //повреждение
+    int selfdamage;
+    //дальность
+    vec_t range;
+    //начальная скорость пули
+    vec_t speed;
 } bullinfo_t;
 
 static const bullinfo_t bullinfo_table[BULL_NUM] =
 {
-		{ 15,   7,  -1,  75 },
-		{100,  50,  -1,  80 },
-		{200, 100, 100,  80 }
+        { 15,   7,  -1,  75 },
+        {100,  50,  -1,  80 },
+        {200, 100, 100,  80 }
 };
 
 static void bull_artillery_detonate(ENTITY this, ENTITY that)
@@ -53,7 +53,7 @@ static void bull_artillery_detonate(ENTITY this, ENTITY that)
         return;
 
     ENTITY explode = entity_new("explode_artillery", player);
-    entity_common_t * this_vars = entity_vars(this);
+    entity_vars_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(explode);
     VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
@@ -90,7 +90,7 @@ static void bull_mine_detonate(ENTITY this, ENTITY that)
 
     ENTITY e = entity_new("explode_mine", player);
 
-    entity_common_t * this_vars = entity_vars(this);
+    entity_vars_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
     VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
@@ -106,99 +106,97 @@ static void bull_mine_detonate(ENTITY this, ENTITY that)
 static bool bull_common_handle(ENTITY this, const bullinfo_t * bullinfo)
 {
     bull_vars_t * bull = entity_vars(this);
-	entity_move(this, bull->dir, bullinfo->speed, false);
+    entity_move(this, bull->dir, bullinfo->speed, false);
 
-	//предельное расстояние пройдено
-	if(bullinfo->range > -1 && bull->stat_traveled_distance > bullinfo->range)
-		return true;
+    //предельное расстояние пройдено
+    if(bullinfo->range > -1 && bull->stat_traveled_distance > bullinfo->range)
+        return true;
 
-	//найдем препятствия
-	bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
-	map_clip_find(
-	    bull->origin,
-		entity_info_bodybox(this),
-		MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
-		&Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
-	);
-	if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
-		return true;
-	return false;
+    //найдем препятствия
+    bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
+    map_clip_find(
+        bull->origin,
+        entity_info_bodybox(this),
+        MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
+        &Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
+    );
+    if(Ul || Ur || Dl || Dr || Lu || Ld || Ru || Rd)
+        return true;
+    return false;
 }
 
-static void bull_common_modelaction_startplay(ENTITY this, unsigned int imodel, char * actionname)
+static void bull_common_modelaction_startplay(ENTITY this, unsigned int modelId, const char * actionname)
 {
-	entity_model_play_start(this, imodel, actionname);
+    entity_model_play_start(this, modelId, actionname);
 }
 
 /*
  * bull_artillery
  */
-entitymodel_t bull_artillery_models[] =
+entity_model_t bull_artillery_models[] =
 {
-		{
-				.modelname = "bull_artillery",
-				.modelscale = 2.0f / 2.0f, /* picturesize = 2 x 2 */
-				.translation = { 0.0, 0.0 },
-				.actions_num = 0,
-				.actions = NULL
-		}
+        {
+                .modelname = "bull_artillery",
+                .modelscale = 2.0f / 2.0f, /* picturesize = 2 x 2 */
+                .translation = { 0.0, 0.0 },
+        }
 };
 
 static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
 {
-	const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
-	bool detonate = bull_common_handle(this, bullinfo);
-	if(detonate)
-		bull_artillery_detonate(this, NULL);
+    const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
+    bool detonate = bull_common_handle(this, bullinfo);
+    if(detonate)
+        bull_artillery_detonate(this, NULL);
 }
 
 ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
 {
-	bull_artillery_detonate(this, that);
+    bull_artillery_detonate(this, that);
 }
 
 entitytouch_t bull_artillery_touchs[] =
 {
-		{ "player", bull_artillery_touch },
-		{ "enemy" , bull_artillery_touch },
-		{ "boss"  , bull_artillery_touch }
+        { "player", bull_artillery_touch },
+        { "enemy" , bull_artillery_touch },
+        { "boss"  , bull_artillery_touch }
 };
 
 static const entityinfo_t bull_artillery_reginfo = {
-		.name = "bull_artillery",
-		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = 2.0f,
+        .name = "bull_artillery",
+        .flags = ENTITYFLAG_SOLIDWALL,
+        .bodybox = 2.0f,
         ENTITYINFO_VARS(bull_vars_t, bull_vars),
-		ENTITYINFO_ENTMODELS(bull_artillery_models),
-		.init = ENTITY_FUNCTION_NONE,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle   = bull_artillery_handle,
-		ENTITYINFO_TOUCHS(bull_artillery_touchs)
+        ENTITYINFO_FRAMESSEQ_NONE(),
+        ENTITYINFO_ENTMODELS(bull_artillery_models),
+        .init = ENTITY_FUNCTION_NONE,
+        .done = ENTITY_FUNCTION_NONE,
+        .handle   = bull_artillery_handle,
+        ENTITYINFO_TOUCHS(bull_artillery_touchs)
 };
 
 /**
  * bull_missile
  */
 
-static const ent_modelaction_t bull_missile_modelactions[] =
+static const entity_framessequence_t bull_missile_modelactions[] =
 {
-		{
-				.name = "fly",
-				.startframe = 0,
-				.endframe = 1,
-				.endframef = bull_common_modelaction_startplay
-		}
+        {
+                .modelId = 0,
+                .seqname = "fly",
+                .firstframe = 0,
+                .lastframe = 1,
+                .lastframef = bull_common_modelaction_startplay
+        }
 };
 
-static entitymodel_t bull_missile_models[] =
+static entity_model_t bull_missile_models[] =
 {
-		{
-				.modelname = "bull_missile",
-				.modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
-				.translation = { 0.0, 0.0 },
-				.actions_num = 1,
-				.actions = bull_missile_modelactions
-		}
+        {
+                .modelname = "bull_missile",
+                .modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
+                .translation = { 0.0, 0.0 },
+        }
 };
 
 static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
@@ -211,95 +209,97 @@ static ENTITY_FUNCTION_INIT(bull_missile_entity_init)
 
 static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 {
-	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
-	bool detonate = bull_common_handle(this, bullinfo);
-	if(detonate)
-		bull_missile_detonate(this, NULL);
+    const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
+    bool detonate = bull_common_handle(this, bullinfo);
+    if(detonate)
+        bull_missile_detonate(this, NULL);
 }
 
 ENTITY_FUNCTION_TOUCH(bull_missile_touch)
 {
-	bull_missile_detonate(this, that);
+    bull_missile_detonate(this, that);
 }
 
 entitytouch_t bull_missile_touchs[] =
 {
-		{ "player", bull_missile_touch },
-		{ "enemy" , bull_missile_touch },
-		{ "boss"  , bull_missile_touch }
+        { "player", bull_missile_touch },
+        { "enemy" , bull_missile_touch },
+        { "boss"  , bull_missile_touch }
 };
 
 static const entityinfo_t bull_missile_reginfo = {
-		.name = "bull_missile",
-		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = 8.0f,
+        .name = "bull_missile",
+        .flags = ENTITYFLAG_SOLIDWALL,
+        .bodybox = 8.0f,
         ENTITYINFO_VARS(bull_vars_t, bull_vars),
-		ENTITYINFO_ENTMODELS(bull_missile_models),
-		.init = bull_missile_entity_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = bull_missile_handle,
-		ENTITYINFO_TOUCHS(bull_missile_touchs)
+        ENTITYINFO_FRAMESSEQ(bull_missile_modelactions),
+        ENTITYINFO_ENTMODELS(bull_missile_models),
+        .init = bull_missile_entity_init,
+        .done = ENTITY_FUNCTION_NONE,
+        .handle = bull_missile_handle,
+        ENTITYINFO_TOUCHS(bull_missile_touchs)
 };
 
 /**
  * bull_mine
  */
-static const ent_modelaction_t bull_mine_modelactions[] =
+static const entity_framessequence_t bull_mine_modelactions[] =
 {
-		{
-				.name = "fly",
-				.startframe = 0,
-				.endframe = 1,
-				.endframef = bull_common_modelaction_startplay
-		}
+        {
+                .modelId = 0,
+                .seqname = "fly",
+                .firstframe = 0,
+                .lastframe = 1,
+                .lastframef = bull_common_modelaction_startplay
+        }
 };
 
-static entitymodel_t bull_mine_models[] =
+static entity_model_t bull_mine_models[] =
 {
-		{
-				.modelname = "bull_mine",
-				.modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
-				.translation = { 0.0, 0.0 },
-				.actions_num = 1,
-				.actions = bull_mine_modelactions
-		}
+        {
+                .modelname = "bull_mine",
+                .modelscale = 8.0f / 2.0f, /* picturesize = 8 x 64 */
+                .translation = { 0.0, 0.0 }
+        }
 };
 
 static ENTITY_FUNCTION_INIT(bull_mine_entity_init)
 {
-	bull_common_modelaction_startplay(this, 0, "fly");
+    bull_common_modelaction_startplay(this, 0, "fly");
 }
 
 static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 {
-	const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
-	bool detonate = bull_common_handle(this, bullinfo);
-	if(detonate)
-		bull_mine_detonate(this, NULL);
+    const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
+    bool detonate = bull_common_handle(this, bullinfo);
+    if(detonate)
+        bull_mine_detonate(this, NULL);
 }
 
 ENTITY_FUNCTION_TOUCH(bull_mine_touch)
 {
-	bull_mine_detonate(this, that);
+    bull_mine_detonate(this, that);
 }
 
 entitytouch_t bull_mine_touchs[] =
 {
-		{ "player", bull_mine_touch },
-		{ "enemy" , bull_mine_touch },
-		{ "boss"  , bull_mine_touch }
+        { "player", bull_mine_touch },
+        { "enemy" , bull_mine_touch },
+        { "boss"  , bull_mine_touch }
 };
 
-static const entityinfo_t bull_mine_reginfo = {
-		.name = "bull_mine",
-		.flags = ENTITYFLAG_SOLIDWALL,
-		.bodybox = 8.0f,
-		ENTITYINFO_VARS(bull_vars_t, bull_vars),
-		ENTITYINFO_ENTMODELS(bull_mine_models),
-		.init = bull_mine_entity_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = bull_mine_handle,
-		ENTITYINFO_TOUCHS(bull_mine_touchs)
+static const entityinfo_t bull_mine_reginfo =
+{
+        .name = "bull_mine",
+        .flags = ENTITYFLAG_SOLIDWALL,
+        .bodybox = 8.0f,
+        ENTITYINFO_VARS(bull_vars_t, bull_vars),
+        ENTITYINFO_FRAMESSEQ(bull_mine_modelactions),
+        ENTITYINFO_ENTMODELS(bull_mine_models),
+        .init = bull_mine_entity_init,
+        .done = ENTITY_FUNCTION_NONE,
+        .handle = bull_mine_handle,
+        ENTITYINFO_TOUCHS(bull_mine_touchs)
 };
 
 /**
@@ -307,7 +307,7 @@ static const entityinfo_t bull_mine_reginfo = {
  */
 void entity_bull_init(void)
 {
-	entity_register(&bull_artillery_reginfo);
-	entity_register(&bull_missile_reginfo);
-	entity_register(&bull_mine_reginfo);
+    entity_register(&bull_artillery_reginfo);
+    entity_register(&bull_missile_reginfo);
+    entity_register(&bull_mine_reginfo);
 }

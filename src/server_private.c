@@ -187,7 +187,7 @@ void server_player_info_store(server_player_vars_storage_t * storage, server_pla
 {
     entity_t * entity = player->entity;
     size_t info_vars_num = entity->info->vars_descr_num;
-    var_descr_t * info_vars = entity->info->vars_descr;
+    const var_descr_t * info_vars = entity->info->vars_descr;
     if(!storage->vars)
         storage->vars = Z_malloc(entity->info->vars_size);
     storage->info = player->entity->info;
@@ -287,15 +287,15 @@ server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bo
 
 
 
-static const entityaction_t * server_entity_action_find_(
+static const entity_action_t * server_entity_action_find_(
     const char * action_str,
-    const entityaction_t *actions,
+    const entity_action_t *actions,
     size_t actions_num)
 {
 
     for(size_t i = 0; i < actions_num; i++)
     {
-        const entityaction_t * action = &actions[i];
+        const entity_action_t * action = &actions[i];
         if(ACTIONS_EQ(action->action, action_str))
         {
             return action;
@@ -305,7 +305,7 @@ static const entityaction_t * server_entity_action_find_(
 }
 
 
-const entityaction_t * server_entity_action_find(const entity_t * ent, const char * action_str)
+const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str)
 {
     const entityinfo_t * info = ent->info;
     return server_entity_action_find_(action_str, info->actions, info->actions_num);

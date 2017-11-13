@@ -105,7 +105,7 @@ typedef struct
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
 
     INTEGER fragstotal; /* фрагов за пройденые карты */
     INTEGER frags;      /* фрагов за карту */

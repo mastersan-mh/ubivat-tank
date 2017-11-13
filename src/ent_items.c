@@ -10,11 +10,11 @@
 
 static var_descr_t item_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
         VAR_DESCR( VARTYPE_INTEGER, entity_item_t, amount )
 };
 
-static entitymodel_t item_scores_models[] =
+static entity_model_t item_scores_models[] =
 {
 		{
 				.modelname = "item_scores",
@@ -23,7 +23,7 @@ static entitymodel_t item_scores_models[] =
 		}
 };
 
-static entitymodel_t item_health_models[] =
+static entity_model_t item_health_models[] =
 {
 		{
 				.modelname = "item_health",
@@ -32,7 +32,7 @@ static entitymodel_t item_health_models[] =
 		}
 };
 
-static entitymodel_t item_armor_models[] =
+static entity_model_t item_armor_models[] =
 {
 		{
 				.modelname = "item_armor",
@@ -41,7 +41,7 @@ static entitymodel_t item_armor_models[] =
 		}
 };
 
-static entitymodel_t item_ammo_missile_models[] =
+static entity_model_t item_ammo_missile_models[] =
 {
 		{
 				.modelname = "item_ammo_missile",
@@ -50,7 +50,7 @@ static entitymodel_t item_ammo_missile_models[] =
 		}
 };
 
-static entitymodel_t item_ammo_mine_models[] =
+static entity_model_t item_ammo_mine_models[] =
 {
 		{
 				.modelname = "item_ammo_mine",

@@ -35,7 +35,7 @@ static int g_gamesave_save_player(int fd, entity_t * player)
     write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
 
     size_t vars_num = player->info->vars_descr_num;
-    var_descr_t * vars_descr = player->info->vars_descr;
+    const var_descr_t * vars_descr = player->info->vars_descr;
     char * vars = player->vars;
 
     /* buffer prepare */
@@ -66,7 +66,7 @@ static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t 
 
 
     size_t vars_num = storage->info->vars_descr_num;
-    var_descr_t * vars_descr = storage->info->vars_descr;
+    const var_descr_t * vars_descr = storage->info->vars_descr;
     char * vars = storage->vars;
 
     size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);

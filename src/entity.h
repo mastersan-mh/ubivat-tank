@@ -19,7 +19,7 @@
 typedef struct {char binary[1];} * ENTITY;
 
 /* common */
-#define ENTITY_COMMON_STRUCT \
+#define ENTITY_VARS_COMMON_STRUCT \
         /* объект живой. влияет на победу игроков и на взаимодействие (touch). */ \
         BOOL alive; \
         /* позиция */ \
@@ -31,18 +31,18 @@ typedef struct {char binary[1];} * ENTITY;
         /* пройденое расстояние */ \
         VECTOR1 stat_traveled_distance;
 
-#define ENTITY_COMMON_VARS \
-        VAR_DESCR( VARTYPE_BOOL     , entity_common_t, alive  ), \
-        VAR_DESCR( VARTYPE_VECTOR2  , entity_common_t, origin_prev), \
-        VAR_DESCR( VARTYPE_VECTOR2  , entity_common_t, origin     ), \
-        VAR_DESCR( VARTYPE_DIRECTION, entity_common_t, dir        ), \
-        VAR_DESCR( VARTYPE_VECTOR1  , entity_common_t, stat_traveled_distance)
+#define ENTITY_VARS_COMMON \
+        VAR_DESCR( VARTYPE_BOOL     , entity_vars_common_t, alive  ), \
+        VAR_DESCR( VARTYPE_VECTOR2  , entity_vars_common_t, origin_prev), \
+        VAR_DESCR( VARTYPE_VECTOR2  , entity_vars_common_t, origin     ), \
+        VAR_DESCR( VARTYPE_DIRECTION, entity_vars_common_t, dir        ), \
+        VAR_DESCR( VARTYPE_VECTOR1  , entity_vars_common_t, stat_traveled_distance)
 
 
-typedef struct entity_common_s
+typedef struct
 {
-    ENTITY_COMMON_STRUCT;
-} entity_common_t;
+    ENTITY_VARS_COMMON_STRUCT;
+} entity_vars_common_t;
 
 #define ENTITY_NAME_SIZE (64)
 
@@ -100,6 +100,14 @@ typedef struct entity_common_s
         .vars_descr_num = ARRAYSIZE(xvars), \
         .vars_descr = xvars
 
+#define ENTITYINFO_FRAMESSEQ(xframessequences) \
+        .framessequences_num = ARRAYSIZE(xframessequences), \
+        .framessequences = xframessequences
+
+#define ENTITYINFO_FRAMESSEQ_NONE() \
+        .framessequences_num = 0, \
+        .framessequences = NULL
+
 #define ENTITYINFO_TOUCHS(xtouchs) \
         .entitytouchs_num = ARRAYSIZE(xtouchs), \
         .entitytouchs = xtouchs
@@ -118,15 +126,18 @@ enum
     //	ENTITYFLAG_SOLIDENTITY = 0x02
 };
 
-
+/**
+ * @breif Последовательности кадров
+ */
 typedef struct
 {
-    char * name;
-    unsigned int startframe;
-    void (*startframef)(ENTITY this, unsigned int imodel, char * actionname);
-    unsigned int endframe;
-    void (*endframef)(ENTITY this, unsigned int imodel, char * actionname);
-} ent_modelaction_t;
+    unsigned int modelId; /* индекс модели, для которой предназначена последовательность */
+    char * seqname; /* имя последовательности */
+    unsigned int firstframe; /* первый кадр */
+    void (*firstframef)(ENTITY this, unsigned int modelId, const char * seqname);
+    unsigned int lastframe; /* последний кадр */
+    void (*lastframef)(ENTITY this, unsigned int modelId, const char * seqname);
+} entity_framessequence_t;
 
 typedef struct
 {
@@ -134,21 +145,17 @@ typedef struct
     char * modelname;
     const vec_t modelscale;
     const vec2_t translation;
-    /* количество действий */
-    const unsigned int actions_num;
-    /* действия */
-    const ent_modelaction_t * actions;
-} entitymodel_t;
+} entity_model_t;
 
-/* структура для проигрывания кадров моделей, связанных с объектом */
-typedef struct ent_modelplayer_s
+/* структура для проигрывания последовательности кадров моделей, связанных с объектом */
+typedef struct entity_modelplayer_s
 {
     const model_t * model;
-    //	/* воспроизводимое действие */
-    const ent_modelaction_t * action;
+    /* воспроизводимая последовательность */
+    const entity_framessequence_t * framesseq;
     /* номер кадра */
     float frame;
-} ent_modelplayer_t;
+} entity_modelplayer_t;
 
 typedef struct
 {
@@ -161,7 +168,7 @@ typedef struct entityaction_s
 {
     char * action;
     void (*action_f)(ENTITY this, const char * action);
-} entityaction_t;
+} entity_action_t;
 
 typedef struct entityinfo_s
 {
@@ -176,12 +183,17 @@ typedef struct entityinfo_s
     size_t vars_size;
     /* массив описателей переменных */
     size_t vars_descr_num;
-    var_descr_t * vars_descr;
+    const var_descr_t * vars_descr;
+
+    /* количество действий */
+    size_t framessequences_num;
+    /* действия */
+    const entity_framessequence_t * framessequences;
 
     /* размер массива моделей */
     size_t entmodels_num;
     /* массив моделей, связанных с объектом*/
-    entitymodel_t * entmodels;
+    entity_model_t * entmodels;
 
     void (*init)(ENTITY this, ENTITY parent);
     void (*done)(ENTITY this);
@@ -196,9 +208,9 @@ typedef struct entityinfo_s
 
     ENTITY_FUNCTION_PLAYER_SPAWN((*player_spawn));
 
-    /* массив действий, допустимых для entity */
-    unsigned int actions_num;
-    entityaction_t * actions;
+    /* массив действий, допустимых для entity, при управлении игроком */
+    size_t actions_num;
+    entity_action_t * actions;
 
 }entityinfo_t;
 
@@ -223,7 +235,7 @@ extern void entity_cam_reset(ENTITY entity);
 
 extern ENTITY entity_new(const char * name, ENTITY parent);
 
-extern void entity_model_play_start(ENTITY entity, unsigned int imodel, char * actionname);
+extern void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * seqname);
 extern void entity_model_play_pause(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause_all(ENTITY entity);
 

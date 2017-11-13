@@ -29,7 +29,7 @@ typedef struct entity_s
     struct entity_s * parent;
 
     /* структура для проигрывания кардов моделей, связанных с объектом */
-    struct ent_modelplayer_s * modelplayers;
+    struct entity_modelplayer_s * modelplayers;
 
     /* удалить объект */
     bool erase;
@@ -68,7 +68,7 @@ extern size_t entityregs_num;
 
 extern entity_registered_t * entityregisteredinfo_get(const char * name);
 
-extern const ent_modelaction_t * entity_reginfo_action_get(const entityinfo_t * info, unsigned int imodel, char * actionname);
+extern const entity_framessequence_t * entity_reginfo_framessequence_get(const entityinfo_t * info, unsigned int imodel, const char * seqname);
 
 extern void entities_handle(void);
 

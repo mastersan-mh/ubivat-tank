@@ -14,7 +14,7 @@
 
 typedef struct
 {
-    ENTITY_COMMON_STRUCT;
+    ENTITY_VARS_COMMON_STRUCT;
     STRING text;
 } entity_message_t;
 

@@ -144,7 +144,7 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
         return;
     }
 
-    const entityaction_t * action = server_entity_action_find(entity, event->data.REMOTE_PLAYER_ACTION.action);
+    const entity_action_t * action = server_entity_action_find(entity, event->data.REMOTE_PLAYER_ACTION.action);
 
     if(!action)
     {

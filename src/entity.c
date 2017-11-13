@@ -14,7 +14,7 @@
 
 var_descr_t entity_common_vars[] =
 {
-        ENTITY_COMMON_VARS,
+        ENTITY_VARS_COMMON,
 };
 
 /*
@@ -32,7 +32,7 @@ void entity_register(const entityinfo_t * info)
 {
     static var_descr_t entity_common_vars[] =
     {
-            ENTITY_COMMON_VARS
+            ENTITY_VARS_COMMON
     };
 
     ssize_t i;
@@ -165,7 +165,7 @@ void entity_restore(ENTITY entity, const void * vars)
         return;
     entity_t * ent = (entity_t *)entity;
     size_t info_vars_num = ent->info->vars_descr_num;
-    var_descr_t * info_vars = ent->info->vars_descr;
+    const var_descr_t * info_vars = ent->info->vars_descr;
 
     for(size_t i = 0; i < info_vars_num; i++)
     {
@@ -255,42 +255,39 @@ ENTITY entity_new(const char * name, ENTITY parent)
 /**
  * @description начать/возобновить проигрывание кадров модели
  */
-void entity_model_play_start(ENTITY entity, unsigned int imodel, char * actionname)
+void entity_model_play_start(ENTITY entity, unsigned int modelId, const char * seqname)
 {
     entity_t * ent = (entity_t*)entity;
     const entityinfo_t * info = ent->info;
-    if(imodel >= info->entmodels_num)
+    if(modelId >= info->entmodels_num)
     {
-        game_console_send("Error: Entity \"%s\": imodel %d not found, could not play frames.",
+        game_console_send("Error: Entity \"%s\": modelId %d not found, could not play frames sequence.",
             info->name,
-            imodel
+            modelId
         );
         return;
     }
-    const ent_modelaction_t * action = entity_reginfo_action_get(info, imodel, actionname);
-    if(!action)
+    const entity_framessequence_t * framesseq = entity_reginfo_framessequence_get(info, modelId, seqname);
+    if(!framesseq)
     {
-        game_console_send("Error: Entity \"%s\", imodel %d: Action \"%s\" not found, could not play frames.",
-            info->name,
-            imodel,
-            actionname
-        );
+        game_console_send("Error: Entity \"%s\", modelId %d, frames sequence \"%s\" not found, could not play frames sequence.",
+            info->name, modelId, seqname);
         return;
     }
 
-    ent_modelplayer_t * modelplayer = &ent->modelplayers[imodel];
-    if(modelplayer->action == NULL)
+    entity_modelplayer_t * modelplayer = &ent->modelplayers[modelId];
+    if(modelplayer->framesseq == NULL)
     {
         /* если действия нет или закончилось, начнём действие заново */
-        modelplayer->action = action;
-        modelplayer->frame = action->startframe;
+        modelplayer->framesseq = framesseq;
+        modelplayer->frame = framesseq->firstframe;
     }
     else
     {
-        modelplayer->action = action;
+        modelplayer->framesseq = framesseq;
         float frame = modelplayer->frame;
-        if( frame < action->startframe || action->endframe + 1 <= frame )
-            modelplayer->frame = action->startframe;
+        if( frame < framesseq->firstframe || framesseq->lastframe + 1 <= frame )
+            modelplayer->frame = framesseq->firstframe;
     }
 
 }
@@ -310,7 +307,7 @@ void entity_model_play_pause(ENTITY entity, unsigned int imodel)
         );
         return;
     }
-    ent->modelplayers[imodel].action = NULL;
+    ent->modelplayers[imodel].framesseq = NULL;
 }
 
 void entity_model_play_pause_all(ENTITY entity)
@@ -320,7 +317,7 @@ void entity_model_play_pause_all(ENTITY entity)
     int imodel;
     for(imodel = 0; imodel < info->entmodels_num; imodel++ )
     {
-        ent->modelplayers[imodel].action = NULL;
+        ent->modelplayers[imodel].framesseq = NULL;
     }
 }
 
