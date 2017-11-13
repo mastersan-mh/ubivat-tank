@@ -27,7 +27,7 @@ static ENTITY_FUNCTION_INIT(spawn_player_init)
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
     spawn_vars_t * sp = entity_vars(this);
-    void * ent = entity_new("enemy", this);
+    ENTITY ent = entity_new("enemy", this);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
@@ -36,7 +36,7 @@ static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
     spawn_vars_t * sp = entity_vars(this);
-    void * ent = entity_new("boss", this);
+    ENTITY ent = entity_new("boss", this);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;

@@ -55,7 +55,7 @@ static void explode_common_destroy_walls(ENTITY this, const explodeinfo_t * expl
     }
 }
 
-static void explode_touch_common(void * this, void * that, const explodeinfo_t * explodeinfo)
+static void explode_touch_common(ENTITY this, ENTITY that, const explodeinfo_t * explodeinfo)
 {
     vec_t r;
     vec2_t d;
@@ -93,7 +93,7 @@ static void explode_detonate(ENTITY this, explodetype_t type)
 
     explode_common_destroy_walls(this, explodeinfo);
     //проверка попаданий в игрока
-    void * ent_attacked;
+    ENTITY ent_attacked;
 
     ENTITIES_FOREACH("player", ent_attacked)
     {

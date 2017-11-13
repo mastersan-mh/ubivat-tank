@@ -46,13 +46,13 @@ static const bullinfo_t bullinfo_table[BULL_NUM] =
 		{200, 100, 100,  80 }
 };
 
-static void bull_artillery_detonate(void * this, void * that)
+static void bull_artillery_detonate(ENTITY this, ENTITY that)
 {
     ENTITY player = entity_parent(this);
     if(that && player == that)
         return;
 
-    void * explode = entity_new("explode_artillery", player);
+    ENTITY explode = entity_new("explode_artillery", player);
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(explode);
     VEC2_COPY(explode_vars->origin, this_vars->origin);
@@ -61,13 +61,13 @@ static void bull_artillery_detonate(void * this, void * that)
     ENTITY_ERASE(this);
 }
 
-static void bull_missile_detonate(void * this, void * that)
+static void bull_missile_detonate(ENTITY this, ENTITY that)
 {
     ENTITY player = entity_parent(this);
     if(that && player == that)
         return;
 
-    void * e = entity_new("explode_missile", player);
+    ENTITY e = entity_new("explode_missile", player);
 
     bull_vars_t * bull_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
@@ -82,13 +82,13 @@ static void bull_missile_detonate(void * this, void * that)
     entity_erase(this);
 }
 
-static void bull_mine_detonate(void * this, void * that)
+static void bull_mine_detonate(ENTITY this, ENTITY that)
 {
     ENTITY player = entity_parent(this);
     if(that && player == that)
         return;
 
-    void * e = entity_new("explode_mine", player);
+    ENTITY e = entity_new("explode_mine", player);
 
     entity_common_t * this_vars = entity_vars(this);
     entity_explode_t * explode_vars = entity_vars(e);
@@ -103,7 +103,7 @@ static void bull_mine_detonate(void * this, void * that)
  * @return true  = сдетонировала
  * @return false = полёт продолжается
  */
-static bool bull_common_handle(void * this, const bullinfo_t * bullinfo)
+static bool bull_common_handle(ENTITY this, const bullinfo_t * bullinfo)
 {
     bull_vars_t * bull = entity_vars(this);
 	entity_move(this, bull->dir, bullinfo->speed, false);
