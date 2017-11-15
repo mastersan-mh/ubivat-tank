@@ -57,7 +57,7 @@ extern bool sv_entity_valid;
                     break; \
                 }
 
-void server_fsm_client_connect(const game_server_event_t * event)
+void server_fsm_client_connect(const server_event_t * event)
 {
     server_client_t * client;
     game_console_send("server: client request connection from 0x%00000000x:%d.",
@@ -68,7 +68,7 @@ void server_fsm_client_connect(const game_server_event_t * event)
     server_reply_send_connection_accepted(client);
 }
 
-void server_fsm_client_disconnect(const game_server_event_t * event, server_client_t * client)
+void server_fsm_client_disconnect(const server_event_t * event, server_client_t * client)
 {
     if(!client)
     {
@@ -83,7 +83,7 @@ void server_fsm_client_disconnect(const game_server_event_t * event, server_clie
     server_client_delete(client);
 }
 
-void server_fsm_game_abort(const game_server_event_t * event, server_client_t * client)
+void server_fsm_game_abort(const server_event_t * event, server_client_t * client)
 {
     game_console_send("server: client 0x%00000000x:%d aborted game.",
         event->sender.addr_in.sin_addr, ntohs(event->sender.addr_in.sin_port));
@@ -94,7 +94,7 @@ void server_fsm_game_abort(const game_server_event_t * event, server_client_t * 
     server_event_local_stop();
 }
 
-void server_fsm_game_setmap(const game_server_event_t * event)
+void server_fsm_game_setmap(const server_event_t * event)
 {
     const char * mapname = event->data.REMOTE_GAME_SETMAP.mapname;
     server.gstate.gamemap = map_find(mapname);
@@ -111,7 +111,7 @@ void server_fsm_game_setmap(const game_server_event_t * event)
     }
 }
 
-static void server_client_fsm_control_handle(const game_server_event_t * event, server_client_t * client)
+static void server_fsm_control_handle(const server_event_t * event, server_client_t * client)
 {
     size_t clientId = server_client_id_get(client);
     size_t playerId = event->data.REMOTE_PLAYER_ACTION.playerId;
@@ -158,7 +158,7 @@ static void server_client_fsm_control_handle(const game_server_event_t * event, 
 }
 
 
-void server_fsm(const game_server_event_t * event)
+void server_fsm(const server_event_t * event)
 {
     server_gamestate_t gamestate = server.gamestate;
 
@@ -179,7 +179,13 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_LOCAL_WIN:
                 break;
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
+            {
+                server_client_t * cl;
+                int num = 0;
+                LIST2_FOREACH(server.clients, cl) num++;
+                server_reply_send_info(client, num);
                 break;
+            }
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
                 FSM_CLIENT_CONNECT_CHECK();
                 server_fsm_client_connect(event);
@@ -281,7 +287,7 @@ void server_fsm(const game_server_event_t * event)
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION:
-                server_client_fsm_control_handle(event, client);
+                server_fsm_control_handle(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_ABORT:
                 FSM_CLIENT_CHECK_PRIVILEGED(client);

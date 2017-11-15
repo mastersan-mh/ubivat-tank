@@ -9,7 +9,7 @@
 #include "client_requests.h"
 #include <assert.h>
 
-static void client_req_send(const game_client_request_t * req)
+static void client_req_send(const client_request_t * req)
 {
     if(client.tx_queue_num >= CLIENT_REQ_QUEUE_SIZE)
     {
@@ -22,7 +22,9 @@ static void client_req_send(const game_client_request_t * req)
 
 extern void client_req_send_discoveryserver(void)
 {
-    assert(0 && "client_req_send_discoveryserver(): unreleased function");
+    client_request_t req;
+    req.type = G_CLIENT_REQ_DISCOVERYSERVER;
+    client_req_send(&req);
 }
 
 /**
@@ -30,20 +32,20 @@ extern void client_req_send_discoveryserver(void)
  */
 void client_req_send_connect(void)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_CONNECT;
     client_req_send(&req);
 }
 void client_req_send_disconnect(void)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_DISCONNECT;
     client_req_send(&req);
 }
 
 void client_req_send_spawn(void)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_SPAWN;
     req.data.SPAWN.players_num = client.gstate.players_num;
     client_req_send(&req);
@@ -57,7 +59,7 @@ void client_req_send_player_action(int playerId, const char * action_name)
         /* клавиша игрока, которого нет */
         return;
     }
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_PLAYER_ACTION;
     req.data.PLAYER_ACTION.playerId = playerId;
     memcpy(req.data.PLAYER_ACTION.action, action_name, GAME_ACTION_SIZE);
@@ -66,14 +68,14 @@ void client_req_send_player_action(int playerId, const char * action_name)
 
 void client_req_send_game_abort(void)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_GAME_ABORT;
     client_req_send(&req);
 }
 
 void client_req_send_game_setmap(const char * mapname)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_GAME_SETMAP;
     strncpy(req.data.GAME_SETMAP.mapname, mapname, MAP_FILENAME_SIZE);
     client_req_send(&req);
@@ -81,14 +83,14 @@ void client_req_send_game_setmap(const char * mapname)
 
 void client_req_send_ready(void)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_READY;
     client_req_send(&req);
 }
 
 void client_req_send_game_save(int isave)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_GAME_SAVE;
     req.data.GAME_SAVE.isave = isave;
     client_req_send(&req);
@@ -96,7 +98,7 @@ void client_req_send_game_save(int isave)
 
 void client_req_send_game_load(int isave)
 {
-    game_client_request_t req;
+    client_request_t req;
     req.type = G_CLIENT_REQ_GAME_LOAD;
     req.data.GAME_LOAD.isave = isave;
     client_req_send(&req);

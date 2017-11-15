@@ -38,11 +38,13 @@ typedef struct client_player_s
 
 typedef struct
 {
-    game_client_request_t req;
+    client_request_t req;
 } client_req_queue_t;
 
 typedef struct
 {
+    client_event_head_t events;
+
     client_state_t state;
 
     client_gamestate_t gamestate;

@@ -8,7 +8,7 @@
 #include "common/common_list2.h"
 #include "server_private.h"
 
-static void server_reply_send(server_client_t * client, const game_server_reply_t * req)
+static void server_reply_send(server_client_t * client, const server_reply_t * req)
 {
     if(client->tx_queue_num >= SERVER_CLIENT_TX_QUEUE_SIZE)
     {
@@ -20,31 +20,31 @@ static void server_reply_send(server_client_t * client, const game_server_reply_
 }
 
 
-void server_reply_send_info(server_client_t * client)
+void server_reply_send_info(server_client_t * client, int clients_num)
 {
-    game_server_reply_t reply;
+    server_reply_t reply;
     reply.type = G_SERVER_REPLY_INFO;
-    reply.data.INFO.clients_num = 0;
+    reply.data.INFO.clients_num = clients_num;
     server_reply_send(client, &reply);
 }
 
 void server_reply_send_connection_accepted(server_client_t * client)
 {
-    game_server_reply_t reply;
+    server_reply_t reply;
     reply.type = G_SERVER_REPLY_CONNECTION_ACCEPTED;
     server_reply_send(client, &reply);
 }
 
 void server_reply_send_connection_close(server_client_t * client)
 {
-    game_server_reply_t reply;
+    server_reply_t reply;
     reply.type = G_SERVER_REPLY_CONNECTION_CLOSE;
     server_reply_send(client, &reply);
 }
 
 void server_reply_send_players_entity_set(server_client_t * client)
 {
-    game_server_reply_t reply;
+    server_reply_t reply;
     reply.type = G_SERVER_REPLY_PLAYERS_ENTITY_SET;
     reply.data.PLAYERS_ENTITY_SET.players_num = client->players_num;
     int i = 0;
@@ -64,7 +64,7 @@ void server_reply_send_players_entity_set(server_client_t * client)
 
 void server_reply_send_game_endmap(server_client_t * client, bool win, bool endgame)
 {
-    game_server_reply_t reply;
+    server_reply_t reply;
     reply.type = G_SERVER_REPLY_GAME_ENDMAP;
     reply.data.GAME_ENDMAP.win = win;
     reply.data.GAME_ENDMAP.endgame = endgame;

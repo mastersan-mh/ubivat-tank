@@ -12,6 +12,7 @@
 
 typedef enum
 {
+    CLIENT_GAMESTATE_0_DISCOVERY, /* режим получения информации */
     CLIENT_GAMESTATE_1_NOGAME, /* игра не создана */
     CLIENT_GAMESTATE_2_MISSION_BRIEF,
     CLIENT_GAMESTATE_3_SPAWN_AWAITING,
@@ -21,7 +22,7 @@ typedef enum
     CLIENT_GAMESTATE_7_ENDGAME,
 } client_gamestate_t;
 
-extern void client_fsm(const game_client_event_t * event);
+extern void client_fsm(const client_event_t * event);
 
 
 #endif /* SRC_CLIENT_FSM_H_ */

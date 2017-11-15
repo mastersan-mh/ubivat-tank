@@ -11,20 +11,28 @@
 
 void server_events_handle(void)
 {
-    while(!TAILQ_EMPTY(&server.events))
+    while(!CIRCLEQ_EMPTY(&server.events))
     {
-        game_server_event_entry_t * ev = TAILQ_FIRST(&server.events);
-        TAILQ_REMOVE(&server.events, ev, entry);
-        server_fsm(&ev->ev);
-        Z_free(ev);
+        server_event_t * event = CIRCLEQ_FIRST(&server.events);
+        CIRCLEQ_REMOVE(&server.events, event, queue);
+        server_fsm(event);
+        Z_free(event);
     }
 }
 
-void server_event_send(const game_server_event_t * event)
+void server_event_send(
+    const net_addr_t * sender,
+    server_event_type_t type,
+    const server_event_data_t * data)
 {
-    game_server_event_entry_t * ev = Z_malloc(sizeof(game_server_event_entry_t));
-    ev->ev = *event;
-    TAILQ_INSERT_TAIL(&server.events, ev, entry);
+    server_event_t * event = Z_malloc(sizeof(server_event_t));
+    if(sender)
+        event->sender = *sender;
+    event->type = type;
+    if(data)
+        event->data = *data;
+
+    CIRCLEQ_INSERT_TAIL(&server.events, event, queue);
 }
 
 /*
@@ -32,14 +40,18 @@ void server_event_send(const game_server_event_t * event)
  */
 void server_event_local_stop(void)
 {
-    game_server_event_t event;
-    event.type = G_SERVER_EVENT_LOCAL_STOP;
-    server_event_send(&event);
+    server_event_send(
+        NULL,
+        G_SERVER_EVENT_LOCAL_STOP,
+        NULL
+    );
 }
 
 void server_event_local_win()
 {
-    game_server_event_t event;
-    event.type = G_SERVER_EVENT_LOCAL_WIN;
-    server_event_send(&event);
+    server_event_send(
+        NULL,
+        G_SERVER_EVENT_LOCAL_WIN,
+        NULL
+    );
 }

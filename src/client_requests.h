@@ -28,7 +28,7 @@ typedef enum
     G_CLIENT_REQ_READY, /**< перейти на следующее состояние, если допустимо */
     G_CLIENT_REQ_GAME_SAVE,
     G_CLIENT_REQ_GAME_LOAD,
-} game_client_request_type_t;
+} client_request_type_t;
 
 typedef union
 {
@@ -53,13 +53,13 @@ typedef union
     {
         char mapname[MAP_FILENAME_SIZE];
     } GAME_SETMAP;
-} game_client_request_data_t;
+} client_request_data_t;
 
 typedef struct
 {
-    game_client_request_type_t type;
-    game_client_request_data_t data;
-} game_client_request_t;
+    client_request_type_t type;
+    client_request_data_t data;
+} client_request_t;
 
 
 extern void client_req_send_discoveryserver(void);

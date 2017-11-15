@@ -18,6 +18,6 @@ typedef enum
     SERVER_GAMESTATE_3_INTERMISSION,
 } server_gamestate_t;
 
-void server_fsm(const game_server_event_t * event);
+void server_fsm(const server_event_t * event);
 
 #endif /* SRC_SERVER_FSM_H_ */

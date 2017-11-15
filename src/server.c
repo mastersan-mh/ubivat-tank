@@ -50,9 +50,9 @@ bool sv_entity_valid = false;
 
 void server_init(void)
 {
+    CIRCLEQ_INIT(&server.events);
     server.gstate.custommap = mapList;
     server.gstate.gamemap   = mapList;
-    TAILQ_INIT(&server.events);
 
 }
 

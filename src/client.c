@@ -31,20 +31,19 @@
 
 client_t client = {};
 
-bool client_running(void)
+bool client_ingame(void)
 {
-    return client.state != CLIENT_STATE_IDLE;
-}
-
-client_gamestate_t client_gamestate_get(void)
-{
-    return client.gamestate;
+    return
+            !(client.gamestate == CLIENT_GAMESTATE_0_DISCOVERY ||
+                    client.gamestate == CLIENT_GAMESTATE_1_NOGAME);
 }
 
 void client_init(void)
 {
+    CIRCLEQ_INIT(&client.events);
     client.state            = CLIENT_STATE_IDLE;
     client.gstate.msg       = NULL;
+
     /* flush queues */
     client.tx_queue_num = 0;
 }
@@ -65,10 +64,15 @@ void client_stop(void)
     client.state = CLIENT_STATE_DONE;
 }
 
-
-static int client_pdu_parse(const char * buf, size_t buf_len)
+bool client_running(void)
 {
-    game_client_event_t event;
+    return client.state != CLIENT_STATE_IDLE;
+}
+
+static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
+{
+    client_event_type_t evtype;
+    client_event_data_t evdata;
     int16_t value16;
     size_t i;
     size_t ofs = 0;
@@ -79,44 +83,45 @@ static int client_pdu_parse(const char * buf, size_t buf_len)
     for(i = 0; i < events_num; i++)
     {
         PDU_POP_BUF(&value16, sizeof(value16));
-        game_server_reply_type_t type = ntohs(value16);
-        switch(type)
+        server_reply_type_t rtype = ntohs(value16);
+        switch(rtype)
         {
             case G_SERVER_REPLY_INFO:
-                event.type = G_CLIENT_EVENT_REMOTE_INFO;
+                evtype = G_CLIENT_EVENT_REMOTE_INFO;
                 /*
-            nvalue32 = htonl( (uint32_t) event.info.clients_num );
+            nvalue32 = htonl( (uint32_t) info.clients_num );
             memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
             buflen += sizeof(nvalue32);
                  */
                 break;
             case G_SERVER_REPLY_CONNECTION_ACCEPTED:
-                event.type = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
+                evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
-                event.type = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
+                evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
                 break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
-                event.type = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
+                evtype = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_PLAYERS_ENTITY_SET.players_num = ntohs(value16);
-                for(int i = 0; i < event.data.REMOTE_PLAYERS_ENTITY_SET.players_num; i++)
+                evdata.REMOTE_PLAYERS_ENTITY_SET.players_num = ntohs(value16);
+                for(int i = 0; i < evdata.REMOTE_PLAYERS_ENTITY_SET.players_num; i++)
                 {
-                    PDU_POP_BUF(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_POP_BUF(&event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event.data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
+                    PDU_POP_BUF(evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                    PDU_POP_BUF(&evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
                 }
                 break;
             }
             case G_SERVER_REPLY_GAME_ENDMAP:
-                event.type = G_CLIENT_EVENT_REMOTE_GAME_ENDMAP;
+                evtype = G_CLIENT_EVENT_REMOTE_GAME_ENDMAP;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_ENDMAP.win = (ntohs(value16) != 0);
+                evdata.REMOTE_GAME_ENDMAP.win = (ntohs(value16) != 0);
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_ENDMAP.endgame = (ntohs(value16) != 0);
+                evdata.REMOTE_GAME_ENDMAP.endgame = (ntohs(value16) != 0);
                 break;
         }
-        client_fsm(&event);
+
+        client_event_send(sender, evtype, &evdata);
     }
 
     return 0;
@@ -135,7 +140,7 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
     PDU_PUSH_BUF(&value16, sizeof(value16));
     for(size_t i = 0; i < client.tx_queue_num; i++)
     {
-        game_client_request_t * req = &client.tx_queue[i].req;
+        client_request_t * req = &client.tx_queue[i].req;
         value16 = htons(req->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(req->type)
@@ -190,7 +195,7 @@ static void client_net_io(void)
     if(!client.ns)
         return;
 
-    struct sockaddr addr;
+    net_addr_t net_addr;
     socklen_t addr_len = 0;
     size_t buf_len;
 
@@ -199,10 +204,10 @@ static void client_net_io(void)
         game_console_send("client: server reply timeout.");
     }
 
-    while(net_recv(client.ns, buf, &buf_len, PDU_BUF_SIZE, &addr, &addr_len) == 0)
+    while(net_recv(client.ns, buf, &buf_len, PDU_BUF_SIZE, &net_addr.addr, &addr_len) == 0)
     {
         client.time = time_current;
-        err = client_pdu_parse(buf, buf_len);
+        err = client_pdu_parse(&net_addr, buf, buf_len);
         if(err)
         {
             game_console_send("CLIENT: TX PDU parse error.");
@@ -227,7 +232,7 @@ void client_handle(void)
     switch(client.state)
     {
         case CLIENT_STATE_IDLE:
-            client.gamestate = CLIENT_GAMESTATE_1_NOGAME;
+            client.gamestate = CLIENT_GAMESTATE_0_DISCOVERY;
             break;
         case CLIENT_STATE_INIT:
 
@@ -247,14 +252,16 @@ void client_handle(void)
             break;
         case CLIENT_STATE_RUN :
             client_net_io();
+            client_events_handle();
             break;
         case CLIENT_STATE_DONE:
+            client_events_pop_all();
             client_req_send_game_abort();
             client_players_delete();
             /* flush queue */
             client.tx_queue_num = 0;
             client.state = CLIENT_STATE_IDLE;
-            client.gamestate = CLIENT_GAMESTATE_1_NOGAME;
+            client.gamestate = CLIENT_GAMESTATE_0_DISCOVERY;
             game_menu_show(MENU_MAIN);
             break;
     }

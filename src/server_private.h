@@ -19,12 +19,6 @@
 
 #include <sys/queue.h>
 
-typedef struct game_server_event_entry_s
-{
-    TAILQ_ENTRY(game_server_event_entry_s) entry;
-    game_server_event_t ev;
-} game_server_event_entry_t;
-
 #define SERVER_CLIENT_TX_QUEUE_SIZE 16
 
 typedef struct server_player_s
@@ -39,7 +33,7 @@ typedef struct server_player_s
 typedef struct
 {
     net_socket_t * ns;
-    game_server_reply_t req;
+    server_reply_t req;
 } server_tx_t;
 
 typedef struct server_player_vars_storage_s
@@ -90,7 +84,7 @@ typedef enum
 
 typedef struct
 {
-    TAILQ_HEAD(event_s, game_server_event_entry_s) events;
+    server_event_head_t events;
 
     server_state_t state;
     server_gameflags_t flags;

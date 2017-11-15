@@ -8,7 +8,9 @@
 #ifndef SRC_GAME_H_
 #define SRC_GAME_H_
 
+#include <sys/queue.h>
 #include "types.h"
+#include "net.h"
 #include "img.h"
 #include "menu.h"
 #include "map.h"
@@ -32,6 +34,16 @@
 /* игра по выбору */
 #define GAMEFLAG_CUSTOMGAME 0x02
 
+#define GAME_SERVERS_FOREACH(server) \
+    CIRCLEQ_FOREACH(server, &game.servers, list)
+
+struct game_server_s
+{
+    CIRCLEQ_ENTRY(game_server_s) list;
+    net_addr_t net_addr;
+    int clients_num;
+};
+
 typedef struct
 {
     bool quit;
@@ -39,6 +51,11 @@ typedef struct
     menu_selector_t imenu_process;
     menu_selector_t imenu;
     maplist_t * custommap;
+
+#define GAME_SERVERS_NUM 64
+    size_t servers_num;
+    CIRCLEQ_HEAD(game_servers_head_s, game_server_s) servers;
+
 } game_t;
 
 extern unsigned long time_current;
@@ -81,6 +98,9 @@ extern void game_record_getsaves(void);
 extern bool game_record_save(int isave);
 extern int game_record_load(int isave);
 extern void game_msg_error(int error);
+
+extern void game_server_add(const net_addr_t * sender, int clients_num);
+extern void game_servers_freeall(void);
 
 
 void game_halt(const char *error, ...)

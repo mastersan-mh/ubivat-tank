@@ -18,6 +18,17 @@
 
 #define PDU_BUF_SIZE (NET_MTU*10)
 
+#define PRINTF_NETADDR_IPv4_FMT "%d.%d.%d.%d"
+#define PRINTF_NETADDR_IPv4_VAL(net_addr) \
+        ((char*)(&(net_addr).addr_in.sin_addr))[0], \
+        ((char*)(&(net_addr).addr_in.sin_addr))[1], \
+        ((char*)(&(net_addr).addr_in.sin_addr))[2], \
+        ((char*)(&(net_addr).addr_in.sin_addr))[3]
+
+#define PRINTF_NETADDR_PORT_FMT "%d"
+#define PRINTF_NETADDR_PORT_VAL(net_addr) \
+        (net_addr).addr_in.sin_port
+
 typedef union
 {
     struct sockaddr addr;

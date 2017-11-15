@@ -340,8 +340,8 @@ void server_player_delete(server_player_t * player)
 int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
 {
     size_t sv_req_queue_num;
-    game_server_event_t event;
-    event.sender = *sender;
+    server_event_type_t evtype;
+    server_event_data_t evdata;
 
     size_t ofs = 0;
     int16_t value16;
@@ -351,54 +351,54 @@ int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len
     for(size_t i = 0; i < sv_req_queue_num; i++)
     {
         PDU_POP_BUF(&value16, sizeof(value16));
-        game_client_request_type_t type = htons(value16);
-        switch(type)
+        client_request_type_t rtype = htons(value16);
+        switch(rtype)
         {
             /** Непривилегированые запросы */
             case G_CLIENT_REQ_DISCOVERYSERVER:
-                event.type = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
+                evtype = G_SERVER_EVENT_REMOTE_DISCOVERYSERVER;
                 break;
             case G_CLIENT_REQ_CONNECT:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
+                evtype = G_SERVER_EVENT_REMOTE_CLIENT_CONNECT;
                 break;
             case G_CLIENT_REQ_DISCONNECT:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
+                evtype = G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT;
                 break;
             case G_CLIENT_REQ_SPAWN:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
+                evtype = G_SERVER_EVENT_REMOTE_CLIENT_SPAWN;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_JOIN.players_num = ntohs(value16);
+                evdata.REMOTE_JOIN.players_num = ntohs(value16);
                 break;
             case G_CLIENT_REQ_PLAYER_ACTION:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
+                evtype = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
-                PDU_POP_BUF(event.data.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
+                evdata.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
+                PDU_POP_BUF(evdata.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
                 break;
                 /** Привилегированные запросы */
             case G_CLIENT_REQ_GAME_ABORT:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_ABORT;
+                evtype = G_SERVER_EVENT_REMOTE_GAME_ABORT;
                 break;
             case G_CLIENT_REQ_GAME_SETMAP:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
-                PDU_POP_BUF(event.data.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
+                evtype = G_SERVER_EVENT_REMOTE_GAME_SETMAP;
+                PDU_POP_BUF(evdata.REMOTE_GAME_SETMAP.mapname, MAP_FILENAME_SIZE);
                 break;
             case G_CLIENT_REQ_READY:
-                event.type = G_SERVER_EVENT_REMOTE_CLIENT_READY;
+                evtype = G_SERVER_EVENT_REMOTE_CLIENT_READY;
                 break;
             case G_CLIENT_REQ_GAME_SAVE:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_SAVE;
+                evtype = G_SERVER_EVENT_REMOTE_GAME_SAVE;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_SAVE.isave = ntohs(value16);
+                evdata.REMOTE_GAME_SAVE.isave = ntohs(value16);
                 break;
             case G_CLIENT_REQ_GAME_LOAD:
-                event.type = G_SERVER_EVENT_REMOTE_GAME_LOAD;
+                evtype = G_SERVER_EVENT_REMOTE_GAME_LOAD;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                event.data.REMOTE_GAME_LOAD.isave = ntohs(value16);
+                evdata.REMOTE_GAME_LOAD.isave = ntohs(value16);
                 break;
         }
 
-        server_event_send(&event);
+        server_event_send(sender, evtype, &evdata);
     }
     return 0;
 }
@@ -414,7 +414,7 @@ int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, siz
 
     for(i = 0; i < client->tx_queue_num; i++)
     {
-        game_server_reply_t *event = &client->tx_queue[i].req;
+        server_reply_t *event = &client->tx_queue[i].req;
         value16 = htons(event->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(event->type)

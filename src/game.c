@@ -151,6 +151,39 @@ void game_init(void)
 
     game_menu_show(MENU_MAIN);
 
+
+    CIRCLEQ_INIT(&game.servers);
+    game.servers_num = 0;
+
+}
+
+void game_server_add(const net_addr_t * sender, int clients_num)
+{
+    struct game_server_s * server;
+    GAME_SERVERS_FOREACH(server)
+    {
+        if(memcmp(&server->net_addr, sender, sizeof(net_addr_t)) == 0)
+        {
+            server->clients_num = clients_num;
+            return;
+        }
+    }
+    if(game.servers_num >= GAME_SERVERS_NUM)
+        return;
+    server = Z_malloc(sizeof(struct game_server_s));
+    CIRCLEQ_INSERT_TAIL(&game.servers, server, list);
+    game.servers_num++;
+}
+
+void game_servers_freeall(void)
+{
+    struct game_server_s * server;
+    while(!CIRCLEQ_EMPTY(&game.servers))
+    {
+        server = CIRCLEQ_FIRST(&game.servers);
+        CIRCLEQ_REMOVE(&game.servers, server, list);
+        Z_free(server);
+    }
 }
 
 /*
@@ -158,6 +191,8 @@ void game_init(void)
  */
 void game_done(void)
 {
+    game_servers_freeall();
+
     Z_free(game_dir_home);
     Z_free(game_dir_conf);
     Z_free(game_dir_saves);

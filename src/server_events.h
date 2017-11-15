@@ -12,6 +12,8 @@
 #include "map.h"
 #include "actions.h"
 
+#include <sys/queue.h>
+
 /** @brief События сервер */
 typedef enum
 {
@@ -29,7 +31,7 @@ typedef enum
     G_SERVER_EVENT_REMOTE_GAME_SETMAP,
     G_SERVER_EVENT_REMOTE_GAME_SAVE,
     G_SERVER_EVENT_REMOTE_GAME_LOAD,
-} game_server_event_type_t;
+} server_event_type_t;
 
 typedef union
 {
@@ -54,17 +56,23 @@ typedef union
     {
         char mapname[MAP_FILENAME_SIZE];
     } REMOTE_GAME_SETMAP;
-} game_server_event_data_t;
+} server_event_data_t;
 
 typedef struct server_event_s
 {
+    CIRCLEQ_ENTRY(server_event_s) queue;
     net_addr_t sender;
-    game_server_event_type_t type;
-    game_server_event_data_t data;
-} game_server_event_t;
+    server_event_type_t type;
+    server_event_data_t data;
+} server_event_t;
+
+typedef CIRCLEQ_HEAD(server_event_head_s, server_event_s) server_event_head_t;
 
 extern void server_events_handle(void);
-extern void server_event_send(const game_server_event_t * event);
+extern void server_event_send(
+    const net_addr_t * sender,
+    server_event_type_t type,
+    const server_event_data_t * data);
 extern void server_event_local_stop(void);
 extern void server_event_local_win(void);
 

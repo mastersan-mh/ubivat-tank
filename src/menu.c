@@ -47,15 +47,16 @@ extern game_t game;
             video_image_draw(120 + (width), 30 + 23 * (row), IMG_MENU_ARROWR); \
         } while (0)
 
-#define menu_draw_string_indicator_small(row, nchars) \
+#define menu_draw_string_indicator_small(row, nchars, format, ...) \
         do { \
             video_image_draw(120, 30 + (row) * 15, IMG_MENU_LINEL); \
-            int icol; \
-            for(icol = 0; icol < (nchars); icol++) \
+            int col; \
+            for(col = 0; col < (nchars); col++) \
             { \
-                video_image_draw(120 + 4 + icol * 8, 30 + (row) * 15, IMG_MENU_LINEM); \
+                video_image_draw(120 + 4 + col * 8, 30 + (row) * 15, IMG_MENU_LINEM); \
             } \
-            video_image_draw(120 + 4 + icol * 8, 30 + (row) * 15, IMG_MENU_LINER); \
+            video_image_draw(120 + 4 + col * 8, 30 + (row) * 15, IMG_MENU_LINER); \
+            video_printf(120 + 4, 3 + 30 + (row) * 15, (format), ##__VA_ARGS__); \
         } while (0)
 
 #define	menu_draw_cursor_small(row) \
@@ -260,12 +261,12 @@ static int menu_main(buffer_key_t scancode, menu_action_t action, void * ctx_)
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() == CLIENT_GAMESTATE_1_NOGAME && ctx->menu == 4)
+        if(ctx->menu == 4 && !client_ingame())
             return MENU_MAIN;
         return menus[ctx->menu];
     case MENU_ACTION_LEAVE  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+        if(client_ingame())
             game_menu_hide();
         break;
     case MENU_ACTION_SPACE: break;
@@ -294,7 +295,7 @@ static void menu_main_draw(const void * ctx_)
     };
     for(int i = 0; i < ARRAYSIZE(list); i++)
     {
-        if(i != 4 || client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+        if(!(i == 4 && !client_ingame()))
             menu_draw_entry(i, list[i]);
     }
     menu_draw_cursor(imenu);
@@ -344,7 +345,7 @@ static void menu_game_draw(const void * ctx_)
 static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
     int ret;
-    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+    if(client_ingame())
         return MENU_MAIN;
 
     ret = game_create(0);
@@ -355,8 +356,8 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_req_send_connect();
-    client_req_send_game_setmap(firstmap->map);
+    client_event_local_connect();
+    client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
 }
@@ -364,7 +365,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
     int ret;
-    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+    if(client_ingame())
         return MENU_MAIN;
 
     ret = game_create(GAMEFLAG_2PLAYERS);
@@ -375,8 +376,8 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_req_send_connect();
-    client_req_send_game_setmap(firstmap->map);
+    client_event_local_connect();
+    client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
 }
@@ -400,7 +401,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-        if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+        if(client_ingame())
             return MENU_MAIN;
         if(!gamesaves[ctx->menu].exist)
             break;
@@ -415,9 +416,8 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
                 return MENU_ABORT;
             }
 
-            client_req_send_connect();
-
-            client_req_send_game_load(ctx->menu);
+            client_event_local_connect();
+            client_event_local_loadgame(ctx->menu);
 
         }
         return MENU_MAIN;
@@ -444,9 +444,8 @@ static void menu_game_load_draw(const void * ctx_)
         else
             s = "---===EMPTY===---";
 
-        menu_draw_string_indicator_small(irow, 16);
         font_color_set3i(COLOR_7);
-        video_printf(97+23+4, 33+irow*15, s);
+        menu_draw_string_indicator_small(irow, 16, s);
         //отображение статуса сохраненной игры
         if(showstat)
         {
@@ -550,9 +549,8 @@ static void menu_game_save_draw(const void * ctx_)
         else
             s = "---===EMPTY===---";
 
-        menu_draw_string_indicator_small(irow, 16);
         font_color_set3i(COLOR_7);
-        video_printf(97+23+4,33+irow*15, s);
+        menu_draw_string_indicator_small(irow, 16, s);
 
         if(showstat)
         {
@@ -631,14 +629,16 @@ static void menu_custom_draw(const void * ctx_)
 static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
     menu_custom_connect_ctx_t * ctx = ctx_;
+    int menu_rows = 10;
     switch(action)
     {
     case MENU_ACTION_NOTHING: break;
     case MENU_ACTION_FIRSTENTRY:
+        client_req_send_discoveryserver();
 
         break;
-    case MENU_ACTION_UP     : /* _menu_dec(, &ctx->menu);*/ break;
-    case MENU_ACTION_DOWN   : /* _menu_inc(, &ctx->menu);*/ break;
+    case MENU_ACTION_UP     : _menu_dec(menu_rows, &ctx->menu); break;
+    case MENU_ACTION_DOWN   : _menu_inc(menu_rows, &ctx->menu); break;
     case MENU_ACTION_LEFT   :
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
@@ -656,9 +656,27 @@ static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void
 
 static void menu_custom_connect_draw(const void * ctx_)
 {
-    //const menu_custom_ctx_t * ctx = ctx_;
+
+    const menu_custom_connect_ctx_t * ctx = ctx_;
+
     menu_draw_conback();
     menu_draw_header(IMG_MENU_CASE_SERVERCONNECT);
+
+    struct game_server_s * server;
+    int irow = 0;
+    GAME_SERVERS_FOREACH(server)
+    {
+
+        menu_draw_string_indicator_small(irow, 16,
+            "ip = "PRINTF_NETADDR_IPv4_FMT ", port " PRINTF_NETADDR_PORT_FMT ", clients %d",
+            PRINTF_NETADDR_IPv4_VAL(server->net_addr), PRINTF_NETADDR_PORT_VAL(server->net_addr), server->clients_num);
+
+        irow++;
+
+    }
+
+    menu_draw_cursor_small(ctx->menu);
+
 }
 
 
@@ -667,7 +685,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 {
 
     int ret;
-    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+    if(client_ingame())
         return MENU_MAIN;
     ret = game_create(GAMEFLAG_CUSTOMGAME);
     if(ret)
@@ -676,9 +694,8 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_req_send_connect();
-
-    client_req_send_game_setmap(game.custommap->map);
+    client_event_local_connect();
+    client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;
 }
@@ -686,7 +703,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
 static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void * ctx)
 {
     int ret;
-    if(client_gamestate_get() != CLIENT_GAMESTATE_1_NOGAME)
+    if(client_ingame())
         return MENU_MAIN;
     ret = game_create(GAMEFLAG_2PLAYERS | GAMEFLAG_CUSTOMGAME);
     if(ret)
@@ -695,9 +712,8 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_req_send_connect();
-
-    client_req_send_game_setmap(game.custommap->map);
+    client_event_local_connect();
+    client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;
 }

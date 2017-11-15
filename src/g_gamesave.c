@@ -251,7 +251,7 @@ int g_gamesave_load_read_header(gamesave_load_context_t * ctx)
     GS_READ_U16(ctx->clients_num);
     ctx->clients_descr = Z_malloc(sizeof(size_t) * ctx->clients_num);
 
-    for(size_t clientId; clientId < ctx->clients_num; clientId++)
+    for(size_t clientId = 0; clientId < ctx->clients_num; clientId++)
     {
         size_t players_num;
         GS_READ_U16(players_num);

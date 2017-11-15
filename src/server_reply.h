@@ -21,7 +21,7 @@ typedef enum
     G_SERVER_REPLY_CONNECTION_CLOSE,
     G_SERVER_REPLY_PLAYERS_ENTITY_SET,
     G_SERVER_REPLY_GAME_ENDMAP, /* карта завершена */
-} game_server_reply_type_t;
+} server_reply_type_t;
 
 typedef union
 {
@@ -43,13 +43,13 @@ typedef union
         bool win; /**< win / lose */
         bool endgame; /* end of map / end of map and game*/
     } GAME_ENDMAP;
-} game_server_reply_data_t;
+} server_reply_data_t;
 
 
 typedef struct
 {
-    game_server_reply_type_t type;
-    game_server_reply_data_t data;
-} game_server_reply_t;
+    server_reply_type_t type;
+    server_reply_data_t data;
+} server_reply_t;
 
 #endif /* SRC_SERVER_REPLY_H_ */

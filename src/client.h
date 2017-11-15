@@ -26,7 +26,7 @@ extern void client_start(int flags);
 extern void client_stop(void);
 extern bool client_running(void);
 
-extern client_gamestate_t client_gamestate_get(void);
+extern bool client_ingame(void);
 
 extern void client_handle(void);
 

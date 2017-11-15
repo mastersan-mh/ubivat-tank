@@ -179,26 +179,28 @@ void client_game_draw(void)
 {
     switch(client.gamestate)
     {
-    case CLIENT_GAMESTATE_1_NOGAME:
-        client_game_draw_nogame();
-        break;
-    case CLIENT_GAMESTATE_2_MISSION_BRIEF:
-        client_game_draw_missionbrief();
-        break;
-    case CLIENT_GAMESTATE_3_SPAWN_AWAITING:
-        client_game_draw_spawn_awaiting();
-        break;
-    case CLIENT_GAMESTATE_4_GAMESAVE:
-        break;
-    case CLIENT_GAMESTATE_5_INGAME:
-        cl_draw();
-        break;
-    case CLIENT_GAMESTATE_6_INTERMISSION:
-        cl_game_state_intermission_draw();
-        break;
-    case CLIENT_GAMESTATE_7_ENDGAME:
-        cl_game_state_endgame_draw();
-        break;
+        case CLIENT_GAMESTATE_0_DISCOVERY:
+            break;
+        case CLIENT_GAMESTATE_1_NOGAME:
+            client_game_draw_nogame();
+            break;
+        case CLIENT_GAMESTATE_2_MISSION_BRIEF:
+            client_game_draw_missionbrief();
+            break;
+        case CLIENT_GAMESTATE_3_SPAWN_AWAITING:
+            client_game_draw_spawn_awaiting();
+            break;
+        case CLIENT_GAMESTATE_4_GAMESAVE:
+            break;
+        case CLIENT_GAMESTATE_5_INGAME:
+            cl_draw();
+            break;
+        case CLIENT_GAMESTATE_6_INTERMISSION:
+            cl_game_state_intermission_draw();
+            break;
+        case CLIENT_GAMESTATE_7_ENDGAME:
+            cl_game_state_endgame_draw();
+            break;
     }
 }
 
