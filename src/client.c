@@ -48,14 +48,20 @@ void client_init(void)
     client.tx_queue_num = 0;
 }
 
-void client_done()
+void client_done(void)
 {
 
 }
 
-void client_start(int flags)
+void client_flags_set(int flags)
 {
     client.gstate.players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+}
+
+void client_start(void)
+{
+    if(client.state != CLIENT_STATE_IDLE)
+        return;
     client.state = CLIENT_STATE_INIT;
 }
 
@@ -88,11 +94,8 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
         {
             case G_SERVER_REPLY_INFO:
                 evtype = G_CLIENT_EVENT_REMOTE_INFO;
-                /*
-            nvalue32 = htonl( (uint32_t) info.clients_num );
-            memcpy(&buf[buflen], &nvalue32, sizeof(nvalue32));
-            buflen += sizeof(nvalue32);
-                 */
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_INFO.clients_num = ntohs(value16);
                 break;
             case G_SERVER_REPLY_CONNECTION_ACCEPTED:
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;

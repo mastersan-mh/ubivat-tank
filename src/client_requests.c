@@ -43,11 +43,11 @@ void client_req_send_disconnect(void)
     client_req_send(&req);
 }
 
-void client_req_send_spawn(void)
+void client_req_send_spawn(int players_num)
 {
     client_request_t req;
     req.type = G_CLIENT_REQ_SPAWN;
-    req.data.SPAWN.players_num = client.gstate.players_num;
+    req.data.SPAWN.players_num = players_num;
     client_req_send(&req);
 }
 

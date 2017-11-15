@@ -51,6 +51,7 @@ bool sv_entity_valid = false;
 void server_init(void)
 {
     CIRCLEQ_INIT(&server.events);
+    CIRCLEQ_INIT(&server.txs);
     server.gstate.custommap = mapList;
     server.gstate.gamemap   = mapList;
 
@@ -63,6 +64,8 @@ void server_done(void)
 
 void server_start(int flags)
 {
+    if(server.state != SERVER_STATE_IDLE)
+        return;
     server.state = SERVER_STATE_INIT;
     server.flags.localgame = !(flags & GAMEFLAG_CUSTOMGAME);
     server.flags.allow_respawn = (flags & GAMEFLAG_2PLAYERS) || (flags & GAMEFLAG_CUSTOMGAME);

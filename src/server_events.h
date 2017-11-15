@@ -66,7 +66,7 @@ typedef struct server_event_s
     server_event_data_t data;
 } server_event_t;
 
-typedef CIRCLEQ_HEAD(server_event_head_s, server_event_s) server_event_head_t;
+typedef CIRCLEQ_HEAD(, server_event_s) server_event_head_t;
 
 extern void server_events_handle(void);
 extern void server_event_send(

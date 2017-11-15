@@ -57,6 +57,11 @@ extern bool sv_entity_valid;
                     break; \
                 }
 
+void server_fsm_discovery(const server_event_t * event)
+{
+    server_reply_send_info(&event->sender);
+}
+
 void server_fsm_client_connect(const server_event_t * event)
 {
     server_client_t * client;
@@ -157,7 +162,6 @@ static void server_fsm_control_handle(const server_event_t * event, server_clien
 
 }
 
-
 void server_fsm(const server_event_t * event)
 {
     server_gamestate_t gamestate = server.gamestate;
@@ -179,13 +183,8 @@ void server_fsm(const server_event_t * event)
             case G_SERVER_EVENT_LOCAL_WIN:
                 break;
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
-            {
-                server_client_t * cl;
-                int num = 0;
-                LIST2_FOREACH(server.clients, cl) num++;
-                server_reply_send_info(client, num);
+                server_fsm_discovery(event);
                 break;
-            }
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
                 FSM_CLIENT_CONNECT_CHECK();
                 server_fsm_client_connect(event);
@@ -258,6 +257,7 @@ void server_fsm(const server_event_t * event)
                 break;
             }
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
+                server_fsm_discovery(event);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
                 FSM_CLIENT_CONNECT_CHECK();
@@ -311,6 +311,7 @@ void server_fsm(const server_event_t * event)
             case G_SERVER_EVENT_LOCAL_WIN:
                 break;
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
+                server_fsm_discovery(event);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_CONNECT:
                 break;

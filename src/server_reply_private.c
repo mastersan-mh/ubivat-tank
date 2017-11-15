@@ -8,38 +8,47 @@
 #include "common/common_list2.h"
 #include "server_private.h"
 
-static void server_reply_send(server_client_t * client, const server_reply_t * req)
+#include <sys/queue.h>
+
+static void server_reply_client_send(server_client_t * client, const server_reply_t * req)
 {
     if(client->tx_queue_num >= SERVER_CLIENT_TX_QUEUE_SIZE)
     {
         game_console_send("SERVER: TX queue overflow.");
         return;
     }
-    client->tx_queue[client->tx_queue_num].req = *req;
+    client->tx_queue[client->tx_queue_num].reply = *req;
     client->tx_queue_num++;
 }
 
+static void server_reply_send(const net_addr_t * net_addr, const server_reply_t * reply)
+{
+    server_tx_t * tx = Z_malloc(sizeof(server_tx_t));
+    tx->net_addr = *net_addr;
+    tx->reply = *reply;
+    CIRCLEQ_INSERT_TAIL(&server.txs, tx, queue);
+}
 
-void server_reply_send_info(server_client_t * client, int clients_num)
+void server_reply_send_info(const net_addr_t * net_addr)
 {
     server_reply_t reply;
     reply.type = G_SERVER_REPLY_INFO;
-    reply.data.INFO.clients_num = clients_num;
-    server_reply_send(client, &reply);
+    reply.data.INFO.clients_num = server_clients_num_get();
+    server_reply_send(net_addr, &reply);
 }
 
 void server_reply_send_connection_accepted(server_client_t * client)
 {
     server_reply_t reply;
     reply.type = G_SERVER_REPLY_CONNECTION_ACCEPTED;
-    server_reply_send(client, &reply);
+    server_reply_client_send(client, &reply);
 }
 
 void server_reply_send_connection_close(server_client_t * client)
 {
     server_reply_t reply;
     reply.type = G_SERVER_REPLY_CONNECTION_CLOSE;
-    server_reply_send(client, &reply);
+    server_reply_client_send(client, &reply);
 }
 
 void server_reply_send_players_entity_set(server_client_t * client)
@@ -58,7 +67,7 @@ void server_reply_send_players_entity_set(server_client_t * client)
         reply.data.PLAYERS_ENTITY_SET.ent[i].entity = player->entity;
         i++;
     }
-    server_reply_send(client, &reply);
+    server_reply_client_send(client, &reply);
 
 }
 
@@ -68,5 +77,5 @@ void server_reply_send_game_endmap(server_client_t * client, bool win, bool endg
     reply.type = G_SERVER_REPLY_GAME_ENDMAP;
     reply.data.GAME_ENDMAP.win = win;
     reply.data.GAME_ENDMAP.endgame = endgame;
-    server_reply_send(client, &reply);
+    server_reply_client_send(client, &reply);
 }

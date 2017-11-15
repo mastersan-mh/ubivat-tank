@@ -32,9 +32,17 @@ typedef struct server_player_s
 
 typedef struct
 {
-    net_socket_t * ns;
-    server_reply_t req;
+    server_reply_t reply;
+} server_client_tx_t;
+
+typedef struct server_tx_s
+{
+    CIRCLEQ_ENTRY(server_tx_s) queue;
+    net_addr_t net_addr;
+    server_reply_t reply;
 } server_tx_t;
+
+typedef CIRCLEQ_HEAD(, server_tx_s) server_tx_head_t;
 
 typedef struct server_player_vars_storage_s
 {
@@ -70,7 +78,7 @@ typedef struct server_client_s
     server_player_t * players;
 
     size_t tx_queue_num;
-    server_tx_t tx_queue[SERVER_CLIENT_TX_QUEUE_SIZE];
+    server_client_tx_t tx_queue[SERVER_CLIENT_TX_QUEUE_SIZE];
 
 } server_client_t;
 
@@ -85,6 +93,8 @@ typedef enum
 typedef struct
 {
     server_event_head_t events;
+    /* TX queue */
+    server_tx_head_t txs;
 
     server_state_t state;
     server_gameflags_t flags;
@@ -143,7 +153,7 @@ server_player_t * server_client_player_get_by_id(const server_client_t * client,
 extern int server_gamesave_load(int isave);
 
 extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);
-extern int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);
+extern int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);
 
 extern void server_tx(void);
 

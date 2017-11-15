@@ -79,6 +79,14 @@ void net_send(const net_socket_t * net_sock, void * buf, size_t size)
     }
 }
 
+void net_send_addr(int sock, const net_addr_t * net_addr, void * buf, size_t size)
+{
+    if( sendto(sock, buf, size, 0, &net_addr->addr, sizeof(net_addr->addr)) < 0 )
+    {
+        game_halt("sendto()");
+    }
+}
+
 #define LOCK()
 #define UNLOCK()
 

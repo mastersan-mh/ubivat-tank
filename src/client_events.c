@@ -74,6 +74,11 @@ void client_event_local_connect(void)
     client_event_send(NULL, G_CLIENT_EVENT_LOCAL_CONNECT, NULL);
 }
 
+void client_event_local_discoveryserver(void)
+{
+    client_event_send(NULL, G_CLIENT_EVENT_LOCAL_DICOVERYSERVER, NULL);
+}
+
 void client_event_local_newgame(const char * mapname)
 {
     client_event_data_t data;

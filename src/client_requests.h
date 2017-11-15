@@ -65,7 +65,7 @@ typedef struct
 extern void client_req_send_discoveryserver(void);
 extern void client_req_send_connect(void);
 extern void client_req_send_disconnect(void);
-extern void client_req_send_spawn(void);
+extern void client_req_send_spawn(int players_num);
 extern void client_req_send_player_action(int playerId, const char * action_name);
 extern void client_req_send_game_abort(void);
 extern void client_req_send_game_setmap(const char * mapname);

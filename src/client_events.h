@@ -18,6 +18,7 @@ typedef enum
     G_CLIENT_EVENT_LOCAL_KEY_PRESS,
     G_CLIENT_EVENT_LOCAL_KEY_RELEASE,
     G_CLIENT_EVENT_LOCAL_CONNECT,
+    G_CLIENT_EVENT_LOCAL_DICOVERYSERVER,
     G_CLIENT_EVENT_LOCAL_NEWGAME,
     G_CLIENT_EVENT_LOCAL_LOADGAME,
     G_CLIENT_EVENT_LOCAL_ENTERGAME,
@@ -86,6 +87,7 @@ void client_event_send(
 
 extern void client_event_local_key_input(bool key_repeat, int key, bool state);
 extern void client_event_local_connect(void);
+extern void client_event_local_discoveryserver(void);
 extern void client_event_local_newgame(const char * mapname);
 extern void client_event_local_loadgame(int isave);
 extern void client_event_local_entergame(void);

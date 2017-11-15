@@ -48,6 +48,7 @@ extern net_socket_t * net_socket_create_sockaddr(struct sockaddr addr);
 void net_socket_close(net_socket_t * ns);
 
 extern void net_send(const net_socket_t * sock, void * buf, size_t size);
+extern void net_send_addr(int sock, const net_addr_t * net_addr, void * buf, size_t size);
 
 extern int net_recv(const net_socket_t * net_sock, char * buf, size_t * buf_len, size_t buf_size, struct sockaddr * addr, socklen_t * addr_len);
 

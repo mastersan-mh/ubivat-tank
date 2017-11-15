@@ -171,6 +171,8 @@ void game_server_add(const net_addr_t * sender, int clients_num)
     if(game.servers_num >= GAME_SERVERS_NUM)
         return;
     server = Z_malloc(sizeof(struct game_server_s));
+    server->net_addr = *sender;
+    server->clients_num = clients_num;
     CIRCLEQ_INSERT_TAIL(&game.servers, server, list);
     game.servers_num++;
 }
@@ -263,6 +265,8 @@ void game_main(void)
 
     long int cycletimeeventer = 0;
 
+    client_start();
+
     while(!game_quit_get())
     {
         time_prev = time_current;
@@ -315,15 +319,14 @@ void game_main(void)
 int game_create(int flags)
 {
     server_start(flags);
-    client_start(flags);
-    game.show_menu = false;
+    client_flags_set(flags);
+    game_menu_hide();
     return 0;
 }
 
 void game_abort(void)
 {
     server_stop();
-    client_stop();
 }
 
 void game_handle(void)

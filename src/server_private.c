@@ -403,21 +403,26 @@ int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len
     return 0;
 }
 
-int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size)
+int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size)
 {
     int16_t value16;
     size_t i;
     size_t ofs = 0;
 
+    if(client->tx_queue_num == 0)
+    {
+        *buf_len = 0;
+        return 0;
+    }
     value16 = htons(client->tx_queue_num);
     PDU_PUSH_BUF(&value16, sizeof(value16));
 
     for(i = 0; i < client->tx_queue_num; i++)
     {
-        server_reply_t *event = &client->tx_queue[i].req;
-        value16 = htons(event->type);
+        server_reply_t * reply = &client->tx_queue[i].reply;
+        value16 = htons(reply->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
-        switch(event->type)
+        switch(reply->type)
         {
             case G_SERVER_REPLY_INFO:
                 /*
@@ -432,20 +437,20 @@ int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, siz
                 break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
-                int player_num = event->data.PLAYERS_ENTITY_SET.players_num;
+                int player_num = reply->data.PLAYERS_ENTITY_SET.players_num;
                 value16 = htons(player_num);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
                 for(int i = 0; i < player_num; i++)
                 {
-                    PDU_PUSH_BUF(event->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_PUSH_BUF(&event->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(event->data.PLAYERS_ENTITY_SET.ent[i].entity));
+                    PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                    PDU_PUSH_BUF(&reply->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply->data.PLAYERS_ENTITY_SET.ent[i].entity));
                 }
                 break;
             }
             case G_SERVER_REPLY_GAME_ENDMAP:
-                value16 = htons(event->data.GAME_ENDMAP.win ? -1 : 0);
+                value16 = htons(reply->data.GAME_ENDMAP.win ? -1 : 0);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
-                value16 = htons(event->data.GAME_ENDMAP.endgame ? -1 : 0);
+                value16 = htons(reply->data.GAME_ENDMAP.endgame ? -1 : 0);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
                 break;
         }
@@ -453,6 +458,54 @@ int server_pdu_build(server_client_t * client, char * buf, size_t * buf_len, siz
     client->tx_queue_num = 0;
     return 0;
 }
+
+int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len, size_t buf_size)
+{
+    int16_t value16;
+
+    size_t ofs = 0;
+
+    int tx_queue_num = 1;
+    value16 = htons(tx_queue_num);
+    PDU_PUSH_BUF(&value16, sizeof(value16));
+
+    value16 = htons(reply->type);
+    PDU_PUSH_BUF(&value16, sizeof(value16));
+    switch(reply->type)
+    {
+        case G_SERVER_REPLY_INFO:
+            value16 = htons(reply->data.INFO.clients_num);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            break;
+        case G_SERVER_REPLY_CONNECTION_ACCEPTED:
+            break;
+        case G_SERVER_REPLY_CONNECTION_CLOSE:
+            break;
+        case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
+        {
+            int player_num = reply->data.PLAYERS_ENTITY_SET.players_num;
+            value16 = htons(player_num);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            for(int i = 0; i < player_num; i++)
+            {
+                PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
+                PDU_PUSH_BUF(&reply->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply->data.PLAYERS_ENTITY_SET.ent[i].entity));
+            }
+            break;
+        }
+        case G_SERVER_REPLY_GAME_ENDMAP:
+            value16 = htons(reply->data.GAME_ENDMAP.win ? -1 : 0);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            value16 = htons(reply->data.GAME_ENDMAP.endgame ? -1 : 0);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            break;
+    }
+
+    return 0;
+}
+
+
+
 
 
 
@@ -465,7 +518,7 @@ void server_tx(void)
     server_client_t * client;
     LIST2_FOREACH(server.clients, client)
     {
-        err = server_pdu_build(client, buf, &buf_len, PDU_BUF_SIZE);
+        err = server_pdu_client_build(client, buf, &buf_len, PDU_BUF_SIZE);
         if(err)
         {
             game_console_send("SERVER: client TX buffer overflow");
@@ -477,4 +530,25 @@ void server_tx(void)
         }
 
     }
+
+
+    while(!CIRCLEQ_EMPTY(&server.txs))
+    {
+        server_tx_t * tx = CIRCLEQ_FIRST(&server.txs);
+        CIRCLEQ_REMOVE(&server.txs, tx, queue);
+
+        server_pdu_build(&tx->reply, buf, &buf_len, PDU_BUF_SIZE);
+        if(err)
+        {
+            game_console_send("SERVER: TX buffer overflow");
+            return;
+        }
+        if(buf_len > 0)
+        {
+            net_send_addr(server.ns->sock, &tx->net_addr, buf, buf_len);
+        }
+        Z_free(tx);
+    }
+
+
 }

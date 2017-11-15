@@ -194,9 +194,10 @@ buffer_key_t buffer_dequeue_nowait(void)
 
 void menu_event_key_down(bool key_repeat, int key)
 {
+    /*
     if(key_repeat)
         return;
-
+*/
     /*
         event->key.keysym.scancode; //SDL_Scancode
         event->key.keysym.sym; //SDL_Keycode  - для ввода текста
@@ -634,8 +635,7 @@ static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void
     {
     case MENU_ACTION_NOTHING: break;
     case MENU_ACTION_FIRSTENTRY:
-        client_req_send_discoveryserver();
-
+        client_event_local_discoveryserver();
         break;
     case MENU_ACTION_UP     : _menu_dec(menu_rows, &ctx->menu); break;
     case MENU_ACTION_DOWN   : _menu_inc(menu_rows, &ctx->menu); break;
@@ -667,7 +667,7 @@ static void menu_custom_connect_draw(const void * ctx_)
     GAME_SERVERS_FOREACH(server)
     {
 
-        menu_draw_string_indicator_small(irow, 16,
+        menu_draw_string_indicator_small(irow, 20,
             "ip = "PRINTF_NETADDR_IPv4_FMT ", port " PRINTF_NETADDR_PORT_FMT ", clients %d",
             PRINTF_NETADDR_IPv4_VAL(server->net_addr), PRINTF_NETADDR_PORT_VAL(server->net_addr), server->clients_num);
 

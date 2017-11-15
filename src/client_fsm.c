@@ -52,6 +52,9 @@ void client_fsm(const client_event_t * event)
                     client_req_send_connect();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_1_NOGAME);
                     break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
+                    break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
                 case G_CLIENT_EVENT_LOCAL_LOADGAME:
@@ -81,6 +84,9 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
                     break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     client_req_send_game_setmap(event->data.LOCAL_NEWGAME.mapname);
@@ -118,12 +124,15 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
-                    client_req_send_spawn();
+                    client_req_send_spawn(client.gstate.players_num);
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_3_SPAWN_AWAITING);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
                     break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
@@ -155,6 +164,9 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
                     break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
@@ -214,6 +226,9 @@ void client_fsm(const client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
                     break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
+                    break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
                 case G_CLIENT_EVENT_LOCAL_LOADGAME:
@@ -248,6 +263,9 @@ void client_fsm(const client_event_t * event)
                     client_key_release(event->data.LOCAL_KEY_RELEASE.key);
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
                     break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
@@ -295,6 +313,9 @@ void client_fsm(const client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
                     break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
+                    break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
                 case G_CLIENT_EVENT_LOCAL_LOADGAME:
@@ -320,11 +341,19 @@ void client_fsm(const client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    client_stop();
+                    client_req_send_game_abort();
+                    client_players_delete();
+                    /* flush queue */
+                    client.tx_queue_num = 0;
+                    game_menu_show(MENU_MAIN);
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_DISCOVERY);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    break;
+                case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
+                    client_req_send_discoveryserver();
                     break;
                 case G_CLIENT_EVENT_LOCAL_NEWGAME:
                     break;
