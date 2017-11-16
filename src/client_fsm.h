@@ -12,7 +12,7 @@
 
 typedef enum
 {
-    CLIENT_GAMESTATE_0_DISCOVERY, /* режим получения информации */
+    CLIENT_GAMESTATE_0_IDLE, /* режим получения информации */
     CLIENT_GAMESTATE_1_NOGAME, /* игра не создана */
     CLIENT_GAMESTATE_2_MISSION_BRIEF,
     CLIENT_GAMESTATE_3_SPAWN_AWAITING,

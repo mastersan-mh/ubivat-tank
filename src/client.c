@@ -34,15 +34,16 @@ client_t client = {};
 bool client_ingame(void)
 {
     return
-            !(client.gamestate == CLIENT_GAMESTATE_0_DISCOVERY ||
+            !(client.gamestate == CLIENT_GAMESTATE_0_IDLE ||
                     client.gamestate == CLIENT_GAMESTATE_1_NOGAME);
 }
 
 void client_init(void)
 {
     CIRCLEQ_INIT(&client.events);
-    client.state            = CLIENT_STATE_IDLE;
-    client.gstate.msg       = NULL;
+    client.state      = CLIENT_STATE_IDLE;
+    client.gamestate  = CLIENT_GAMESTATE_0_IDLE;
+    client.gstate.msg = NULL;
 
     /* flush queues */
     client.tx_queue_num = 0;
@@ -235,22 +236,9 @@ void client_handle(void)
     switch(client.state)
     {
         case CLIENT_STATE_IDLE:
-            client.gamestate = CLIENT_GAMESTATE_0_DISCOVERY;
             break;
         case CLIENT_STATE_INIT:
-
-            client.ns = net_socket_create(NET_PORT, "127.0.0.1");
-
-            if(client.ns == NULL)
-            {
-                game_halt("client socket() failed");
-            }
-            /*
-        if(net_socket_bind(client_ns) < 0)
-        {
-            game_halt("client bind() failed");
-        }
-             */
+            client.gamestate = CLIENT_GAMESTATE_0_IDLE;
             client.state = CLIENT_STATE_RUN;
             break;
         case CLIENT_STATE_RUN :
@@ -258,14 +246,10 @@ void client_handle(void)
             client_events_handle();
             break;
         case CLIENT_STATE_DONE:
-            client_events_pop_all();
-            client_req_send_game_abort();
-            client_players_delete();
-            /* flush queue */
-            client.tx_queue_num = 0;
+            client_events_flush();
+            client_clean();
             client.state = CLIENT_STATE_IDLE;
-            client.gamestate = CLIENT_GAMESTATE_0_DISCOVERY;
-            game_menu_show(MENU_MAIN);
+            client.gamestate = CLIENT_GAMESTATE_0_IDLE;
             break;
     }
 }

@@ -357,7 +357,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_event_local_connect();
+    client_event_local_connect(NULL);
     client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
@@ -377,7 +377,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_event_local_connect();
+    client_event_local_connect(NULL);
     client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
@@ -417,7 +417,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
                 return MENU_ABORT;
             }
 
-            client_event_local_connect();
+            client_event_local_connect(NULL);
             client_event_local_loadgame(ctx->menu);
 
         }
@@ -627,22 +627,36 @@ static void menu_custom_draw(const void * ctx_)
     menu_draw_cursor(ctx->menu);
 }
 
+#define MENU_CUSTOM_CONNECT_ROWS 10
 static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
     menu_custom_connect_ctx_t * ctx = ctx_;
-    int menu_rows = 10;
+    struct game_server_s * server;
+    int irow;
     switch(action)
     {
     case MENU_ACTION_NOTHING: break;
     case MENU_ACTION_FIRSTENTRY:
         client_event_local_discoveryserver();
         break;
-    case MENU_ACTION_UP     : _menu_dec(menu_rows, &ctx->menu); break;
-    case MENU_ACTION_DOWN   : _menu_inc(menu_rows, &ctx->menu); break;
+    case MENU_ACTION_UP     : _menu_dec(MENU_CUSTOM_CONNECT_ROWS, &ctx->menu); break;
+    case MENU_ACTION_DOWN   : _menu_inc(MENU_CUSTOM_CONNECT_ROWS, &ctx->menu); break;
     case MENU_ACTION_LEFT   :
     case MENU_ACTION_RIGHT  : break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
+
+        irow = 0;
+        GAME_SERVERS_FOREACH(server)
+        {
+            if(irow == ctx->menu)
+                break;
+            irow++;
+        }
+        if(server)
+        {
+            client_event_local_connect(&server->net_addr);
+        }
         //return menus[ctx->menu];
         break;
     case MENU_ACTION_LEAVE  :
@@ -662,17 +676,20 @@ static void menu_custom_connect_draw(const void * ctx_)
     menu_draw_conback();
     menu_draw_header(IMG_MENU_CASE_SERVERCONNECT);
 
-    struct game_server_s * server;
     int irow = 0;
+
+    struct game_server_s * server;
     GAME_SERVERS_FOREACH(server)
     {
 
         menu_draw_string_indicator_small(irow, 20,
-            "ip = "PRINTF_NETADDR_IPv4_FMT ", port " PRINTF_NETADDR_PORT_FMT ", clients %d",
-            PRINTF_NETADDR_IPv4_VAL(server->net_addr), PRINTF_NETADDR_PORT_VAL(server->net_addr), server->clients_num);
-
+            "ip = "PRINTF_NETADDR_FMT ", clients %d",
+            PRINTF_NETADDR_VAL(server->net_addr), server->clients_num);
         irow++;
-
+    }
+    for(; irow < MENU_CUSTOM_CONNECT_ROWS; irow++)
+    {
+        menu_draw_string_indicator_small(irow, 20, "");
     }
 
     menu_draw_cursor_small(ctx->menu);
@@ -694,7 +711,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_event_local_connect();
+    client_event_local_connect(NULL);
     client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;
@@ -712,7 +729,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_event_local_connect();
+    client_event_local_connect(NULL);
     client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;

@@ -18,6 +18,8 @@
 
 #include "common/common_list2.h"
 
+#include <assert.h>
+
 #define GAME_SOUND_MENU 10
 
 #define INVALID_EVENT() game_console_send("client: invalid server gamestate %s event %d.", game_gamestate_to_str(gamestate), event->type)
@@ -34,22 +36,64 @@
             game_console_send("client: gamestate changed to %s.", client_gamestate_to_str(gamestate)); \
         } while (0)
 
+static void client_fsm_local_connect(const client_event_t * event)
+{
+    if(!event->data.LOCAL_CONNECT.remotegame)
+    {
+        client.remotegame = event->data.LOCAL_CONNECT.remotegame;
+        client.ns = net_socket_create_hostname(NET_PORT, "127.0.0.1");
+
+        if(client.ns == NULL)
+        {
+            game_halt("client socket() failed");
+        }
+
+        client_req_send_connect();
+        return;
+    }
+
+    assert(client.ns == NULL && "client_fsm_local_connect(): already connected, disconnect first");
+
+    client.remotegame = event->data.LOCAL_CONNECT.remotegame;
+    const net_addr_t *net_addr = &event->data.LOCAL_CONNECT.net_addr;
+    client.ns = net_socket_create(net_addr);
+
+    game_console_send("client: connecting to " PRINTF_NETADDR_FMT "...",
+        PRINTF_NETADDR_VAL(*net_addr));
+
+    if(client.ns == NULL)
+    {
+        game_halt("client socket() failed");
+    }
+    /*
+                        if(net_socket_bind(client_ns) < 0)
+                        {
+                            game_halt("client bind() failed");
+                        }
+     */
+
+    client_req_send_connect();
+}
+
 void client_fsm(const client_event_t * event)
 {
     client_gamestate_t gamestate = client.gamestate;
 
     switch(client.gamestate)
     {
-        case CLIENT_GAMESTATE_0_DISCOVERY:
+        case CLIENT_GAMESTATE_0_IDLE:
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    /* already stopped */
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
-                    client_req_send_connect();
+                    client_fsm_local_connect(event);
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_1_NOGAME);
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
@@ -79,11 +123,16 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    client_fsm_local_connect(event);
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -122,6 +171,10 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
                     client_req_send_spawn(client.gstate.players_num);
@@ -159,6 +212,10 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
@@ -220,6 +277,10 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
@@ -256,6 +317,10 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     client_key_press(event->data.LOCAL_KEY_PRESS.key);
                     break;
@@ -298,6 +363,10 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
                     sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
                     client_req_send_ready();
@@ -340,13 +409,13 @@ void client_fsm(const client_event_t * event)
         {
             switch(event->type)
             {
+                case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
+                    break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
-                    client_req_send_game_abort();
-                    client_players_delete();
-                    /* flush queue */
-                    client.tx_queue_num = 0;
-                    game_menu_show(MENU_MAIN);
-                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_DISCOVERY);
+                    client_clean();
+                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;

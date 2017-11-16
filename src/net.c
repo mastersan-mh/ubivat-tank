@@ -11,15 +11,19 @@
 
 #include "game.h"
 
-#include <stddef.h>
+#include <assert.h>
 
+#include <stddef.h>
 #include <fcntl.h>
+
 
 /*
  * @param hostname = NULL - any address
  */
-net_socket_t * net_socket_create(short port, const char * hostname)
+net_socket_t * net_socket_create(const net_addr_t * net_addr)
 {
+    assert(net_addr->addr_in.sin_family == AF_INET && "net_socket_create(): invalid sin_family?");
+
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(sock < 0)
         return NULL;
@@ -30,15 +34,27 @@ net_socket_t * net_socket_create(short port, const char * hostname)
     }
     net_socket_t * ns = Z_malloc(sizeof(net_socket_t));
     ns->sock = sock;
-    ns->addr_.addr_in.sin_family = AF_INET; // домены Internet
-    ns->addr_.addr_in.sin_port = htons(port);
-    ns->addr_.addr_in.sin_addr.s_addr = inet_addr (hostname ? hostname : INADDR_ANY);
+    ns->net_addr = *net_addr;
     return ns;
+}
+
+/*
+ * @param hostname = NULL - any address
+ */
+net_socket_t * net_socket_create_hostname(short port, const char * hostname)
+{
+    net_addr_t net_addr;
+
+    net_addr.addr_in.sin_family = AF_INET; // домены Internet
+    net_addr.addr_in.sin_port = htons(port);
+    net_addr.addr_in.sin_addr.s_addr = inet_addr (hostname ? hostname : INADDR_ANY);
+
+    return net_socket_create(&net_addr);
 }
 
 int net_socket_bind(const net_socket_t * sock)
 {
-    return bind(sock->sock, &sock->addr_.addr, sizeof(sock->addr_.addr));
+    return bind(sock->sock, &sock->net_addr.addr, sizeof(sock->net_addr.addr));
 }
 
 net_socket_t * net_socket_create_sockaddr(struct sockaddr addr)
@@ -55,7 +71,7 @@ net_socket_t * net_socket_create_sockaddr(struct sockaddr addr)
 	addr_to.sin_addr.s_addr = inet_addr(hostname);
      */
     net_socket_t * ns = Z_malloc(sizeof(net_socket_t));
-    ns->addr_.addr = addr;
+    ns->net_addr.addr = addr;
     ns->sock = sock;
     return ns;
 }
@@ -73,7 +89,7 @@ void net_socket_close(net_socket_t * net_sock)
  */
 void net_send(const net_socket_t * net_sock, void * buf, size_t size)
 {
-    if( sendto(net_sock->sock, buf, size, 0, &net_sock->addr_.addr, sizeof(net_sock->addr_.addr)) < 0 )
+    if( sendto(net_sock->sock, buf, size, 0, &net_sock->net_addr.addr, sizeof(net_sock->net_addr.addr)) < 0 )
     {
         game_halt("sendto()");
     }

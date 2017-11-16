@@ -52,8 +52,8 @@ extern bool sv_entity_valid;
 #define FSM_CLIENT_CONNECT_CHECK() \
                 if(client) \
                 { \
-                    game_console_send("server: client from 0x%00000000x:%d  already connected.", \
-                        client->ns.addr_.addr_in, ntohs(client->ns.addr_.addr_in.sin_port)); \
+                    game_console_send("server: client from " PRINTF_NETADDR_FMT " already connected.", \
+                        PRINTF_NETADDR_VAL(client->ns.net_addr)); \
                     break; \
                 }
 

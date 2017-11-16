@@ -15,6 +15,7 @@
 
 typedef enum
 {
+    G_CLIENT_EVENT_LOCAL_STOP,
     G_CLIENT_EVENT_LOCAL_KEY_PRESS,
     G_CLIENT_EVENT_LOCAL_KEY_RELEASE,
     G_CLIENT_EVENT_LOCAL_CONNECT,
@@ -39,6 +40,11 @@ typedef union
     {
         int key;
     } LOCAL_KEY_RELEASE;
+    struct
+    {
+        bool remotegame;
+        net_addr_t net_addr;
+    } LOCAL_CONNECT;
     struct
     {
         char mapname[MAP_NAME_SIZE];
@@ -78,15 +84,16 @@ typedef struct client_event_s
 typedef CIRCLEQ_HEAD(client_event_head_s, client_event_s) client_event_head_t;
 
 void client_events_handle(void);
-void client_events_pop_all(void);
+void client_events_flush(void);
 
 void client_event_send(
     const net_addr_t * sender,
     client_event_type_t type,
     const client_event_data_t * data);
 
+extern void client_event_local_stop(void);
 extern void client_event_local_key_input(bool key_repeat, int key, bool state);
-extern void client_event_local_connect(void);
+extern void client_event_local_connect(const net_addr_t * net_addr);
 extern void client_event_local_discoveryserver(void);
 extern void client_event_local_newgame(const char * mapname);
 extern void client_event_local_loadgame(int isave);

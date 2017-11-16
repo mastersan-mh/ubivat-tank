@@ -27,7 +27,13 @@
 
 #define PRINTF_NETADDR_PORT_FMT "%d"
 #define PRINTF_NETADDR_PORT_VAL(net_addr) \
-        (net_addr).addr_in.sin_port
+        ntohs((net_addr).addr_in.sin_port)
+
+#define PRINTF_NETADDR_FMT \
+        PRINTF_NETADDR_IPv4_FMT ":" PRINTF_NETADDR_PORT_FMT
+#define PRINTF_NETADDR_VAL(net_addr) \
+        PRINTF_NETADDR_IPv4_VAL((net_addr)), PRINTF_NETADDR_PORT_VAL((net_addr))
+
 
 typedef union
 {
@@ -39,10 +45,12 @@ typedef union
 typedef struct net_socket_s
 {
     int sock;
-    net_addr_t addr_;
+    net_addr_t net_addr;
 } net_socket_t;
 
-extern net_socket_t * net_socket_create(short port, const char * hostname);
+extern net_socket_t * net_socket_create(const net_addr_t * net_addr);
+
+extern net_socket_t * net_socket_create_hostname(short port, const char * hostname);
 extern int net_socket_bind(const net_socket_t * sock);
 extern net_socket_t * net_socket_create_sockaddr(struct sockaddr addr);
 void net_socket_close(net_socket_t * ns);

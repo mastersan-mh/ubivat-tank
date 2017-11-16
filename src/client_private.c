@@ -24,6 +24,15 @@ const char * client_gamestate_to_str(client_gamestate_t state)
 }
 
 
+void client_clean(void)
+{
+    client_req_send_game_abort();
+    client_players_delete();
+    /* flush queue */
+    client.tx_queue_num = 0;
+    game_menu_show(MENU_MAIN);
+}
+
 void client_disconnect()
 {
 

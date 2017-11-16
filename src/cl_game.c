@@ -179,7 +179,7 @@ void client_game_draw(void)
 {
     switch(client.gamestate)
     {
-        case CLIENT_GAMESTATE_0_DISCOVERY:
+        case CLIENT_GAMESTATE_0_IDLE:
             break;
         case CLIENT_GAMESTATE_1_NOGAME:
             client_game_draw_nogame();

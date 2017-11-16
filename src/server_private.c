@@ -71,7 +71,7 @@ server_client_t * server_client_find_by_addr(const net_addr_t * addr)
     server_client_t * client;
     LIST2_FOREACH(server.clients, client)
     {
-        if( !memcmp(&client->ns.addr_.addr, &addr->addr, sizeof(struct sockaddr)) )
+        if( !memcmp(&client->ns.net_addr.addr, &addr->addr, sizeof(struct sockaddr)) )
             return client;
     }
     return NULL;
@@ -276,7 +276,7 @@ server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bo
     client->joined = false;
     client->main = main;
     client->ns.sock = sock;
-    client->ns.addr_ = *net_addr;
+    client->ns.net_addr = *net_addr;
     client->players_num = GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT;
     client->players = NULL;
     client->tx_queue_num = 0;

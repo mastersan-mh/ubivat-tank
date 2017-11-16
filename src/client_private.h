@@ -60,6 +60,7 @@ typedef struct
         bool endgame;
     } gstate;
 
+    bool remotegame;
     net_socket_t * ns;
 
     /* время последнего получения сообщения */
@@ -75,6 +76,8 @@ typedef struct
 extern client_t client;
 
 extern const char * client_gamestate_to_str(client_gamestate_t state);
+
+extern void client_clean(void);
 
 extern void client_disconnect();
 

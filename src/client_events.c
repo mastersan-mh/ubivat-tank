@@ -20,7 +20,7 @@ void client_events_handle(void)
     }
 }
 
-void client_events_pop_all(void)
+void client_events_flush(void)
 {
     while(!CIRCLEQ_EMPTY(&client.events))
     {
@@ -43,6 +43,14 @@ void client_event_send(
         event->data = *data;
 
     CIRCLEQ_INSERT_TAIL(&client.events, event, queue);
+}
+
+/**
+ * @brief client game stop, make client idle
+ */
+void client_event_local_stop(void)
+{
+    client_event_send(NULL, G_CLIENT_EVENT_LOCAL_STOP, NULL);
 }
 
 /**
@@ -69,9 +77,16 @@ void client_event_local_key_input(bool key_repeat, int key, bool state_pressed)
     client_event_send(NULL, type, &data);
 }
 
-void client_event_local_connect(void)
+/**
+ * @param net_addr  NULL - localhost
+ */
+void client_event_local_connect(const net_addr_t * net_addr)
 {
-    client_event_send(NULL, G_CLIENT_EVENT_LOCAL_CONNECT, NULL);
+    client_event_data_t data;
+    data.LOCAL_CONNECT.remotegame = (net_addr != NULL);
+    if(net_addr)
+        data.LOCAL_CONNECT.net_addr = *net_addr;
+    client_event_send(NULL, G_CLIENT_EVENT_LOCAL_CONNECT, &data);
 }
 
 void client_event_local_discoveryserver(void)

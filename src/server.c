@@ -125,7 +125,7 @@ void server_handle()
             sv_entity_valid = false;
             break;
         case SERVER_STATE_INIT:
-            server.ns = net_socket_create(NET_PORT, "127.0.0.1");
+            server.ns = net_socket_create_hostname(NET_PORT, "127.0.0.1");
 
             if(server.ns == NULL)
             {

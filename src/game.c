@@ -327,6 +327,7 @@ int game_create(int flags)
 void game_abort(void)
 {
     server_stop();
+    client_event_local_stop();
 }
 
 void game_handle(void)
