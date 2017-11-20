@@ -61,8 +61,11 @@ typedef struct server_client_s
     struct server_client_s * prev;
     struct server_client_s * next;
 
+    /* адрес клиента */
+    net_addr_t net_addr;
+
     /* состояние игры для клиента */
-    server_gamestate_t gamestate;
+    server_gamestate_t gamestate; /* TODO: erase it */
 
     bool joined;
 
@@ -70,8 +73,7 @@ typedef struct server_client_s
      * только от него принимаются команды управления сервером.
      */
     bool main;
-    /* адрес клиента */
-    net_socket_t ns;
+
 
     int players_num;
 
@@ -111,7 +113,9 @@ typedef struct
         maplist_t * custommap;
     } gstate;
 
-    net_socket_t * ns;
+    int sock;
+    uint16_t sv_port;
+    in_addr_t sv_addr;
 
     server_client_t * clients;
 

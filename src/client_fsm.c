@@ -24,6 +24,9 @@
 
 #define INVALID_EVENT() game_console_send("client: invalid server gamestate %s event %d.", game_gamestate_to_str(gamestate), event->type)
 
+#define FSM_WARNING_ALREADY_CONNECTED() \
+        game_console_send("You already connected to the game, disconnect first.");
+
 #define FSM_CLIENT_DISCONECT() \
         do { \
             client_disconnect(); \
@@ -36,45 +39,33 @@
             game_console_send("client: gamestate changed to %s.", client_gamestate_to_str(gamestate)); \
         } while (0)
 
+
 static void client_fsm_local_connect(const client_event_t * event)
 {
     if(!event->data.LOCAL_CONNECT.remotegame)
     {
         client.remotegame = event->data.LOCAL_CONNECT.remotegame;
-        client.ns = net_socket_create_hostname(NET_PORT, "127.0.0.1");
-
-        if(client.ns == NULL)
-        {
-            game_halt("client socket() failed");
-        }
-
+        client.dest_addr = INADDR_LOOPBACK;
         client_req_send_connect();
         return;
     }
 
-    assert(client.ns == NULL && "client_fsm_local_connect(): already connected, disconnect first");
-
     client.remotegame = event->data.LOCAL_CONNECT.remotegame;
     const net_addr_t *net_addr = &event->data.LOCAL_CONNECT.net_addr;
-    client.ns = net_socket_create(net_addr);
+
+    /*client.dest_port = net_addr->addr_in.sin_port;*/
+    client.dest_addr = net_addr->addr_in.sin_addr.s_addr;
 
     game_console_send("client: connecting to " PRINTF_NETADDR_FMT "...",
         PRINTF_NETADDR_VAL(*net_addr));
 
-    if(client.ns == NULL)
-    {
-        game_halt("client socket() failed");
-    }
-    /*
-                        if(net_socket_bind(client_ns) < 0)
-                        {
-                            game_halt("client bind() failed");
-                        }
-     */
-
     client_req_send_connect();
 }
 
+void client_fsm_remote_info(const client_event_t * event)
+{
+    game_server_add(&event->sender, event->data.REMOTE_INFO.clients_num);
+}
 void client_fsm(const client_event_t * event)
 {
     client_gamestate_t gamestate = client.gamestate;
@@ -106,7 +97,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
-                    game_server_add(&event->sender, event->data.REMOTE_INFO.clients_num);
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -146,6 +137,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
@@ -183,6 +175,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -194,6 +187,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -221,6 +215,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -232,6 +227,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -251,16 +247,30 @@ void client_fsm(const client_event_t * event)
                         game_console_send("CLIENT: server not assign players amount, client set equal %d", client.gstate.players_num);
                     }
 
-                    for(int i = 0; i < client.gstate.players_num; i++)
+                    bool success = true;
+                    entity_t *entities[client.gstate.players_num];
+                    for(size_t i = 0; i < client.gstate.players_num; i++)
+                    {
+                        entity_id_t entityId = event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityId;
+                        entities[i] = entity_find_by_id(entityId);
+                        if(!entities[i])
+                        {
+                            game_console_send("client: No entity id %ld, can not create player #%d", (long)entityId, i);
+                            success = false;
+                            break;
+                        }
+                    }
+                    if(!success)
+                    {
+                        game_abort();
+                        break;
+                    }
+
+                    for(size_t i = 0; i < client.gstate.players_num; i++)
                     {
                         client_player_t * player = Z_malloc(sizeof(client_player_t));
                         LIST2_PUSH(client.players, player);
-                        entity_t * clientent = event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity;
-                        bool local_client = true;
-                        if(local_client)
-                        {
-                            player->entity = clientent;
-                        }
+                        player->entity = entities[i];
                     }
                     client_initcams();
 
@@ -286,6 +296,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -300,6 +311,7 @@ void client_fsm(const client_event_t * event)
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_5_INGAME);
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -328,6 +340,7 @@ void client_fsm(const client_event_t * event)
                     client_key_release(event->data.LOCAL_KEY_RELEASE.key);
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -339,6 +352,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -381,6 +395,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -392,6 +407,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;
@@ -420,6 +436,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -431,6 +448,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_ENTERGAME:
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
+                    client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
                     break;

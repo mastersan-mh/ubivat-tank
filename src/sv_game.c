@@ -65,14 +65,6 @@ void sv_game_win(void)
 }
 
 /*
- * главная процедура игры
- */
-void sv_game_gameTick(void)
-{
-    entities_handle();
-}
-
-/*
  * сообщения об ошибках
  */
 int sv_game_nextmap(void)

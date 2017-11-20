@@ -11,6 +11,8 @@
 #include "types.h"
 #include "entity.h"
 
+#define ENTITY_ID_MAX SIZE_MAX
+typedef size_t entity_id_t;
 /*
  * список объектов одного типа, у которых
  * .erased == false
@@ -19,6 +21,8 @@ typedef struct entity_s
 {
     struct entity_s * prev;
     struct entity_s * next;
+
+    entity_id_t id;
 
     const struct entityinfo_s * info;
 
@@ -65,6 +69,8 @@ typedef struct
 extern entity_registered_t * entityregs;
 extern size_t entityregs_size;
 extern size_t entityregs_num;
+
+extern entity_t * entity_find_by_id(entity_id_t entityId);
 
 extern entity_registered_t * entityregisteredinfo_get(const char * name);
 

@@ -10,10 +10,30 @@
 
 #include "common/common_list2.h"
 
+#include <assert.h>
+
 /* зарегестрированные объекты */
 entity_registered_t * entityregs = NULL;
 size_t entityregs_size = 0;
 size_t entityregs_num = 0;
+
+static entity_id_t entityId_last = 0;
+
+entity_t * entity_find_by_id(entity_id_t entityId)
+{
+    size_t ientreg;
+    for(ientreg = 0; ientreg < entityregs_num; ientreg++)
+    {
+        entity_registered_t * entreg = &entityregs[ientreg];
+        entity_t * entity;
+        for(entity = entreg->entities; entity; entity = entity->next)
+        {
+            if(entity->id == entityId)
+                return entity;
+        }
+    }
+    return NULL;
+}
 
 /**
  *  получить регистрационную информацию объекта
@@ -501,6 +521,11 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     const entityinfo_t * entityinfo = entityinfo_reg->info;
 
     entity_t * entity = Z_malloc(sizeof(entity_t));
+
+    entity->id = entityId_last;
+    entityId_last++;
+    assert(entityId_last < ENTITY_ID_MAX && "Entities id are over!");
+
     entity->info = entityinfo;
 
     entity->vars = Z_malloc(entityinfo->vars_size);

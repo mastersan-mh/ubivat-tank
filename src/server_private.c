@@ -25,7 +25,6 @@ const char * server_gamestate_to_str(server_gamestate_t state)
     {
             "SERVER_GAMESTATE_1_NOGAME",
             "SERVER_GAMESTATE_2_INGAME",
-            "SERVER_GAMESTATE_3_INTERMISSION",
     };
     return list[state];
 }
@@ -71,7 +70,7 @@ server_client_t * server_client_find_by_addr(const net_addr_t * addr)
     server_client_t * client;
     LIST2_FOREACH(server.clients, client)
     {
-        if( !memcmp(&client->ns.net_addr.addr, &addr->addr, sizeof(struct sockaddr)) )
+        if( !memcmp(&client->net_addr.addr, &addr->addr, sizeof(struct sockaddr)) )
             return client;
     }
     return NULL;
@@ -243,7 +242,6 @@ int server_gamesave_load(int isave)
     if(map_load(ctx.mapfilename))
     {
         game_console_send("server: Error: Could not load map \"%s\".", ctx.mapfilename);
-        //game_abort();
 
         g_gamesave_load_close(&ctx);
         return -1;
@@ -275,8 +273,7 @@ server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bo
 
     client->joined = false;
     client->main = main;
-    client->ns.sock = sock;
-    client->ns.net_addr = *net_addr;
+    client->net_addr = *net_addr;
     client->players_num = GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT;
     client->players = NULL;
     client->tx_queue_num = 0;
@@ -406,6 +403,7 @@ int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len
 int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size)
 {
     int16_t value16;
+    uint32_t valueu32;
     size_t i;
     size_t ofs = 0;
 
@@ -443,7 +441,9 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
                 for(int i = 0; i < player_num; i++)
                 {
                     PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_PUSH_BUF(&reply->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply->data.PLAYERS_ENTITY_SET.ent[i].entity));
+                    uint32_t entityId = reply->data.PLAYERS_ENTITY_SET.ent[i].entityId;
+                    valueu32 = htonl(entityId);
+                    PDU_PUSH_BUF(&valueu32, sizeof(valueu32));
                 }
                 break;
             }
@@ -462,6 +462,7 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
 int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len, size_t buf_size)
 {
     int16_t value16;
+    uint32_t valueu32;
 
     size_t ofs = 0;
 
@@ -489,7 +490,9 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
             for(int i = 0; i < player_num; i++)
             {
                 PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                PDU_PUSH_BUF(&reply->data.PLAYERS_ENTITY_SET.ent[i].entity, sizeof(reply->data.PLAYERS_ENTITY_SET.ent[i].entity));
+                uint32_t entityId = reply->data.PLAYERS_ENTITY_SET.ent[i].entityId;
+                valueu32 = htonl(entityId);
+                PDU_PUSH_BUF(&valueu32, sizeof(valueu32));
             }
             break;
         }
@@ -526,7 +529,7 @@ void server_tx(void)
         }
         if(buf_len > 0)
         {
-            net_send(&client->ns, buf, buf_len);
+            net_send(server.sock, buf, buf_len, &client->net_addr);
         }
 
     }
@@ -545,7 +548,7 @@ void server_tx(void)
         }
         if(buf_len > 0)
         {
-            net_send_addr(server.ns->sock, &tx->net_addr, buf, buf_len);
+            net_send(server.sock, buf, buf_len, &tx->net_addr);
         }
         Z_free(tx);
     }

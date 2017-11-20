@@ -38,6 +38,7 @@ typedef struct client_player_s
 
 typedef struct
 {
+    net_addr_t dest_addr;
     client_request_t req;
 } client_req_queue_t;
 
@@ -61,7 +62,11 @@ typedef struct
     } gstate;
 
     bool remotegame;
-    net_socket_t * ns;
+    int sock;
+    uint16_t sender_port; /* sender port */
+    in_addr_t sender_addr;
+    uint16_t dest_port; /* server port */
+    in_addr_t dest_addr;
 
     /* время последнего получения сообщения */
     unsigned long time;

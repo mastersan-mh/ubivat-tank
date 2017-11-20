@@ -47,11 +47,26 @@ void client_init(void)
 
     /* flush queues */
     client.tx_queue_num = 0;
+
+
+    client.remotegame = false;
+    client.sender_port = NET_CLIENT_SENDER_PORT;
+    client.sender_addr = INADDR_ANY;
+    client.dest_port = NET_SERVER_RECIEVER_PORT;
+    client.dest_addr = INADDR_ANY;
+    net_addr_t net_addr;
+    net_addr_set(&net_addr, client.sender_port, client.sender_addr);
+    client.sock = net_socket_open_connectionless(&net_addr);
+    if(client.sock < 0)
+    {
+        game_halt("client socket() failed");
+    }
+
 }
 
 void client_done(void)
 {
-
+    net_socket_close(client.sock);
 }
 
 void client_flags_set(int flags)
@@ -81,6 +96,7 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
     client_event_type_t evtype;
     client_event_data_t evdata;
     int16_t value16;
+    uint32_t valueu32;
     size_t i;
     size_t ofs = 0;
 
@@ -112,7 +128,9 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
                 for(int i = 0; i < evdata.REMOTE_PLAYERS_ENTITY_SET.players_num; i++)
                 {
                     PDU_POP_BUF(evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    PDU_POP_BUF(&evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity, sizeof(evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entity));
+                    PDU_POP_BUF(&valueu32, sizeof(valueu32));
+                    evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityId = ntohl(valueu32);
+
                 }
                 break;
             }
@@ -134,17 +152,25 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
 /**
  * @brief Build client PDU
  */
-static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
+static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size, net_addr_t * dest_addr)
 {
     int16_t value16;
+    size_t processed = 0;
     size_t ofs = 0;
 
+    if(client.tx_queue_num == 0)
+    {
+        *buf_len = 0;
+        return 0;
+    }
     /* client requests */
     value16 = htons(client.tx_queue_num);
     PDU_PUSH_BUF(&value16, sizeof(value16));
     for(size_t i = 0; i < client.tx_queue_num; i++)
     {
-        client_request_t * req = &client.tx_queue[i].req;
+        client_req_queue_t * tx = &client.tx_queue[i];
+        *dest_addr = tx->dest_addr;
+        client_request_t * req = &tx->req;
         value16 = htons(req->type);
         PDU_PUSH_BUF(&value16, sizeof(value16));
         switch(req->type)
@@ -182,8 +208,20 @@ static int client_pdu_build(char * buf, size_t * buf_len, size_t buf_size)
                 PDU_PUSH_BUF(&value16, sizeof(value16));
                 break;
         }
+        processed++;
+
+        client_req_queue_t * tx_next = NULL;
+        if(i+1 < client.tx_queue_num)
+        {
+            tx_next = &client.tx_queue[i+1];
+            if(tx->dest_addr.addr_len != tx_next->dest_addr.addr_len)
+                break;
+            if(memcmp(&tx->dest_addr.addr, &tx_next->dest_addr.addr, tx->dest_addr.addr_len) != 0)
+                break;
+        }
     }
-    client.tx_queue_num = 0;
+
+    client.tx_queue_num -= processed;
 
     return 0;
 }
@@ -196,19 +234,18 @@ static void client_net_io(void)
     static char buf[PDU_BUF_SIZE];
     int err;
 
-    if(!client.ns)
+    if(client.sock < 0)
         return;
 
     net_addr_t net_addr;
-    socklen_t addr_len = 0;
     size_t buf_len;
 
     if(time_current - client.time > CLIENT_TIMEOUT)
     {
-        game_console_send("client: server reply timeout.");
+        // game_console_send("client: server reply timeout.");
     }
 
-    while(net_recv(client.ns, buf, &buf_len, PDU_BUF_SIZE, &net_addr.addr, &addr_len) == 0)
+    while(net_recv(client.sock, buf, &buf_len, PDU_BUF_SIZE, &net_addr) == 0)
     {
         client.time = time_current;
         err = client_pdu_parse(&net_addr, buf, buf_len);
@@ -218,7 +255,7 @@ static void client_net_io(void)
         }
     }
 
-    err = client_pdu_build(buf, &buf_len, PDU_BUF_SIZE);
+    err = client_pdu_build(buf, &buf_len, PDU_BUF_SIZE, &net_addr);
     if(err)
     {
         game_console_send("CLIENT: TX buffer overflow.");
@@ -226,7 +263,7 @@ static void client_net_io(void)
     }
     if(buf_len > 0)
     {
-        net_send(client.ns, buf, buf_len);
+        net_send(client.sock, buf, buf_len, &net_addr);
     }
 }
 

@@ -1,8 +1,11 @@
 /*
- * client_events.h
+ * @file client_events.h
  *
  *  Created on: 1 нояб. 2017 г.
  *      Author: mastersan
+ *
+ * @brief События клиента
+ *
  */
 
 #ifndef SRC_CLIENT_EVENTS_H_
@@ -10,8 +13,8 @@
 
 #include "types.h"
 #include "g_events.h"
+#include "entity_internal.h"
 
-/* события клиента */
 
 typedef enum
 {
@@ -63,7 +66,7 @@ typedef union
         struct
         {
             char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
-            void /*entity_t */ * entity;
+            entity_id_t entityId;
         } ent[2];
     } REMOTE_PLAYERS_ENTITY_SET;
     struct
@@ -92,7 +95,7 @@ void client_event_send(
     const client_event_data_t * data);
 
 extern void client_event_local_stop(void);
-extern void client_event_local_key_input(bool key_repeat, int key, bool state);
+extern void client_event_local_key_input(bool key_repeat, int key, bool key_pressed);
 extern void client_event_local_connect(const net_addr_t * net_addr);
 extern void client_event_local_discoveryserver(void);
 extern void client_event_local_newgame(const char * mapname);

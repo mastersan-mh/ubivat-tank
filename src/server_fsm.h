@@ -15,7 +15,6 @@ typedef enum
 {
     SERVER_GAMESTATE_1_NOGAME, /* игра не создана */
     SERVER_GAMESTATE_2_INGAME,
-    SERVER_GAMESTATE_3_INTERMISSION,
 } server_gamestate_t;
 
 void server_fsm(const server_event_t * event);

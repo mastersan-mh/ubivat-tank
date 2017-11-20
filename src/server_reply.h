@@ -35,7 +35,7 @@ typedef union
         struct
         {
             char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
-            void /*entity_t */ * entity;
+            entity_id_t entityId;
         } ent[2];
     } PLAYERS_ENTITY_SET;
     struct

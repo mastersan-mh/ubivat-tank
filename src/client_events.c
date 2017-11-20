@@ -54,16 +54,16 @@ void client_event_local_stop(void)
 }
 
 /**
- * state = true | false = pressed | released
+ * @return state = { true = pressed | false = released }
  */
-void client_event_local_key_input(bool key_repeat, int key, bool state_pressed)
+void client_event_local_key_input(bool key_repeat, int key, bool key_pressed)
 {
     if(key_repeat)
         return;
     client_event_type_t type;
     client_event_data_t data;
 
-    if(state_pressed)
+    if(key_pressed)
     {
         type = G_CLIENT_EVENT_LOCAL_KEY_PRESS;
         data.LOCAL_KEY_PRESS.key = key;

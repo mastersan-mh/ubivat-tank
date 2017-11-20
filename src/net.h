@@ -8,22 +8,28 @@
 #ifndef SRC_NET_H_
 #define SRC_NET_H_
 
+#include "types.h"
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #define NET_MTU 1500
 
-#define NET_PORT 20000
+#define NET_PORT_AUTO 0
+
+#define NET_SERVER_RECIEVER_PORT 40000
+//#define NET_CLIENT_SENDER_PORT (NET_SERVER_RECIEVER_PORT+1)
+#define NET_CLIENT_SENDER_PORT NET_PORT_AUTO
 
 #define PDU_BUF_SIZE (NET_MTU*10)
 
 #define PRINTF_NETADDR_IPv4_FMT "%d.%d.%d.%d"
 #define PRINTF_NETADDR_IPv4_VAL(net_addr) \
-        ((char*)(&(net_addr).addr_in.sin_addr))[0], \
-        ((char*)(&(net_addr).addr_in.sin_addr))[1], \
-        ((char*)(&(net_addr).addr_in.sin_addr))[2], \
-        ((char*)(&(net_addr).addr_in.sin_addr))[3]
+        (int)((unsigned char*)(&(net_addr).addr_in.sin_addr))[0], \
+        (int)((unsigned char*)(&(net_addr).addr_in.sin_addr))[1], \
+        (int)((unsigned char*)(&(net_addr).addr_in.sin_addr))[2], \
+        (int)((unsigned char*)(&(net_addr).addr_in.sin_addr))[3]
 
 #define PRINTF_NETADDR_PORT_FMT "%d"
 #define PRINTF_NETADDR_PORT_VAL(net_addr) \
@@ -35,30 +41,23 @@
         PRINTF_NETADDR_IPv4_VAL((net_addr)), PRINTF_NETADDR_PORT_VAL((net_addr))
 
 
-typedef union
+typedef struct
 {
-    struct sockaddr addr;
-    struct sockaddr_in addr_in;
+    socklen_t addr_len;
+    union {
+        struct sockaddr addr;
+        struct sockaddr_in addr_in;
+    };
 } net_addr_t;
 
 
-typedef struct net_socket_s
-{
-    int sock;
-    net_addr_t net_addr;
-} net_socket_t;
+extern int net_socket_open_connectionless(net_addr_t * net_addr);
+extern void net_socket_close(int sock);
+extern int net_addr_set(net_addr_t * net_addr, in_port_t port, in_addr_t in_addr);
+extern int net_addr_set_fromstring(net_addr_t * net_addr, in_port_t port, const char * hostname);
 
-extern net_socket_t * net_socket_create(const net_addr_t * net_addr);
-
-extern net_socket_t * net_socket_create_hostname(short port, const char * hostname);
-extern int net_socket_bind(const net_socket_t * sock);
-extern net_socket_t * net_socket_create_sockaddr(struct sockaddr addr);
-void net_socket_close(net_socket_t * ns);
-
-extern void net_send(const net_socket_t * sock, void * buf, size_t size);
-extern void net_send_addr(int sock, const net_addr_t * net_addr, void * buf, size_t size);
-
-extern int net_recv(const net_socket_t * net_sock, char * buf, size_t * buf_len, size_t buf_size, struct sockaddr * addr, socklen_t * addr_len);
+extern void net_send(int sock, const void * buf, size_t buf_size, const net_addr_t * dest_addr);
+extern int net_recv(int sock, void * buf, size_t * buf_len, size_t buf_size, net_addr_t * src_addr);
 
 #define net_pdu_free(buf) \
         do \

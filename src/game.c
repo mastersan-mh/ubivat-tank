@@ -65,12 +65,16 @@ char * game_dir_saves;
 
 bool game_quit_get(void)
 {
-    return !server_running() && !client_running() && game.quit;
+    return
+            (!game.remotegame || (game.remotegame && !server_running()))
+            && !client_running()
+            && game.quit;
 }
 
 void game_quit_set(void)
 {
-    server_stop();
+    if(game.remotegame)
+        server_stop();
     client_stop();
     game.quit = true;
 }
@@ -79,9 +83,10 @@ void game_init(void)
 {
     game.quit = false;
     game.show_menu = true;
+    game.handle = false;
+    game.remotegame = false;
     game.imenu = MENU_MAIN;
     game.imenu_process = game.imenu;
-
 
     char * home_dir = getenv("HOME");
 
@@ -154,7 +159,6 @@ void game_init(void)
 
     CIRCLEQ_INIT(&game.servers);
     game.servers_num = 0;
-
 }
 
 void game_server_add(const net_addr_t * sender, int clients_num)
@@ -297,7 +301,7 @@ void game_main(void)
         video_screen_draw_begin();
 
         game_events_pump();
-        game_handle();
+        game_tick();
         game_draw();
 
 
@@ -321,18 +325,42 @@ int game_create(int flags)
     server_start(flags);
     client_flags_set(flags);
     game_menu_hide();
+    game.remotegame = true;
+    game.handle = true;
     return 0;
+}
+
+void game_stop(void)
+{
+    game.handle = false;
 }
 
 void game_abort(void)
 {
-    server_stop();
+    game_stop();
+    if(game.remotegame)
+        server_stop();
     client_event_local_stop();
 }
 
-void game_handle(void)
+
+/**
+ * главная процедура игры
+ */
+static void game_handle(void)
 {
-    server_handle();
+    if(!game.handle)
+        return;
+
+    entities_handle();
+}
+
+
+void game_tick(void)
+{
+    game_handle();
+    if(game.remotegame)
+        server_handle();
     client_handle();
 
     if(game.show_menu)
@@ -370,8 +398,8 @@ void game_menu_hide(void)
     game.show_menu = false;
 }
 
-/*
- * чтение файла палитры
+/**
+ * @brief чтение файла палитры, для BII файлов
  * @return = 0 -успешно
  * @return = 1 -файл не найден
  * @return = 2 -ошибка чтения файла

@@ -48,6 +48,8 @@ typedef struct
 {
     bool quit;
     bool show_menu;
+    bool handle;
+    bool remotegame;
     menu_selector_t imenu_process;
     menu_selector_t imenu;
     maplist_t * custommap;
@@ -84,8 +86,9 @@ extern void game_done(void);
 extern void game_main(void);
 
 extern int game_create(int flags);
+extern void game_stop(void);
 extern void game_abort(void);
-extern void game_handle(void);
+extern void game_tick(void);
 
 extern void game_draw(void);
 

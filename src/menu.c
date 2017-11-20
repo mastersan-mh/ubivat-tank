@@ -574,7 +574,7 @@ static int menu_custom(buffer_key_t scancode, menu_action_t action, void * ctx_)
             MENU_CUSTOM,
             MENU_CUSTOM_NEWP1,
             MENU_CUSTOM_NEWP2,
-            MENU_CUSTOM_CONNECT,
+            MENU_CUSTOM_SERVERSLIST,
     };
 
     menu_custom_ctx_t * ctx = ctx_;
@@ -628,7 +628,7 @@ static void menu_custom_draw(const void * ctx_)
 }
 
 #define MENU_CUSTOM_CONNECT_ROWS 10
-static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void * ctx_)
+static int menu_custom_serverslist(buffer_key_t scancode, menu_action_t action, void * ctx_)
 {
     menu_custom_connect_ctx_t * ctx = ctx_;
     struct game_server_s * server;
@@ -665,10 +665,10 @@ static int menu_custom_connect(buffer_key_t scancode, menu_action_t action, void
     case MENU_ACTION_SPACE: break;
     }
 
-    return MENU_CUSTOM_CONNECT;
+    return MENU_CUSTOM_SERVERSLIST;
 }
 
-static void menu_custom_connect_draw(const void * ctx_)
+static void menu_custom_serverslist_draw(const void * ctx_)
 {
 
     const menu_custom_connect_ctx_t * ctx = ctx_;
@@ -682,7 +682,7 @@ static void menu_custom_connect_draw(const void * ctx_)
     GAME_SERVERS_FOREACH(server)
     {
 
-        menu_draw_string_indicator_small(irow, 20,
+        menu_draw_string_indicator_small(irow, 23,
             "ip = "PRINTF_NETADDR_FMT ", clients %d",
             PRINTF_NETADDR_VAL(server->net_addr), server->clients_num);
         irow++;
@@ -892,7 +892,7 @@ menu_t menus[MENU_NUM] =
         { &menu_custom_ctx    , menu_custom      , menu_custom_draw }, /* MENU_CUSTOM */
         { NULL                , menu_custom_new1P, NULL }, /* MENU_CUSTOM_NEWP1 */
         { NULL                , menu_custom_new2P, NULL }, /* MENU_CUSTOM_NEWP2 */
-        { &menu_custom_connect_ctx, menu_custom_connect, menu_custom_connect_draw}, /* MENU_CUSTOM_CONNECT */
+        { &menu_custom_connect_ctx, menu_custom_serverslist, menu_custom_serverslist_draw}, /* MENU_CUSTOM_CONNECT */
         { &menu_options_ctx   , menu_options     , menu_options_draw}, /* MENU_OPTIONS */
         { &menu_about_ctx     , menu_about       , menu_about_draw  }, /* MENU_ABOUT */
         { NULL                , menu_abort       , NULL }, /* MENU_ABORT */

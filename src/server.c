@@ -54,7 +54,6 @@ void server_init(void)
     CIRCLEQ_INIT(&server.txs);
     server.gstate.custommap = mapList;
     server.gstate.gamemap   = mapList;
-
 }
 
 void server_done(void)
@@ -81,24 +80,16 @@ static void server_net_io(void)
 {
     static char buf[PDU_BUF_SIZE];
 
-    int err;
-
-    net_addr_t sender;
-
-    //struct sockaddr sender_addr;
-
-    socklen_t sender_addr_len = sizeof(sender.addr);
-
     /*
      * https://www.linux.org.ru/forum/development/10072313
      */
 
+    int err;
     size_t buf_len;
-    ssize_t size_;
-    while( (size_ = recvfrom(server.ns->sock, buf, PDU_BUF_SIZE, 0, &sender.addr, &sender_addr_len)) > 0 )
-    {
-        buf_len = size_;
+    net_addr_t sender;
 
+    while(net_recv(server.sock, buf, &buf_len, PDU_BUF_SIZE, &sender) == 0)
+    {
         err = server_pdu_parse(&sender, buf, buf_len);
         if(err)
         {
@@ -125,15 +116,16 @@ void server_handle()
             sv_entity_valid = false;
             break;
         case SERVER_STATE_INIT:
-            server.ns = net_socket_create_hostname(NET_PORT, "127.0.0.1");
 
-            if(server.ns == NULL)
+            server.sv_port = NET_SERVER_RECIEVER_PORT;
+            server.sv_addr = INADDR_ANY;
+            net_addr_t net_addr;
+            net_addr_set(&net_addr, server.sv_port, server.sv_addr);
+
+            server.sock = net_socket_open_connectionless(&net_addr);
+            if(server.sock < 0)
             {
-                game_halt("socket() failed");
-            }
-            if(net_socket_bind(server.ns) < 0)
-            {
-                game_halt("server bind() failed");
+                game_halt("server socket() failed");
             }
 
             server.gamestate = SERVER_GAMESTATE_1_NOGAME;
@@ -144,14 +136,11 @@ void server_handle()
         case SERVER_STATE_RUN :
             server_net_io();
             server_events_handle();
-            if(server.gamestate == SERVER_GAMESTATE_2_INGAME)
-                sv_game_gameTick();
             break;
         case SERVER_STATE_DONE:
             // удалить оставшихся игроков
             server_clients_delete();
-            net_socket_close(server.ns);
-            server.ns = NULL;
+            net_socket_close(server.sock);
             //закроем карту
             map_clear();
             server.gamestate = SERVER_GAMESTATE_1_NOGAME;
