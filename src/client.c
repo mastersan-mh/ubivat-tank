@@ -284,7 +284,7 @@ void client_handle(void)
         case CLIENT_STATE_DONE:
             client_events_flush();
             client_clean();
-            client.state = CLIENT_STATE_IDLE;
+            client.state = CLIENT_STATE_INIT;
             client.gamestate = CLIENT_GAMESTATE_0_IDLE;
             break;
     }
