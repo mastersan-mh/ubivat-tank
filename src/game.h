@@ -86,6 +86,7 @@ extern void game_done(void);
 extern void game_main(void);
 
 extern int game_create(int flags);
+extern void game_connect(const net_addr_t * net_addr, int players_num);
 extern void game_stop(void);
 extern void game_abort(void);
 extern void game_tick(void);

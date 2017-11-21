@@ -357,7 +357,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_event_local_connect(NULL);
+    game_connect(NULL, 1);
     client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
@@ -377,7 +377,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
     }
 
     maplist_t * firstmap = mapList;
-    client_event_local_connect(NULL);
+    game_connect(NULL, 2);
     client_event_local_newgame(firstmap->map);
 
     return MENU_MAIN;
@@ -417,7 +417,7 @@ static int menu_game_load(buffer_key_t scancode, menu_action_t action, void * ct
                 return MENU_ABORT;
             }
 
-            client_event_local_connect(NULL);
+            game_connect(NULL, 0);
             client_event_local_loadgame(ctx->menu);
 
         }
@@ -655,7 +655,7 @@ static int menu_custom_serverslist(buffer_key_t scancode, menu_action_t action, 
         }
         if(server)
         {
-            client_event_local_connect(&server->net_addr);
+            game_connect(&server->net_addr, 1);
         }
         //return menus[ctx->menu];
         break;
@@ -711,7 +711,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_event_local_connect(NULL);
+    game_connect(NULL, 1);
     client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;
@@ -729,7 +729,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
         return MENU_ABORT;
     }
 
-    client_event_local_connect(NULL);
+    game_connect(NULL, 2);
     client_event_local_newgame(game.custommap->map);
 
     return MENU_MAIN;

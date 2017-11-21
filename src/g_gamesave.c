@@ -36,16 +36,22 @@ static int g_gamesave_save_player(int fd, entity_t * player)
 
     size_t vars_num = player->info->vars_descr_num;
     const var_descr_t * vars_descr = player->info->vars_descr;
-    char * vars = player->vars;
+    void * vars = player->vars;
+
+    uint32_t vn = vars_num;
 
     /* buffer prepare */
-    size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);
+    size_t vn_size = sizeof(vn);
+    size_t bufsize = vn_size + var_buffersize_calculate(vars_descr, vars_num);
 
-    char * buf = Z_malloc(bufsize);
+    void * buf = Z_malloc(bufsize);
+
+    memcpy(buf, &vn, vn_size);
 
     for(size_t i = 0; i < vars_num; i++)
     {
-        memcpy(buf + vars_descr[i].ofs, vars + vars_descr[i].ofs, vars_descr[i].size);
+        const var_descr_t * var_descr = &vars_descr[i];
+        memcpy(buf + vn_size + var_descr->ofs, vars + var_descr->ofs, var_descr->size);
     }
 
     write(fd, buf, bufsize);
@@ -64,33 +70,42 @@ static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t 
     if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
         return -1;
 
+    const entityinfo_t * info = storage->info;
+    void * vars = storage->vars;
 
-    size_t vars_num = storage->info->vars_descr_num;
-    const var_descr_t * vars_descr = storage->info->vars_descr;
-    char * vars = storage->vars;
+    assert(info != NULL && "g_gamesave_load_player_internal(): storage->info == NULL");
+
+    size_t vars_num;
+    const var_descr_t * vars_descr = info->vars_descr;
+
+    uint16_t vn;
+    ssize_t c;
+    c = read(fd, &vn, sizeof(vn));
+    if(c != sizeof(vn))
+        return -1;
+
+    vars_num = vn;
 
     size_t bufsize = var_buffersize_calculate(vars_descr, vars_num);
 
     char * buf = Z_malloc(bufsize);
 
-    ssize_t c = read(fd, buf, bufsize);
+    c = read(fd, buf, bufsize);
     if(c != bufsize)
     {
         Z_free(buf);
         return -1;
     }
 
-
-    for(size_t i = 0; i < vars_num; i++)
+    for(size_t i = 0; i < vars_num && i < info->vars_descr_num; i++)
     {
-        memcpy(vars + vars_descr[i].ofs, buf + vars_descr[i].ofs, vars_descr[i].size);
+        const var_descr_t * var_descr = &vars_descr[i];
+        memcpy(vars + var_descr->ofs, buf + var_descr->ofs, var_descr->size);
     }
 
     vars_dump(storage->vars, vars_descr, vars_num, "==== LOADED:");
 
     Z_free(buf);
-
-
 
     return 0;
 };

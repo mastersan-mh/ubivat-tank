@@ -100,6 +100,7 @@ int server_client_spawn(server_client_t * client, int players_num)
 {
     client->players_num = players_num;
     int playerId = players_num - 1;
+    int player_spawned = 0;
     for(int i = 0; i < players_num; i++)
     {
         server_player_t * player = server_player_create();
@@ -116,9 +117,10 @@ int server_client_spawn(server_client_t * client, int players_num)
         }
         player->entity = entity;
         playerId--;
+        player_spawned++;
     }
-    client->joined = true;
-    return 0;
+    client->joined = (player_spawned != 0);
+    return client->joined ? 0 : -1;
 }
 
 /**
@@ -253,6 +255,9 @@ int server_gamesave_load(int isave)
         for(size_t playerId = 0; playerId < players_num; playerId++)
         {
             server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+
+            assert(storage->info != NULL && "g_gamesave_load_player_internal(): storage->info == NULL");
+
             g_gamesave_load_player(&ctx, storage);
         }
     }

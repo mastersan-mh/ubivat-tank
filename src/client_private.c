@@ -13,16 +13,17 @@ const char * client_gamestate_to_str(client_gamestate_t state)
 {
     static const char *list[] =
     {
+            "CLIENT_GAMESTATE_0_IDLE",
             "CLIENT_GAMESTATE_1_NOGAME",
             "CLIENT_GAMESTATE_2_MISSION_BRIEF",
             "CLIENT_GAMESTATE_3_SPAWN_AWAITING",
             "CLIENT_GAMESTATE_4_GAMESAVE",
             "CLIENT_GAMESTATE_5_INGAME",
             "CLIENT_GAMESTATE_6_INTERMISSION",
+            "CLIENT_GAMESTATE_7_ENDGAME",
     };
     return list[state];
 }
-
 
 void client_clean(void)
 {

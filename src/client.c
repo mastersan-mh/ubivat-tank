@@ -48,8 +48,7 @@ void client_init(void)
     /* flush queues */
     client.tx_queue_num = 0;
 
-
-    client.remotegame = false;
+    client.sv_dedicated = false;
     client.sender_port = NET_CLIENT_SENDER_PORT;
     client.sender_addr = INADDR_ANY;
     client.dest_port = NET_SERVER_RECIEVER_PORT;
@@ -69,9 +68,9 @@ void client_done(void)
     net_socket_close(client.sock);
 }
 
-void client_flags_set(int flags)
+void client_players_num_set(int players_num)
 {
-    client.gstate.players_num = (flags & GAMEFLAG_2PLAYERS) ? 2 : 1;
+    client.gstate.players_num = COERCE(0, 2, players_num);
 }
 
 void client_start(void)

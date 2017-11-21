@@ -22,7 +22,7 @@
 extern void client_init(void);
 extern void client_done(void);
 
-extern void client_flags_set(int flags);
+extern void client_players_num_set(int players_num);
 extern void client_start(void);
 extern void client_stop(void);
 extern bool client_running(void);

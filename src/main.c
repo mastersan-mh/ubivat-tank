@@ -12,15 +12,17 @@
 void listenForPackets(void)
 {
 
-#define PORT_SRC 40000
+#define PORT_SRC 39789
+//#define PORT_SRC 40000
 #define PORT_DEST 40001
 
     net_addr_t dest;
     //net_addr_set(&dest, PORT_DEST, INADDR_BROADCAST);
     //net_addr_set_fromstring(&dest, PORT_DEST, "127.0.0.1");
     //net_addr_set_fromstring(&dest, PORT_DEST, "192.168.1.5");
+    net_addr_set_fromstring(&dest, PORT_DEST, "192.168.1.39");
     //net_addr_set_fromstring(&dest, PORT_DEST, "192.168.7.255");
-    net_addr_set_fromstring(&dest, PORT_DEST, "255.255.255.255");
+    //net_addr_set_fromstring(&dest, PORT_DEST, "255.255.255.255");
 
     net_addr_t sender;
     net_addr_set(&sender, PORT_SRC, INADDR_ANY);

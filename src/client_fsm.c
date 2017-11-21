@@ -5,6 +5,8 @@
  *      Author: mastersan
  */
 
+#include "net.h"
+
 #include "client.h"
 #include "client_fsm.h"
 
@@ -44,20 +46,20 @@ static void client_fsm_local_connect(const client_event_t * event)
 {
     if(!event->data.LOCAL_CONNECT.remotegame)
     {
-        client.remotegame = event->data.LOCAL_CONNECT.remotegame;
+        client.sv_dedicated = false;
         client.dest_addr = INADDR_LOOPBACK;
         client_req_send_connect();
         return;
     }
 
-    client.remotegame = event->data.LOCAL_CONNECT.remotegame;
+    client.sv_dedicated = true;
+
     const net_addr_t *net_addr = &event->data.LOCAL_CONNECT.net_addr;
 
-    /*client.dest_port = net_addr->addr_in.sin_port;*/
-    client.dest_addr = net_addr->addr_in.sin_addr.s_addr;
+    client.dest_port = ntohs(net_addr->addr_in.sin_port);
+    client.dest_addr = ntohl(net_addr->addr_in.sin_addr.s_addr);
 
-    game_console_send("client: connecting to " PRINTF_NETADDR_FMT "...",
-        PRINTF_NETADDR_VAL(*net_addr));
+    game_console_send("client: connecting to " PRINTF_NETADDR_FMT "...", PRINTF_NETADDR_VAL(*net_addr));
 
     client_req_send_connect();
 }
@@ -77,6 +79,7 @@ void client_fsm(const client_event_t * event)
             switch(event->type)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
+                    client_stop();
                     /* already stopped */
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -116,6 +119,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -123,7 +127,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_LOCAL_KEY_RELEASE:
                     break;
                 case G_CLIENT_EVENT_LOCAL_CONNECT:
-                    client_fsm_local_connect(event);
+                    FSM_WARNING_ALREADY_CONNECTED();
                     break;
                 case G_CLIENT_EVENT_LOCAL_DICOVERYSERVER:
                     client_req_send_discoveryserver();
@@ -140,8 +144,7 @@ void client_fsm(const client_event_t * event)
                     client_fsm_remote_info(event);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
-                    //game_console_send("client: server accept connection at 0x%00000000x:%d.", client.ns->addr_.addr_in.sin_addr, ntohs(client.ns->addr_.addr_in.sin_port));
-                    game_console_send("client: server accept connection.");
+                    game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " accept connection.", PRINTF_NETADDR_VAL(event->sender));
                     sound_play_stop(NULL, GAME_SOUND_MENU);
                     sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
                     client_req_send_ready();
@@ -165,6 +168,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -208,6 +212,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -255,7 +260,7 @@ void client_fsm(const client_event_t * event)
                         entities[i] = entity_find_by_id(entityId);
                         if(!entities[i])
                         {
-                            game_console_send("client: No entity id %ld, can not create player #%d", (long)entityId, i);
+                            game_console_send("client: No entity #%ld, can not create player #%d", (long)entityId, i);
                             success = false;
                             break;
                         }
@@ -274,8 +279,15 @@ void client_fsm(const client_event_t * event)
                     }
                     client_initcams();
 
-                    game_menu_show(MENU_GAME_SAVE);
-                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_4_GAMESAVE);
+                    if(client.sv_dedicated)
+                    {
+                        FSM_GAMESTATE_SET(CLIENT_GAMESTATE_5_INGAME);
+                    }
+                    else
+                    {
+                        game_menu_show(MENU_GAME_SAVE);
+                        FSM_GAMESTATE_SET(CLIENT_GAMESTATE_4_GAMESAVE);
+                    }
                     break;
                 }
                 case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
@@ -289,6 +301,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -331,6 +344,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -364,7 +378,6 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_GAME_ENDMAP:
                     client.gstate.win = event->data.REMOTE_GAME_ENDMAP.win;
                     client.gstate.endgame = event->data.REMOTE_GAME_ENDMAP.endgame;
-
                     sound_play_stop(NULL, GAME_SOUND_MENU);
                     sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
                     game_console_send("client: server say: PLAYER WIN!");
@@ -379,6 +392,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:
@@ -386,9 +400,7 @@ void client_fsm(const client_event_t * event)
                     client_req_send_ready();
                     client_players_delete();
                     if(client.gstate.endgame)
-                    {
                         FSM_GAMESTATE_SET(CLIENT_GAMESTATE_7_ENDGAME);
-                    }
                     else
                         FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_MISSION_BRIEF);
                     break;
@@ -427,6 +439,7 @@ void client_fsm(const client_event_t * event)
             {
                 case G_CLIENT_EVENT_LOCAL_STOP:
                     client_clean();
+                    client_stop();
                     FSM_GAMESTATE_SET(CLIENT_GAMESTATE_0_IDLE);
                     break;
                 case G_CLIENT_EVENT_LOCAL_KEY_PRESS:

@@ -48,14 +48,20 @@ void vars_free(void * vars, const var_descr_t * vars_descr, size_t vars_descr_nu
  */
 size_t var_buffersize_calculate(const var_descr_t * vars_descr, size_t vars_descr_num)
 {
-    size_t bufsize = 0;
+    size_t max_offset = 0;
+    size_t max_offset_size = 0;
     for(size_t i = 0; i < vars_descr_num; i++)
     {
-        bufsize += vars_descr[i].size;
+        const var_descr_t * var_descr = &vars_descr[i];
+        /* считаем так, потому что данные в структуре не упакованы*/
+        if(var_descr->ofs > max_offset)
+        {
+            max_offset = var_descr->ofs;
+            max_offset_size = vars_descr[i].size;
+        }
     }
-    return bufsize;
+    return max_offset + max_offset_size;
 }
-
 
 void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num, const char * title)
 {

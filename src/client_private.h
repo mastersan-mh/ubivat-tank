@@ -61,7 +61,8 @@ typedef struct
         bool endgame;
     } gstate;
 
-    bool remotegame;
+    /* dedicated server */
+    bool sv_dedicated;
     int sock;
     uint16_t sender_port; /* sender port */
     in_addr_t sender_addr;

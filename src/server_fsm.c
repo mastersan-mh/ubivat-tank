@@ -270,9 +270,9 @@ void server_fsm(const server_event_t * event)
                     game_console_send("server: can not spawn players, no entities to spawn.");
                     break;
                 }
-                FSM_GAMESTATE_SET(gamestate);
                 server_reply_send_players_entity_set(client);
                 game_console_send("server: client joined to game.");
+                FSM_GAMESTATE_SET(gamestate);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
                 break;

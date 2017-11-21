@@ -66,14 +66,14 @@ char * game_dir_saves;
 bool game_quit_get(void)
 {
     return
-            (!game.remotegame || (game.remotegame && !server_running()))
+            (game.remotegame || (!game.remotegame && !server_running()))
             && !client_running()
             && game.quit;
 }
 
 void game_quit_set(void)
 {
-    if(game.remotegame)
+    if(!game.remotegame)
         server_stop();
     client_stop();
     game.quit = true;
@@ -322,12 +322,21 @@ void game_main(void)
  */
 int game_create(int flags)
 {
-    server_start(flags);
-    client_flags_set(flags);
-    game_menu_hide();
     game.remotegame = true;
     game.handle = true;
+    server_start(flags);
     return 0;
+}
+
+/**
+ * @descr Connect to the existing game
+ */
+void game_connect(const net_addr_t * net_addr, int players_num)
+{
+    game.remotegame = (net_addr != NULL);
+    game_menu_hide();
+    client_event_local_connect(net_addr);
+    client_players_num_set(players_num);
 }
 
 void game_stop(void)
@@ -338,9 +347,10 @@ void game_stop(void)
 void game_abort(void)
 {
     game_stop();
-    if(game.remotegame)
+    if(!game.remotegame)
         server_stop();
     client_event_local_stop();
+    game_console_send("Game aborted.");
 }
 
 
@@ -359,7 +369,7 @@ static void game_handle(void)
 void game_tick(void)
 {
     game_handle();
-    if(game.remotegame)
+    if(!game.remotegame)
         server_handle();
     client_handle();
 

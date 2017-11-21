@@ -25,7 +25,7 @@ typedef enum
     G_SERVER_EVENT_REMOTE_CLIENT_CONNECT,
     G_SERVER_EVENT_REMOTE_CLIENT_DISCONNECT,
     G_SERVER_EVENT_REMOTE_CLIENT_SPAWN,     /**< назначить игроку объект на карте */
-    G_SERVER_EVENT_REMOTE_CLIENT_READY, /**< Клиент готов для следующего состояния */
+    G_SERVER_EVENT_REMOTE_CLIENT_READY, /**< Клиент готов для следующего состояния, FIXME: НЕ ИСПОЛЬЗУЕТСЯ! */
     G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION,
     G_SERVER_EVENT_REMOTE_GAME_ABORT,
     G_SERVER_EVENT_REMOTE_GAME_SETMAP,

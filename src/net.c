@@ -71,7 +71,6 @@ int net_addr_set(net_addr_t * net_addr, in_port_t port, in_addr_t in_addr)
     memset(&net_addr->addr, 0, sizeof(net_addr->addr));
 
     net_addr->addr_in.sin_family = AF_INET;
-    //assert(port != 0 && "net_addr_set() port == 0");
     net_addr->addr_in.sin_port = htons(port);
     net_addr->addr_in.sin_addr.s_addr = htonl(in_addr);
     return 0;

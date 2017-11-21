@@ -88,6 +88,12 @@ typedef struct
 #define ARRAYSIZE( x ) ( sizeof( (x) )/sizeof( *(x) ) )
 #define SIZEOF_MEMBER(type, member) sizeof( ((type *)0)->member )
 
+/**
+ * @brief Coerce value x in [min, max] range.
+ */
+#define COERCE(min, max, x) ((x) < (min) ? (min) : (x) > (max) ? (max) : (x))
+
+
 extern char * c_strTITLE;
 extern char * c_strCORP;
 extern coloredtext_t c_about[];
