@@ -255,9 +255,6 @@ int server_gamesave_load(int isave)
         for(size_t playerId = 0; playerId < players_num; playerId++)
         {
             server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-
-            assert(storage->info != NULL && "g_gamesave_load_player_internal(): storage->info == NULL");
-
             g_gamesave_load_player(&ctx, storage);
         }
     }
