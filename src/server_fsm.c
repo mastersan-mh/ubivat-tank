@@ -28,6 +28,7 @@ extern bool sv_entity_valid;
 #define FSM_LOCAL_STOP() \
         do { \
             game_stop(); \
+            server_gamesave_clients_info_clean(); \
             server_tx(); \
             server_stop(); \
         } while (0)
@@ -119,7 +120,7 @@ static void server_fsm_control_handle(const server_event_t * event, server_clien
 
     if(!player)
         return;
-    game_console_send("server: from client " PRINTF_NETADDR_FMT " player %d received action \"%s.\"",
+    game_console_send("server: from client " PRINTF_NETADDR_FMT " player %d received action \"%s\".",
         PRINTF_NETADDR_VAL(event->sender),
         event->data.REMOTE_PLAYER_ACTION.playerId,
         event->data.REMOTE_PLAYER_ACTION.action);
@@ -213,6 +214,7 @@ void server_fsm(const server_event_t * event)
                 break;
             case G_SERVER_EVENT_LOCAL_WIN:
             {
+                server_gamesave_clients_info_clean();
                 sv_entity_valid = false;
 
                 server_client_t * client;
@@ -258,6 +260,7 @@ void server_fsm(const server_event_t * event)
                 server_fsm_client_disconnect(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
+            {
                 sv_entity_valid = true;
                 FSM_CLIENT_CHECK(client);
                 if(client->joined)
@@ -265,15 +268,27 @@ void server_fsm(const server_event_t * event)
                     game_console_send("server: client already joined.");
                     break;
                 }
-                if(server_client_spawn(client, event->data.REMOTE_JOIN.players_num) != 0)
+                int players_num = event->data.REMOTE_JOIN.players_num;
+
+                size_t clientId = server_client_id_get(client);
+                if(players_num == 0)
                 {
-                    game_console_send("server: can not spawn players, no entities to spawn.");
+                    // сервер сам выбирает количество игроков
+                    players_num = server_gamesave_client_info_get(clientId);
+                }
+                if(server_client_spawn(client, players_num) != 0)
+                {
+                    game_console_send("server: can not spawn players, no entities or players to spawn.");
                     break;
                 }
+
+                server_gamesave_client_info_mark(clientId);
+
                 server_reply_send_players_entity_set(client);
                 game_console_send("server: client joined to game.");
                 FSM_GAMESTATE_SET(gamestate);
                 break;
+            }
             case G_SERVER_EVENT_REMOTE_CLIENT_READY:
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION:

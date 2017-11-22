@@ -94,6 +94,11 @@ typedef enum
 
 typedef struct
 {
+    size_t players_num;
+} server_gamesave_client_info_t;
+
+typedef struct
+{
     server_event_head_t events;
     /* TX queue */
     server_tx_head_t txs;
@@ -119,6 +124,10 @@ typedef struct
 
     server_client_t * clients;
 
+    /* информация о клиентах из gamesave */
+    size_t gamesave_clients_info_num;
+    server_gamesave_client_info_t * gamesave_clients_info;
+
     /* массив по клиентам, для сохранения переменных */
     server_player_vars_storage_t * storages;
 
@@ -127,6 +136,11 @@ typedef struct
 extern server_t server;
 
 extern const char * server_gamestate_to_str(server_gamestate_t state);
+
+extern void server_gamesave_clients_info_allocate(size_t clients_num);
+extern void server_gamesave_clients_info_clean(void);
+extern size_t server_gamesave_client_info_get(size_t clientId);
+extern void server_gamesave_client_info_mark(size_t clientId);
 
 extern void server_storages_free();
 extern server_player_vars_storage_t * server_storage_find(size_t clientId, size_t playerId);
@@ -141,11 +155,10 @@ extern void server_clients_delete(void);
 extern int server_client_spawn(server_client_t * client, int players_num);
 extern void server_clients_unspawn(void);
 extern int server_clients_num_get(void);
-size_t server_client_id_get(server_client_t * client);
+extern size_t server_client_id_get(const server_client_t * client);
 extern int server_client_players_num_get(const server_client_t * client);
 extern void server_client_players_num_set(server_client_t * client, int players_num);
 extern server_client_t * server_client_get(int id);
-
 
 extern server_player_t * server_player_create();
 extern void server_player_delete(server_player_t * player);

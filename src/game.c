@@ -67,12 +67,13 @@ bool game_quit_get(void)
 {
     return
             (game.remotegame || (!game.remotegame && !server_running()))
-            && !client_running()
+            /* TODO && !client_running() */
             && game.quit;
 }
 
 void game_quit_set(void)
 {
+    game_console_send("Quit from game.");
     if(!game.remotegame)
         server_stop();
     client_stop();
