@@ -29,6 +29,49 @@ const char * server_gamestate_to_str(server_gamestate_t state)
     return list[state];
 }
 
+
+void server_gamesave_clients_info_allocate(size_t clients_num)
+{
+    if(server.gamesave_clients_info != NULL)
+        Z_free(server.gamesave_clients_info);
+    server.gamesave_clients_info_num = clients_num;
+    size_t size = sizeof(server_gamesave_client_info_t) * clients_num;
+    server.gamesave_clients_info = Z_malloc(size);
+    memset(server.gamesave_clients_info, 0, size);
+}
+
+void server_gamesave_clients_info_clean(void)
+{
+    Z_free(server.gamesave_clients_info);
+    server.gamesave_clients_info_num = 0;
+}
+
+static inline void server_gamesave_client_info_set(size_t clientId, size_t players_num)
+{
+    server.gamesave_clients_info[clientId].players_num = players_num;
+}
+
+size_t server_gamesave_client_info_get(size_t clientId)
+{
+    if(clientId >= server.gamesave_clients_info_num)
+        return 0;
+    return server.gamesave_clients_info[clientId].players_num;
+}
+
+/**
+ * @brief отметить инфлормацию как использованную
+ */
+void server_gamesave_client_info_mark(size_t clientId)
+{
+    if(clientId >= server.gamesave_clients_info_num)
+        return;
+    server_gamesave_client_info_t * info = &server.gamesave_clients_info[clientId];
+    if(info->players_num > 0)
+        info->players_num--;
+}
+
+
+
 void server_storages_free()
 {
     server_player_vars_storage_t * storage;
@@ -159,19 +202,23 @@ int server_clients_num_get(void)
     return num;
 }
 
-size_t server_client_id_get(server_client_t * client)
+/**
+ * получить id клиента
+ */
+size_t server_client_id_get(const server_client_t * client)
 {
+    int clients_num = server_clients_num_get();
     server_client_t * cl;
-    ssize_t id = 0;
     LIST2_FOREACH(server.clients, cl)
     {
+        clients_num--;
         if(cl == client)
-            return id;
-        id++;
+            return clients_num;
     }
     assert(0 && "server_client_id_get(): client not found.");
     return -1;
 }
+
 
 int server_client_players_num_get(const server_client_t * client)
 {
@@ -249,6 +296,8 @@ int server_gamesave_load(int isave)
         return -1;
     }
 
+    server_gamesave_clients_info_allocate(ctx.clients_num);
+
     for(size_t clientId = 0; clientId < ctx.clients_num; clientId++)
     {
         size_t players_num = ctx.clients_descr[clientId];
@@ -256,6 +305,7 @@ int server_gamesave_load(int isave)
         {
             server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
             g_gamesave_load_player(&ctx, storage);
+            server_gamesave_client_info_set(clientId, players_num);
         }
     }
 
