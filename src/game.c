@@ -25,6 +25,8 @@
 #include "entity.h"
 #include "actions.h"
 
+#include "world.h"
+
 // entities
 #include "entities_includes.h"
 
@@ -114,7 +116,7 @@ void game_init(void)
     printf(GAME_LOGO);
     map_init();
 
-    map_load_list();
+    maplist_load();
     game.custommap = mapList;
 
     server_init();
@@ -211,7 +213,7 @@ void game_done(void)
     client_done();
     server_done();
     //очистим список карт
-    map_list_removeall();
+    maplist_free();
     //очистим память от изображений
     images_done();
 };
@@ -363,7 +365,8 @@ static void game_handle(void)
     if(!game.handle)
         return;
 
-    entities_handle();
+    world_handle();
+
 }
 
 

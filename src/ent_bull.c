@@ -13,6 +13,7 @@
 #include "ent_explode.h"
 #include "ent_player.h"
 #include "ent_weap.h"
+#include "world.h"
 
 static var_descr_t bull_vars[] =
 {
@@ -105,6 +106,8 @@ static void bull_mine_detonate(ENTITY this, ENTITY that)
  */
 static bool bull_common_handle(ENTITY this, const bullinfo_t * bullinfo)
 {
+    map_t * map = world_map_get();
+
     bull_vars_t * bull = entity_vars(this);
     entity_move(this, bull->dir, bullinfo->speed, false);
 
@@ -115,6 +118,7 @@ static bool bull_common_handle(ENTITY this, const bullinfo_t * bullinfo)
     //найдем препятствия
     bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
     map_clip_find(
+        map,
         bull->origin,
         entity_info_bodybox(this),
         MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,

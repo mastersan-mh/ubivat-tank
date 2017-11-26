@@ -167,7 +167,9 @@ extern void server_player_info_store(server_player_vars_storage_t * storage, ser
 extern const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
 
-extern int server_gamesave_load(int isave);
+extern int server_world_recreate(const char * mapname);
+
+extern int server_fsm_gamesave_load(int isave);
 
 extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);
 extern int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);

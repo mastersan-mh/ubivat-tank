@@ -17,7 +17,7 @@
 #include "server_events.h"
 #include "sv_game.h"
 
-
+#include "world.h"
 #include "game.h"
 #include "g_gamesave.h"
 
@@ -105,11 +105,7 @@ void server_fsm_game_setmap(const server_event_t * event)
         //game_abort();
         return;
     }
-    if(map_load(mapname))
-    {
-        game_console_send("Error: Could not load map \"%s\".", mapname);
-        //game_abort();
-    }
+    server_world_recreate(mapname);
 }
 
 static void server_fsm_control_handle(const server_event_t * event, server_client_t * client)
@@ -201,7 +197,7 @@ void server_fsm(const server_event_t * event)
             case G_SERVER_EVENT_REMOTE_GAME_SAVE:
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_LOAD:
-                server_gamesave_load(event->data.REMOTE_GAME_LOAD.isave);
+                server_fsm_gamesave_load(event->data.REMOTE_GAME_LOAD.isave);
                 FSM_GAMESTATE_SET(SERVER_GAMESTATE_2_INGAME);
                 break;
         }
@@ -244,8 +240,6 @@ void server_fsm(const server_event_t * event)
                 {
                     server_reply_send_game_endmap(client, true, false);
                 }
-
-
                 break;
             }
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
@@ -283,7 +277,6 @@ void server_fsm(const server_event_t * event)
                 }
 
                 server_gamesave_client_info_mark(clientId);
-
                 server_reply_send_players_entity_set(client);
                 game_console_send("server: client joined to game.");
                 FSM_GAMESTATE_SET(gamestate);

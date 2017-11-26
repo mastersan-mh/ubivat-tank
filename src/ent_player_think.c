@@ -9,6 +9,7 @@
 #include "ent_player.h"
 #include "ent_weap.h"
 
+#include "world.h"
 #include "entity_helpers.h"
 #include "types.h"
 #include "game.h"
@@ -60,6 +61,7 @@ void ctrl_AI_done(think_t * thinker)
  */
 static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 {
+    map_t * map = world_map_get();
 	vec_t Udist;
 	vec_t Ddist;
 	vec_t Ldist;
@@ -83,13 +85,13 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 	vec_t halfbox = ENTITY_HALFBODYBOX(player);
 
 	//верхняя ближайшая стена
-	map_clip_find_near(pl->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
+	map_clip_find_near(map, pl->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
 	//нижняя ближайшая стена
-	map_clip_find_near(pl->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
+	map_clip_find_near(map, pl->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
 	//левая ближайшая стена
-	map_clip_find_near(pl->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
+	map_clip_find_near(map, pl->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
 	//правая ближайшая стена
-	map_clip_find_near(pl->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
+	map_clip_find_near(map, pl->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
 	Ud = (pl->origin_y + Udist - halfbox) - (dng->origin_y + radius);
 	Dd = (dng->origin_y - radius) - (pl->origin_y-Ddist + halfbox);
 	Rd = (pl->origin_x + Rdist - halfbox) - (dng->origin_x + radius);
@@ -269,6 +271,7 @@ static bool turn_to_target(ENTITY player, ENTITY target)
  */
 static void ctrl_AI_attack(ENTITY player, ENTITY target)
 {
+    map_t * map = world_map_get();
 
 	/* противник в прямой видимости */
 	void P_weapon_select_direct_view(ENTITY player)
@@ -380,7 +383,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 	pl->brain.target = NULL;
 	if(pl->item_ammo_missile > 0)
 	{
-		map_clip_find_near_wall(pl->origin, pl->dir, &dist, &wall);
+		map_clip_find_near_wall(map, pl->origin, pl->dir, &dist, &wall);
 		if(
 				MAP_WALL_CLIPPED(wall) &&
 				(
@@ -399,7 +402,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 	{
 		if(turn_to_target(player, target))
 		{
-			map_clip_find_near_wall(pl->origin, pl->dir, &dist, &wall);
+			map_clip_find_near_wall(map, pl->origin, pl->dir, &dist, &wall);
 			if(
 					( (pl->dir == DIR_DOWN || pl->dir == DIR_UP   ) && VEC_ABS(pl->origin_y - trg->origin_y) < dist ) ||
 					( (pl->dir == DIR_LEFT || pl->dir == DIR_RIGHT) && VEC_ABS(pl->origin_x - trg->origin_x) < dist ) ||

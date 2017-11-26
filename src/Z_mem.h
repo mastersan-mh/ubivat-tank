@@ -8,12 +8,10 @@
 #ifndef SRC_Z_MEM_H_
 #define SRC_Z_MEM_H_
 
+#include "gamedefs.h"
+
 #include <stddef.h>
 #include <sys/cdefs.h>
-
-//#define _ZMEM_DEBUG _DEBUG
-//#define _ZMEM_DEBUG_TRACE
-//#define _ZMEM_MEMDUMP
 
 #if !defined(_ZMEM_DEBUG)
 #	define _ZMEM_ARGS2_DECL

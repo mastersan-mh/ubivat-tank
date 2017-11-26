@@ -14,7 +14,7 @@
 
 #define ATTR_PACKED __attribute__ ((packed))
 
-#include "config.h"
+#include "gamedefs.h"
 #include "vec.h"
 #include "fonts.h"
 #include "Z_mem.h"

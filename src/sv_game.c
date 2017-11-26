@@ -14,6 +14,7 @@
 #include "server.h"
 #include "server_events.h"
 #include "server_private.h"
+#include "world.h"
 
 #include "common/common_list2.h"
 
@@ -69,10 +70,7 @@ void sv_game_win(void)
  */
 int sv_game_nextmap(void)
 {
-    int ret;
-
-    //закроем карту
-    map_clear();
+    world_destroy();
 
     server.gstate.gamemap = server.gstate.gamemap->next;
     if(!server.gstate.gamemap)
@@ -81,10 +79,8 @@ int sv_game_nextmap(void)
         server_event_local_stop();
         return -1;
     }
-    ret = map_load(server.gstate.gamemap->map);
-    if(ret)
+    if(server_world_recreate(server.gstate.gamemap->filename))
     {
-        game_msg_error(ret);
         server_event_local_stop();
         return -1;
     }

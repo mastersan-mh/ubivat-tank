@@ -5,6 +5,7 @@
  *      Author: mastersan
  */
 
+#include "world.h"
 #include "game.h"
 #include "entity.h"
 #include "model.h"
@@ -29,6 +30,8 @@ explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
 
 static void explode_common_destroy_walls(ENTITY this, const explodeinfo_t * explodeinfo)
 {
+    map_t * map = world_map_get();
+
     vec_t ix;
     vec_t iy;
 
@@ -47,9 +50,9 @@ static void explode_common_destroy_walls(ENTITY this, const explodeinfo_t * expl
                     0 <= y8 && y8 < MAP_SY
             )
             {
-                char wall = map.map[y8][x8];
+                char wall = map->map[y8][x8];
                 if(MAP_WALL_CLIPPED(wall) && ( MAP_WALL_TEXTURE(wall) & explodeinfo->wall ) )
-                    map.map[y8][x8] = 0;
+                    map->map[y8][x8] = 0;
             }
         }
     }

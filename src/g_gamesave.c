@@ -8,6 +8,7 @@
 
 #include "common/common_list2.h"
 #include "types.h"
+#include "world.h"
 #include "server.h"
 #include "server_private.h"
 #include "client.h"
@@ -86,7 +87,6 @@ static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t 
     if(c != sizeof(vbs))
         return -1;
 
-    size_t vars_num = vn;
     size_t varbufsize = vbs;
 
     char * vars = Z_malloc(varbufsize);
@@ -112,6 +112,9 @@ static int g_gamesave_load_player_internal(int fd, server_player_vars_storage_t 
  */
 int g_gamesave_save(int isave)
 {
+    map_t * map = world_map_get();
+
+
 #define GS_WRITE(data, data_size) \
         do { \
             ssize_t count = write(fd, (data), (data_size)); \
@@ -153,7 +156,7 @@ int g_gamesave_save(int isave)
         return -1;
     gamesave_data_header_t header;
     strncpy(header.name, gamesave->name, G_GAMESAVE_NAME_SIZE);
-    strncpy(header.mapfilename, map._file, MAP_FILENAME_SIZE);
+    strncpy(header.mapfilename, map->filename, MAP_FILENAME_SIZE);
 
     gamesave->flags = server.flags;
     header.flag_localgame = gamesave->flags.localgame;

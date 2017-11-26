@@ -8,6 +8,7 @@
 #include "common/common_list2.h"
 #include "client_private.h"
 #include "video.h"
+#include "world.h"
 
 const char * client_gamestate_to_str(client_gamestate_t state)
 {
@@ -15,18 +16,21 @@ const char * client_gamestate_to_str(client_gamestate_t state)
     {
             "CLIENT_GAMESTATE_0_IDLE",
             "CLIENT_GAMESTATE_1_NOGAME",
-            "CLIENT_GAMESTATE_2_MISSION_BRIEF",
-            "CLIENT_GAMESTATE_3_SPAWN_AWAITING",
-            "CLIENT_GAMESTATE_4_GAMESAVE",
-            "CLIENT_GAMESTATE_5_INGAME",
-            "CLIENT_GAMESTATE_6_INTERMISSION",
-            "CLIENT_GAMESTATE_7_ENDGAME",
+            "CLIENT_GAMESTATE_2_WORLD_CREATING",
+            "CLIENT_GAMESTATE_3_MISSION_BRIEF",
+            "CLIENT_GAMESTATE_4_SPAWN_AWAITING",
+            "CLIENT_GAMESTATE_5_GAMESAVE",
+            "CLIENT_GAMESTATE_6_INGAME",
+            "CLIENT_GAMESTATE_7_INTERMISSION",
+            "CLIENT_GAMESTATE_8_ENDGAME",
     };
     return list[state];
 }
 
 void client_clean(void)
 {
+    if(client.sv_dedicated)
+        world_destroy();
     client_req_send_game_abort();
     client_players_delete();
     /* flush queue */

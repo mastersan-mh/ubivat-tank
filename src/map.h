@@ -62,8 +62,8 @@ extern char * map_class_names[MAPDATA_MOBJ_NUM];
 typedef struct
 {
 	char sign[3];
-	char name[MAP_NAME_SIZE];
-	char brief[MAP_BRIEF_SIZE];
+	char mapname[MAP_NAME_SIZE];
+	char mapbrief[MAP_BRIEF_SIZE];
 } ATTR_PACKED map_data_header_t;
 
 /* координаты */
@@ -116,8 +116,8 @@ typedef struct maplist_s
 {
 	struct maplist_s * prev;
 	struct maplist_s * next;
-	char * map;
-	char * name;
+	char * filename;
+	char * mapname;
 } maplist_t;
 
 
@@ -126,18 +126,15 @@ typedef struct maplist_s
  */
 typedef struct
 {
-	bool loaded;
 	// имя файла карты
-	char * _file;
+	char * filename;
 	// название карты
-	char * name;
+	char * mapname;
 	// краткое описание
-	char * brief;
+	char * mapbrief;
 	// 66 X 50 = 3300 матрица карты
 	char map[MAP_SY][MAP_SX];
 } map_t;
-
-extern map_t map;
 
 extern maplist_t * mapList;
 
@@ -149,6 +146,7 @@ extern void map_init(void);
 
 
 extern void map_clip_find(
+    map_t * map,
 	const vec2_t orig,
 	vec_t BOX,
 	char mask,
@@ -162,16 +160,21 @@ extern void map_clip_find(
 	bool * Rd
 );
 
-extern void map_clip_find_near(const vec2_t origin, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist);
-extern void map_clip_find_near_wall(const vec2_t origin, direction_t dir, vec_t * dist, char * wall);
+extern void map_clip_find_near(
+    map_t * map,
+    const vec2_t origin, vec_t box, direction_t dir, char mask, vec_t DISTmax, vec_t * dist);
+extern void map_clip_find_near_wall(
+    map_t * map,
+    const vec2_t origin, direction_t dir, vec_t * dist, char * wall);
 
 extern mapdata_entity_type_t map_file_class_get(int fd);
-extern int map_load(const char * mapname);
-extern void map_clear(void);
-extern void map_draw(camera_t * cam);
-extern void map_list_add(const char * map,const char * name);
-extern void map_list_removeall(void);
-extern void map_load_list(void);
+extern map_t * map_load(const char * mapname);
+extern void map_free(map_t * map);
+extern void map_render(const map_t * map, camera_t * cam);
+
+extern void maplist_add(const char * filename,const char * mapname);
+extern void maplist_free(void);
+extern void maplist_load(void);
 
 
 #endif /* SRC_MAP_H_ */

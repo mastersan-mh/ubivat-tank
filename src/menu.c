@@ -358,7 +358,7 @@ static int menu_game_new1P(buffer_key_t scancode, menu_action_t action, void * c
 
     maplist_t * firstmap = mapList;
     game_connect(NULL, 1);
-    client_event_local_newgame(firstmap->map);
+    client_event_local_newgame(firstmap->filename);
 
     return MENU_MAIN;
 }
@@ -378,7 +378,7 @@ static int menu_game_new2P(buffer_key_t scancode, menu_action_t action, void * c
 
     maplist_t * firstmap = mapList;
     game_connect(NULL, 2);
-    client_event_local_newgame(firstmap->map);
+    client_event_local_newgame(firstmap->filename);
 
     return MENU_MAIN;
 }
@@ -585,17 +585,12 @@ static int menu_custom(buffer_key_t scancode, menu_action_t action, void * ctx_)
     case MENU_ACTION_UP     : _menu_dec(ARRAYSIZE(menus), &ctx->menu);break;
     case MENU_ACTION_DOWN   : _menu_inc(ARRAYSIZE(menus), &ctx->menu);break;
     case MENU_ACTION_LEFT   :
+        if(ctx->menu == 0 && game.custommap->prev)
+            game.custommap = game.custommap->prev;
+        break;
     case MENU_ACTION_RIGHT  :
-        if(ctx->menu == 0)
-        {
-            if(action == MENU_ACTION_LEFT)
-
-                if(game.custommap->prev) game.custommap = game.custommap->prev;
-
-
-            if(action == MENU_ACTION_RIGHT)
-                if(game.custommap->next) game.custommap = game.custommap->next;
-        }
+        if(ctx->menu == 0 && game.custommap->next)
+            game.custommap = game.custommap->next;
         break;
     case MENU_ACTION_ENTER  :
         sound_play_start(NULL, 0, SOUND_MENU_ENTER, 1);
@@ -618,8 +613,8 @@ static void menu_custom_draw(const void * ctx_)
 
     menu_draw_spinbox_horisontal(0, 140);
     font_color_set3i(COLOR_25);
-    video_printf(120 + 13, 33 +     23*0, game.custommap->map);
-    video_printf(120 + 13, 33 + 8 + 23*0, game.custommap->name);
+    video_printf(120 + 13, 33 +     23*0, game.custommap->filename);
+    video_printf(120 + 13, 33 + 8 + 23*0, game.custommap->mapname);
 
     menu_draw_entry(1, IMG_MENU_G_NEW_P1);
     menu_draw_entry(2, IMG_MENU_G_NEW_P2);
@@ -712,7 +707,7 @@ static int menu_custom_new1P(buffer_key_t scancode, menu_action_t action, void *
     }
 
     game_connect(NULL, 1);
-    client_event_local_newgame(game.custommap->map);
+    client_event_local_newgame(game.custommap->filename);
 
     return MENU_MAIN;
 }
@@ -730,7 +725,7 @@ static int menu_custom_new2P(buffer_key_t scancode, menu_action_t action, void *
     }
 
     game_connect(NULL, 2);
-    client_event_local_newgame(game.custommap->map);
+    client_event_local_newgame(game.custommap->filename);
 
     return MENU_MAIN;
 }

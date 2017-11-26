@@ -22,7 +22,7 @@
 #	define _ZMEM_ARGS3_DECL size_t __size, const char * __file, int __line
 #	define _ZMEM_ARGS3 __size, __file, __line
 #	define _ZMEM_ARGS3STRNDUP __size + 1, __file, __line
-#	if !defined(_ZMEM_MEMDUMP)
+#	if !defined(_ZMEM_DEBUG_MEMDUMP)
 #		define Z_MEM_DUMP()
 #	else
 #		define Z_MEM_DUMP() Z_mem_dump()
@@ -55,7 +55,7 @@ static Z_block_t * Z_block = NULL;
 static int block_id = 0;
 #endif
 
-#if defined(_ZMEM_MEMDUMP)
+#if defined(_ZMEM_DEBUG_MEMDUMP)
 
 static int mem_dump_i = 0;
 

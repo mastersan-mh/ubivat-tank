@@ -35,6 +35,7 @@ g_gamesave.c \
 img.c \
 main.c \
 map.c \
+world.c \
 entity_internal.c \
 entity.c \
 entity_helpers.c \

@@ -29,6 +29,7 @@ typedef enum
     G_CLIENT_EVENT_REMOTE_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
+    G_CLIENT_EVENT_REMOTE_WORLD_CREATE,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
     G_CLIENT_EVENT_REMOTE_GAME_ENDMAP,
 } client_event_type_t;
@@ -60,6 +61,10 @@ typedef union
     {
         int clients_num; /* количество клиентов на сервере */
     } REMOTE_INFO;
+    struct
+    {
+        char mapfilename[MAP_FILENAME_SIZE];
+    } REMOTE_WORLD_CREATE;
     struct
     {
         int players_num; /**< amount of client local players */

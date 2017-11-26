@@ -16,6 +16,7 @@
 extern void server_reply_send_info(const net_addr_t * net_addr);
 extern void server_reply_send_connection_accepted(server_client_t * client);
 extern void server_reply_send_connection_close(server_client_t * client);
+extern void server_reply_send_world_create(server_client_t * client, const char * mapfilename);
 extern void server_reply_send_players_entity_set(server_client_t * client);
 extern void server_reply_send_game_endmap(server_client_t * client, bool win, bool endgame);
 

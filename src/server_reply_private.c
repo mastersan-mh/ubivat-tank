@@ -51,6 +51,16 @@ void server_reply_send_connection_close(server_client_t * client)
     server_reply_client_send(client, &reply);
 }
 
+void server_reply_send_world_create(server_client_t * client, const char * mapfilename)
+{
+    if(!mapfilename)
+        return;
+    server_reply_t reply;
+    reply.type = G_SERVER_REPLY_WORLD_CREATE;
+    strncpy(reply.data.WORLD_CREATE.mapfilename, mapfilename, MAP_FILENAME_SIZE);
+    server_reply_client_send(client, &reply);
+}
+
 void server_reply_send_players_entity_set(server_client_t * client)
 {
     server_reply_t reply;

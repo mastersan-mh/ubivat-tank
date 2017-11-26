@@ -119,6 +119,10 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
                 break;
+            case G_SERVER_REPLY_WORLD_CREATE:
+                evtype = G_CLIENT_EVENT_REMOTE_WORLD_CREATE;
+                PDU_POP_BUF(evdata.REMOTE_WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
+                break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
                 evtype = G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET;

@@ -5,6 +5,7 @@
  *      Author: mastersan
  */
 
+#include "gamedefs.h"
 #include "entity_internal.h"
 #include "game.h"
 #include "entity.h"
@@ -173,10 +174,11 @@ void entity_restore(ENTITY entity, const void * vars)
         memcpy(ent->vars + ofs, vars + ofs, info_vars[i].size);
     }
 
+#ifdef VARS_DUMP
     char title[128];
     sprintf(title, "==== Entity \"%s\" vars:", ent->info->name);
     vars_dump(ent->vars, ent->info->vars_descr, ent->info->vars_descr_num, title);
-
+#endif
 }
 
 /* entity является объектом типа entity_name */

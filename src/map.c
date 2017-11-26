@@ -60,7 +60,7 @@ maplist_t * map_find(const char * name)
     maplist_t * gamemap = mapList;
     while(gamemap)
     {
-        if(!strcmp(name, gamemap->map))
+        if(!strcmp(name, gamemap->filename))
             return gamemap;
         gamemap = gamemap->next;
     }
@@ -235,6 +235,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
  * поиск препятствия на карте
  */
 void map_clip_find(
+    map_t * map,
     const vec2_t origin,
     vec_t bodybox,
     char mask,
@@ -307,29 +308,29 @@ void map_clip_find(
         int y_sub_hbox_add_count_8 = VEC_TRUNC((y_sub_hbox_add_count)/8);
 
         if(
-                MAP_WALL_CLIPPED( map.map[y_add_hbox_8][x_sub_hbox_add_count_8] ) &&
-                (          mask & map.map[y_add_hbox_8][x_sub_hbox_add_count_8] )    ) *Ul = true;
+                MAP_WALL_CLIPPED( map->map[y_add_hbox_8][x_sub_hbox_add_count_8] ) &&
+                (          mask & map->map[y_add_hbox_8][x_sub_hbox_add_count_8] )    ) *Ul = true;
         if(
-                ( map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_add_hbox_8][x_add_hbox_sub_count_8] & mask )) *Ur = true;
+                ( map->map[y_add_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_add_hbox_8][x_add_hbox_sub_count_8] & mask )) *Ur = true;
         if(
-                ( map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_sub_hbox_8][x_sub_hbox_add_count_8] & mask )) *Dl = true;
+                ( map->map[y_sub_hbox_8][x_sub_hbox_add_count_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_sub_hbox_8][x_sub_hbox_add_count_8] & mask )) *Dl = true;
         if(
-                ( map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_sub_hbox_8][x_add_hbox_sub_count_8] & mask )) *Dr = true;
+                ( map->map[y_sub_hbox_8][x_add_hbox_sub_count_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_sub_hbox_8][x_add_hbox_sub_count_8] & mask )) *Dr = true;
         if(
-                ( map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_add_hbox_sub_count_8][x_sub_hbox_8] & mask )) *Lu = true;
+                ( map->map[y_add_hbox_sub_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_add_hbox_sub_count_8][x_sub_hbox_8] & mask )) *Lu = true;
         if(
-                ( map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_sub_hbox_add_count_8][x_sub_hbox_8] & mask )) *Ld = true;
+                ( map->map[y_sub_hbox_add_count_8][x_sub_hbox_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_sub_hbox_add_count_8][x_sub_hbox_8] & mask )) *Ld = true;
         if(
-                ( map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_add_hbox_sub_count_8][x_add_hbox_8] & mask )) *Ru = true;
+                ( map->map[y_add_hbox_sub_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_add_hbox_sub_count_8][x_add_hbox_8] & mask )) *Ru = true;
         if(
-                ( map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
-                ( map.map[y_sub_hbox_add_count_8][x_add_hbox_8] & mask )) *Rd = true;
+                ( map->map[y_sub_hbox_add_count_8][x_add_hbox_8] & MAP_WALL_CLIP ) &&
+                ( map->map[y_sub_hbox_add_count_8][x_add_hbox_8] & mask )) *Rd = true;
         count++;
     }
 }
@@ -337,7 +338,9 @@ void map_clip_find(
 /*
  * вычисление расстояния до ближайшей стены
  */
-void map_clip_find_near(const vec2_t origin, vec_t bodybox, direction_t dir, char mask, vec_t maxdist, vec_t * dist)
+void map_clip_find_near(
+    map_t * map,
+    const vec2_t origin, vec_t bodybox, direction_t dir, char mask, vec_t maxdist, vec_t * dist)
 {
     char wall;
     vec_t halfbox = bodybox/2;
@@ -378,7 +381,7 @@ void map_clip_find_near(const vec2_t origin, vec_t bodybox, direction_t dir, cha
 
             mapy = VEC_TRUNC((oy + dy) / MAP_WALLBLOCKSIZE);
             mapx = VEC_TRUNC((ox + dx) / MAP_WALLBLOCKSIZE);
-            wall = map.map[mapy][mapx];
+            wall = map->map[mapy][mapx];
             dwidth++;
         } while ( (dwidth < halfbox ) && !(wall & mask) );
     } while     ( (ddist  < maxdist ) && !(wall & mask) );
@@ -389,7 +392,9 @@ void map_clip_find_near(const vec2_t origin, vec_t bodybox, direction_t dir, cha
 /*
  * вычисление расстояния до ближайшей стены и определение стены
  */
-void map_clip_find_near_wall(const vec2_t origin, direction_t dir, vec_t * dist, char * wall)
+void map_clip_find_near_wall(
+    map_t * map,
+    const vec2_t origin, direction_t dir, vec_t * dist, char * wall)
 {
     vec_t oy = origin_y;
     vec_t ox = origin_x;
@@ -410,7 +415,7 @@ void map_clip_find_near_wall(const vec2_t origin, direction_t dir, vec_t * dist,
     {
         y = VEC_TRUNC(oy / MAP_WALLBLOCKSIZE);
         x = VEC_TRUNC(ox / MAP_WALLBLOCKSIZE);
-        *wall = map.map[y][x];
+        *wall = map->map[y][x];
         switch(dir)
         {
             case DIR_UP   : oy += 1.0f; break;
@@ -501,17 +506,18 @@ static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_
 //map_load=3 -ошибка чтения(файл поврежден)
 //map_load=4 -не найден спавн-поинт для GAME игры
 //map_load=5 -не найден спавн-поинт для CASE игры
-int map_load(const char * mapname)
+map_t * map_load(const char * mapname)
 {
+
+    map_t * map = Z_malloc(sizeof(map_t));
 
     bool parental_lock = !strcmp(mapname, "map02");
 
-    if(map.loaded) return -1;
 #define RETURN_ERR(err) \
         do{ \
             close(fd); \
             map_error = (err); \
-            return -1; \
+            return NULL; \
         }while(0);
 #define STRBUFSIZE 2048
     static char buf[STRBUFSIZE];
@@ -520,16 +526,16 @@ int map_load(const char * mapname)
     char *path;
     size_t len;
 
-    map._file = Z_strdup(mapname);
+    map->filename = Z_strdup(mapname);
 
     path = Z_malloc(
         strlen(BASEDIR MAPSDIR "/")+
-        strlen(map._file)+
+        strlen(map->filename)+
         strlen(MAP_FILE_EXT)+
         1
     );
     strcpy(path, BASEDIR MAPSDIR "/");
-    strcat(path, map._file);
+    strcat(path, map->filename);
     strcat(path, MAP_FILE_EXT);
     fd = open(path, O_RDONLY);
     Z_free(path);
@@ -545,15 +551,15 @@ int map_load(const char * mapname)
     if(ret) RETURN_ERR(MAP_ERR_FORMAT);
 
     //название карты
-    len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.name);
-    map.name = Z_strndup(buf, len);
+    len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.mapname);
+    map->mapname = Z_strndup(buf, len);
 
     //краткое описание
-    len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.brief);
-    map.brief = Z_strndup(buf, len);
+    len = strn_cpp866_to_utf8(buf, STRBUFSIZE - 1, header.mapbrief);
+    map->mapbrief = Z_strndup(buf, len);
 
     //чтение карты
-    count = read(fd, map.map, MAP_SX * MAP_SY);
+    count = read(fd, map->map, MAP_SX * MAP_SY);
     if(count != MAP_SX * MAP_SY) RETURN_ERR(MAP_ERR_READ);
 
     bool player_spawn_exist = false;
@@ -576,27 +582,25 @@ int map_load(const char * mapname)
         map_mobj_add(mapdata_mobj_type, &data);
     }
     close(fd);
-    map.loaded = true;
     if(!player_spawn_exist || ret < 0)
     {
-        map.loaded = true;
-        map_clear();
+        map_free(map);
         RETURN_ERR(MAP_ERR_READ);
     }
-    return 0;
+    return map;
 };
-/*
- * закрытие карты
+
+/**
+ * @brief закрытие карты
  */
-void map_clear(void)
+void map_free(map_t * map)
 {
-    if(!map.loaded)
+    if(!map)
         return;
-    Z_FREE(map._file);
-    Z_FREE(map.name);
-    Z_FREE(map.brief);
+    Z_FREE(map->filename);
+    Z_FREE(map->mapname);
+    Z_FREE(map->mapbrief);
     entities_erase();
-    map.loaded = false;
 }
 
 /*
@@ -650,7 +654,7 @@ static void map_wall_render(
 /*
  * рисование объектов на карте
  */
-void map_draw(camera_t * cam)
+void map_render(const map_t * map, camera_t * cam)
 {
     static image_index_t water_images[] =
     {
@@ -677,7 +681,7 @@ void map_draw(camera_t * cam)
         for(x = x0; x < x1; x++ )
         {
             const item_img_t * img = NULL;
-            switch(MAP_WALL_TEXTURE(map.map[y][x]))
+            switch(MAP_WALL_TEXTURE(map->map[y][x]))
             {
                 case MAP_WALL_W0   : img = image_get(IMG_WALL_W0); break;
                 case MAP_WALL_W1   : img = image_get(IMG_WALL_W1); break;
@@ -699,7 +703,7 @@ void map_draw(camera_t * cam)
 /*
  * добавление карты в список
  */
-void map_list_add(const char *map, const char * name)
+void maplist_add(const char *filename, const char * mapname)
 {
     maplist_t * mapEnt, * p;
 
@@ -707,8 +711,8 @@ void map_list_add(const char *map, const char * name)
     mapEnt = Z_malloc(sizeof(*mapEnt));
     mapEnt->prev = NULL;
     mapEnt->next = NULL;
-    mapEnt->map  = Z_strdup(map);
-    mapEnt->name = Z_strdup(name);
+    mapEnt->filename  = Z_strdup(filename);
+    mapEnt->mapname = Z_strdup(mapname);
     if(mapList == NULL)
         mapList = mapEnt;
     else
@@ -723,14 +727,14 @@ void map_list_add(const char *map, const char * name)
 /*
  * удаление списка карт
  */
-void map_list_removeall(void)
+void maplist_free(void)
 {
     maplist_t * mapEnt;
     while(mapList)
     {
         mapEnt  = mapList;
-        Z_free(mapEnt->map);
-        Z_free(mapEnt->name);
+        Z_free(mapEnt->filename);
+        Z_free(mapEnt->mapname);
         mapList = mapList->prev;
         Z_free(mapEnt);
     }
@@ -739,7 +743,7 @@ void map_list_removeall(void)
 /*
  * чтение из файла списка карт
  */
-void map_load_list(void)
+void maplist_load(void)
 {
     printf("Maps list loading: ");
 
@@ -817,7 +821,7 @@ void map_load_list(void)
                 }
                 else
                 {
-                    map_list_add(map, str);
+                    maplist_add(map, str);
                     Z_free(map);
                     map = NULL;
                     str[0] = 0;

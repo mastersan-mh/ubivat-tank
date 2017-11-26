@@ -28,6 +28,7 @@
 
 #include "client_requests.h"
 
+#include "world.h"
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -141,8 +142,7 @@ void server_handle()
             // удалить оставшихся игроков
             server_clients_delete();
             net_socket_close(server.sock);
-            //закроем карту
-            map_clear();
+            world_destroy();
             server.gamestate = SERVER_GAMESTATE_1_NOGAME;
             server.state = SERVER_STATE_IDLE;
             server_storages_free();

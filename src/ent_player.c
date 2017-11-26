@@ -16,6 +16,7 @@
 #include "ent_message.h"
 #include "ent_weap.h"
 
+#include "world.h"
 #include "ui.h"
 #include "system.h"
 #include "types.h"
@@ -457,6 +458,9 @@ static void player_handle_common(ENTITY player)
 {
 #define PLAYER_SOUND_MOVE 0
 #define PLAYER_SOUND_ATTACK 1
+
+    map_t * map = world_map_get();
+
     player_vars_t * pl = entity_vars(player);
     void player_handle_common_(ENTITY player, int info_item, INTEGER * item)
     {
@@ -602,10 +606,10 @@ static void player_handle_common(ENTITY player)
         case DIR_DOWN:
             VEC2_COPY(Sorig, pl->origin);
             Sorig[0] -= quarterbox;
-            map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &L);
+            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &L);
             VEC2_COPY(Sorig, pl->origin);
             Sorig[0] += quarterbox;
-            map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &R);
+            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &R);
             if((halfbox<L) && (R-1<=halfbox)) entity_move(player, DIR_LEFT, speed_s, true);//strafe left
             if((halfbox<R) && (L-1<=halfbox)) entity_move(player, DIR_RIGHT, speed_s, true);//strafe right
             break;
@@ -613,10 +617,10 @@ static void player_handle_common(ENTITY player)
         case DIR_RIGHT:
             VEC2_COPY(Sorig, pl->origin);
             Sorig[1] -= quarterbox;
-            map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &D);
+            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &D);
             VEC2_COPY(Sorig, pl->origin);
             Sorig[1] += quarterbox;
-            map_clip_find_near(Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &U);
+            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &U);
             if((halfbox < U)&&(D-1 <= halfbox)) entity_move(player, DIR_UP  , speed_s, true);//strafe up
             if((halfbox < D)&&(U-1 <= halfbox)) entity_move(player, DIR_DOWN, speed_s, true);//strafe down
             break;

@@ -9,10 +9,10 @@
 
 #include "net_pdu.h"
 #include "server_private.h"
-#include "server_reply.h"
+#include "server_reply_private.h"
 
 #include "client_requests.h"
-
+#include "world.h"
 #include "g_gamesave.h"
 #include "vars.h"
 
@@ -271,7 +271,23 @@ server_client_t * server_client_get(int id)
     return client;
 }
 
-int server_gamesave_load(int isave)
+int server_world_recreate(const char * mapname)
+{
+    world_destroy();
+    if(world_create(mapname))
+    {
+        game_console_send("server: Error: Could not create world");
+        return -1;
+    }
+    server_client_t * client;
+    LIST2_FOREACH(server.clients, client)
+    {
+        server_reply_send_world_create(client, world_mapfilename_get());
+    }
+    return 0;
+}
+
+int server_fsm_gamesave_load(int isave)
 {
     /* игра уже создана */
     gamesave_load_context_t ctx;
@@ -285,13 +301,9 @@ int server_gamesave_load(int isave)
         return -1;
     }
 
-    map_clear();
-
-    //прочитаем карту
-    if(map_load(ctx.mapfilename))
+    // создадим мир
+    if(server_world_recreate(ctx.mapfilename))
     {
-        game_console_send("server: Error: Could not load map \"%s\".", ctx.mapfilename);
-
         g_gamesave_load_close(&ctx);
         return -1;
     }
@@ -485,6 +497,9 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 break;
+            case G_SERVER_REPLY_WORLD_CREATE:
+                PDU_PUSH_BUF(reply->data.WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
+                break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
                 int player_num = reply->data.PLAYERS_ENTITY_SET.players_num;
@@ -533,6 +548,9 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
         case G_SERVER_REPLY_CONNECTION_ACCEPTED:
             break;
         case G_SERVER_REPLY_CONNECTION_CLOSE:
+            break;
+        case G_SERVER_REPLY_WORLD_CREATE:
+            PDU_PUSH_BUF(reply->data.WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
             break;
         case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
         {

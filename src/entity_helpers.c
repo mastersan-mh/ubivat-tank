@@ -10,6 +10,7 @@
 #include "entity_helpers.h"
 #include "game.h"
 #include "entity_internal.h"
+#include "world.h"
 
 /**
  * получить любой объект из заданной группы
@@ -53,6 +54,8 @@ direction_t entity_direction_invert(direction_t dir)
  */
 void entity_move(ENTITY this, direction_t dir, vec_t speed, bool check_clip)
 {
+    map_t * map = world_map_get();
+
     entity_t * ent = (entity_t *)this;
     entity_vars_common_t * common = ent->vars;
     vec_t dway = speed * dtimed1000;
@@ -63,7 +66,7 @@ void entity_move(ENTITY this, direction_t dir, vec_t speed, bool check_clip)
     if(check_clip) /* FIXME: костыль */
     {
         /* найдем препятствия */
-        map_clip_find_near(common->origin, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
+        map_clip_find_near(map, common->origin, bodybox, dir, MAP_WALL_CLIP, bodybox, &dist);
         if(dist < dway + halfbox)
             dway = dist - halfbox;
     }

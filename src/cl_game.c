@@ -8,6 +8,7 @@
 #include "common/common_list2.h"
 
 #include "types.h"
+#include "world.h"
 
 #include "client.h"
 #include "client_private.h"
@@ -28,19 +29,28 @@ static void client_game_draw_nogame(void)
     video_printf(160 - 6 * 10 , 8 * 5, "Ожидание соединения...");
 }
 
+static void client_game_draw_world_creating(void)
+{
+    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+    font_color_set3i(COLOR_15);
+    video_printf(160-06*4 ,8*5, "СОЗДАНИЕ МИРА...");
+}
+
 /**
  * информация об уровне
  */
 static void client_game_draw_missionbrief(void)
 {
+    map_t * map = world_map_get();
+
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
     video_printf(160-06*4 ,8*5, "КАРТА:");
     font_color_set3i(COLOR_15);
-    video_printf(160-16*4, 8*7 , map.name);
+    video_printf(160-16*4, 8*7 , map->mapname);
     video_printf(160-07*4, 8*10, "ЗАДАЧА:");
     video_printf(108     , 191 , "НАЖМИ ПРОБЕЛ");
-    video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map.brief);
+    video_printf_wide(160 - 8 * 8, 8 * 12, 8 * 16, map->mapbrief);
 }
 
 /**
@@ -109,7 +119,7 @@ static void cl_game_state_endgame_draw(void)
 
 static void client_game_draw_cam(camera_t * cam)
 {
-    map_draw(cam);
+    map_render(world_map_get(), cam);
 }
 
 static void cl_draw(void)
@@ -184,21 +194,24 @@ void client_game_draw(void)
         case CLIENT_GAMESTATE_1_NOGAME:
             client_game_draw_nogame();
             break;
-        case CLIENT_GAMESTATE_2_MISSION_BRIEF:
+        case CLIENT_GAMESTATE_2_WORLD_CREATING:
+            client_game_draw_world_creating();
+            break;
+        case CLIENT_GAMESTATE_3_MISSION_BRIEF:
             client_game_draw_missionbrief();
             break;
-        case CLIENT_GAMESTATE_3_SPAWN_AWAITING:
+        case CLIENT_GAMESTATE_4_SPAWN_AWAITING:
             client_game_draw_spawn_awaiting();
             break;
-        case CLIENT_GAMESTATE_4_GAMESAVE:
+        case CLIENT_GAMESTATE_5_GAMESAVE:
             break;
-        case CLIENT_GAMESTATE_5_INGAME:
+        case CLIENT_GAMESTATE_6_INGAME:
             cl_draw();
             break;
-        case CLIENT_GAMESTATE_6_INTERMISSION:
+        case CLIENT_GAMESTATE_7_INTERMISSION:
             cl_game_state_intermission_draw();
             break;
-        case CLIENT_GAMESTATE_7_ENDGAME:
+        case CLIENT_GAMESTATE_8_ENDGAME:
             cl_game_state_endgame_draw();
             break;
     }
