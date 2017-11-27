@@ -5,8 +5,8 @@
  *      Author: mastersan
  */
 
-#include "entity.h"
-#include "entity_helpers.h"
+#include "progs.h"
+
 #include "ent_spawn.h"
 #include "ent_player.h"
 

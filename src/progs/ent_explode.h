@@ -10,7 +10,7 @@
 #ifndef SRC_ENT_EXPLODE_H_
 #define SRC_ENT_EXPLODE_H_
 
-#include "sound.h"
+#include "progs.h"
 
 typedef struct
 {

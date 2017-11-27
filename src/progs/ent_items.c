@@ -5,7 +5,8 @@
  *      Author: mastersan
  */
 
-#include "model.h"
+#include "progs.h"
+
 #include "ent_items.h"
 
 static var_descr_t item_vars[] =

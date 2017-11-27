@@ -8,7 +8,7 @@
 #ifndef SRC_ENT_ITEMS_H_
 #define SRC_ENT_ITEMS_H_
 
-#include "entity.h"
+#include "progs.h"
 
 typedef struct
 {

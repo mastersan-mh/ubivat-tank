@@ -10,7 +10,7 @@
 #ifndef SRC_ENT_MESSAGE_H_
 #define SRC_ENT_MESSAGE_H_
 
-#include "entity.h"
+#include "progs.h"
 
 typedef struct
 {

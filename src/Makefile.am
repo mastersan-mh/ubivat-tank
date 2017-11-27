@@ -9,15 +9,15 @@ ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
 common/common_hash.c \
-ent_exit.c \
-ent_message.c \
-ent_spawn.c \
-ent_bull.c \
-ent_explode.c \
-ent_weap.c \
-ent_items.c \
-ent_player.c \
-ent_player_think.c \
+progs/ent_exit.c \
+progs/ent_message.c \
+progs/ent_spawn.c \
+progs/ent_bull.c \
+progs/ent_explode.c \
+progs/ent_weap.c \
+progs/ent_items.c \
+progs/ent_player.c \
+progs/ent_player_think.c \
 Z_mem.c \
 vars.c \
 system.c \

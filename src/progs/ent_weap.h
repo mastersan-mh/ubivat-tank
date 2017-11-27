@@ -10,10 +10,7 @@
 #ifndef SRC_ENT_WEAP_H_
 #define SRC_ENT_WEAP_H_
 
-#include "types.h"
-#include "img.h"
-#include "sound.h"
-#include "entity.h"
+#include "progs.h"
 
 typedef enum
 {

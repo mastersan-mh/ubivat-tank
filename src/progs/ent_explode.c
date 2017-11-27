@@ -5,14 +5,10 @@
  *      Author: mastersan
  */
 
-#include "world.h"
-#include "game.h"
-#include "entity.h"
-#include "model.h"
+#include "progs.h"
+
 #include "ent_explode.h"
 #include "ent_player.h"
-#include "_gr2D.h"
-#include "sound.h"
 
 static var_descr_t explode_vars[] =
 {

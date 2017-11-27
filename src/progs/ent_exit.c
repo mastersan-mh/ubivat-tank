@@ -5,9 +5,9 @@
  *      Author: mastersan
  */
 
+#include "progs.h"
+
 #include "ent_exit.h"
-#include "entity.h"
-#include "model.h"
 
 static var_descr_t exit_vars[] =
 {

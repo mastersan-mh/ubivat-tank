@@ -8,9 +8,8 @@
 #ifndef SRC_ENT_PLAYER_H_
 #define SRC_ENT_PLAYER_H_
 
-#include "map.h"
-#include "types.h"
-#include "entity.h"
+#include "progs.h"
+
 #include "ent_items.h"
 #include "ent_player_think.h"
 #include "ent_weap.h"

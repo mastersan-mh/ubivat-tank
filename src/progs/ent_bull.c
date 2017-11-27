@@ -5,15 +5,12 @@
  *      Author: mastersan
  */
 
-#include "game.h"
-#include "entity_helpers.h"
-#include "model.h"
-#include "sound.h"
+#include "progs.h"
+
 #include "ent_bull.h"
 #include "ent_explode.h"
 #include "ent_player.h"
 #include "ent_weap.h"
-#include "world.h"
 
 static var_descr_t bull_vars[] =
 {

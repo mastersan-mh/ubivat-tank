@@ -3,21 +3,14 @@
  *        управление игроками
  * by Master San
  */
+
+#include "progs.h"
+
 #include "ent_bull.h"
 #include "ent_explode.h"
 #include "ent_player_think.h"
 #include "ent_player.h"
 #include "ent_weap.h"
-
-#include "world.h"
-#include "entity_helpers.h"
-#include "types.h"
-#include "game.h"
-#include "map.h"
-#include "client.h"
-#include "system.h"
-
-#include <stdlib.h>
 
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (16 * 3)

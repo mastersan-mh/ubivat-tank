@@ -5,6 +5,8 @@
  * by Master San
  */
 
+#include "progs.h"
+
 #include "ent_player.h"
 #include "ent_player_think.h"
 #include "ent_spawn.h"
@@ -15,19 +17,6 @@
 #include "ent_explode.h"
 #include "ent_message.h"
 #include "ent_weap.h"
-
-#include "world.h"
-#include "ui.h"
-#include "system.h"
-#include "types.h"
-#include "entity.h"
-#include "entity_helpers.h"
-#include "img.h"
-#include "map.h"
-#include "server.h"
-#include "sv_game.h"
-#include "game.h"
-#include "sound.h"
 
 void coerce_value_int(int * val, int min, int max)
 {
@@ -765,9 +754,6 @@ void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, 
 
 
 /****************/
-
-#include "_gr2D.h"
-#include "video.h"
 
 /*
  * вывод информации об игроке

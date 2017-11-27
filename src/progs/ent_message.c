@@ -5,7 +5,8 @@
  *      Author: mastersan
  */
 
-#include "entity.h"
+#include "progs.h"
+
 #include "ent_message.h"
 
 static var_descr_t message_vars[] =

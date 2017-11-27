@@ -1,3 +1,6 @@
+
+#include "progs.h"
+
 #include "ent_weap.h"
 
 //оружия

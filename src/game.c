@@ -28,7 +28,7 @@
 #include "world.h"
 
 // entities
-#include "entities_includes.h"
+#include "progs/entities_includes.h"
 
 #include <stdlib.h>
 #include <stdio.h>
