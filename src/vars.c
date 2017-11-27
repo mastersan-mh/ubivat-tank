@@ -29,7 +29,7 @@ const var_descr_t * var_find(const var_descr_t * vars_descr, size_t vars_descr_n
  */
 void vars_free(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num)
 {
-    vars_dump(vars, vars_descr, vars_descr_num, "==== vars_free():");
+    VARS_DUMP(vars, vars_descr, vars_descr_num, "==== vars_free():");
 
     for(size_t i = 0; i < vars_descr_num; i++)
     {

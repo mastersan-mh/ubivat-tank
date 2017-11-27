@@ -18,6 +18,6 @@
 //#define _ZMEM_DEBUG_MEMDUMP
 
 /* Do dump of the entities variables */
-//#define VARS_DUMP
+//#define VARS_DUMP_ALLOW
 
 #endif /* SRC_GAMEDEFS_H_ */

@@ -47,8 +47,6 @@
 
 server_t server = {};
 
-bool sv_entity_valid = false;
-
 void server_init(void)
 {
     CIRCLEQ_INIT(&server.events);
@@ -114,7 +112,6 @@ void server_handle()
     {
         case SERVER_STATE_IDLE:
             server.gamestate = SERVER_GAMESTATE_1_NOGAME;
-            sv_entity_valid = false;
             break;
         case SERVER_STATE_INIT:
 

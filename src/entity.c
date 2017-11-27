@@ -174,10 +174,10 @@ void entity_restore(ENTITY entity, const void * vars)
         memcpy(ent->vars + ofs, vars + ofs, info_vars[i].size);
     }
 
-#ifdef VARS_DUMP
+#ifdef VARS_DUMP_ALLOW
     char title[128];
     sprintf(title, "==== Entity \"%s\" vars:", ent->info->name);
-    vars_dump(ent->vars, ent->info->vars_descr, ent->info->vars_descr_num, title);
+    VARS_DUMP(ent->vars, ent->info->vars_descr, ent->info->vars_descr_num, title);
 #endif
 }
 

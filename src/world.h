@@ -18,6 +18,7 @@ typedef struct
 
 extern int world_create(const char * mapfilename);
 extern void world_destroy(void);
+extern bool world_valid(void);
 extern const char * world_mapfilename_get(void);
 extern map_t * world_map_get(void);
 extern void world_handle(void);

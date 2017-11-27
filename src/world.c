@@ -21,11 +21,12 @@ int world_create(const char * mapfilename)
         game_console_send("Can not create world, it already created.");
         return -1;
     }
+    game_console_send("Loading map \"%s\"", mapfilename);
     world.map = map_load(mapfilename);
     if(!world.map)
     {
 
-        game_console_send("Error: Can not load world map: %s", mapfilename);
+        game_console_send("Error: Can not load world map \"%s\"", mapfilename);
         return -1;
     }
     world.mapfilename = Z_strdup(mapfilename);
@@ -38,6 +39,11 @@ void world_destroy(void)
     world.mapfilename = NULL;
     map_free(world.map);
     world.map = NULL;
+}
+
+bool world_valid(void)
+{
+    return world.map != NULL;
 }
 
 const char * world_mapfilename_get(void)

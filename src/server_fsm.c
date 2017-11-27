@@ -23,8 +23,6 @@
 
 #include <stddef.h>
 
-extern bool sv_entity_valid;
-
 #define FSM_LOCAL_STOP() \
         do { \
             game_stop(); \
@@ -70,6 +68,8 @@ void server_fsm_client_connect(const server_event_t * event)
     //net_socket_t * ns = net_socket_create_sockaddr(event->sender.addr);
     client = server_client_create(server.sock, &event->sender, mainclient);
     server_reply_send_connection_accepted(client);
+    if(world_valid())
+        server_reply_send_world_create(client, world_mapfilename_get());
 }
 
 void server_fsm_client_disconnect(const server_event_t * event, server_client_t * client)
@@ -211,7 +211,6 @@ void server_fsm(const server_event_t * event)
             case G_SERVER_EVENT_LOCAL_WIN:
             {
                 server_gamesave_clients_info_clean();
-                sv_entity_valid = false;
 
                 server_client_t * client;
                 server_clients_unspawn();
@@ -255,7 +254,6 @@ void server_fsm(const server_event_t * event)
                 break;
             case G_SERVER_EVENT_REMOTE_CLIENT_SPAWN:
             {
-                sv_entity_valid = true;
                 FSM_CLIENT_CHECK(client);
                 if(client->joined)
                 {

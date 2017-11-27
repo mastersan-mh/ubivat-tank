@@ -111,4 +111,10 @@ extern size_t var_buffersize_calculate(const var_descr_t * vars_descr, size_t va
 
 extern void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num, const char * title);
 
+#ifdef VARS_DUMP_ALLOW
+#define VARS_DUMP(vars, vars_descr, vars_descr_num, title) vars_dump((vars), (vars_descr), (vars_descr_num), (title))
+#else
+#define VARS_DUMP(vars, vars_descr, vars_descr_num, title) (void *)0
+#endif
+
 #endif /* SRC_VARS_H_ */
