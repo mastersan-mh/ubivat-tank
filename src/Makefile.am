@@ -9,6 +9,7 @@ ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 
 ubivat_tank_SOURCES = \
 common/common_hash.c \
+progs/progs_main.c \
 progs/ent_exit.c \
 progs/ent_message.c \
 progs/ent_spawn.c \

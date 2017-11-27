@@ -26,9 +26,9 @@
 #include "actions.h"
 
 #include "world.h"
+#include "progs/progs_main.h"
 
 // entities
-#include "progs/entities_includes.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -155,7 +155,7 @@ void game_init(void)
 
     model_resources_register();
 
-#include "entities_init.h"
+    progs_init();
 
     game_menu_show(MENU_MAIN);
 

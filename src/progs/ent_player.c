@@ -760,6 +760,8 @@ void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, 
  */
 static void player_ui_draw(camera_t * cam, ENTITY player)
 {
+    if(!world_valid())
+        return;
     player_vars_t * pl = entity_vars(player);
     static image_index_t list[] =
     {
