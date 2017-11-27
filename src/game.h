@@ -101,7 +101,6 @@ extern int game_pal_get(void);
 extern void game_record_getsaves(void);
 extern bool game_record_save(int isave);
 extern int game_record_load(int isave);
-extern void game_msg_error(int error);
 
 extern void game_server_add(const net_addr_t * sender, int clients_num);
 extern void game_servers_freeall(void);

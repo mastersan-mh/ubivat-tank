@@ -423,47 +423,6 @@ int game_pal_get(void)
     return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
 
-
-
-
-
-void game_msg_error(int error)
-{
-#define sx (256)
-#define sy (32)
-#define x (160 - (sx / 2))
-#define y (100 - (sy / 2))
-#define ERR_MAX 10
-    static char *errList[ERR_MAX] = {
-            "NO ERRORS.", // 0
-            "Map not found.", // 1
-            "Map load error.", // 2
-            "Map load error.", // 3
-            "Could not find spawn point.", // 4
-            "Could not find spawn point.", // 5
-            "Record not found.", // 11
-            "Map have no found in maps list.", // 12
-            "Map load error.", // 13
-            "Unknown."
-    };
-    bool quit = false;
-
-    while(!quit)
-    {
-        font_color_set3i(COLOR_4);
-        video_printf(x+(sx / 2)-6*8, y+2, "ERROR: ");
-        font_color_set3i(COLOR_15);
-        int e;
-        if(error <= 5)e = error;
-        else e = error - 5;
-        if(e > ERR_MAX) e = ERR_MAX;
-
-        video_printf(x+2, y+16, errList[e]);
-
-        do{ } while(true);
-    }
-}
-
 void game_console_send(const char *error, ...)
 {
     static char errmsg[MAX_MESSAGE_SIZE];
