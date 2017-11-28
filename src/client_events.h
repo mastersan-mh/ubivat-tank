@@ -25,13 +25,13 @@ typedef enum
     G_CLIENT_EVENT_LOCAL_DICOVERYSERVER,
     G_CLIENT_EVENT_LOCAL_NEWGAME,
     G_CLIENT_EVENT_LOCAL_LOADGAME,
+    G_CLIENT_EVENT_LOCAL_WORLD_RECREATE,
     G_CLIENT_EVENT_LOCAL_ENTERGAME,
     G_CLIENT_EVENT_REMOTE_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
-    G_CLIENT_EVENT_REMOTE_WORLD_CREATE,
+    G_CLIENT_EVENT_REMOTE_GAME_NEXTMAP,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
-    G_CLIENT_EVENT_REMOTE_GAME_ENDMAP,
 } client_event_type_t;
 
 typedef union
@@ -59,12 +59,18 @@ typedef union
     } LOCAL_LOADGAME;
     struct
     {
+        char mapfilename[MAP_FILENAME_SIZE];
+    } LOCAL_WORLD_RECREATE;
+    struct
+    {
         int clients_num; /* количество клиентов на сервере */
     } REMOTE_INFO;
     struct
     {
+        bool win; /**< win / lose */
+        bool endgame; /* end of map / end of map and game*/
         char mapfilename[MAP_FILENAME_SIZE];
-    } REMOTE_WORLD_CREATE;
+    } REMOTE_GAME_NEXTMAP;
     struct
     {
         int players_num; /**< amount of client local players */
@@ -74,11 +80,6 @@ typedef union
             entity_id_t entityId;
         } ent[2];
     } REMOTE_PLAYERS_ENTITY_SET;
-    struct
-    {
-        bool win; /**< win / lose */
-        bool endgame; /* end of map / end of map and game*/
-    } REMOTE_GAME_ENDMAP;
 } client_event_data_t;
 
 typedef struct client_event_s
@@ -105,6 +106,7 @@ extern void client_event_local_connect(const net_addr_t * net_addr);
 extern void client_event_local_discoveryserver(void);
 extern void client_event_local_newgame(const char * mapname);
 extern void client_event_local_loadgame(int isave);
+extern void client_event_local_world_recreate(const char * mapfilename);
 extern void client_event_local_entergame(void);
 
 #endif /* SRC_CLIENT_EVENTS_H_ */

@@ -19,9 +19,8 @@ typedef enum
     G_SERVER_REPLY_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
     G_SERVER_REPLY_CONNECTION_ACCEPTED,
     G_SERVER_REPLY_CONNECTION_CLOSE,
-    G_SERVER_REPLY_WORLD_CREATE,
+    G_SERVER_REPLY_GAME_NEXTMAP, /* следующая карта */
     G_SERVER_REPLY_PLAYERS_ENTITY_SET,
-    G_SERVER_REPLY_GAME_ENDMAP, /* карта завершена */
 } server_reply_type_t;
 
 typedef union
@@ -30,10 +29,6 @@ typedef union
     {
         int clients_num; /* количество клиентов на сервере */
     } INFO;
-    struct
-    {
-        char mapfilename[MAP_FILENAME_SIZE];
-    } WORLD_CREATE;
     struct
     {
         int players_num; /**< amount of client local players */
@@ -47,7 +42,8 @@ typedef union
     {
         bool win; /**< win / lose */
         bool endgame; /* end of map / end of map and game*/
-    } GAME_ENDMAP;
+        char mapfilename[MAP_FILENAME_SIZE];
+    } GAME_NEXTMAP;
 } server_reply_data_t;
 
 

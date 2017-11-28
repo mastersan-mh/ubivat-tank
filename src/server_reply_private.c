@@ -51,13 +51,13 @@ void server_reply_send_connection_close(server_client_t * client)
     server_reply_client_send(client, &reply);
 }
 
-void server_reply_send_world_create(server_client_t * client, const char * mapfilename)
+void server_reply_send_game_nextmap(server_client_t * client, bool win, const char * mapfilename)
 {
-    if(!mapfilename)
-        return;
     server_reply_t reply;
-    reply.type = G_SERVER_REPLY_WORLD_CREATE;
-    strncpy(reply.data.WORLD_CREATE.mapfilename, mapfilename, MAP_FILENAME_SIZE);
+    reply.type = G_SERVER_REPLY_GAME_NEXTMAP;
+    reply.data.GAME_NEXTMAP.win = win;
+    reply.data.GAME_NEXTMAP.endgame = (mapfilename == NULL);
+    strncpy(reply.data.GAME_NEXTMAP.mapfilename, mapfilename, MAP_FILENAME_SIZE);
     server_reply_client_send(client, &reply);
 }
 
@@ -79,13 +79,4 @@ void server_reply_send_players_entity_set(server_client_t * client)
     }
     server_reply_client_send(client, &reply);
 
-}
-
-void server_reply_send_game_endmap(server_client_t * client, bool win, bool endgame)
-{
-    server_reply_t reply;
-    reply.type = G_SERVER_REPLY_GAME_ENDMAP;
-    reply.data.GAME_ENDMAP.win = win;
-    reply.data.GAME_ENDMAP.endgame = endgame;
-    server_reply_client_send(client, &reply);
 }

@@ -31,7 +31,7 @@ static void client_game_draw_world_creating(void)
 {
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
-    video_printf(160-06*4 ,8*5, "СОЗДАНИЕ МИРА...");
+    video_printf(160 - 9 * 4 , 8 * 5, "СОЗДАНИЕ МИРА...");
 }
 
 /**
@@ -76,6 +76,7 @@ static void cl_game_state_intermission_draw(void)
     };
     video_image_draw(0, 0, IMG_MENU_I_INTERLV);
     font_color_set3i(COLOR_15);
+    video_printf(160 - 6 * 4 , 8 * 5, "РАНГИ");
     video_printf(108,191,"НАЖМИ ПРОБЕЛ");
 /* TODO cl_game_state_intermission_draw
     int i;
@@ -122,11 +123,10 @@ static void client_game_draw_cam(camera_t * cam)
 
 static void cl_draw(void)
 {
-    client_player_t * player;
-
-    if(!world_valid())
+    if(!client_world_valid())
         return;
 
+    client_player_t * player;
 
     LIST2_FOREACH(client.players, player)
     {
@@ -143,7 +143,9 @@ static void cl_draw(void)
             );
             if(entity->cam_entity)
             {
-                VEC2_COPY(cam->origin, ((entity_vars_common_t*)(entity->cam_entity->vars))->origin);
+                entity_vars_common_t * vars = entity->cam_entity->vars;
+                if(vars)
+                    VEC2_COPY(cam->origin, vars->origin);
             }
             else
             {

@@ -46,7 +46,7 @@ void server_gamesave_clients_info_clean(void)
     server.gamesave_clients_info_num = 0;
 }
 
-static inline void server_gamesave_client_info_set(size_t clientId, size_t players_num)
+void server_gamesave_client_info_set(size_t clientId, size_t players_num)
 {
     server.gamesave_clients_info[clientId].players_num = players_num;
 }
@@ -271,64 +271,6 @@ server_client_t * server_client_get(int id)
     return client;
 }
 
-int server_world_recreate(const char * mapname)
-{
-    world_destroy();
-    if(world_create(mapname))
-    {
-        game_console_send("server: Error: Could not create world");
-        return -1;
-    }
-    server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
-    {
-        server_reply_send_world_create(client, world_mapfilename_get());
-    }
-    return 0;
-}
-
-int server_fsm_gamesave_load(int isave)
-{
-    /* игра уже создана */
-    gamesave_load_context_t ctx;
-    if(g_gamesave_load_open(isave, &ctx))
-        return -1;
-
-    int res = g_gamesave_load_read_header(&ctx);
-    if(res)
-    {
-        game_console_send("server: Error: Could not load gamesave.");
-        return -1;
-    }
-
-    // создадим мир
-    if(server_world_recreate(ctx.mapfilename))
-    {
-        g_gamesave_load_close(&ctx);
-        return -1;
-    }
-
-    server_gamesave_clients_info_allocate(ctx.clients_num);
-
-    for(size_t clientId = 0; clientId < ctx.clients_num; clientId++)
-    {
-        size_t players_num = ctx.clients_descr[clientId];
-        for(size_t playerId = 0; playerId < players_num; playerId++)
-        {
-            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-            g_gamesave_load_player(&ctx, storage);
-            server_gamesave_client_info_set(clientId, players_num);
-        }
-    }
-
-    server.flags.localgame = ctx.flag_localgame;
-    server.flags.allow_respawn = ctx.flag_allow_respawn;
-
-    g_gamesave_load_close(&ctx);
-
-    return 0;
-}
-
 server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bool main)
 {
     server_client_t * client = Z_malloc(sizeof(server_client_t));
@@ -497,8 +439,12 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 break;
-            case G_SERVER_REPLY_WORLD_CREATE:
-                PDU_PUSH_BUF(reply->data.WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
+            case G_SERVER_REPLY_GAME_NEXTMAP:
+                value16 = htons(reply->data.GAME_NEXTMAP.win ? -1 : 0);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
+                value16 = htons(reply->data.GAME_NEXTMAP.endgame ? -1 : 0);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
+                PDU_PUSH_BUF(reply->data.GAME_NEXTMAP.mapfilename, MAP_FILENAME_SIZE);
                 break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
@@ -514,12 +460,6 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
                 }
                 break;
             }
-            case G_SERVER_REPLY_GAME_ENDMAP:
-                value16 = htons(reply->data.GAME_ENDMAP.win ? -1 : 0);
-                PDU_PUSH_BUF(&value16, sizeof(value16));
-                value16 = htons(reply->data.GAME_ENDMAP.endgame ? -1 : 0);
-                PDU_PUSH_BUF(&value16, sizeof(value16));
-                break;
         }
     }
     client->tx_queue_num = 0;
@@ -549,8 +489,12 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
             break;
         case G_SERVER_REPLY_CONNECTION_CLOSE:
             break;
-        case G_SERVER_REPLY_WORLD_CREATE:
-            PDU_PUSH_BUF(reply->data.WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
+        case G_SERVER_REPLY_GAME_NEXTMAP:
+            value16 = htons(reply->data.GAME_NEXTMAP.win ? -1 : 0);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            value16 = htons(reply->data.GAME_NEXTMAP.endgame ? -1 : 0);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
+            PDU_PUSH_BUF(reply->data.GAME_NEXTMAP.mapfilename, MAP_FILENAME_SIZE);
             break;
         case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
         {
@@ -566,12 +510,6 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
             }
             break;
         }
-        case G_SERVER_REPLY_GAME_ENDMAP:
-            value16 = htons(reply->data.GAME_ENDMAP.win ? -1 : 0);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            value16 = htons(reply->data.GAME_ENDMAP.endgame ? -1 : 0);
-            PDU_PUSH_BUF(&value16, sizeof(value16));
-            break;
     }
 
     return 0;

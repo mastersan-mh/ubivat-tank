@@ -108,6 +108,13 @@ void client_event_local_loadgame(int isave)
     client_event_send(NULL, G_CLIENT_EVENT_LOCAL_LOADGAME, &data);
 }
 
+void client_event_local_world_recreate(const char * mapfilename)
+{
+    client_event_data_t data;
+    strncpy(data.LOCAL_WORLD_RECREATE.mapfilename, mapfilename, MAP_FILENAME_SIZE);
+    client_event_send(NULL, G_CLIENT_EVENT_LOCAL_WORLD_RECREATE, &data);
+}
+
 void client_event_local_entergame(void)
 {
     client_event_send(NULL, G_CLIENT_EVENT_LOCAL_ENTERGAME, NULL);

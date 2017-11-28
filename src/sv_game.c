@@ -64,26 +64,3 @@ void sv_game_win(void)
         server_event_local_win();
     }
 }
-
-/*
- * сообщения об ошибках
- */
-int sv_game_nextmap(void)
-{
-    world_destroy();
-
-    server.gstate.gamemap = server.gstate.gamemap->next;
-    if(!server.gstate.gamemap)
-    {
-        // конец игры, последняя карта
-        server_event_local_stop();
-        return -1;
-    }
-    if(server_world_recreate(server.gstate.gamemap->filename))
-    {
-        server_event_local_stop();
-        return -1;
-    }
-
-    return 0;
-}

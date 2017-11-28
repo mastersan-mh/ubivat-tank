@@ -38,6 +38,16 @@ bool client_ingame(void)
                     client.gamestate == CLIENT_GAMESTATE_1_NOGAME);
 }
 
+bool client_world_valid(void)
+{
+    return client.world_valid;
+}
+
+void client_world_valid_set(bool valid)
+{
+    client.world_valid = valid;
+}
+
 void client_init(void)
 {
     CIRCLEQ_INIT(&client.events);
@@ -119,9 +129,13 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
                 break;
-            case G_SERVER_REPLY_WORLD_CREATE:
-                evtype = G_CLIENT_EVENT_REMOTE_WORLD_CREATE;
-                PDU_POP_BUF(evdata.REMOTE_WORLD_CREATE.mapfilename, MAP_FILENAME_SIZE);
+            case G_SERVER_REPLY_GAME_NEXTMAP:
+                evtype = G_CLIENT_EVENT_REMOTE_GAME_NEXTMAP;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_GAME_NEXTMAP.win = (ntohs(value16) != 0);
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_GAME_NEXTMAP.endgame = (ntohs(value16) != 0);
+                PDU_POP_BUF(evdata.REMOTE_GAME_NEXTMAP.mapfilename, MAP_FILENAME_SIZE);
                 break;
             case G_SERVER_REPLY_PLAYERS_ENTITY_SET:
             {
@@ -137,13 +151,6 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
                 }
                 break;
             }
-            case G_SERVER_REPLY_GAME_ENDMAP:
-                evtype = G_CLIENT_EVENT_REMOTE_GAME_ENDMAP;
-                PDU_POP_BUF(&value16, sizeof(value16));
-                evdata.REMOTE_GAME_ENDMAP.win = (ntohs(value16) != 0);
-                PDU_POP_BUF(&value16, sizeof(value16));
-                evdata.REMOTE_GAME_ENDMAP.endgame = (ntohs(value16) != 0);
-                break;
         }
 
         client_event_send(sender, evtype, &evdata);

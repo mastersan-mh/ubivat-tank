@@ -8,8 +8,6 @@
 #ifndef SRC_SV_GAME_H_
 #define SRC_SV_GAME_H_
 
-extern int sv_game_nextmap(void);
-
 extern void sv_game_message_send(const char * mess);
 
 extern int sv_game_flag_localgame(void);

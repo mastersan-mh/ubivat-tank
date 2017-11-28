@@ -55,12 +55,72 @@
                     break; \
                 }
 
-void server_fsm_discovery(const server_event_t * event)
+static int server_world_recreate(const char * mapname)
+{
+    server_client_t * client;
+    world_destroy();
+    if(world_create(mapname))
+    {
+        game_console_send("server: Error: Could not create world");
+        LIST2_FOREACH(server.clients, client)
+        {
+            server_reply_send_game_nextmap(client, true, NULL);
+        }
+        server_event_local_stop();
+        return -1;
+    }
+
+    //игра по уровням
+    LIST2_FOREACH(server.clients, client)
+    {
+        server_reply_send_game_nextmap(client, true, world_mapfilename_get());
+    }
+    return 0;
+}
+
+static void server_fsm_local_win(void)
+{
+    server_gamesave_clients_info_clean();
+
+    server_client_t * client;
+
+    server_clients_unspawn();
+    if(!server.flags.localgame)
+    {
+        //игра по выбору
+        LIST2_FOREACH(server.clients, client)
+        {
+            server_reply_send_game_nextmap(client, true, NULL);
+        }
+        server_event_local_stop();
+        return;
+    }
+
+
+    server.gstate.gamemap = server.gstate.gamemap->next;
+
+    if(!server.gstate.gamemap)
+    {
+        world_destroy();
+        game_console_send("server: can't set next map.");
+        // конец игры, последняя карта
+        LIST2_FOREACH(server.clients, client)
+        {
+            server_reply_send_game_nextmap(client, true, NULL);
+        }
+        server_event_local_stop();
+        return;
+    }
+
+    server_world_recreate(server.gstate.gamemap->filename);
+}
+
+static void server_fsm_discovery(const server_event_t * event)
 {
     server_reply_send_info(&event->sender);
 }
 
-void server_fsm_client_connect(const server_event_t * event)
+static void server_fsm_client_connect(const server_event_t * event)
 {
     server_client_t * client;
     game_console_send("server: client request connection from " PRINTF_NETADDR_IPv4_FMT ".", PRINTF_NETADDR_VAL(event->sender));
@@ -69,10 +129,10 @@ void server_fsm_client_connect(const server_event_t * event)
     client = server_client_create(server.sock, &event->sender, mainclient);
     server_reply_send_connection_accepted(client);
     if(world_valid())
-        server_reply_send_world_create(client, world_mapfilename_get());
+        server_reply_send_game_nextmap(client, true, world_mapfilename_get());
 }
 
-void server_fsm_client_disconnect(const server_event_t * event, server_client_t * client)
+static void server_fsm_client_disconnect(const server_event_t * event, server_client_t * client)
 {
     if(!client)
     {
@@ -85,7 +145,7 @@ void server_fsm_client_disconnect(const server_event_t * event, server_client_t 
     server_client_delete(client);
 }
 
-void server_fsm_game_abort(const server_event_t * event, server_client_t * client)
+static void server_fsm_remote_game_abort(const server_event_t * event, server_client_t * client)
 {
     game_console_send("server: client " PRINTF_NETADDR_FMT " aborted game.", PRINTF_NETADDR_VAL(event->sender));
     LIST2_FOREACH(server.clients, client)
@@ -95,7 +155,7 @@ void server_fsm_game_abort(const server_event_t * event, server_client_t * clien
     server_event_local_stop();
 }
 
-void server_fsm_game_setmap(const server_event_t * event)
+static void server_fsm_game_setmap(const server_event_t * event)
 {
     const char * mapname = event->data.REMOTE_GAME_SETMAP.mapname;
     server.gstate.gamemap = map_find(mapname);
@@ -105,7 +165,51 @@ void server_fsm_game_setmap(const server_event_t * event)
         //game_abort();
         return;
     }
+
     server_world_recreate(mapname);
+}
+
+static int server_fsm_gamesave_load(int isave)
+{
+    /* игра уже создана */
+    gamesave_load_context_t ctx;
+    if(g_gamesave_load_open(isave, &ctx))
+        return -1;
+
+    int res = g_gamesave_load_read_header(&ctx);
+    if(res)
+    {
+        world_destroy();
+        game_console_send("server: Error: Could not load gamesave.");
+        return -1;
+    }
+
+    // создадим мир
+    if(server_world_recreate(ctx.mapfilename))
+    {
+        g_gamesave_load_close(&ctx);
+        return -1;
+    }
+
+    server_gamesave_clients_info_allocate(ctx.clients_num);
+
+    for(size_t clientId = 0; clientId < ctx.clients_num; clientId++)
+    {
+        size_t players_num = ctx.clients_descr[clientId];
+        for(size_t playerId = 0; playerId < players_num; playerId++)
+        {
+            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
+            g_gamesave_load_player(&ctx, storage);
+            server_gamesave_client_info_set(clientId, players_num);
+        }
+    }
+
+    server.flags.localgame = ctx.flag_localgame;
+    server.flags.allow_respawn = ctx.flag_allow_respawn;
+
+    g_gamesave_load_close(&ctx);
+
+    return 0;
 }
 
 static void server_fsm_control_handle(const server_event_t * event, server_client_t * client)
@@ -188,7 +292,7 @@ void server_fsm(const server_event_t * event)
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_ABORT:
                 FSM_CLIENT_CHECK_PRIVILEGED(client);
-                server_fsm_game_abort(event, client);
+                server_fsm_remote_game_abort(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_SETMAP:
                 server_fsm_game_setmap(event);
@@ -209,38 +313,8 @@ void server_fsm(const server_event_t * event)
                 FSM_LOCAL_STOP();
                 break;
             case G_SERVER_EVENT_LOCAL_WIN:
-            {
-                server_gamesave_clients_info_clean();
-
-                server_client_t * client;
-                server_clients_unspawn();
-                if(!server.flags.localgame)
-                {
-                    //игра по выбору
-                    LIST2_FOREACH(server.clients, client)
-                    {
-                        server_reply_send_game_endmap(client, true, true);
-                    }
-                    server_event_local_stop();
-                    break;
-                }
-                //игра по уровням
-                if(sv_game_nextmap())
-                {
-                    LIST2_FOREACH(server.clients, client)
-                    {
-                        server_reply_send_game_endmap(client, true, true);
-                    }
-                    game_console_send("server: can't next map.");
-                    server_event_local_stop();
-                    break;
-                }
-                LIST2_FOREACH(server.clients, client)
-                {
-                    server_reply_send_game_endmap(client, true, false);
-                }
+                server_fsm_local_win();
                 break;
-            }
             case G_SERVER_EVENT_REMOTE_DISCOVERYSERVER:
                 server_fsm_discovery(event);
                 break;
@@ -287,7 +361,7 @@ void server_fsm(const server_event_t * event)
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_ABORT:
                 FSM_CLIENT_CHECK_PRIVILEGED(client);
-                server_fsm_game_abort(event, client);
+                server_fsm_remote_game_abort(event, client);
                 break;
             case G_SERVER_EVENT_REMOTE_GAME_SETMAP:
                 break;

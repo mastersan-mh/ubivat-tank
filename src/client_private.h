@@ -50,6 +50,7 @@ typedef struct
 
     client_gamestate_t gamestate;
 
+    bool world_valid;
     //состояние игры
     struct
     {
@@ -59,6 +60,7 @@ typedef struct
         /* игрок победил */
         bool win;
         bool endgame;
+        char next_mapfilename[MAP_FILENAME_SIZE];
     } gstate;
 
     /* dedicated server */

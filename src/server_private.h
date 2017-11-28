@@ -139,6 +139,7 @@ extern const char * server_gamestate_to_str(server_gamestate_t state);
 
 extern void server_gamesave_clients_info_allocate(size_t clients_num);
 extern void server_gamesave_clients_info_clean(void);
+extern void server_gamesave_client_info_set(size_t clientId, size_t players_num);
 extern size_t server_gamesave_client_info_get(size_t clientId);
 extern void server_gamesave_client_info_mark(size_t clientId);
 
@@ -166,10 +167,6 @@ extern void server_player_info_store(server_player_vars_storage_t * storage, ser
 
 extern const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
-
-extern int server_world_recreate(const char * mapname);
-
-extern int server_fsm_gamesave_load(int isave);
 
 extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);
 extern int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);

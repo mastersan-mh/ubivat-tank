@@ -29,6 +29,9 @@ extern bool client_running(void);
 
 extern bool client_ingame(void);
 
+extern bool client_world_valid(void);
+extern void client_world_valid_set(bool valid);
+
 extern void client_handle(void);
 
 #endif /* SRC_CLIENT_H_ */
