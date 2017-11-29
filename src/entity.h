@@ -51,11 +51,12 @@ typedef struct
 
 #define ENTITY_HALFBODYBOX(ENTITY) (entity_info_bodybox(ENTITY) * 0.5)
 
-/*
- * цикл по объектам одного определённого типа
- */
-#define ENTITIES_FOREACH(entity_name, entity) \
-        for(entity = entity_first(entity_name); entity; entity = entity_next(entity))
+#define ENTITIES_FOREACH(entity) \
+        for((entity) = entity_first((entity_name)); !entity_end(entity) ; (entity) = entity_next((entity), (entity_name)))
+
+/* цикл по объектам одного определённого типа */
+#define ENTITIES_FOREACH_NAME(entity_name, entity) \
+        for((entity) = entity_first_name((entity_name)); !entity_end(entity) ; (entity) = entity_next_name((entity), (entity_name)))
 
 #define ENTITY_FUNCTION_TOUCH(x) \
         void x (ENTITY this, ENTITY that)
@@ -217,8 +218,9 @@ typedef struct entityinfo_s
 extern const entityinfo_t * entityinfo_get(const char * name);
 extern void entity_register(const entityinfo_t * info);
 
-extern ENTITY entity_first(const char * name);
-extern ENTITY entity_next(ENTITY entity);
+extern ENTITY entity_first_name(const char * entity_name);
+extern ENTITY entity_next_name(ENTITY entity, const char * entity_name);
+extern bool entity_end(ENTITY entity);
 
 extern BOOL entity_is(const ENTITY entity, const char *entity_name);
 extern const char * entity_info_name(const ENTITY entity);

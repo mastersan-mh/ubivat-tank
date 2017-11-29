@@ -201,19 +201,19 @@ static void ctrl_AI_checkdangers(ENTITY player)
 	bool danger = false;
 	ENTITY dangerous;
 
-	ENTITIES_FOREACH("bull_artillery", dangerous)
+	ENTITIES_FOREACH_NAME("bull_artillery", dangerous)
 	{
 		danger = ctrl_AI_checkdanger(player, dangerous);
 		if(danger)
 			goto next;
 	}
-	ENTITIES_FOREACH("bull_missile", dangerous)
+	ENTITIES_FOREACH_NAME("bull_missile", dangerous)
 	{
 		danger = ctrl_AI_checkdanger(player, dangerous);
 		if(danger)
 			goto next;
 	}
-	ENTITIES_FOREACH("bull_mine", dangerous)
+	ENTITIES_FOREACH_NAME("bull_mine", dangerous)
 	{
 		danger = ctrl_AI_checkdanger(player, dangerous);
 		if(danger)

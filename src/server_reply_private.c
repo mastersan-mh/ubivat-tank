@@ -8,7 +8,7 @@
 #include "common/common_list2.h"
 #include "server_private.h"
 
-#include <sys/queue.h>
+#include "common/common_queue.h"
 
 static void server_reply_client_send(server_client_t * client, const server_reply_t * req)
 {

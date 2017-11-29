@@ -94,6 +94,7 @@ client_player_t * client_player_get(int playerId)
 
 void client_player_delete(client_player_t * player)
 {
+    LIST2_UNLINK(client.players, player);
     Z_free(player);
 }
 
@@ -103,7 +104,6 @@ void client_players_delete(void)
     while(!LIST2_IS_EMPTY(client.players))
     {
         player = client.players;
-        LIST2_UNLINK(client.players, player);
         client_player_delete(player);
     }
 }

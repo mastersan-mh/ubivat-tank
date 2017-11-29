@@ -94,15 +94,15 @@ static void explode_detonate(ENTITY this, explodetype_t type)
     //проверка попаданий в игрока
     ENTITY ent_attacked;
 
-    ENTITIES_FOREACH("player", ent_attacked)
+    ENTITIES_FOREACH_NAME("player", ent_attacked)
     {
         explode_touch_common(this, ent_attacked, explodeinfo);
     }
-    ENTITIES_FOREACH("enemy", ent_attacked)
+    ENTITIES_FOREACH_NAME("enemy", ent_attacked)
     {
         explode_touch_common(this, ent_attacked, explodeinfo);
     }
-    ENTITIES_FOREACH("boss", ent_attacked)
+    ENTITIES_FOREACH_NAME("boss", ent_attacked)
     {
         explode_touch_common(this, ent_attacked, explodeinfo);
     }

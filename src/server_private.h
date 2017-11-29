@@ -17,7 +17,7 @@
 #include "server_events.h"
 #include "server_fsm.h"
 
-#include <sys/queue.h>
+#include "common/common_queue.h"
 
 #define SERVER_CLIENT_TX_QUEUE_SIZE 16
 

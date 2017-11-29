@@ -20,7 +20,7 @@ ENTITY entity_get_random(const char * entityname)
     size_t count = 0;
     ENTITY entity;
     /* считаем количество */
-    ENTITIES_FOREACH(entityname, entity)
+    ENTITIES_FOREACH_NAME(entityname, entity)
     {
         count++;
     };
@@ -29,7 +29,7 @@ ENTITY entity_get_random(const char * entityname)
     count = xrand(count);
 
     /* выбираем случайным образом */
-    ENTITIES_FOREACH(entityname, entity)
+    ENTITIES_FOREACH_NAME(entityname, entity)
     {
         if(count == 0)
             return entity;

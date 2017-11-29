@@ -129,10 +129,10 @@ void server_client_delete(server_client_t * client)
 {
     size_t playerId = 0;
     server_player_t * player;
+    LIST2_UNLINK(server.clients, client);
     while(!LIST2_IS_EMPTY(client->players))
     {
         player = client->players;
-        LIST2_UNLINK(client->players, player);
         server_player_delete(player);
         playerId++;
     }
@@ -320,7 +320,6 @@ void server_clients_delete(void)
     while(!LIST2_IS_EMPTY(server.clients))
     {
         client = server.clients;
-        LIST2_UNLINK(server.clients, client);
         server_client_delete(client);
     }
 }
@@ -335,8 +334,9 @@ server_player_t * server_player_create()
     return player;
 }
 
-void server_player_delete(server_player_t * player)
+void server_player_delete(server_client_t * client, server_player_t * player)
 {
+    LIST2_UNLINK(client->players, player);
     Z_free(player);
 }
 

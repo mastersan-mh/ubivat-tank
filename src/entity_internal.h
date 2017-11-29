@@ -11,6 +11,8 @@
 #include "types.h"
 #include "entity.h"
 
+#include "common/common_queue.h"
+
 #define ENTITY_ID_MAX SIZE_MAX
 typedef size_t entity_id_t;
 /*
@@ -19,8 +21,7 @@ typedef size_t entity_id_t;
  */
 typedef struct entity_s
 {
-    struct entity_s * prev;
-    struct entity_s * next;
+    CIRCLEQ_ENTRY(entity_s) list;
 
     entity_id_t id;
 
@@ -56,15 +57,18 @@ typedef struct entity_s
     void * vars; /* entity_common_t */
 } entity_t;
 
+typedef CIRCLEQ_HEAD(, entity_s) entity_head_t;
+
 typedef struct
 {
     /* информация о объектах в списках */
     const entityinfo_t * info;
-    /* существующие объекты (все одного типа) */
-    entity_t * entities;
-    /* удалённые объекты (все одного типа) */
-    entity_t * entities_erased;
 } entity_registered_t;
+
+extern entity_head_t entities;
+
+/* удалённые объекты */
+extern entity_head_t entities_erased;
 
 extern entity_registered_t * entityregs;
 extern size_t entityregs_size;

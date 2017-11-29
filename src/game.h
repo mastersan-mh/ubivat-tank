@@ -8,7 +8,8 @@
 #ifndef SRC_GAME_H_
 #define SRC_GAME_H_
 
-#include <sys/queue.h>
+#include "common/common_queue.h"
+
 #include "types.h"
 #include "net.h"
 #include "img.h"

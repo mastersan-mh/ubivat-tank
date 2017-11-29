@@ -12,7 +12,7 @@
 #include "map.h"
 #include "actions.h"
 
-#include <sys/queue.h>
+#include "common/common_queue.h"
 
 /** @brief События сервер */
 typedef enum

@@ -51,28 +51,4 @@
 #define LIST2_LIST_TO_IENT(list, ent, i, itarget) \
 		for((ent) = (list), (i) = 0; ent != NULL && (i) < (itarget); (ent) = (ent)->next, (i)++)
 
-
-/* проход по элементам с возможностью исключения элементов */
-#define LIST2_FOREACHM(list, ent, erased) \
-		for((ent) = (list), (erased) = NULL; (ent) != NULL; (erased) = NULL)
-
-/* переход к следующему элементу в списке для цикла с возможностью удаления */
-#define LIST2_FOREACHM_NEXT(ent, erased) \
-		if(!(erased) && (ent)) \
-			(ent) = (ent)->next;
-
-/* извлечение элемнта из списка во время прохождения в цикле */
-#define LIST2_FOREACHM_EXCLUDE(list, ent, erased) \
-		do \
-		{  \
-			(erased) = (ent); \
-			(ent) = (ent)->next; \
-			if((erased) == (list)) \
-				(list) = (list)->next; \
-			if((erased)->prev) \
-				(erased)->prev->next = (erased)->next; \
-			if((erased)->next) \
-				(erased)->next->prev = (erased)->prev; \
-		} while(0)
-
 #endif /* SRC_COMMON_LIST2_H_ */

@@ -130,8 +130,6 @@ bool vars_descr_eq(const var_descr_t * vds1, const var_descr_t * vds2, size_t si
         entityregs = tmp;
     }
     entityregs[entityregs_num].info = info;
-    entityregs[entityregs_num].entities = NULL;
-    entityregs[entityregs_num].entities_erased = NULL;
     entityregs_num++;
 
     game_console_send("Entity \"%s\" registered.", info->name);
@@ -327,15 +325,9 @@ void entity_model_play_pause_all(ENTITY entity)
 /**
  * получить первый entity, соответствующий name
  */
-ENTITY entity_first(const char * name)
+ENTITY entity_first(void)
 {
-    entity_registered_t * entinfo = entityregisteredinfo_get(name);
-    if(entinfo == NULL)
-    {
-        game_console_send("Error: Unknown entity \"%s\".", name);
-        return NULL;
-    }
-    return (ENTITY)entinfo->entities;
+    return (ENTITY)CIRCLEQ_FIRST(&entities);
 }
 
 /**
@@ -343,6 +335,44 @@ ENTITY entity_first(const char * name)
  */
 ENTITY entity_next(ENTITY entity)
 {
-    return (ENTITY)((entity_t*)entity)->next;
+    if(CIRCLEQ_END((entity_t*)entity, &entities))
+        return CIRCLEQ_NULL(&entities);
+    return (ENTITY)CIRCLEQ_NEXT((entity_t*)entity, list);
 }
 
+/**
+ * получить первый entity, соответствующий name
+ */
+ENTITY entity_first_name(const char * entity_name)
+{
+    entity_t * entity;
+    CIRCLEQ_FOREACH(entity, &entities, list)
+    {
+        if(entity_is((ENTITY)entity, entity_name))
+            return (ENTITY)entity;
+    }
+
+    return CIRCLEQ_NULL(&entities);
+}
+
+/**
+ * получить первый entity, соответствующий name
+ */
+ENTITY entity_next_name(ENTITY entity, const char * entity_name)
+{
+    if(CIRCLEQ_END((entity_t*)entity, &entities))
+        return (ENTITY)CIRCLEQ_NULL(&entities);
+    entity_t * ent = (entity_t*)entity;
+    for(
+            ent = CIRCLEQ_NEXT(ent, list);
+            !CIRCLEQ_END(ent, &entities) && !entity_is((ENTITY)ent, entity_name);
+            ent = CIRCLEQ_NEXT(ent, list)
+    );
+    return (ENTITY)ent;
+}
+
+bool entity_end(ENTITY entity)
+{
+
+    return CIRCLEQ_END(entity, &entities);
+}
