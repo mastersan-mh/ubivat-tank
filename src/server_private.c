@@ -133,7 +133,7 @@ void server_client_delete(server_client_t * client)
     while(!LIST2_IS_EMPTY(client->players))
     {
         player = client->players;
-        server_player_delete(player);
+        server_player_delete(client, player);
         playerId++;
     }
     Z_free(client);
@@ -181,12 +181,11 @@ void server_clients_unspawn(void)
         while(!LIST2_IS_EMPTY(client->players))
         {
             player = client->players;
-            LIST2_UNLINK(client->players, player);
 
             server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
             server_player_info_store(storage, player);
             player->entity = NULL;
-            server_player_delete(player);
+            server_player_delete(client, player);
 
             playerId--;
         }

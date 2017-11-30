@@ -31,7 +31,7 @@ static void explode_common_destroy_walls(ENTITY this, const explodeinfo_t * expl
     vec_t ix;
     vec_t iy;
 
-    vec_t halfbox = entity_info_bodybox(this) * 0.5f;
+    vec_t halfbox = entity_bodybox_get(this) * 0.5f;
     entity_explode_t * explode = entity_vars(this);
 
     //проверка попаданий в стены
@@ -60,7 +60,7 @@ static void explode_touch_common(ENTITY this, ENTITY that, const explodeinfo_t *
     vec2_t d;
     bool self;
 
-    vec_t that_halfbox = entity_info_bodybox(this) * 0.5f;
+    vec_t that_halfbox = entity_bodybox_get(this) * 0.5f;
     entity_explode_t * this_vars = entity_vars(this);
     entity_vars_common_t  * that_vars = entity_vars(that);
 
@@ -74,7 +74,7 @@ static void explode_touch_common(ENTITY this, ENTITY that, const explodeinfo_t *
     {
         r = VEC_SQRT(DOT_PRODUCT2(d, d)) - VEC_SQRT(sqrf(that_halfbox) + VEC_SQRT(that_halfbox))/2;
     }
-    if(r <= entity_info_bodybox(this) * 0.5f)
+    if(r <= entity_bodybox_get(this) * 0.5f)
     {
         //r = dx < dy ? dx : dy;
         //взрывом задели себя или товарища по команде(не для монстров)
@@ -151,21 +151,12 @@ static void explode_common_modelaction_endframef(ENTITY this, unsigned int imode
 static const entity_framessequence_t explode_small_modelactions[] =
 {
         {
-                .modelId = 0,
+                .imodel = 0,
                 .seqname = "explode",
                 .firstframe = 0,
                 .firstframef = explode_common_modelaction_startframef,
                 .lastframe = 7,
                 .lastframef = explode_common_modelaction_endframef
-        }
-};
-
-static entity_model_t explode_small_models[] =
-{
-        {
-                .modelname = "explode_small",
-                .modelscale = 14.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
         }
 };
 
@@ -176,7 +167,7 @@ static entity_model_t explode_small_models[] =
 static const entity_framessequence_t explode_big_modelactions[] =
 {
         {
-                .modelId = 0,
+                .imodel = 0,
                 .seqname = "explode",
                 .firstframe = 0,
                 .firstframef = explode_common_modelaction_startframef,
@@ -185,60 +176,53 @@ static const entity_framessequence_t explode_big_modelactions[] =
         }
 };
 
-static entity_model_t explode_big_models[] =
+static ENTITY_FUNCTION_INIT(explode_artillery_init)
 {
-        {
-                .modelname = "explode_big",
-                .modelscale = 22.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-        }
-};
-
-
-static ENTITY_FUNCTION_INIT(explode_artillery_entity_init)
-{
+    entity_bodybox_set(this, 14.0f);
+    entity_model_set(this, 0, ":/explode_small", 14.0f / 2.0f, 0.0f, 0.0f);
     entity_model_play_start(this, 0, "explode");
 }
 
-static ENTITY_FUNCTION_INIT(explode_missile_entity_init)
+static ENTITY_FUNCTION_INIT(explode_missile_init)
 {
+    entity_bodybox_set(this, 22.0f);
+    entity_model_set(this, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_play_start(this, 0, "explode");
 }
 
-static ENTITY_FUNCTION_INIT(explode_mine_entity_init)
+static ENTITY_FUNCTION_INIT(explode_mine_init)
 {
+    entity_bodybox_set(this, 22.0f);
+    entity_model_set(this, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_play_start(this, 0, "explode");
 }
 
 static const entityinfo_t explode_artillery_reginfo = {
-        .name = "explode_artillery",
-        .bodybox = 7.0f * 2.0f,
+        .name_ = "explode_artillery",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
         ENTITYINFO_FRAMESSEQ(explode_small_modelactions),
-        ENTITYINFO_ENTMODELS(explode_small_models),
-        .init = explode_artillery_entity_init,
+        .models_num = 1,
+        .init = explode_artillery_init,
         .done = ENTITY_FUNCTION_NONE,
         .handle = ENTITY_FUNCTION_NONE,
 };
 
 static const entityinfo_t explode_missile_reginfo = {
-        .name = "explode_missile",
-        .bodybox = 11.0f * 2.0f,
+        .name_ = "explode_missile",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
         ENTITYINFO_FRAMESSEQ(explode_big_modelactions),
-        ENTITYINFO_ENTMODELS(explode_big_models),
-        .init = explode_missile_entity_init,
+        .models_num = 1,
+        .init = explode_missile_init,
         .done = ENTITY_FUNCTION_NONE,
         .handle = ENTITY_FUNCTION_NONE,
 };
 
 static const entityinfo_t explode_mine_reginfo = {
-        .name = "explode_mine",
-        .bodybox = 11.0f * 2.0f,
+        .name_ = "explode_mine",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
         ENTITYINFO_FRAMESSEQ(explode_big_modelactions),
-        ENTITYINFO_ENTMODELS(explode_big_models),
-        .init = explode_mine_entity_init,
+        .models_num = 1,
+        .init = explode_mine_init,
         .done = ENTITY_FUNCTION_NONE,
         .handle = ENTITY_FUNCTION_NONE,
 };

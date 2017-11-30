@@ -15,21 +15,18 @@ static var_descr_t exit_vars[] =
         VAR_DESCR( VARTYPE_STRING, entity_exit_t, text)
 };
 
-static entity_model_t exit_models[] =
+
+static ENTITY_FUNCTION_INIT(exit_init)
 {
-		{
-				.modelname = "exit",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/exit", 8.0f, 0.0f, 0.0f);
+}
 
 static const entityinfo_t exit_reginfo = {
-		.name = "exit",
-		.bodybox = 16.0f,
+		.name_ = "exit",
 		ENTITYINFO_VARS(entity_exit_t, exit_vars),
-		ENTITYINFO_ENTMODELS(exit_models),
-		.init = ENTITY_FUNCTION_NONE,
+		.models_num = 1,
+		.init = exit_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };

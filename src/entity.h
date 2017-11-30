@@ -49,8 +49,6 @@ typedef struct
 #define origin_x origin[0]
 #define origin_y origin[1]
 
-#define ENTITY_HALFBODYBOX(ENTITY) (entity_info_bodybox(ENTITY) * 0.5)
-
 #define ENTITIES_FOREACH(entity) \
         for((entity) = entity_first((entity_name)); !entity_end(entity) ; (entity) = entity_next((entity), (entity_name)))
 
@@ -117,10 +115,6 @@ typedef struct
         .actions_num = ARRAYSIZE(xactions), \
         .actions = xactions
 
-#define ENTITYINFO_ENTMODELS(xentmodels) \
-        .entmodels_num = ARRAYSIZE(xentmodels), \
-        .entmodels = xentmodels
-
 enum
 {
     ENTITYFLAG_SOLIDWALL   = 0x01
@@ -132,31 +126,32 @@ enum
  */
 typedef struct
 {
-    unsigned int modelId; /* индекс модели, для которой предназначена последовательность */
+    unsigned int imodel; /* индекс модели, для которой предназначена последовательность */
     char * seqname; /* имя последовательности */
     unsigned int firstframe; /* первый кадр */
-    void (*firstframef)(ENTITY this, unsigned int modelId, const char * seqname);
+    void (*firstframef)(ENTITY this, unsigned int imodel, const char * seqname);
     unsigned int lastframe; /* последний кадр */
-    void (*lastframef)(ENTITY this, unsigned int modelId, const char * seqname);
+    void (*lastframef)(ENTITY this, unsigned int imodel, const char * seqname);
 } entity_framessequence_t;
-
-typedef struct
-{
-    /* имя модели */
-    char * modelname;
-    const vec_t modelscale;
-    const vec2_t translation;
-} entity_model_t;
 
 /* структура для проигрывания последовательности кадров моделей, связанных с объектом */
 typedef struct entity_modelplayer_s
 {
-    const model_t * model;
     /* воспроизводимая последовательность */
-    const entity_framessequence_t * framesseq;
+    const entity_framessequence_t * play_frames_seq;
     /* номер кадра */
     float frame;
 } entity_modelplayer_t;
+
+typedef struct
+{
+    /* имя модели */
+    char * name;
+    model_t * model;
+    FLOAT scale;
+    vec2_t translation;
+    entity_modelplayer_t player;
+} entity_model_t;
 
 typedef struct
 {
@@ -173,12 +168,7 @@ typedef struct entityaction_s
 
 typedef struct entityinfo_s
 {
-    char * name;
-
-    /* entity flags */
-    int flags;
-    /* для простоты все объекты квадратные */
-    vec_t bodybox;
+    char * name_;
 
     /* размер буфера переменных */
     size_t vars_size;
@@ -192,9 +182,7 @@ typedef struct entityinfo_s
     const entity_framessequence_t * framessequences;
 
     /* размер массива моделей */
-    size_t entmodels_num;
-    /* массив моделей, связанных с объектом*/
-    entity_model_t * entmodels;
+    size_t models_num;
 
     void (*init)(ENTITY this, ENTITY parent);
     void (*done)(ENTITY this);
@@ -224,7 +212,6 @@ extern bool entity_end(ENTITY entity);
 
 extern BOOL entity_is(const ENTITY entity, const char *entity_name);
 extern const char * entity_info_name(const ENTITY entity);
-VECTOR1 entity_info_bodybox(const ENTITY entity);
 extern void entity_erase(ENTITY entity);
 extern bool entity_is_spawned(ENTITY entity);
 extern void entity_unspawn(ENTITY entity);
@@ -236,13 +223,22 @@ extern void entity_cam_set(ENTITY entity, ENTITY cam_entity);
 extern void entity_cam_reset(ENTITY entity);
 
 extern ENTITY entity_new(const char * name, ENTITY parent);
-
+extern void entity_flags_set(ENTITY entity, int flags);
+extern void entity_bodybox_set(ENTITY entity, FLOAT bodybox);
+extern FLOAT entity_bodybox_get(const ENTITY entity);
+extern int entity_model_set(
+    ENTITY entity,
+    unsigned int imodel,
+    const char * modelname,
+    FLOAT modelscale,
+    VECTOR1 translation_x,
+    VECTOR1 translation_y
+);
 extern void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * seqname);
 extern void entity_model_play_pause(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause_all(ENTITY entity);
 
 extern void entity_restore(ENTITY entity, const void * vars);
 
-extern int entity_model_set(ENTITY entity, unsigned int imodel, const char * modelname);
 
 #endif /* SRC_ENTITY_H_ */

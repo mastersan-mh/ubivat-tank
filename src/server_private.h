@@ -162,7 +162,7 @@ extern void server_client_players_num_set(server_client_t * client, int players_
 extern server_client_t * server_client_get(int id);
 
 extern server_player_t * server_player_create();
-extern void server_player_delete(server_player_t * player);
+extern void server_player_delete(server_client_t * client, server_player_t * player);
 extern void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player);
 
 extern const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str);

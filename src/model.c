@@ -19,15 +19,21 @@ static size_t models_num = 0;
 /**
  * @description получить зарегестрированную модель
  */
-const model_t * model_get(const char * name)
+const model_t * model_get(const char * modelname)
 {
-	size_t i;
-	for(i = 0; i < models_num; i++)
-	{
-		if(!strncmp(models[i]->name, name, 64))
-			return models[i];
-	}
-	return NULL;
+    const char * name;
+    if(strncmp(modelname, ":/", 2) == 0)
+        name = modelname + 2; /* внутренняя модель */
+    else
+        return NULL; /* внешние модели не реализованы */
+
+    size_t i;
+    for(i = 0; i < models_num; i++)
+    {
+        if(strncmp(models[i]->name, name, 64) == 0)
+            return models[i];
+    }
+    return NULL;
 }
 
 /**

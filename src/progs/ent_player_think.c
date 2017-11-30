@@ -73,9 +73,9 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 	if(entity_parent(dangerous) == player)
 		return false;
 
-	vec_t radius = entity_info_bodybox(dangerous) * 0.5f;
+	vec_t radius = entity_bodybox_get(dangerous) * 0.5f;
 
-	vec_t halfbox = ENTITY_HALFBODYBOX(player);
+	vec_t halfbox = entity_bodybox_get(player) * 0.5;
 
 	//верхняя ближайшая стена
 	map_clip_find_near(map, pl->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
@@ -239,7 +239,8 @@ static bool turn_to_target(ENTITY player, ENTITY target)
     player_vars_t * pl = entity_vars(player);
     entity_vars_common_t * trg = entity_vars(target);
 	/* повернёмся к противнику */
-	if( (pl->origin_x - ENTITY_HALFBODYBOX(player) < trg->origin_x) && (trg->origin_x < pl->origin_x + ENTITY_HALFBODYBOX(player)) )
+    FLOAT player_bodybox_half = entity_bodybox_get(player) * 0.5f;
+	if( (pl->origin_x - player_bodybox_half < trg->origin_x) && (trg->origin_x < pl->origin_x + player_bodybox_half) )
 	{
 		if(trg->origin_y < pl->origin_y)
 			pl->dir = DIR_DOWN;
@@ -247,7 +248,7 @@ static bool turn_to_target(ENTITY player, ENTITY target)
 			pl->dir = DIR_UP;
 		return true;
 	}
-	if( (pl->origin_y - ENTITY_HALFBODYBOX(player) < trg->origin_y) && (trg->origin_y < pl->origin_y + ENTITY_HALFBODYBOX(player)) )
+	if( (pl->origin_y - player_bodybox_half < trg->origin_y) && (trg->origin_y < pl->origin_y + player_bodybox_half) )
 	{
 		if(trg->origin_x < pl->origin_x)
 			pl->dir = DIR_LEFT;
@@ -306,7 +307,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 			}
 		}
 		if(
-				(dist - ENTITY_HALFBODYBOX(player) * 2 < explode_radius) &&
+				(dist - entity_bodybox_get(player) < explode_radius) &&
 				(
 						MAP_WALL_CLIPPED(wall) &&
 						( MAP_WALL_TEXTURE(wall) == MAP_WALL_W0 || MAP_WALL_TEXTURE(wall) == MAP_WALL_W1)
@@ -318,17 +319,16 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 
 	player_vars_t * pl = entity_vars(player);
 
-	vec_t dist;
+	VECTOR1 dist;
 	char wall;
 
-	static char *list[] =
-	{
-			"explode_artillery",
-			"explode_missile",
-			"explode_mine",
-	};
-	const entityinfo_t * explode_entityinfo = entityinfo_get(list[weapontype_to_explodetype(pl->brain.weap)]);
-	vec_t explode_radius = explode_entityinfo->bodybox * 0.5f;
+    static FLOAT list_explode_diameter[] =
+    {
+            14.0f, /* artillery */
+            22.0f, /* missile */
+            22.0f, /* mine */
+    };
+    FLOAT explode_radius = list_explode_diameter[weapontype_to_explodetype(pl->brain.weap)] * 0.5f;
 
 	/* управляемый снаряд */
 	if( pl->bull && pl->brain.target )
@@ -371,7 +371,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 	if(0 < pl->reloadtime_d)
 		return;
 
-	vec_t halfbox = ENTITY_HALFBODYBOX(player);
+	vec_t halfbox = entity_bodybox_get(player) * 0.5f;
 
 	pl->brain.target = NULL;
 	if(pl->item_ammo_missile > 0)

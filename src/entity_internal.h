@@ -25,6 +25,14 @@ typedef struct entity_s
 
     entity_id_t id;
 
+    char name[ENTITY_NAME_SIZE];
+
+    /* entity flags */
+    int flags;
+
+    /* для простоты все объекты квадратные */
+    FLOAT bodybox;
+
     const struct entityinfo_s * info;
 
     /* объект, за которым следит камера данного объекта, обычно равен this */
@@ -33,8 +41,8 @@ typedef struct entity_s
     /* родитель объекта. Если родитель уничтожатеся, родителем становится "дедушка" */
     struct entity_s * parent;
 
-    /* структура для проигрывания кардов моделей, связанных с объектом */
-    struct entity_modelplayer_s * modelplayers;
+    /* массив: модели */
+    entity_model_t * models;
 
     /* удалить объект */
     bool erase;

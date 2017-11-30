@@ -22,10 +22,13 @@ static var_descr_t spawn_player_vars[] =
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
 {
+    entity_bodybox_set(this, 16.0f);
 }
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
+    entity_bodybox_set(this, 16.0f);
+
     spawn_vars_t * sp = entity_vars(this);
     ENTITY ent = entity_new("enemy", this);
     player_vars_t * vars = entity_vars(ent);
@@ -35,6 +38,8 @@ static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
+    entity_bodybox_set(this, 16.0f);
+
     spawn_vars_t * sp = entity_vars(this);
     ENTITY ent = entity_new("boss", this);
     player_vars_t * vars = entity_vars(ent);
@@ -70,8 +75,7 @@ static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
 }
 
 static const entityinfo_t spawn_player_reginfo = {
-		.name = "spawn_player",
-		.bodybox = 16.0f,
+		.name_ = "spawn_player",
 		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_player_init,
 		.done = ENTITY_FUNCTION_NONE,
@@ -80,8 +84,7 @@ static const entityinfo_t spawn_player_reginfo = {
 };
 
 static const entityinfo_t spawn_enemy_reginfo = {
-		.name = "spawn_enemy",
-		.bodybox = 16.0f,
+		.name_ = "spawn_enemy",
 		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_enemy_init,
 		.done = ENTITY_FUNCTION_NONE,
@@ -89,8 +92,7 @@ static const entityinfo_t spawn_enemy_reginfo = {
 };
 
 static const entityinfo_t spawn_boss_reginfo = {
-		.name = "spawn_boss",
-		.bodybox = 16.0f,
+		.name_ = "spawn_boss",
 		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
 		.init = spawn_boss_init,
 		.done = ENTITY_FUNCTION_NONE,

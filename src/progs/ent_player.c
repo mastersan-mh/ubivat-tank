@@ -121,12 +121,12 @@ void player_spawn_init(ENTITY player , ENTITY spawn)
 playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
 {
         /* SCORES                 , HEALTH, ARMOR,  AMMO_ARTILLERY,   AMMO_MISSILE,     AMMO_MINE,     speed,            modelname */
-        { { PLAYER_SCOREPERCLASS * 1,    100,     0, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, "tank1"},
-        { { PLAYER_SCOREPERCLASS * 2,    100,    50, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, "tank2"},
-        { { PLAYER_SCOREPERCLASS * 3,    100,   100, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, "tank3"},
-        { { PLAYER_SCOREPERCLASS * 4,    200,   150, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, "tank4"},
-        { { PLAYER_SCOREPERCLASS * 5,    200,   200, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"},
-        { { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, "tank5"}  /* BOSS */
+        { { PLAYER_SCOREPERCLASS * 1,    100,     0, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 40/2 * SPEEDSCALE, ":/tank1"},
+        { { PLAYER_SCOREPERCLASS * 2,    100,    50, PLAYER_ITEM_AMOUNT_INF, PLAYER_ITEM_AMOUNT_NA, PLAYER_ITEM_AMOUNT_NA }, 50/2 * SPEEDSCALE, ":/tank2"},
+        { { PLAYER_SCOREPERCLASS * 3,    100,   100, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 60/2 * SPEEDSCALE, ":/tank3"},
+        { { PLAYER_SCOREPERCLASS * 4,    200,   150, PLAYER_ITEM_AMOUNT_INF, 50            , PLAYER_ITEM_AMOUNT_NA }, 70/2 * SPEEDSCALE, ":/tank4"},
+        { { PLAYER_SCOREPERCLASS * 5,    200,   200, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, ":/tank5"},
+        { { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, ":/tank5"}  /* BOSS */
 };
 
 static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int modelId, const char * actionname)
@@ -136,54 +136,12 @@ static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int model
 static const entity_framessequence_t tank_modelactions[] =
 {
         {
-                .modelId = 0,
+                .imodel = 0,
                 .seqname = "run",
                 .firstframe = 0,
                 .firstframef = NULL,
                 .lastframe = 3,
                 .lastframef = tank_common_modelaction_lastframef
-        }
-};
-
-static entity_model_t tank_player_models[] =
-{
-        {
-                .modelname = "tank1",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
-        },
-        {
-                .modelname = "flag_player",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
-        }
-};
-
-static entity_model_t tank_enemy_models[] =
-{
-        {
-                .modelname = "tank1",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
-        },
-        {
-                .modelname = "flag_enemy",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
-        }
-};
-
-static entity_model_t tank_boss_models[] =
-{
-        {
-                .modelname = "tank1",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 },
-        },
-        {
-                .modelname = "flag_boss",
-                .modelscale = 16.0f / 2.0f,
-                .translation = { 0.0, 0.0 }
         }
 };
 
@@ -376,8 +334,14 @@ static entity_action_t player_actions[] =
 
 static void player_handle_common(ENTITY player);
 
-ENTITY_FUNCTION_INIT(player_init)
+static ENTITY_FUNCTION_INIT(player_init)
 {
+    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(this, 16.0f);
+
+    entity_model_set(this, 0, ":/tank1"      , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(this, 1, ":/flag_player", 16.0f / 2.0f, 0.0f, 0.0f);
+
     player_vars_t * pl = entity_vars(this);
 
 #if defined(_DEBUG_PLAYERMAXLEVEL)
@@ -406,8 +370,13 @@ ENTITY_FUNCTION_HANDLE(player_handle)
     player_handle_common(this);
 }
 
-ENTITY_FUNCTION_INIT(enemy_init)
+static ENTITY_FUNCTION_INIT(enemy_init)
 {
+    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/tank1"     , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(this, 1, ":/flag_enemy", 16.0f / 2.0f, 0.0f, 0.0f);
+
     player_spawn_init(this, parent);
     player_vars_t * pl = entity_vars(this);
     ctrl_AI_init(&pl->brain);
@@ -426,6 +395,11 @@ ENTITY_FUNCTION_HANDLE(enemy_handle)
 
 ENTITY_FUNCTION_INIT(boss_init)
 {
+    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/tank1"    , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(this, 1, ":/flag_boss", 16.0f / 2.0f, 0.0f, 0.0f);
+
     player_spawn_init(this, parent);
     player_vars_t * pl = entity_vars(this);
     ctrl_AI_init(&pl->brain);
@@ -586,7 +560,7 @@ static void player_handle_common(ENTITY player)
 
         vec_t speed_s = playerinfo->speed / 4;
 
-        vec_t halfbox = ENTITY_HALFBODYBOX(player);
+        vec_t halfbox = entity_bodybox_get(player) * 0.5;
         vec_t quarterbox = halfbox * 0.5f;
         //стрейф
         switch(pl->dir)
@@ -690,8 +664,7 @@ void player_class_init(ENTITY player, player_vars_t * pl)
     player_class_init_(player, &pl->item_ammo_missile  , playerinfo->items[ITEM_AMMO_MISSILE]);
     player_class_init_(player, &pl->item_ammo_mine     , playerinfo->items[ITEM_AMMO_MINE]);
 
-    entity_model_set(player, 0, playerinfo->modelname);
-
+    entity_model_set(player, 0, playerinfo->modelname, 16.0f / 2.0f, 0.0f, 0.0f);
 }
 
 /*
@@ -703,7 +676,7 @@ void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, 
     int damage_full;
     int armor;
 
-    vec_t radius = entity_info_bodybox(explode) * 0.5f;
+    vec_t radius = entity_bodybox_get(explode) * 0.5f;
 
     //weapon_info_t * weapinfo = &wtable[explode->explode.type];
 
@@ -808,12 +781,10 @@ static void player_ui_draw(camera_t * cam, ENTITY player)
 
 
 static const entityinfo_t player_reginfo = {
-        .name = "player",
-        .flags = ENTITYFLAG_SOLIDWALL,
-        .bodybox = 16,
+        .name_ = "player",
         ENTITYINFO_VARS(player_vars_t, player_vars),
         ENTITYINFO_FRAMESSEQ(tank_modelactions),
-        ENTITYINFO_ENTMODELS(tank_player_models),
+        .models_num = 2,
         .init = player_init,
         .done = player_done,
         .spawn = player_spawn,
@@ -823,24 +794,20 @@ static const entityinfo_t player_reginfo = {
 };
 
 static const entityinfo_t enemy_reginfo = {
-        .name = "enemy",
-        .flags = ENTITYFLAG_SOLIDWALL,
-        .bodybox = 16,
+        .name_ = "enemy",
         ENTITYINFO_VARS(player_vars_t, player_vars),
         ENTITYINFO_FRAMESSEQ(tank_modelactions),
-        ENTITYINFO_ENTMODELS(tank_enemy_models),
+        .models_num = 2,
         .init = enemy_init,
         .done = enemy_done,
         .handle = enemy_handle,
 };
 
 static const entityinfo_t boss_reginfo = {
-        .name = "boss",
-        .flags = ENTITYFLAG_SOLIDWALL,
-        .bodybox = 16,
+        .name_ = "boss",
         ENTITYINFO_VARS(player_vars_t, player_vars),
         ENTITYINFO_FRAMESSEQ(tank_modelactions),
-        ENTITYINFO_ENTMODELS(tank_boss_models),
+        .models_num = 2,
         .init = boss_init,
         .done = boss_done,
         .handle = boss_handle,

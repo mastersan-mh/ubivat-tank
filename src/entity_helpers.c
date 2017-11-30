@@ -59,8 +59,8 @@ void entity_move(ENTITY this, direction_t dir, vec_t speed, bool check_clip)
     entity_t * ent = (entity_t *)this;
     entity_vars_common_t * common = ent->vars;
     vec_t dway = speed * dtimed1000;
-    vec_t bodybox = ent->info->bodybox;
-    vec_t halfbox = bodybox/2;
+    FLOAT bodybox = ent->bodybox;
+    FLOAT halfbox = bodybox/2;
     vec_t dist;
 
     if(check_clip) /* FIXME: костыль */

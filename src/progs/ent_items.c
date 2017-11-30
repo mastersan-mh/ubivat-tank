@@ -15,97 +15,77 @@ static var_descr_t item_vars[] =
         VAR_DESCR( VARTYPE_INTEGER, entity_item_t, amount )
 };
 
-static entity_model_t item_scores_models[] =
+static ENTITY_FUNCTION_INIT(item_scores_init)
 {
-		{
-				.modelname = "item_scores",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
-
-static entity_model_t item_health_models[] =
-{
-		{
-				.modelname = "item_health",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
-
-static entity_model_t item_armor_models[] =
-{
-		{
-				.modelname = "item_armor",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
-
-static entity_model_t item_ammo_missile_models[] =
-{
-		{
-				.modelname = "item_ammo_missile",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
-
-static entity_model_t item_ammo_mine_models[] =
-{
-		{
-				.modelname = "item_ammo_mine",
-				.modelscale = 8.0f,
-				.translation = { 0.0, 0.0 }
-		}
-};
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/item_scores", 8.0f, 0.0f, 0.0f);
+}
 
 static const entityinfo_t item_scores_reginfo = {
-		.name = "item_scores",
-		.bodybox = 16.0f,
+		.name_ = "item_scores",
 		ENTITYINFO_VARS(entity_item_t, item_vars),
-		ENTITYINFO_ENTMODELS(item_scores_models),
-		.init = ENTITY_FUNCTION_NONE,
+		.models_num = 1,
+		.init = item_scores_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };
+
+static ENTITY_FUNCTION_INIT(item_heath_init)
+{
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/item_health", 8.0f, 0.0f, 0.0f);
+}
 
 static const entityinfo_t item_health_reginfo = {
-		.name = "item_health",
-		.bodybox = 16.0f,
+		.name_ = "item_health",
 		ENTITYINFO_VARS(entity_item_t, item_vars),
-		ENTITYINFO_ENTMODELS(item_health_models),
-		.init = ENTITY_FUNCTION_NONE,
+        .models_num = 1,
+		.init = item_heath_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };
+
+static ENTITY_FUNCTION_INIT(item_armor_init)
+{
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/item_armor", 8.0f, 0.0f, 0.0f);
+}
 
 static const entityinfo_t item_armor_reginfo = {
-		.name = "item_armor",
-		.bodybox = 16.0f,
+		.name_ = "item_armor",
 		ENTITYINFO_VARS(entity_item_t, item_vars),
-		ENTITYINFO_ENTMODELS(item_armor_models),
-		.init = ENTITY_FUNCTION_NONE,
+        .models_num = 1,
+		.init = item_armor_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };
+
+static ENTITY_FUNCTION_INIT(item_ammo_missile_init)
+{
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/item_ammo_missile", 8.0f, 0.0f, 0.0f);
+}
 
 static const entityinfo_t item_ammo_missile_reginfo = {
-		.name = "item_ammo_missile",
-		.bodybox = 16.0f,
+		.name_ = "item_ammo_missile",
 		ENTITYINFO_VARS(entity_item_t, item_vars),
-		ENTITYINFO_ENTMODELS(item_ammo_missile_models),
-		.init = ENTITY_FUNCTION_NONE,
+        .models_num = 1,
+		.init = item_ammo_missile_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };
 
+static ENTITY_FUNCTION_INIT(item_ammo_mine_init)
+{
+    entity_bodybox_set(this, 16.0f);
+    entity_model_set(this, 0, ":/item_ammo_mine", 8.0f, 0.0f, 0.0f);
+}
+
 static const entityinfo_t item_ammo_mine_reginfo = {
-		.name = "item_ammo_mine",
-		.bodybox = 16.0f,
+		.name_ = "item_ammo_mine",
 		ENTITYINFO_VARS(entity_item_t, item_vars),
-		ENTITYINFO_ENTMODELS(item_ammo_mine_models),
-		.init = ENTITY_FUNCTION_NONE,
+        .models_num = 1,
+		.init = item_ammo_mine_init,
 		.done = ENTITY_FUNCTION_NONE,
 		.handle = ENTITY_FUNCTION_NONE,
 };
