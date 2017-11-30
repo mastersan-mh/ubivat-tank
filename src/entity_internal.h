@@ -25,7 +25,7 @@ typedef struct entity_s
 
     entity_id_t id;
 
-    char name[ENTITY_NAME_SIZE];
+    char classname[ENTITY_CLASSNAME_SIZE];
 
     /* entity flags */
     int flags;

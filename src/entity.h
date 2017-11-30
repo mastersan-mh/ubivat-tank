@@ -44,7 +44,7 @@ typedef struct
     ENTITY_VARS_COMMON_STRUCT;
 } entity_vars_common_t;
 
-#define ENTITY_NAME_SIZE (64)
+#define ENTITY_CLASSNAME_SIZE (64)
 
 #define origin_x origin[0]
 #define origin_y origin[1]
@@ -54,10 +54,10 @@ typedef struct
 
 /* цикл по объектам одного определённого типа */
 #define ENTITIES_FOREACH_NAME(entity_name, entity) \
-        for((entity) = entity_first_name((entity_name)); !entity_end(entity) ; (entity) = entity_next_name((entity), (entity_name)))
+        for((entity) = entity_first_classname((entity_name)); !entity_end(entity) ; (entity) = entity_next_classname((entity), (entity_name)))
 
 #define ENTITY_FUNCTION_TOUCH(x) \
-        void x (ENTITY this, ENTITY that)
+        void x (ENTITY this, ENTITY other)
 
 #define ENTITY_FUNCTION_INIT(x) \
         void x (ENTITY this, ENTITY parent)
@@ -79,21 +79,6 @@ typedef struct
 #define ENTITY_FUNCTION_ACTION(x) \
         void x (ENTITY this, const char * action)
 
-
-#define ENTITY_ERASE(ENTITY) entity_erase((ENTITY))
-
-#define entity_is_SPAWNED(ENTITY) \
-        entity_is_spawned((ENTITY))
-
-#define ENTITY_UNSPAWN(ENTITY) \
-        entity_unspawn((ENTITY))
-
-#define ENTITY_SHOW(ENTITY) \
-        entity_show((ENTITY))
-
-#define ENTITY_HIDE(ENTITY) \
-        entity_hide((ENTITY))
-
 #define ENTITYINFO_VARS(TYPE, xvars) \
         .vars_size = sizeof(TYPE), \
         .vars_descr_num = ARRAYSIZE(xvars), \
@@ -106,10 +91,6 @@ typedef struct
 #define ENTITYINFO_FRAMESSEQ_NONE() \
         .framessequences_num = 0, \
         .framessequences = NULL
-
-#define ENTITYINFO_TOUCHS(xtouchs) \
-        .entitytouchs_num = ARRAYSIZE(xtouchs), \
-        .entitytouchs = xtouchs
 
 #define ENTITYINFO_ACTIONS(xactions) \
         .actions_num = ARRAYSIZE(xactions), \
@@ -129,9 +110,9 @@ typedef struct
     unsigned int imodel; /* индекс модели, для которой предназначена последовательность */
     char * seqname; /* имя последовательности */
     unsigned int firstframe; /* первый кадр */
-    void (*firstframef)(ENTITY this, unsigned int imodel, const char * seqname);
+    void (*firstframef)(ENTITY self, unsigned int imodel, const char * seqname);
     unsigned int lastframe; /* последний кадр */
-    void (*lastframef)(ENTITY this, unsigned int imodel, const char * seqname);
+    void (*lastframef)(ENTITY self, unsigned int imodel, const char * seqname);
 } entity_framessequence_t;
 
 /* структура для проигрывания последовательности кадров моделей, связанных с объектом */
@@ -153,17 +134,10 @@ typedef struct
     entity_modelplayer_t player;
 } entity_model_t;
 
-typedef struct
-{
-    const char * entityname;
-    void (*touch)(ENTITY this, ENTITY that);
-} entitytouch_t;
-
-
 typedef struct entityaction_s
 {
     char * action;
-    void (*action_f)(ENTITY this, const char * action);
+    void (*action_f)(ENTITY self, const char * action);
 } entity_action_t;
 
 typedef struct entityinfo_s
@@ -184,16 +158,15 @@ typedef struct entityinfo_s
     /* размер массива моделей */
     size_t models_num;
 
-    void (*init)(ENTITY this, ENTITY parent);
-    void (*done)(ENTITY this);
+    void (*init)(ENTITY self, ENTITY parent);
+    void (*done)(ENTITY self);
 
-    void (*spawn)(ENTITY this);
+    void (*spawn)(ENTITY self);
 
-    void (*handle)(ENTITY this);
+    void (*handle)(ENTITY self);
 
     /* соприкосновения объекта с другими объектами */
-    size_t entitytouchs_num;
-    entitytouch_t * entitytouchs;
+    void (*touch)(ENTITY self, ENTITY other);
 
     ENTITY_FUNCTION_PLAYER_SPAWN((*player_spawn));
 
@@ -206,12 +179,12 @@ typedef struct entityinfo_s
 extern const entityinfo_t * entityinfo_get(const char * name);
 extern void entity_register(const entityinfo_t * info);
 
-extern ENTITY entity_first_name(const char * entity_name);
-extern ENTITY entity_next_name(ENTITY entity, const char * entity_name);
+extern ENTITY entity_first_classname(const char * entity_name);
+extern ENTITY entity_next_classname(ENTITY entity, const char * entity_name);
 extern bool entity_end(ENTITY entity);
 
-extern BOOL entity_is(const ENTITY entity, const char *entity_name);
-extern const char * entity_info_name(const ENTITY entity);
+extern int entity_classname_cmp(const ENTITY entity, const char * classname);
+extern const char * entity_classname_get(const ENTITY entity);
 extern void entity_erase(ENTITY entity);
 extern bool entity_is_spawned(ENTITY entity);
 extern void entity_unspawn(ENTITY entity);

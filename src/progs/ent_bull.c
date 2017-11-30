@@ -56,7 +56,7 @@ static void bull_artillery_detonate(ENTITY this, ENTITY that)
     VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
 
-    ENTITY_ERASE(this);
+    entity_erase(this);
 }
 
 static void bull_missile_detonate(ENTITY this, ENTITY that)
@@ -93,7 +93,7 @@ static void bull_mine_detonate(ENTITY this, ENTITY that)
     VEC2_COPY(explode_vars->origin, this_vars->origin);
     explode_vars->dir = this_vars->dir;
 
-    ENTITY_ERASE(this);
+    entity_erase(this);
 }
 
 /*
@@ -139,17 +139,15 @@ static ENTITY_FUNCTION_HANDLE(bull_artillery_handle)
         bull_artillery_detonate(this, NULL);
 }
 
-ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
+static ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
 {
-    bull_artillery_detonate(this, that);
+    if(
+            entity_classname_cmp(other, "player") == 0 ||
+            entity_classname_cmp(other, "enemy") == 0 ||
+            entity_classname_cmp(other, "boss") == 0
+    )
+        bull_artillery_detonate(this, other);
 }
-
-entitytouch_t bull_artillery_touchs[] =
-{
-        { "player", bull_artillery_touch },
-        { "enemy" , bull_artillery_touch },
-        { "boss"  , bull_artillery_touch }
-};
 
 static ENTITY_FUNCTION_INIT(bull_artillery_init)
 {
@@ -165,8 +163,8 @@ static const entityinfo_t bull_artillery_reginfo = {
         .models_num = 1,
         .init = bull_artillery_init,
         .done = ENTITY_FUNCTION_NONE,
-        .handle   = bull_artillery_handle,
-        ENTITYINFO_TOUCHS(bull_artillery_touchs)
+        .handle = bull_artillery_handle,
+        .touch  = bull_artillery_touch
 };
 
 /**
@@ -206,15 +204,14 @@ static ENTITY_FUNCTION_HANDLE(bull_missile_handle)
 
 ENTITY_FUNCTION_TOUCH(bull_missile_touch)
 {
-    bull_missile_detonate(this, that);
+    if(
+            entity_classname_cmp(other, "player") == 0 ||
+            entity_classname_cmp(other, "enemy") == 0 ||
+            entity_classname_cmp(other, "boss") == 0
+    )
+    bull_missile_detonate(this, other);
 }
 
-entitytouch_t bull_missile_touchs[] =
-{
-        { "player", bull_missile_touch },
-        { "enemy" , bull_missile_touch },
-        { "boss"  , bull_missile_touch }
-};
 
 static const entityinfo_t bull_missile_reginfo = {
         .name_ = "bull_missile",
@@ -224,7 +221,7 @@ static const entityinfo_t bull_missile_reginfo = {
         .init = bull_missile_init,
         .done = ENTITY_FUNCTION_NONE,
         .handle = bull_missile_handle,
-        ENTITYINFO_TOUCHS(bull_missile_touchs)
+        .touch = bull_missile_touch
 };
 
 /**
@@ -261,15 +258,13 @@ static ENTITY_FUNCTION_HANDLE(bull_mine_handle)
 
 ENTITY_FUNCTION_TOUCH(bull_mine_touch)
 {
-    bull_mine_detonate(this, that);
+    if(
+            entity_classname_cmp(other, "player") == 0 ||
+            entity_classname_cmp(other, "enemy") == 0 ||
+            entity_classname_cmp(other, "boss") == 0
+    )
+        bull_mine_detonate(this, other);
 }
-
-entitytouch_t bull_mine_touchs[] =
-{
-        { "player", bull_mine_touch },
-        { "enemy" , bull_mine_touch },
-        { "boss"  , bull_mine_touch }
-};
 
 static const entityinfo_t bull_mine_reginfo =
 {
@@ -280,7 +275,7 @@ static const entityinfo_t bull_mine_reginfo =
         .init = bull_mine_init,
         .done = ENTITY_FUNCTION_NONE,
         .handle = bull_mine_handle,
-        ENTITYINFO_TOUCHS(bull_mine_touchs)
+        .touch = bull_mine_touch
 };
 
 /**

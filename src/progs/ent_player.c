@@ -38,10 +38,10 @@ player_invitemtype_t player_entity_to_itemtype(const ENTITY entity)
     size_t i;
     for(i = 0; i < ARRAYSIZE(entitynames); i++)
     {
-        if(entity_is(entity, entitynames[i]))
+        if(entity_classname_cmp(entity, entitynames[i]) == 0)
             return i;
     }
-    game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity_info_name(entity));
+    game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity_classname_get(entity));
     return -1;
 }
 
@@ -74,7 +74,7 @@ void player_spawn_init(ENTITY player , ENTITY spawn)
             spawn_value = infovar;
         else if(spawn_value <=0)
         {
-            if( !entity_is(player, "player") ) /* враг/босс */
+            if( entity_classname_cmp(player, "player") != 0 ) /* враг/босс */
                 spawn_value = infovar;
             else
             {
@@ -189,7 +189,7 @@ static void player_touch_item_scores(ENTITY player, ENTITY item)
     var_int_t level = pl->level;
     playerinfo_t *playerinfo = &playerinfo_table[level];
 
-    ENTITY_UNSPAWN(item);
+    entity_unspawn(item);
 
     entity_item_t * it = entity_vars(item);
 
@@ -229,7 +229,7 @@ static void player_touch_item(ENTITY player, ENTITY item)
                 )
         )
         {
-            ENTITY_UNSPAWN(item);
+            entity_unspawn(item);
             player_itemamount += itemamount;
             coerce_value_int(&player_itemamount, 0, playerinfo->items[invitemtype]);
             *amount = player_itemamount;
@@ -302,15 +302,16 @@ static var_descr_t player_vars[] =
         VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_ammo_mine      ),
 };
 
-static entitytouch_t player_touchs[] =
+
+static void player_touch(ENTITY self, ENTITY other)
 {
-        { "item_scores", player_touch_item_scores },
-        { "item_health", player_touch_item        },
-        { "item_armor"       , player_touch_item },
-        { "item_ammo_missile", player_touch_item },
-        { "item_ammo_mine"   , player_touch_item },
-        { "message", player_touch_message },
-        { "exit"   , player_touch_exit    },
+    if(entity_classname_cmp(other, "item_scores") == 0 ){ player_touch_item_scores(self, other); return; }
+    if(entity_classname_cmp(other, "item_health") == 0 ){ player_touch_item(self, other); return; }
+    if(entity_classname_cmp(other, "item_armor" ) == 0 ){ player_touch_item(self, other); return; }
+    if(entity_classname_cmp(other, "item_ammo_missile") == 0 ){ player_touch_item(self, other); return; }
+    if(entity_classname_cmp(other, "item_ammo_mine"   ) == 0 ){ player_touch_item(self, other); return; }
+    if(entity_classname_cmp(other, "message") == 0 ){ player_touch_message(self, other); return; }
+    if(entity_classname_cmp(other, "exit"   ) == 0 ){ player_touch_exit(self, other); return; }
 };
 
 static entity_action_t player_actions[] =
@@ -450,7 +451,7 @@ static void player_handle_common(ENTITY player)
 
             if(
                     info_item > 0 && //если пули у оружия не бесконечны и
-                    entity_is(player, "player")    // игрок не монстр(у монстров пули не кончаются)
+                    entity_classname_cmp(player, "player") == 0   // игрок не монстр(у монстров пули не кончаются)
             )
                 (*item)--;
         }
@@ -501,26 +502,26 @@ static void player_handle_common(ENTITY player)
     case STATE_RUN_END  : entity_model_play_pause(player, 0); break;
     case STATE_RUN: break;
     case STATE_DEAD:
+        //если игрок мертв
 
         sound_play_stop(player, -1);
 
-        //если игрок мертв
-        if(entity_is_SPAWNED(player))
+        if(entity_is_spawned(player))
         {
             ENTITY e = entity_new("explode_missile", player);
             entity_vars_common_t * vars = entity_vars(e);
             VEC2_COPY(vars->origin, pl->origin);
             vars->dir = pl->dir;
 
-            ENTITY_UNSPAWN(player);
+            entity_unspawn(player);
 
-            if(!entity_is(player, "player"))
-                ENTITY_HIDE(player);
+            if(entity_classname_cmp(player, "player") != 0)
+                entity_hide(player);
             pl->item_armor = 0;
             pl->item_ammo_missile = 0;
             pl->item_ammo_mine = 0;
         };
-        if(entity_is(player, "boss"))
+        if(entity_classname_cmp(player, "boss") == 0)
             sv_game_win();
         break;
     }
@@ -644,13 +645,13 @@ void player_class_init(ENTITY player, player_vars_t * pl)
         }
         if( src < 0 )
             *dest = 0;
-        if( !entity_is(player, "player") )
+        if( entity_classname_cmp(player, "player") != 0 )
             *dest = src;
     }
 
     int level = pl->scores / PLAYER_SCOREPERCLASS;
     if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
-    if( entity_is(player, "boss") )
+    if( entity_classname_cmp(player, "boss") == 0 )
         level = PLAYER_LEVEL_BOSS;
 
     pl->level = level;
@@ -789,7 +790,7 @@ static const entityinfo_t player_reginfo = {
         .done = player_done,
         .spawn = player_spawn,
         .handle = player_handle,
-        ENTITYINFO_TOUCHS(player_touchs),
+        .touch = player_touch,
         ENTITYINFO_ACTIONS(player_actions),
 };
 

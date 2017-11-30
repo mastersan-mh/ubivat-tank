@@ -44,7 +44,7 @@ entity_registered_t * entityregisteredinfo_get(const char * name)
     size_t i;
     for(i = 0; i < entityregs_num; i++)
     {
-        if(!strncmp(entityregs[i].info->name_, name, ENTITY_NAME_SIZE))
+        if(!strncmp(entityregs[i].info->name_, name, ENTITY_CLASSNAME_SIZE))
             return &entityregs[i];
     }
     return NULL;
@@ -87,66 +87,63 @@ static void reparent(const entity_t * oldparent, const entity_t * newparent)
     }
 }
 
-static bool is_touched(entity_t * this, entity_t * that)
-{
-    entity_vars_common_t * thisc = this->vars;
-    entity_vars_common_t * thatc = that->vars;
 
-    FLOAT this_halfbox = this->bodybox * 0.5;
-    FLOAT that_halfbox = that->bodybox * 0.5;
+static bool entities_in_contact(entity_t * ent1, entity_t * ent2)
+{
+    entity_vars_common_t * ent1_vars = ent1->vars;
+    entity_vars_common_t * ent2_vars = ent2->vars;
+
+    FLOAT this_halfbox = ent1->bodybox * 0.5;
+    FLOAT that_halfbox = ent2->bodybox * 0.5;
     return
-            ( thisc->origin[0] - this_halfbox <= thatc->origin[0] + that_halfbox ) &&
-            ( thatc->origin[0] - that_halfbox <= thisc->origin[0] + this_halfbox ) &&
-            ( thisc->origin[1] - this_halfbox <= thatc->origin[1] + that_halfbox ) &&
-            ( thatc->origin[1] - that_halfbox <= thisc->origin[1] + this_halfbox )
+            ( ent1_vars->origin[0] - this_halfbox <= ent2_vars->origin[0] + that_halfbox ) &&
+            ( ent2_vars->origin[0] - that_halfbox <= ent1_vars->origin[0] + this_halfbox ) &&
+            ( ent1_vars->origin[1] - this_halfbox <= ent2_vars->origin[1] + that_halfbox ) &&
+            ( ent2_vars->origin[1] - that_halfbox <= ent1_vars->origin[1] + this_halfbox )
             ;
 }
 
 /**
  * touchs
  */
-static void P_entity_touchs(const entityinfo_t * info, entity_t * entity)
+static void P_entity_touchs(entity_t * self)
 {
-    entity_vars_common_t * common = entity->vars;
+    entity_vars_common_t * self_vars = self->vars;
     if(
-            entity->freezed ||
-            !entity->spawned ||
-            !common->alive
+            self->erase ||
+            self->freezed ||
+            !self->spawned ||
+            !self_vars->alive
     )
         return;
 
-    size_t i;
-    entitytouch_t * entitytouchs = info->entitytouchs;
-    for(i = 0; i < info->entitytouchs_num; i++)
+    entity_t * other;
+
+    for( other = CIRCLEQ_NEXT(self, list); !CIRCLEQ_END(other, &entities); other = CIRCLEQ_NEXT(other, list) )
     {
-        entity_registered_t * entityreg = entityregisteredinfo_get(entitytouchs[i].entityname);
+        bool self_touch = (self->info->touch != NULL);
+        bool other_touch = (other->info->touch != NULL);
 
+        if( !(self_touch || other_touch) )
+            continue;
 
-        const entityinfo_t * thatinfo = entityreg->info;
-        if(!thatinfo)
-        {
-            game_console_send("Error: Entity \"%s\" can not touch unknown entities \"%s\".",
-                info->name_, entitytouchs[i].entityname);
-            break;
-        }
+        if( !entities_in_contact(self, other) )
+            continue;
 
-        if(entitytouchs[i].touch)
-        {
-            ENTITY that;
+        entity_vars_common_t * other_vars = other->vars;
+        if(
+                other->erase ||
+                other->freezed ||
+                !other->spawned ||
+                !other_vars->alive
+        )
+            continue;
 
-            ENTITIES_FOREACH_NAME(entitytouchs[i].entityname, that)
-            {
-                entity_vars_common_t * thatc = entity->vars;
-                if(
-                        !((entity_t *)that)->erase &&
-                        !((entity_t *)that)->freezed &&
-                        ((entity_t *)that)->spawned &&
-                        thatc->alive &&
-                        is_touched(entity, ((entity_t *)that))
-                )
-                    entitytouchs[i].touch((ENTITY)entity, that);
-            }
-        }
+        if(self_touch)
+            self->info->touch((ENTITY)self, (ENTITY)other);
+        if(other_touch)
+            other->info->touch((ENTITY)other, (ENTITY)self);
+
     }
 }
 
@@ -322,8 +319,7 @@ void entities_handle(void)
             info->handle((ENTITY)entity);
         }
 
-        if(!entity->erase)
-            P_entity_touchs(info, entity);
+        P_entity_touchs(entity);
 
         if(!entity->erase)
             P_entity_move(entity);
@@ -363,7 +359,7 @@ static void ent_models_render(
         entity_model_t * model = &models[i];
         if(!model->model)
         {
-            game_console_send("Error: Entity \"%s\", no imodel %d.", entity->name, (int)i);
+            game_console_send("Error: Entity \"%s\", no imodel %d.", entity->classname, (int)i);
             continue;
         }
         int frame = VEC_TRUNC(model->player.frame);
@@ -496,7 +492,7 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     assert(entityId_last < ENTITY_ID_MAX && "Entities id are over!");
     entity->id = entityId_last;
     entityId_last++;
-    strncpy(entity->name, name, ENTITY_NAME_SIZE);
+    strncpy(entity->classname, name, ENTITY_CLASSNAME_SIZE);
     entity->flags = 0;
     entity->bodybox = 0.0f;
 

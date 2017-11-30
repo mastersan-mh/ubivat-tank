@@ -73,7 +73,7 @@ void server_reply_send_players_entity_set(server_client_t * client)
     {
         if(i >= client->players_num)
             break;
-        strncpy(reply.data.PLAYERS_ENTITY_SET.ent[i].entityname, player->entity->name, GAME_SERVER_EVENT_ENTNAME_SIZE);
+        strncpy(reply.data.PLAYERS_ENTITY_SET.ent[i].entityname, player->entity->classname, GAME_SERVER_EVENT_ENTNAME_SIZE);
         reply.data.PLAYERS_ENTITY_SET.ent[i].entityId = player->entity->id;
         i++;
     }

@@ -44,7 +44,7 @@ void entity_register(const entityinfo_t * info)
         return;
     }
 
-    if(info->name_ == NULL || strnlen(info->name_, ENTITY_NAME_SIZE) == 0)
+    if(info->name_ == NULL || strnlen(info->name_, ENTITY_CLASSNAME_SIZE) == 0)
     {
         game_console_send("Entity registration failed: entity name is empty.");
         return;
@@ -153,22 +153,20 @@ void entity_restore(ENTITY entity, const void * vars)
 
 #ifdef VARS_DUMP_ALLOW
     char title[128];
-    sprintf(title, "==== Entity \"%s\" vars:", ent->info->name);
+    sprintf(title, "==== Entity \"%s\" vars:", ent->info->classname);
     VARS_DUMP(ent->vars, ent->info->vars_descr, ent->info->vars_descr_num, title);
 #endif
 }
 
-/* entity является объектом типа entity_name */
-BOOL entity_is(const ENTITY entity, const char * entity_name)
+/* сравнить класс entity */
+int entity_classname_cmp(const ENTITY entity, const char * classname)
 {
-        return strncmp(
-            ((entity_t*)entity)->name,
-            entity_name, ENTITY_NAME_SIZE ) == 0;
+        return strncmp(((entity_t*)entity)->classname, classname, ENTITY_CLASSNAME_SIZE );
 }
 
-const char * entity_info_name(const ENTITY entity)
+const char * entity_classname_get(const ENTITY entity)
 {
-    return ((entity_t *)entity)->name;
+    return ((entity_t *)entity)->classname;
 }
 
 void entity_erase(ENTITY entity)
@@ -254,13 +252,13 @@ int entity_model_set(
     entity_t * ent = (entity_t*)entity;
     if(imodel >= ent->info->models_num)
     {
-        game_console_send("Error: Entity \"%s\" can't set model index %d", ent->name, imodel);
+        game_console_send("Error: Entity \"%s\" can't set model index %d", ent->classname, imodel);
         return -1;
     }
     model_t * model = (model_t*)model_get(modelname);
     if(!model)
     {
-        game_console_send("Error: Entity \"%s\" can't set model \"%s\", can't load model.", ent->name, modelname);
+        game_console_send("Error: Entity \"%s\" can't set model \"%s\", can't load model.", ent->classname, modelname);
     }
 
     entity_model_t * entity_model = &ent->models[imodel];
@@ -285,7 +283,7 @@ void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * se
     if(imodel >= info->models_num)
     {
         game_console_send("Error: Entity \"%s\": model index %d not found, could not play frames sequence.",
-            ent->name,
+            ent->classname,
             imodel
         );
         return;
@@ -294,7 +292,7 @@ void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * se
     if(!framesseq)
     {
         game_console_send("Error: Entity \"%s\", model index %d, frames sequence \"%s\" not found, could not play frames sequence.",
-            ent->name, imodel, seqname);
+            ent->classname, imodel, seqname);
         return;
     }
 
@@ -326,7 +324,7 @@ void entity_model_play_pause(ENTITY entity, unsigned int imodel)
     if(imodel >= info->models_num)
     {
         game_console_send("Error: Entity \"%s\": imodel %d not found, could not pause frames.",
-            ent->name,
+            ent->classname,
             imodel
         );
         return;
@@ -367,12 +365,12 @@ ENTITY entity_next(ENTITY entity)
 /**
  * получить первый entity, соответствующий name
  */
-ENTITY entity_first_name(const char * entity_name)
+ENTITY entity_first_classname(const char * classname)
 {
     entity_t * entity;
     CIRCLEQ_FOREACH(entity, &entities, list)
     {
-        if(entity_is((ENTITY)entity, entity_name))
+        if(entity_classname_cmp((ENTITY)entity, classname) == 0)
             return (ENTITY)entity;
     }
 
@@ -382,14 +380,14 @@ ENTITY entity_first_name(const char * entity_name)
 /**
  * получить первый entity, соответствующий name
  */
-ENTITY entity_next_name(ENTITY entity, const char * entity_name)
+ENTITY entity_next_classname(ENTITY entity, const char * classname)
 {
     if(CIRCLEQ_END((entity_t*)entity, &entities))
         return (ENTITY)CIRCLEQ_NULL(&entities);
     entity_t * ent = (entity_t*)entity;
     for(
             ent = CIRCLEQ_NEXT(ent, list);
-            !CIRCLEQ_END(ent, &entities) && !entity_is((ENTITY)ent, entity_name);
+            !CIRCLEQ_END(ent, &entities) && entity_classname_cmp((ENTITY)ent, classname) != 0;
             ent = CIRCLEQ_NEXT(ent, list)
     );
     return (ENTITY)ent;

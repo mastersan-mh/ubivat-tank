@@ -8,10 +8,11 @@
 #ifndef SRC_G_EVENTS_H_
 #define SRC_G_EVENTS_H_
 
+#include "entity_internal.h"
 #include "map.h"
 #include "game.h"
 
-#define GAME_SERVER_EVENT_ENTNAME_SIZE 64
+#define GAME_SERVER_EVENT_ENTNAME_SIZE ENTITY_CLASSNAME_SIZE
 
 /* количество игроков клиента назначает клиент */
 #define GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT 0

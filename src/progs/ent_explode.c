@@ -58,7 +58,7 @@ static void explode_touch_common(ENTITY this, ENTITY that, const explodeinfo_t *
 {
     vec_t r;
     vec2_t d;
-    bool self;
+    bool self_attack;
 
     vec_t that_halfbox = entity_bodybox_get(this) * 0.5f;
     entity_explode_t * this_vars = entity_vars(this);
@@ -78,8 +78,8 @@ static void explode_touch_common(ENTITY this, ENTITY that, const explodeinfo_t *
     {
         //r = dx < dy ? dx : dy;
         //взрывом задели себя или товарища по команде(не для монстров)
-        self = ( entity_parent(this) == that ) && entity_is(that, "player") ;
-        player_getdamage(that, this, self, r, explodeinfo);
+        self_attack = ( entity_parent(this) == that ) && entity_classname_cmp(that, "player") == 0 ;
+        player_getdamage(that, this, self_attack, r, explodeinfo);
     }
 
 }
@@ -111,17 +111,17 @@ static void explode_detonate(ENTITY this, explodetype_t type)
 
 static void explode_common_modelaction_startframef(ENTITY this, unsigned int imodel, const char * actionname)
 {
-    if(entity_is(this, "explode_artillery"))
+    if(entity_classname_cmp(this, "explode_artillery") == 0)
     {
         explode_detonate(this, EXPLODE_ARTILLERY);
         return;
     }
-    if(entity_is(this, "explode_missile"));
+    if(entity_classname_cmp(this, "explode_missile") == 0);
     {
         explode_detonate(this, EXPLODE_MISSILE);
         return;
     }
-    if(entity_is(this, "explode_mine"));
+    if(entity_classname_cmp(this, "explode_mine") == 0);
     {
         explode_detonate(this, EXPLODE_MINE);
         return;
@@ -141,7 +141,7 @@ static void explode_common_modelaction_endframef(ENTITY this, unsigned int imode
             entity_cam_reset(parent);
         }
     }
-    ENTITY_ERASE(this);
+    entity_erase(this);
 }
 
 /*
