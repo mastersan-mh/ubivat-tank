@@ -18,8 +18,8 @@ static var_descr_t exit_vars[] =
 
 static ENTITY_FUNCTION_INIT(exit_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/exit", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/exit", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t exit_reginfo = {

@@ -57,27 +57,27 @@ typedef struct
         for((entity) = entity_first_classname((entity_name)); !entity_end(entity) ; (entity) = entity_next_classname((entity), (entity_name)))
 
 #define ENTITY_FUNCTION_TOUCH(x) \
-        void x (ENTITY this, ENTITY other)
+        void x (ENTITY self, ENTITY other)
 
 #define ENTITY_FUNCTION_INIT(x) \
-        void x (ENTITY this, ENTITY parent)
+        void x (ENTITY self, ENTITY parent)
 
 #define ENTITY_FUNCTION_DONE(x) \
-        void x (ENTITY this)
+        void x (ENTITY self)
 
 #define ENTITY_FUNCTION_SPAWN(x) \
-        void x (ENTITY this)
+        void x (ENTITY self)
 
 #define ENTITY_FUNCTION_HANDLE(x) \
-        void x (ENTITY this)
+        void x (ENTITY self)
 
 #define ENTITY_FUNCTION_PLAYER_SPAWN(x) \
-        ENTITY x (ENTITY this, void * storage)
+        ENTITY x (ENTITY self, void * storage)
 
 #define ENTITY_FUNCTION_NONE NULL
 
 #define ENTITY_FUNCTION_ACTION(x) \
-        void x (ENTITY this, const char * action)
+        void x (ENTITY self, const char * action)
 
 #define ENTITYINFO_VARS(TYPE, xvars) \
         .vars_size = sizeof(TYPE), \

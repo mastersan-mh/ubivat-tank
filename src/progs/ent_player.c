@@ -147,7 +147,7 @@ static ENTITY_FUNCTION_DONE(player_done);
 static ENTITY_FUNCTION_SPAWN(player_spawn)
 {
     ENTITY spawn = entity_get_random("spawn_player");
-    player_spawn_init(this, spawn);
+    player_spawn_init(self, spawn);
 }
 
 static ENTITY_FUNCTION_HANDLE(player_handle);
@@ -265,21 +265,21 @@ static void player_action_attack(player_vars_t * pl, bool attack, weapontype_t w
 }
 
 
-ENTITY_FUNCTION_ACTION(player_action_move_north_on ) { player_action_move(entity_vars(this), DIR_UP   , true ); }
-ENTITY_FUNCTION_ACTION(player_action_move_north_off) { player_action_move(entity_vars(this), DIR_UP   , false); }
-ENTITY_FUNCTION_ACTION(player_action_move_south_on ) { player_action_move(entity_vars(this), DIR_DOWN , true ); }
-ENTITY_FUNCTION_ACTION(player_action_move_south_off) { player_action_move(entity_vars(this), DIR_DOWN , false); }
-ENTITY_FUNCTION_ACTION(player_action_move_west_on  ) { player_action_move(entity_vars(this), DIR_LEFT , true ); }
-ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move(entity_vars(this), DIR_LEFT , false); }
-ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move(entity_vars(this), DIR_RIGHT, true ); }
-ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move(entity_vars(this), DIR_RIGHT, false); }
+ENTITY_FUNCTION_ACTION(player_action_move_north_on ) { player_action_move(entity_vars(self), DIR_UP   , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_north_off) { player_action_move(entity_vars(self), DIR_UP   , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_south_on ) { player_action_move(entity_vars(self), DIR_DOWN , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_south_off) { player_action_move(entity_vars(self), DIR_DOWN , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_west_on  ) { player_action_move(entity_vars(self), DIR_LEFT , true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move(entity_vars(self), DIR_LEFT , false); }
+ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move(entity_vars(self), DIR_RIGHT, true ); }
+ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move(entity_vars(self), DIR_RIGHT, false); }
 
-ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(entity_vars(this), true , WEAP_ARTILLERY); }
-ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(entity_vars(this), false, WEAP_ARTILLERY); }
-ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(entity_vars(this), true , WEAP_MISSILE); }
-ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(entity_vars(this), false, WEAP_MISSILE); }
-ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(entity_vars(this), true , WEAP_MINE); }
-ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(entity_vars(this), false, WEAP_MINE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(entity_vars(self), true , WEAP_ARTILLERY); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(entity_vars(self), false, WEAP_ARTILLERY); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(entity_vars(self), true , WEAP_MISSILE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(entity_vars(self), false, WEAP_MISSILE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(entity_vars(self), true , WEAP_MINE); }
+ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(entity_vars(self), false, WEAP_MINE); }
 ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
 
 
@@ -333,14 +333,14 @@ static void player_handle_common(ENTITY player);
 
 static ENTITY_FUNCTION_INIT(player_init)
 {
-    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(this, 16.0f);
+    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(self, 16.0f);
 
-    entity_model_set(this, 0, ":/tank1"      , 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_set(this, 1, ":/flag_player", 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_sequence_set(this, 0, &tank_fseq_run);
+    entity_model_set(self, 0, ":/tank1"      , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(self, 1, ":/flag_player", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(self, 0, &tank_fseq_run);
 
-    player_vars_t * pl = entity_vars(this);
+    player_vars_t * pl = entity_vars(self);
 
 #if defined(_DEBUG_PLAYERMAXLEVEL)
     pl->scores      = 9000;
@@ -350,7 +350,7 @@ static ENTITY_FUNCTION_INIT(player_init)
     pl->item_ammo_mine    = 100;
 #endif
 
-    player_spawn_init(this, parent);// parent = spawn
+    player_spawn_init(self, parent);// parent = spawn
 
 
 
@@ -358,60 +358,60 @@ static ENTITY_FUNCTION_INIT(player_init)
 
 ENTITY_FUNCTION_DONE(player_done)
 {
-    sound_play_stop(this, -1);
-    player_vars_t * pl = entity_vars(this);
+    sound_play_stop(self, -1);
+    player_vars_t * pl = entity_vars(self);
     ctrl_AI_done(&(pl->brain));
 }
 
 ENTITY_FUNCTION_HANDLE(player_handle)
 {
-    player_handle_common(this);
+    player_handle_common(self);
 }
 
 static ENTITY_FUNCTION_INIT(enemy_init)
 {
-    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/tank1"     , 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_set(this, 1, ":/flag_enemy", 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_sequence_set(this, 0, &tank_fseq_run);
+    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/tank1"     , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(self, 1, ":/flag_enemy", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(self, 0, &tank_fseq_run);
 
-    player_spawn_init(this, parent);
-    player_vars_t * pl = entity_vars(this);
+    player_spawn_init(self, parent);
+    player_vars_t * pl = entity_vars(self);
     ctrl_AI_init(&pl->brain);
 }
 
 ENTITY_FUNCTION_DONE(enemy_done)
 {
-    player_done(this);
+    player_done(self);
 }
 
 ENTITY_FUNCTION_HANDLE(enemy_handle)
 {
-    think_enemy(this);
-    player_handle_common(this);
+    think_enemy(self);
+    player_handle_common(self);
 }
 
 ENTITY_FUNCTION_INIT(boss_init)
 {
-    entity_flags_set(this, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/tank1"    , 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_set(this, 1, ":/flag_boss", 16.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_sequence_set(this, 0, &tank_fseq_run);
+    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/tank1"    , 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_set(self, 1, ":/flag_boss", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(self, 0, &tank_fseq_run);
 
-    player_spawn_init(this, parent);
-    player_vars_t * pl = entity_vars(this);
+    player_spawn_init(self, parent);
+    player_vars_t * pl = entity_vars(self);
     ctrl_AI_init(&pl->brain);
 }
 ENTITY_FUNCTION_DONE(boss_done)
 {
-    player_done(this);
+    player_done(self);
 }
 ENTITY_FUNCTION_HANDLE(boss_handle)
 {
-    think_enemy(this);
-    player_handle_common(this);
+    think_enemy(self);
+    player_handle_common(self);
 }
 
 /*

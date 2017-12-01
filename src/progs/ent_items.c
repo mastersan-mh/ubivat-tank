@@ -17,8 +17,8 @@ static var_descr_t item_vars[] =
 
 static ENTITY_FUNCTION_INIT(item_scores_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/item_scores", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/item_scores", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t item_scores_reginfo = {
@@ -32,8 +32,8 @@ static const entityinfo_t item_scores_reginfo = {
 
 static ENTITY_FUNCTION_INIT(item_heath_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/item_health", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/item_health", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t item_health_reginfo = {
@@ -47,8 +47,8 @@ static const entityinfo_t item_health_reginfo = {
 
 static ENTITY_FUNCTION_INIT(item_armor_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/item_armor", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/item_armor", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t item_armor_reginfo = {
@@ -62,8 +62,8 @@ static const entityinfo_t item_armor_reginfo = {
 
 static ENTITY_FUNCTION_INIT(item_ammo_missile_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/item_ammo_missile", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/item_ammo_missile", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t item_ammo_missile_reginfo = {
@@ -77,8 +77,8 @@ static const entityinfo_t item_ammo_missile_reginfo = {
 
 static ENTITY_FUNCTION_INIT(item_ammo_mine_init)
 {
-    entity_bodybox_set(this, 16.0f);
-    entity_model_set(this, 0, ":/item_ammo_mine", 8.0f, 0.0f, 0.0f);
+    entity_bodybox_set(self, 16.0f);
+    entity_model_set(self, 0, ":/item_ammo_mine", 8.0f, 0.0f, 0.0f);
 }
 
 static const entityinfo_t item_ammo_mine_reginfo = {

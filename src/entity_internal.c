@@ -93,13 +93,13 @@ static bool entities_in_contact(entity_t * ent1, entity_t * ent2)
     entity_vars_common_t * ent1_vars = ent1->vars;
     entity_vars_common_t * ent2_vars = ent2->vars;
 
-    FLOAT this_halfbox = ent1->bodybox * 0.5;
-    FLOAT that_halfbox = ent2->bodybox * 0.5;
+    FLOAT ent1_halfbox = ent1->bodybox * 0.5;
+    FLOAT ent2_halfbox = ent2->bodybox * 0.5;
     return
-            ( ent1_vars->origin[0] - this_halfbox <= ent2_vars->origin[0] + that_halfbox ) &&
-            ( ent2_vars->origin[0] - that_halfbox <= ent1_vars->origin[0] + this_halfbox ) &&
-            ( ent1_vars->origin[1] - this_halfbox <= ent2_vars->origin[1] + that_halfbox ) &&
-            ( ent2_vars->origin[1] - that_halfbox <= ent1_vars->origin[1] + this_halfbox )
+            ( ent1_vars->origin[0] - ent1_halfbox <= ent2_vars->origin[0] + ent2_halfbox ) &&
+            ( ent2_vars->origin[0] - ent2_halfbox <= ent1_vars->origin[0] + ent1_halfbox ) &&
+            ( ent1_vars->origin[1] - ent1_halfbox <= ent2_vars->origin[1] + ent2_halfbox ) &&
+            ( ent2_vars->origin[1] - ent2_halfbox <= ent1_vars->origin[1] + ent1_halfbox )
             ;
 }
 

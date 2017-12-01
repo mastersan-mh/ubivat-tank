@@ -22,15 +22,15 @@ static var_descr_t spawn_player_vars[] =
 
 static ENTITY_FUNCTION_INIT(spawn_player_init)
 {
-    entity_bodybox_set(this, 16.0f);
+    entity_bodybox_set(self, 16.0f);
 }
 
 static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 {
-    entity_bodybox_set(this, 16.0f);
+    entity_bodybox_set(self, 16.0f);
 
-    spawn_vars_t * sp = entity_vars(this);
-    ENTITY ent = entity_new("enemy", this);
+    spawn_vars_t * sp = entity_vars(self);
+    ENTITY ent = entity_new("enemy", self);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
@@ -38,10 +38,10 @@ static ENTITY_FUNCTION_INIT(spawn_enemy_init)
 
 static ENTITY_FUNCTION_INIT(spawn_boss_init)
 {
-    entity_bodybox_set(this, 16.0f);
+    entity_bodybox_set(self, 16.0f);
 
-    spawn_vars_t * sp = entity_vars(this);
-    ENTITY ent = entity_new("boss", this);
+    spawn_vars_t * sp = entity_vars(self);
+    ENTITY ent = entity_new("boss", self);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;

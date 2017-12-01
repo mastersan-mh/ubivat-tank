@@ -17,7 +17,7 @@ static var_descr_t message_vars[] =
 
 static ENTITY_FUNCTION_INIT(message_init)
 {
-    entity_bodybox_set(this, 16.0f);
+    entity_bodybox_set(self, 16.0f);
 }
 
 static const entityinfo_t message_reginfo = {

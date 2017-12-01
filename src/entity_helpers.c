@@ -52,11 +52,11 @@ direction_t entity_direction_invert(direction_t dir)
 /*
  * передвижение игрока
  */
-void entity_move(ENTITY this, direction_t dir, vec_t speed, bool check_clip)
+void entity_move(ENTITY entity, direction_t dir, vec_t speed, bool check_clip)
 {
     map_t * map = world_map_get();
 
-    entity_t * ent = (entity_t *)this;
+    entity_t * ent = (entity_t *)entity;
     entity_vars_common_t * common = ent->vars;
     vec_t dway = speed * dtimed1000;
     FLOAT bodybox = ent->bodybox;
