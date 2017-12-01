@@ -252,64 +252,94 @@ int entity_model_set(
     entity_t * ent = (entity_t*)entity;
     if(imodel >= ent->info->models_num)
     {
-        game_console_send("Error: Entity \"%s\" can't set model index %d", ent->classname, imodel);
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT " can't set model index %d", ENTITY_PRINTF_VALUE(ent), imodel);
         return -1;
-    }
-    model_t * model = (model_t*)model_get(modelname);
-    if(!model)
-    {
-        game_console_send("Error: Entity \"%s\" can't set model \"%s\", can't load model.", ent->classname, modelname);
     }
 
     entity_model_t * entity_model = &ent->models[imodel];
-
     Z_free(entity_model->name);
-    entity_model->name = Z_strdup(modelname);
+    entity_model->name = NULL;
+
+    model_t * model = (model_t*)model_get(modelname);
+    if(!model)
+    {
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT " can't set model \"%s\", can't load model.", ENTITY_PRINTF_VALUE(ent), modelname);
+    }
+    else
+    {
+        entity_model->name = Z_strdup(modelname);
+    }
+
     entity_model->model = model;
     entity_model->scale = modelscale;
     VEC2_SET(entity_model->translation, translation_x, translation_y);
+    entity_model->player.fseq = NULL;
     entity_model->player.play_frames_seq = NULL;
     entity_model->player.frame = 0.0f;
+    return 0;
+}
+
+int entity_model_sequence_set(ENTITY entity, unsigned int imodel, const entity_framessequence_t * fseq)
+{
+    entity_t * ent = (entity_t*)entity;
+
+    const entityinfo_t * info = ent->info;
+    if(imodel >= info->models_num)
+    {
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ": model index %d not found, could not set frames sequence.",
+            ENTITY_PRINTF_VALUE(ent),
+            imodel
+        );
+        return -1;
+    }
+
+    entity_model_t * model = &ent->models[imodel];
+    model->player.fseq = fseq;
+    if(fseq == NULL)
+        model->player.play_frames_seq = NULL;
     return 0;
 }
 
 /**
  * @description начать/возобновить проигрывание кадров модели
  */
-void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * seqname)
+void entity_model_play_start(ENTITY entity, unsigned int imodel)
 {
     entity_t * ent = (entity_t*)entity;
     const entityinfo_t * info = ent->info;
     if(imodel >= info->models_num)
     {
-        game_console_send("Error: Entity \"%s\": model index %d not found, could not play frames sequence.",
-            ent->classname,
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ": model index %d not found, could not play frames sequence.",
+            ENTITY_PRINTF_VALUE(ent),
             imodel
         );
         return;
     }
-    const entity_framessequence_t * framesseq = entity_reginfo_framessequence_get(info, imodel, seqname);
-    if(!framesseq)
+
+    entity_model_t * model = &ent->models[imodel];
+
+    const entity_framessequence_t * fseq = model->player.fseq;
+    if(!fseq)
     {
-        game_console_send("Error: Entity \"%s\", model index %d, frames sequence \"%s\" not found, could not play frames sequence.",
-            ent->classname, imodel, seqname);
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ", model index %d, no frames sequence, could not start play.",
+            ENTITY_PRINTF_VALUE(ent),
+            imodel);
         return;
     }
 
-    entity_model_t * model = &ent->models[imodel];
     if(model->player.play_frames_seq == NULL)
     {
         /* если действия нет или закончилось, начнём действие заново */
-        model->player.play_frames_seq = framesseq;
-        model->player.frame = framesseq->firstframe;
+        model->player.play_frames_seq = fseq;
+        model->player.frame = fseq->firstframe;
     }
     else
     {
-        model->player.play_frames_seq = framesseq;
+        model->player.play_frames_seq = fseq;
         unsigned int frame = model->player.frame;
         /* coerce */
-        if( frame < framesseq->firstframe || framesseq->lastframe + 1 <= frame )
-            model->player.frame = framesseq->firstframe;
+        if( frame < fseq->firstframe || fseq->lastframe + 1 <= frame )
+            model->player.frame = fseq->firstframe;
     }
 
 }
@@ -323,8 +353,8 @@ void entity_model_play_pause(ENTITY entity, unsigned int imodel)
     const entityinfo_t * info = ent->info;
     if(imodel >= info->models_num)
     {
-        game_console_send("Error: Entity \"%s\": imodel %d not found, could not pause frames.",
-            ent->classname,
+        game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ": imodel %d not found, could not pause frames.",
+            ENTITY_PRINTF_VALUE(ent),
             imodel
         );
         return;

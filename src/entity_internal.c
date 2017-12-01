@@ -182,10 +182,10 @@ static void model_nextframe(float * frame, unsigned int fps, unsigned int startf
 static void P_entity_modelplay(entity_t * entity)
 {
     const entityinfo_t * info = entity->info;
-    size_t ientmodel;
-    for(ientmodel = 0; ientmodel < info->models_num; ientmodel++)
+    size_t imodel;
+    for(imodel = 0; imodel < info->models_num; imodel++)
     {
-        entity_model_t * model = &entity->models[ientmodel];
+        entity_model_t * model = &entity->models[imodel];
         if(!(
                 model->model != NULL &&
                 model->model->frames != NULL &&
@@ -208,8 +208,7 @@ static void P_entity_modelplay(entity_t * entity)
         {
             fseq->firstframef(
                 (ENTITY)entity,
-                ientmodel,
-                fseq->seqname
+                imodel
             );
         }
 
@@ -218,8 +217,7 @@ static void P_entity_modelplay(entity_t * entity)
             model->player.play_frames_seq = NULL;
             fseq->lastframef(
                 (ENTITY)entity,
-                ientmodel,
-                fseq->seqname
+                imodel
             );
         }
 
@@ -263,25 +261,6 @@ static void P_entity_move(entity_t * entity)
     entity->stat_traveled_distance += VEC_ABS(dway);
      */
 }
-
-const entity_framessequence_t * entity_reginfo_framessequence_get(const entityinfo_t * info, unsigned int imodel, const char * seqname)
-{
-    if(!info->framessequences)
-        return NULL;
-    size_t i;
-    for(i = 0; i < info->framessequences_num; i++)
-    {
-        const entity_framessequence_t * modelaction = &info->framessequences[i];
-        if(
-                modelaction->imodel == imodel &&
-                strcmp(modelaction->seqname, seqname) == 0
-        )
-            return modelaction;
-
-    }
-    return NULL;
-}
-
 
 void entities_handle(void)
 {
@@ -359,7 +338,7 @@ static void ent_models_render(
         entity_model_t * model = &models[i];
         if(!model->model)
         {
-            game_console_send("Error: Entity \"%s\", no imodel %d.", entity->classname, (int)i);
+            game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ", no imodel %d.", ENTITY_PRINTF_VALUE(entity), (int)i);
             continue;
         }
         int frame = VEC_TRUNC(model->player.frame);
@@ -504,7 +483,12 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     {
         entity->models = Z_malloc(info->models_num * sizeof(entity_model_t));
         for( i = 0; i < info->models_num; i++)
+        {
             entity->models[i].name = NULL;
+            entity->models[i].player.frame = 0.0f;
+            entity->models[i].player.fseq = NULL;
+            entity->models[i].player.play_frames_seq = NULL;
+        }
     }
 
     entity->info = info;
@@ -556,7 +540,7 @@ entity_t * entity_player_spawn_random(void * storage)
         if(!info->player_spawn)
             continue;
 
-        entity_t * ent = info->player_spawn((ENTITY)entity, storage);
+        entity_t * ent = (entity_t*)info->player_spawn((ENTITY)entity, storage);
         return ent;
     }
 

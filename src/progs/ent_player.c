@@ -129,20 +129,16 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
         { { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, ":/tank5"}  /* BOSS */
 };
 
-static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int modelId, const char * actionname)
+static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int imodel)
 {
-    entity_model_play_start(entity, modelId, actionname);
+    entity_model_play_start(entity, imodel);
 }
-static const entity_framessequence_t tank_modelactions[] =
+static const entity_framessequence_t tank_fseq_run =
 {
-        {
-                .imodel = 0,
-                .seqname = "run",
-                .firstframe = 0,
-                .firstframef = NULL,
-                .lastframe = 3,
-                .lastframef = tank_common_modelaction_lastframef
-        }
+        .firstframe = 0,
+        .firstframef = NULL,
+        .lastframe = 3,
+        .lastframef = tank_common_modelaction_lastframef
 };
 
 static ENTITY_FUNCTION_INIT(player_init);
@@ -342,6 +338,7 @@ static ENTITY_FUNCTION_INIT(player_init)
 
     entity_model_set(this, 0, ":/tank1"      , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(this, 1, ":/flag_player", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(this, 0, &tank_fseq_run);
 
     player_vars_t * pl = entity_vars(this);
 
@@ -377,6 +374,7 @@ static ENTITY_FUNCTION_INIT(enemy_init)
     entity_bodybox_set(this, 16.0f);
     entity_model_set(this, 0, ":/tank1"     , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(this, 1, ":/flag_enemy", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(this, 0, &tank_fseq_run);
 
     player_spawn_init(this, parent);
     player_vars_t * pl = entity_vars(this);
@@ -400,6 +398,7 @@ ENTITY_FUNCTION_INIT(boss_init)
     entity_bodybox_set(this, 16.0f);
     entity_model_set(this, 0, ":/tank1"    , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(this, 1, ":/flag_boss", 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(this, 0, &tank_fseq_run);
 
     player_spawn_init(this, parent);
     player_vars_t * pl = entity_vars(this);
@@ -498,7 +497,7 @@ static void player_handle_common(ENTITY player)
     switch(state)
     {
     case STATE_IDLE: break;
-    case STATE_RUN_BEGIN: entity_model_play_start(player, 0, "run"); break;
+    case STATE_RUN_BEGIN: entity_model_play_start(player, 0); break;
     case STATE_RUN_END  : entity_model_play_pause(player, 0); break;
     case STATE_RUN: break;
     case STATE_DEAD:
@@ -666,6 +665,8 @@ void player_class_init(ENTITY player, player_vars_t * pl)
     player_class_init_(player, &pl->item_ammo_mine     , playerinfo->items[ITEM_AMMO_MINE]);
 
     entity_model_set(player, 0, playerinfo->modelname, 16.0f / 2.0f, 0.0f, 0.0f);
+    entity_model_sequence_set(player, 0, &tank_fseq_run);
+
 }
 
 /*
@@ -784,7 +785,6 @@ static void player_ui_draw(camera_t * cam, ENTITY player)
 static const entityinfo_t player_reginfo = {
         .name_ = "player",
         ENTITYINFO_VARS(player_vars_t, player_vars),
-        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         .models_num = 2,
         .init = player_init,
         .done = player_done,
@@ -797,7 +797,6 @@ static const entityinfo_t player_reginfo = {
 static const entityinfo_t enemy_reginfo = {
         .name_ = "enemy",
         ENTITYINFO_VARS(player_vars_t, player_vars),
-        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         .models_num = 2,
         .init = enemy_init,
         .done = enemy_done,
@@ -807,7 +806,6 @@ static const entityinfo_t enemy_reginfo = {
 static const entityinfo_t boss_reginfo = {
         .name_ = "boss",
         ENTITYINFO_VARS(player_vars_t, player_vars),
-        ENTITYINFO_FRAMESSEQ(tank_modelactions),
         .models_num = 2,
         .init = boss_init,
         .done = boss_done,

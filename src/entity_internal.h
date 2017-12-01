@@ -13,6 +13,10 @@
 
 #include "common/common_queue.h"
 
+#define ENTITY_PRINTF_FORMAT "#%ld class \"%s\""
+#define ENTITY_PRINTF_VALUE(entity) \
+    (long)(entity)->id, (entity)->classname
+
 #define ENTITY_ID_MAX SIZE_MAX
 typedef size_t entity_id_t;
 /*
@@ -85,8 +89,6 @@ extern size_t entityregs_num;
 extern entity_t * entity_find_by_id(entity_id_t entityId);
 
 extern entity_registered_t * entityregisteredinfo_get(const char * name);
-
-extern const entity_framessequence_t * entity_reginfo_framessequence_get(const entityinfo_t * info, unsigned int imodel, const char * seqname);
 
 extern void entities_handle(void);
 

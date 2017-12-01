@@ -72,7 +72,7 @@ typedef struct
         void x (ENTITY this)
 
 #define ENTITY_FUNCTION_PLAYER_SPAWN(x) \
-        void * x (ENTITY this, void * storage)
+        ENTITY x (ENTITY this, void * storage)
 
 #define ENTITY_FUNCTION_NONE NULL
 
@@ -83,14 +83,6 @@ typedef struct
         .vars_size = sizeof(TYPE), \
         .vars_descr_num = ARRAYSIZE(xvars), \
         .vars_descr = xvars
-
-#define ENTITYINFO_FRAMESSEQ(xframessequences) \
-        .framessequences_num = ARRAYSIZE(xframessequences), \
-        .framessequences = xframessequences
-
-#define ENTITYINFO_FRAMESSEQ_NONE() \
-        .framessequences_num = 0, \
-        .framessequences = NULL
 
 #define ENTITYINFO_ACTIONS(xactions) \
         .actions_num = ARRAYSIZE(xactions), \
@@ -107,18 +99,17 @@ enum
  */
 typedef struct
 {
-    unsigned int imodel; /* индекс модели, для которой предназначена последовательность */
-    char * seqname; /* имя последовательности */
     unsigned int firstframe; /* первый кадр */
-    void (*firstframef)(ENTITY self, unsigned int imodel, const char * seqname);
+    void (*firstframef)(ENTITY self, unsigned int imodel);
     unsigned int lastframe; /* последний кадр */
-    void (*lastframef)(ENTITY self, unsigned int imodel, const char * seqname);
+    void (*lastframef)(ENTITY self, unsigned int imodel);
 } entity_framessequence_t;
 
 /* структура для проигрывания последовательности кадров моделей, связанных с объектом */
 typedef struct entity_modelplayer_s
 {
     /* воспроизводимая последовательность */
+    const entity_framessequence_t * fseq;
     const entity_framessequence_t * play_frames_seq;
     /* номер кадра */
     float frame;
@@ -150,11 +141,6 @@ typedef struct entityinfo_s
     size_t vars_descr_num;
     const var_descr_t * vars_descr;
 
-    /* количество действий */
-    size_t framessequences_num;
-    /* действия */
-    const entity_framessequence_t * framessequences;
-
     /* размер массива моделей */
     size_t models_num;
 
@@ -168,7 +154,7 @@ typedef struct entityinfo_s
     /* соприкосновения объекта с другими объектами */
     void (*touch)(ENTITY self, ENTITY other);
 
-    ENTITY_FUNCTION_PLAYER_SPAWN((*player_spawn));
+    ENTITY (*player_spawn)(ENTITY self, void * storage);
 
     /* массив действий, допустимых для entity, при управлении игроком */
     size_t actions_num;
@@ -207,7 +193,8 @@ extern int entity_model_set(
     VECTOR1 translation_x,
     VECTOR1 translation_y
 );
-extern void entity_model_play_start(ENTITY entity, unsigned int imodel, const char * seqname);
+extern int entity_model_sequence_set(ENTITY entity, unsigned int imodel, const entity_framessequence_t * fseq);
+extern void entity_model_play_start(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause_all(ENTITY entity);
 

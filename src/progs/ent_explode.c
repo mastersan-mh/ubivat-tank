@@ -109,7 +109,7 @@ static void explode_detonate(ENTITY this, explodetype_t type)
 
 }
 
-static void explode_common_modelaction_startframef(ENTITY this, unsigned int imodel, const char * actionname)
+static void explode_common_modelaction_startframef(ENTITY this, unsigned int imodel)
 {
     if(entity_classname_cmp(this, "explode_artillery") == 0)
     {
@@ -128,7 +128,7 @@ static void explode_common_modelaction_startframef(ENTITY this, unsigned int imo
     }
 }
 
-static void explode_common_modelaction_endframef(ENTITY this, unsigned int imodel, const char * actionname)
+static void explode_common_modelaction_endframef(ENTITY this, unsigned int imodel)
 {
     ENTITY parent;
     if((parent = entity_parent(this)))
@@ -148,59 +148,53 @@ static void explode_common_modelaction_endframef(ENTITY this, unsigned int imode
  * explode_small
  */
 
-static const entity_framessequence_t explode_small_modelactions[] =
+static const entity_framessequence_t explode_small_fseq_explode =
 {
-        {
-                .imodel = 0,
-                .seqname = "explode",
-                .firstframe = 0,
-                .firstframef = explode_common_modelaction_startframef,
-                .lastframe = 7,
-                .lastframef = explode_common_modelaction_endframef
-        }
+        .firstframe = 0,
+        .firstframef = explode_common_modelaction_startframef,
+        .lastframe = 7,
+        .lastframef = explode_common_modelaction_endframef
 };
 
 /*
  * explode_big
  */
 
-static const entity_framessequence_t explode_big_modelactions[] =
+static const entity_framessequence_t explode_big_fseq_explode =
 {
-        {
-                .imodel = 0,
-                .seqname = "explode",
-                .firstframe = 0,
-                .firstframef = explode_common_modelaction_startframef,
-                .lastframe = 7,
-                .lastframef = explode_common_modelaction_endframef
-        }
+        .firstframe = 0,
+        .firstframef = explode_common_modelaction_startframef,
+        .lastframe = 7,
+        .lastframef = explode_common_modelaction_endframef
 };
 
 static ENTITY_FUNCTION_INIT(explode_artillery_init)
 {
     entity_bodybox_set(this, 14.0f);
     entity_model_set(this, 0, ":/explode_small", 14.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_play_start(this, 0, "explode");
+    entity_model_sequence_set(this, 0, &explode_small_fseq_explode);
+    entity_model_play_start(this, 0);
 }
 
 static ENTITY_FUNCTION_INIT(explode_missile_init)
 {
     entity_bodybox_set(this, 22.0f);
     entity_model_set(this, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_play_start(this, 0, "explode");
+    entity_model_sequence_set(this, 0, &explode_big_fseq_explode);
+    entity_model_play_start(this, 0);
 }
 
 static ENTITY_FUNCTION_INIT(explode_mine_init)
 {
     entity_bodybox_set(this, 22.0f);
     entity_model_set(this, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
-    entity_model_play_start(this, 0, "explode");
+    entity_model_sequence_set(this, 0, &explode_big_fseq_explode);
+    entity_model_play_start(this, 0);
 }
 
 static const entityinfo_t explode_artillery_reginfo = {
         .name_ = "explode_artillery",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        ENTITYINFO_FRAMESSEQ(explode_small_modelactions),
         .models_num = 1,
         .init = explode_artillery_init,
         .done = ENTITY_FUNCTION_NONE,
@@ -210,7 +204,6 @@ static const entityinfo_t explode_artillery_reginfo = {
 static const entityinfo_t explode_missile_reginfo = {
         .name_ = "explode_missile",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        ENTITYINFO_FRAMESSEQ(explode_big_modelactions),
         .models_num = 1,
         .init = explode_missile_init,
         .done = ENTITY_FUNCTION_NONE,
@@ -220,7 +213,6 @@ static const entityinfo_t explode_missile_reginfo = {
 static const entityinfo_t explode_mine_reginfo = {
         .name_ = "explode_mine",
         ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        ENTITYINFO_FRAMESSEQ(explode_big_modelactions),
         .models_num = 1,
         .init = explode_mine_init,
         .done = ENTITY_FUNCTION_NONE,
