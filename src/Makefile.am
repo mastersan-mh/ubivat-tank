@@ -10,6 +10,7 @@ ubivat_tank_LDFLAGS = -lm -lGL -lGLU -lSDL2 -lSDL2_image -lfreetype -lfontconfig
 ubivat_tank_SOURCES = \
 common/common_hash.c \
 progs/progs_main.c \
+progs/helpers.c \
 progs/ent_exit.c \
 progs/ent_message.c \
 progs/ent_spawn.c \
@@ -31,6 +32,8 @@ _gr2D.c \
 fonts.c \
 actions.c \
 game.c \
+game_progs.c \
+game_progs_internal.c \
 g_conf.c \
 g_gamesave.c \
 img.c \
@@ -39,7 +42,6 @@ map.c \
 world.c \
 entity_internal.c \
 entity.c \
-entity_helpers.c \
 model.c \
 model_resources.c \
 ui.c \

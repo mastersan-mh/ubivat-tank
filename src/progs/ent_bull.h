@@ -12,11 +12,8 @@
 
 #include "progs.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-} bull_vars_t;
-
-void entity_bull_init(void);
+ENTITY bull_artillery_spawn(ENTITY parent, const char * spawninfo);
+ENTITY bull_missile_spawn(ENTITY parent, const char * spawninfo);
+ENTITY bull_mine_spawn(ENTITY parent, const char * spawninfo);
 
 #endif /* SRC_ENT_BULL_H_ */

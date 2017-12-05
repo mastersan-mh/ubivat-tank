@@ -10,25 +10,7 @@
 #ifndef SRC_ENT_WEAP_H_
 #define SRC_ENT_WEAP_H_
 
-#include "progs.h"
-
-typedef enum
-{
-	WEAP_ARTILLERY,
-	WEAP_MISSILE,
-	WEAP_MINE,
-	WEAP_NUM
-} weapontype_t;
-
-typedef struct
-{
-	//название оружия
-	char * name;
-	//изображение оружия
-	image_index_t icon;
-	char * entityname;
-	sound_index_t sound_index;
-} weaponinfo_t;
+#include "progs_main.h"
 
 extern weaponinfo_t weaponinfo_table[WEAP_NUM];
 

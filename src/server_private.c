@@ -11,6 +11,7 @@
 #include "server_private.h"
 #include "server_reply_private.h"
 
+#include "game_progs_internal.h"
 #include "client_requests.h"
 #include "world.h"
 #include "g_gamesave.h"
@@ -152,7 +153,8 @@ int server_client_spawn(server_client_t * client, int players_num)
         size_t clientId = server_client_id_get(client);
         server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
 
-        entity_t * entity = entity_player_spawn_random(storage ? storage->vars : NULL);
+        char * userinfo = storage ? storage->vars : NULL;
+        entity_t * entity = game_client_player_spawn(userinfo);
         if(!entity)
         {
             game_console_send("Error: No entity to spawn client.");
@@ -286,33 +288,6 @@ server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bo
     return client;
 }
 
-
-
-
-static const entity_action_t * server_entity_action_find_(
-    const char * action_str,
-    const entity_action_t *actions,
-    size_t actions_num)
-{
-
-    for(size_t i = 0; i < actions_num; i++)
-    {
-        const entity_action_t * action = &actions[i];
-        if(ACTIONS_EQ(action->action, action_str))
-        {
-            return action;
-        }
-    }
-    return NULL;
-}
-
-
-const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str)
-{
-    const entityinfo_t * info = ent->info;
-    return server_entity_action_find_(action_str, info->actions, info->actions_num);
-}
-
 void server_clients_delete(void)
 {
     server_client_t * client;
@@ -434,7 +409,9 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
             buflen += sizeof(nvalue32);
                  */
                 break;
-            case G_SERVER_REPLY_CONNECTION_ACCEPTED:
+            case G_SERVER_REPLY_CONNECTION_RESULT:
+                value16 = htons(reply->data.CONNECTION_RESULT.accepted ? -1 : 0);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 break;
@@ -484,7 +461,9 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
             value16 = htons(reply->data.INFO.clients_num);
             PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
-        case G_SERVER_REPLY_CONNECTION_ACCEPTED:
+        case G_SERVER_REPLY_CONNECTION_RESULT:
+            value16 = htons(reply->data.CONNECTION_RESULT.accepted ? -1 : 0);
+            PDU_PUSH_BUF(&value16, sizeof(value16));
             break;
         case G_SERVER_REPLY_CONNECTION_CLOSE:
             break;

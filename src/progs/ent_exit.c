@@ -9,31 +9,13 @@
 
 #include "ent_exit.h"
 
-static var_descr_t exit_vars[] =
+ENTITY exit_spawn(ENTITY parent, const char * spawninfo)
 {
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_STRING, entity_exit_t, text)
-};
+    ENTITY self = entity_spawn("exit", parent);
 
-
-static ENTITY_FUNCTION_INIT(exit_init)
-{
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/exit", 8.0f, 0.0f, 0.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
-
-static const entityinfo_t exit_reginfo = {
-		.name_ = "exit",
-		ENTITYINFO_VARS(entity_exit_t, exit_vars),
-		.models_num = 1,
-		.init = exit_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-void entity_exit_init(void)
-{
-	entity_register(&exit_reginfo);
-}
-
-

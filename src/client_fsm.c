@@ -89,6 +89,23 @@ static void client_fsm_local_world_recreate(const client_event_t * event)
     game_console_send("client: World created.");
 }
 
+int client_fsm_remote_connection_result(const client_event_t * event)
+{
+    sound_play_stop(NULL, GAME_SOUND_MENU);
+    if(!event->data.REMOTE_CONNECTION_RESULT.accepted)
+    {
+        game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " reject connection.", PRINTF_NETADDR_VAL(event->sender));
+        client_event_local_stop();
+        return -1;
+    }
+    game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " accept connection.", PRINTF_NETADDR_VAL(event->sender));
+    sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
+    client_req_send_ready();
+    client.gstate.win = false;
+    client.gstate.endgame = false;
+    return 0;
+}
+
 #define FSM_REMOTE_GAME_NEXTMAP(event) \
         do { \
             client_fsm_remote_game_nextmap(event); \
@@ -147,7 +164,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     break;
@@ -190,14 +207,9 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
-                    game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " accept connection.", PRINTF_NETADDR_VAL(event->sender));
-                    sound_play_stop(NULL, GAME_SOUND_MENU);
-                    sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
-                    client_req_send_ready();
-                    client.gstate.win = false;
-                    client.gstate.endgame = false;
-                    FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_WORLD_CREATING);
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
+                    if(client_fsm_remote_connection_result(event) == 0)
+                        FSM_GAMESTATE_SET(CLIENT_GAMESTATE_2_WORLD_CREATING);
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -239,7 +251,7 @@ void client_fsm(const client_event_t * event)
                     break;
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -286,7 +298,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -331,7 +343,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -427,7 +439,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -473,7 +485,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -527,7 +539,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();
@@ -571,7 +583,7 @@ void client_fsm(const client_event_t * event)
                 case G_CLIENT_EVENT_REMOTE_INFO:
                     client_fsm_remote_info(event);
                     break;
-                case G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED:
+                case G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT:
                     break;
                 case G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE:
                     FSM_CLIENT_DISCONECT();

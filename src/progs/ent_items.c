@@ -9,92 +9,60 @@
 
 #include "ent_items.h"
 
-static var_descr_t item_vars[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_INTEGER, entity_item_t, amount )
-};
+#include <string.h>
 
-static ENTITY_FUNCTION_INIT(item_scores_init)
+ENTITY item_scores_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("item_scores", parent);
+
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/item_scores", 8.0f, 0.0f, 0.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static const entityinfo_t item_scores_reginfo = {
-		.name_ = "item_scores",
-		ENTITYINFO_VARS(entity_item_t, item_vars),
-		.models_num = 1,
-		.init = item_scores_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-static ENTITY_FUNCTION_INIT(item_heath_init)
+ENTITY item_health_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("item_health", parent);
+    if(!self)
+        return NULL;
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/item_health", 8.0f, 0.0f, 0.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static const entityinfo_t item_health_reginfo = {
-		.name_ = "item_health",
-		ENTITYINFO_VARS(entity_item_t, item_vars),
-        .models_num = 1,
-		.init = item_heath_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-static ENTITY_FUNCTION_INIT(item_armor_init)
+ENTITY item_armor_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("item_armor", parent);
+
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/item_armor", 8.0f, 0.0f, 0.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static const entityinfo_t item_armor_reginfo = {
-		.name_ = "item_armor",
-		ENTITYINFO_VARS(entity_item_t, item_vars),
-        .models_num = 1,
-		.init = item_armor_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-static ENTITY_FUNCTION_INIT(item_ammo_missile_init)
+ENTITY item_ammo_missile_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("item_ammo_missile", parent);
+
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/item_ammo_missile", 8.0f, 0.0f, 0.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static const entityinfo_t item_ammo_missile_reginfo = {
-		.name_ = "item_ammo_missile",
-		ENTITYINFO_VARS(entity_item_t, item_vars),
-        .models_num = 1,
-		.init = item_ammo_missile_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-static ENTITY_FUNCTION_INIT(item_ammo_mine_init)
+ENTITY item_ammo_mine_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("item_ammo_mine", parent);
+
     entity_bodybox_set(self, 16.0f);
     entity_model_set(self, 0, ":/item_ammo_mine", 8.0f, 0.0f, 0.0f);
-}
 
-static const entityinfo_t item_ammo_mine_reginfo = {
-		.name_ = "item_ammo_mine",
-		ENTITYINFO_VARS(entity_item_t, item_vars),
-        .models_num = 1,
-		.init = item_ammo_mine_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-void entity_items_init(void)
-{
-	entity_register(&item_scores_reginfo);
-	entity_register(&item_health_reginfo);
-	entity_register(&item_armor_reginfo);
-	entity_register(&item_ammo_missile_reginfo);
-	entity_register(&item_ammo_mine_reginfo);
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }

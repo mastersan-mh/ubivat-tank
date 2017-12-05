@@ -14,7 +14,7 @@
 #include "server_reply.h"
 
 extern void server_reply_send_info(const net_addr_t * net_addr);
-extern void server_reply_send_connection_accepted(server_client_t * client);
+void server_reply_send_connection_result(server_client_t * client, bool accepted);
 extern void server_reply_send_connection_close(server_client_t * client);
 extern void server_reply_send_game_nextmap(server_client_t * client, bool win, const char * mapfilename);
 extern void server_reply_send_players_entity_set(server_client_t * client);

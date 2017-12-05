@@ -9,26 +9,12 @@
 
 #include "ent_message.h"
 
-static var_descr_t message_vars[] =
+ENTITY message_spawn(ENTITY parent, const char * spawninfo)
 {
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_STRING, entity_message_t, text )
-};
+    ENTITY self = entity_spawn("message", parent);
 
-static ENTITY_FUNCTION_INIT(message_init)
-{
     entity_bodybox_set(self, 16.0f);
-}
 
-static const entityinfo_t message_reginfo = {
-        .name_ = "message",
-        ENTITYINFO_VARS(entity_message_t, message_vars),
-        .init = message_init,
-        .done = ENTITY_FUNCTION_NONE,
-        .handle = ENTITY_FUNCTION_NONE,
-};
-
-void entity_message_init(void)
-{
-    entity_register(&message_reginfo);
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }

@@ -8,7 +8,7 @@
 #ifndef SRC_ENT_PLAYER_H_
 #define SRC_ENT_PLAYER_H_
 
-#include "progs.h"
+#include "progs_main.h"
 
 #include "ent_items.h"
 #include "ent_player_think.h"
@@ -85,63 +85,25 @@ typedef enum
 typedef struct
 {
 	INTEGER items[ITEM_NUM];
-	VECTOR1 speed;
+	FLOAT speed;
 	char * modelname;
 } playerinfo_t;
 
-/*
- * перемещения игрока
- */
-typedef struct
-{
-	//скорость движения игрока
-	vec_t speed;
-	//игрок движется
-	bool prev_go;
-	bool go;
-	//направление движения
-} move_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-
-    INTEGER fragstotal; /* фрагов за пройденые карты */
-    INTEGER frags;      /* фрагов за карту */
-    INTEGER scores;     /* набрано очков */
-    INTEGER level;      /* уровень игрока */
-
-    INTEGER item_health;
-    INTEGER item_armor;
-    INTEGER item_ammo_artillery;
-    INTEGER item_ammo_missile;
-    INTEGER item_ammo_mine;
-
-    //для управляемой ракеты
-    ENTITY bull;
-
-    //передвижения
-    move_t move;
-    bool attack;
-    weapontype_t weap;
-    //время на перезарядку
-    long reloadtime_d;
-
-    // мозг
-    think_t brain;
-
-} player_vars_t;
-
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
-extern void player_spawn_init(ENTITY player , ENTITY spawn);
+ENTITY player_spawn(ENTITY parent, const char * spawninfo);
+ENTITY enemy_spawn(ENTITY parent, const char * spawninfo);
+ENTITY boss_spawn(ENTITY parent, const char * spawninfo);
 
+void player_spawn_init(ENTITY player);
 
-extern void entity_player_init(void);
+void player_action_move(player_vars_t * pl, direction_t dir, bool go);
+void player_action_attack(player_vars_t * pl, bool attack, weapontype_t weap);
 
-extern void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
+void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
 
-extern void player_class_init(ENTITY player, player_vars_t * pl);
+void player_class_init(ENTITY player, player_vars_t * pl);
 
+void player_ui_draw(camera_t * cam, ENTITY player);
 
 #endif /* SRC_ENT_PLAYER_H_ */

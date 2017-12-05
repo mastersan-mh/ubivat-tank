@@ -27,6 +27,13 @@ typedef struct entity_s
 {
     CIRCLEQ_ENTRY(entity_s) list;
 
+    /* вызывается при разрушении объекта в памяти */
+    void (*done)(ENTITY self);
+
+    void (*think)(ENTITY self);
+    /* соприкосновения объекта с другими объектами */
+    void (*touch)(ENTITY self, ENTITY other);
+
     entity_id_t id;
 
     char classname[ENTITY_CLASSNAME_SIZE];
@@ -37,7 +44,8 @@ typedef struct entity_s
     /* для простоты все объекты квадратные */
     FLOAT bodybox;
 
-    const struct entityinfo_s * info;
+    const struct game_exports_entityinfo_s * info;
+
 
     /* объект, за которым следит камера данного объекта, обычно равен self */
     struct entity_s * cam_entity;
@@ -67,6 +75,8 @@ typedef struct entity_s
 
     /* vars */
     void * vars; /* entity_common_t */
+
+
 } entity_t;
 
 typedef CIRCLEQ_HEAD(, entity_s) entity_head_t;
@@ -74,7 +84,7 @@ typedef CIRCLEQ_HEAD(, entity_s) entity_head_t;
 typedef struct
 {
     /* информация о объектах в списках */
-    const entityinfo_t * info;
+    const game_exports_entityinfo_t * info;
 } entity_registered_t;
 
 extern entity_head_t entities;
@@ -97,9 +107,5 @@ extern void entities_render(camera_t * cam);
 extern void entities_erase(void);
 
 extern entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t * vars_values, size_t vars_values_num);
-
-extern entity_t * entity_player_spawn_random(void * storage);
-
-extern void entity_respawn(entity_t * entity, const void * vars);
 
 #endif /* SRC_ENTITY_INTERNAL_H_ */

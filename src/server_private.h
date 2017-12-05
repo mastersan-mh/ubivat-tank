@@ -51,7 +51,7 @@ typedef struct server_player_vars_storage_s
     size_t clientId;
     size_t playerId;
 
-    const entityinfo_t * info;
+    const game_exports_entityinfo_t * info;
     /* сохраняемые переменные */
     void * vars;
 } server_player_vars_storage_t;
@@ -165,7 +165,6 @@ extern server_player_t * server_player_create();
 extern void server_player_delete(server_client_t * client, server_player_t * player);
 extern void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player);
 
-extern const entity_action_t * server_entity_action_find(const entity_t * ent, const char * action_str);
 server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
 
 extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);

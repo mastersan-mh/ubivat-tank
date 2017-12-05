@@ -107,8 +107,8 @@ extern void game_server_add(const net_addr_t * sender, int clients_num);
 extern void game_servers_freeall(void);
 
 
-void game_halt(const char *error, ...)
+void game_console_send(const char *format, ...);
+void game_halt(const char *format, ...)
 __attribute__ ((noreturn));
-void game_console_send(const char *error, ...);
 
 #endif /* SRC_GAME_H_ */

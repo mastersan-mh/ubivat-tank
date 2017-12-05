@@ -29,14 +29,14 @@ typedef struct {char binary[1];} * ENTITY;
         DIRECTION dir; \
         /* статистика */ \
         /* пройденое расстояние */ \
-        VECTOR1 stat_traveled_distance;
+        FLOAT stat_traveled_distance;
 
 #define ENTITY_VARS_COMMON \
         VAR_DESCR( VARTYPE_BOOL     , entity_vars_common_t, alive  ), \
         VAR_DESCR( VARTYPE_VECTOR2  , entity_vars_common_t, origin_prev), \
         VAR_DESCR( VARTYPE_VECTOR2  , entity_vars_common_t, origin     ), \
         VAR_DESCR( VARTYPE_DIRECTION, entity_vars_common_t, dir        ), \
-        VAR_DESCR( VARTYPE_VECTOR1  , entity_vars_common_t, stat_traveled_distance)
+        VAR_DESCR( VARTYPE_FLOAT    , entity_vars_common_t, stat_traveled_distance)
 
 
 typedef struct
@@ -50,43 +50,17 @@ typedef struct
 #define origin_y origin[1]
 
 #define ENTITIES_FOREACH(entity) \
-        for((entity) = entity_first((entity_name)); !entity_end(entity) ; (entity) = entity_next((entity), (entity_name)))
+        for((entity) = entity_first(); !entity_end((entity)) ; (entity) = entity_next((entity)))
 
 /* цикл по объектам одного определённого типа */
-#define ENTITIES_FOREACH_NAME(entity_name, entity) \
-        for((entity) = entity_first_classname((entity_name)); !entity_end(entity) ; (entity) = entity_next_classname((entity), (entity_name)))
+#define ENTITIES_FOREACH_CLASSNAME(entity, entity_classname) \
+        for((entity) = entity_first_classname((entity_classname)); !entity_end((entity)) ; (entity) = entity_next_classname((entity), (entity_classname)))
+
+#define ENTITY_FUNCTION_THINK(x) \
+        void x (ENTITY self)
 
 #define ENTITY_FUNCTION_TOUCH(x) \
         void x (ENTITY self, ENTITY other)
-
-#define ENTITY_FUNCTION_INIT(x) \
-        void x (ENTITY self, ENTITY parent)
-
-#define ENTITY_FUNCTION_DONE(x) \
-        void x (ENTITY self)
-
-#define ENTITY_FUNCTION_SPAWN(x) \
-        void x (ENTITY self)
-
-#define ENTITY_FUNCTION_HANDLE(x) \
-        void x (ENTITY self)
-
-#define ENTITY_FUNCTION_PLAYER_SPAWN(x) \
-        ENTITY x (ENTITY self, void * storage)
-
-#define ENTITY_FUNCTION_NONE NULL
-
-#define ENTITY_FUNCTION_ACTION(x) \
-        void x (ENTITY self, const char * action)
-
-#define ENTITYINFO_VARS(TYPE, xvars) \
-        .vars_size = sizeof(TYPE), \
-        .vars_descr_num = ARRAYSIZE(xvars), \
-        .vars_descr = xvars
-
-#define ENTITYINFO_ACTIONS(xactions) \
-        .actions_num = ARRAYSIZE(xactions), \
-        .actions = xactions
 
 enum
 {
@@ -125,15 +99,9 @@ typedef struct
     entity_modelplayer_t player;
 } entity_model_t;
 
-typedef struct entityaction_s
+typedef struct game_exports_entityinfo_s
 {
-    char * action;
-    void (*action_f)(ENTITY self, const char * action);
-} entity_action_t;
-
-typedef struct entityinfo_s
-{
-    char * name_;
+    char * classname;
 
     /* размер буфера переменных */
     size_t vars_size;
@@ -143,33 +111,16 @@ typedef struct entityinfo_s
 
     /* размер массива моделей */
     size_t models_num;
+}game_exports_entityinfo_t;
 
-    void (*init)(ENTITY self, ENTITY parent);
-    void (*done)(ENTITY self);
+bool entity_end(ENTITY entity);
+ENTITY entity_first(void);
+ENTITY entity_next(ENTITY entity);
+ENTITY entity_first_classname(const char * entity_name);
+ENTITY entity_next_classname(ENTITY entity, const char * entity_name);
 
-    void (*spawn)(ENTITY self);
-
-    void (*handle)(ENTITY self);
-
-    /* соприкосновения объекта с другими объектами */
-    void (*touch)(ENTITY self, ENTITY other);
-
-    ENTITY (*player_spawn)(ENTITY self, void * storage);
-
-    /* массив действий, допустимых для entity, при управлении игроком */
-    size_t actions_num;
-    entity_action_t * actions;
-
-}entityinfo_t;
-
-extern const entityinfo_t * entityinfo_get(const char * name);
-extern void entity_register(const entityinfo_t * info);
-
-extern ENTITY entity_first_classname(const char * entity_name);
-extern ENTITY entity_next_classname(ENTITY entity, const char * entity_name);
-extern bool entity_end(ENTITY entity);
-
-extern int entity_classname_cmp(const ENTITY entity, const char * classname);
+void entity_vars_descr_get(ENTITY entity, const var_descr_t ** vars_descr, size_t * vars_descr_num);
+int entity_classname_cmp(const ENTITY entity, const char * classname);
 extern const char * entity_classname_get(const ENTITY entity);
 extern void entity_erase(ENTITY entity);
 extern bool entity_is_spawned(ENTITY entity);
@@ -181,19 +132,26 @@ extern void * entity_vars(ENTITY entity);
 extern void entity_cam_set(ENTITY entity, ENTITY cam_entity);
 extern void entity_cam_reset(ENTITY entity);
 
-extern ENTITY entity_new(const char * name, ENTITY parent);
-extern void entity_flags_set(ENTITY entity, int flags);
-extern void entity_bodybox_set(ENTITY entity, FLOAT bodybox);
-extern FLOAT entity_bodybox_get(const ENTITY entity);
-extern int entity_model_set(
+ENTITY entity_spawn(const char * name, ENTITY parent);
+
+void entity_done_set(ENTITY entity, void (*done)(ENTITY self));
+void entity_thinker_set(ENTITY entity, void (*think)(ENTITY self));
+void entity_toucher_set(ENTITY entity, void (*touch)(ENTITY self, ENTITY other));
+
+void entity_flags_set(ENTITY entity, int flags);
+void entity_bodybox_set(ENTITY entity, FLOAT bodybox);
+FLOAT entity_bodybox_get(const ENTITY entity);
+int entity_model_set(
     ENTITY entity,
     unsigned int imodel,
     const char * modelname,
     FLOAT modelscale,
-    VECTOR1 translation_x,
-    VECTOR1 translation_y
+    FLOAT translation_x,
+    FLOAT translation_y
 );
+
 extern int entity_model_sequence_set(ENTITY entity, unsigned int imodel, const entity_framessequence_t * fseq);
+
 extern void entity_model_play_start(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause(ENTITY entity, unsigned int imodel);
 extern void entity_model_play_pause_all(ENTITY entity);

@@ -28,7 +28,7 @@ typedef enum
     G_CLIENT_EVENT_LOCAL_WORLD_RECREATE,
     G_CLIENT_EVENT_LOCAL_ENTERGAME,
     G_CLIENT_EVENT_REMOTE_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
-    G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED,
+    G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT,
     G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE,
     G_CLIENT_EVENT_REMOTE_GAME_NEXTMAP,
     G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET,
@@ -65,6 +65,10 @@ typedef union
     {
         int clients_num; /* количество клиентов на сервере */
     } REMOTE_INFO;
+    struct
+    {
+        bool accepted;
+    } REMOTE_CONNECTION_RESULT;
     struct
     {
         bool win; /**< win / lose */

@@ -123,8 +123,10 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
                 PDU_POP_BUF(&value16, sizeof(value16));
                 evdata.REMOTE_INFO.clients_num = ntohs(value16);
                 break;
-            case G_SERVER_REPLY_CONNECTION_ACCEPTED:
-                evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_ACCEPTED;
+            case G_SERVER_REPLY_CONNECTION_RESULT:
+                evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT;
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_CONNECTION_RESULT.accepted = (ntohs(value16) != 0);
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;

@@ -8,6 +8,7 @@
 #include "g_events.h"
 #include "system.h"
 #include "game.h"
+#include "game_progs_internal.h"
 #include "server.h"
 #include "client.h"
 #include "cl_input.h"
@@ -155,7 +156,7 @@ void game_init(void)
 
     model_resources_register();
 
-    progs_init();
+    game_progs_init();
 
     game_menu_show(MENU_MAIN);
 
@@ -423,15 +424,15 @@ int game_pal_get(void)
     return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
 
-void game_console_send(const char *error, ...)
+void game_console_send(const char *format, ...)
 {
     static char errmsg[MAX_MESSAGE_SIZE];
     va_list argptr;
-    va_start(argptr, error);
+    va_start(argptr, format);
 #ifdef HAVE_VSNPRINTF
-    vsnprintf(errmsg, MAX_MESSAGE_SIZE, error, argptr);
+    vsnprintf(errmsg, MAX_MESSAGE_SIZE, format, argptr);
 #else
-    vsprintf(errmsg, error, argptr);
+    vsprintf(errmsg, format, argptr);
 #endif
     va_end(argptr);
 
@@ -440,16 +441,16 @@ void game_console_send(const char *error, ...)
 }
 
 
-void game_halt(const char * error, ...)
+void game_halt(const char * format, ...)
 {
     int __errno_ = errno;
     static char errmsg[MAX_MESSAGE_SIZE];
     va_list argptr;
-    va_start(argptr, error);
+    va_start(argptr, format);
 #ifdef HAVE_VSNPRINTF
-    vsnprintf(errmsg, MAX_MESSAGE_SIZE, error, argptr);
+    vsnprintf(errmsg, MAX_MESSAGE_SIZE, format, argptr);
 #else
-    vsprintf(errmsg, error, argptr);
+    vsprintf(errmsg, format, argptr);
 #endif
     va_end(argptr);
 

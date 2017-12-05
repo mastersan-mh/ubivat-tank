@@ -12,11 +12,6 @@
 
 #include "progs.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-} entity_explode_t;
-
 typedef enum
 {
 	EXPLODE_ARTILLERY,
@@ -38,6 +33,8 @@ typedef struct
 
 extern explodeinfo_t explodeinfo_table[EXPLODE_NUM];
 
-extern void entity_explode_init(void);
+ENTITY explode_artillery_spawn(ENTITY parent, const char * spawninfo);
+ENTITY explode_missile_spawn(ENTITY parent, const char * spawninfo);
+ENTITY explode_mine_spawn(ENTITY parent, const char * spawninfo);
 
 #endif /* SRC_ENT_EXPLODE_H_ */

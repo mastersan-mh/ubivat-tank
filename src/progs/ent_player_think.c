@@ -32,7 +32,7 @@ static explodetype_t weapontype_to_explodetype(weapontype_t weapontype)
 /*
  * инициализация AI
  */
-void ctrl_AI_init(think_t * thiker)
+void ctrl_AI_init(player_ai_t * thiker)
 {
 	thiker->danger  = 0;
 	thiker->Fdanger = 0;
@@ -43,7 +43,7 @@ void ctrl_AI_init(think_t * thiker)
 /*
  * удаление AI
  */
-void ctrl_AI_done(think_t * thinker)
+void ctrl_AI_done(player_ai_t * thinker)
 {
 	thinker->target = NULL;
 };
@@ -197,36 +197,34 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
  */
 static void ctrl_AI_checkdangers(ENTITY player)
 {
-	player_vars_t * pl = entity_vars(player);
-	bool danger = false;
-	ENTITY dangerous;
+    player_vars_t * pl = entity_vars(player);
+    bool danger = false;
+    ENTITY dangerous;
 
-	ENTITIES_FOREACH_NAME("bull_artillery", dangerous)
-	{
-		danger = ctrl_AI_checkdanger(player, dangerous);
-		if(danger)
-			goto next;
-	}
-	ENTITIES_FOREACH_NAME("bull_missile", dangerous)
-	{
-		danger = ctrl_AI_checkdanger(player, dangerous);
-		if(danger)
-			goto next;
-	}
-	ENTITIES_FOREACH_NAME("bull_mine", dangerous)
-	{
-		danger = ctrl_AI_checkdanger(player, dangerous);
-		if(danger)
-			goto next;
-	}
+    ENTITIES_FOREACH(dangerous)
+    {
+        if(entity_classname_cmp(dangerous, "bull_artillery") == 0)
+        {
+            danger = ctrl_AI_checkdanger(player, dangerous);
+        }
+        else if(entity_classname_cmp(dangerous, "bull_missile") == 0)
+        {
+            danger = ctrl_AI_checkdanger(player, dangerous);
+        }
+        else if(entity_classname_cmp(dangerous, "bull_mine") == 0)
+        {
+            danger = ctrl_AI_checkdanger(player, dangerous);
+        }
+        if(danger)
+            break;
+    }
 
-	next:
-	pl->brain.danger = danger;
-	if(!pl->brain.danger)
-	{
-		pl->brain.Fdanger = false;
-		//player->move.go = false;
-	}
+    pl->brain.danger = danger;
+    if(!pl->brain.danger)
+    {
+        pl->brain.Fdanger = false;
+        //player->move.go = false;
+    }
 }
 
 /*
@@ -319,7 +317,7 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 
 	player_vars_t * pl = entity_vars(player);
 
-	VECTOR1 dist;
+	FLOAT dist;
 	char wall;
 
     static FLOAT list_explode_diameter[] =

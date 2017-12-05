@@ -17,7 +17,7 @@
 typedef enum
 {
     G_SERVER_REPLY_INFO, /* информация о срвере на запрос G_CLIENT_REQ_DISCOVERYSERVER */
-    G_SERVER_REPLY_CONNECTION_ACCEPTED,
+    G_SERVER_REPLY_CONNECTION_RESULT,
     G_SERVER_REPLY_CONNECTION_CLOSE,
     G_SERVER_REPLY_GAME_NEXTMAP, /* следующая карта */
     G_SERVER_REPLY_PLAYERS_ENTITY_SET,
@@ -29,6 +29,10 @@ typedef union
     {
         int clients_num; /* количество клиентов на сервере */
     } INFO;
+    struct
+    {
+        bool accepted;
+    }CONNECTION_RESULT;
     struct
     {
         int players_num; /**< amount of client local players */

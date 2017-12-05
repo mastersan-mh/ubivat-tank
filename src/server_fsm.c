@@ -19,6 +19,8 @@
 
 #include "world.h"
 #include "game.h"
+#include "game_progs.h"
+#include "game_progs_internal.h"
 #include "g_gamesave.h"
 
 #include <stddef.h>
@@ -59,6 +61,7 @@ static int server_world_recreate(const char * mapname)
 {
     server_client_t * client;
     world_destroy();
+
     if(world_create(mapname))
     {
         game_console_send("server: Error: Could not create world");
@@ -69,6 +72,7 @@ static int server_world_recreate(const char * mapname)
         server_event_local_stop();
         return -1;
     }
+
 
     //игра по уровням
     LIST2_FOREACH(server.clients, client)
@@ -122,12 +126,19 @@ static void server_fsm_discovery(const server_event_t * event)
 
 static void server_fsm_client_connect(const server_event_t * event)
 {
+    bool accepted = false;
     server_client_t * client;
     game_console_send("server: client request connection from " PRINTF_NETADDR_IPv4_FMT ".", PRINTF_NETADDR_VAL(event->sender));
     bool mainclient = true;
-    //net_socket_t * ns = net_socket_create_sockaddr(event->sender.addr);
     client = server_client_create(server.sock, &event->sender, mainclient);
-    server_reply_send_connection_accepted(client);
+    if(client)
+    {
+        char clientinfo[] = "name1: \"player\", name2: \"player\"";
+        accepted = game_client_player_connect(clientinfo);
+        if(!accepted)
+            server_client_delete(client);
+    }
+    server_reply_send_connection_result(client, accepted);
     if(world_valid())
         server_reply_send_game_nextmap(client, true, world_mapfilename_get());
 }
@@ -214,7 +225,6 @@ static int server_fsm_gamesave_load(int isave)
 
 static void server_fsm_control_handle(const server_event_t * event, server_client_t * client)
 {
-    size_t clientId = server_client_id_get(client);
     size_t playerId = event->data.REMOTE_PLAYER_ACTION.playerId;
     server_player_t * player = server_client_player_get_by_id(client, playerId);
 
@@ -231,16 +241,7 @@ static void server_fsm_control_handle(const server_event_t * event, server_clien
     if(!entity)
         return;
 
-    if(server.flags.allow_respawn && !entity->spawned)
-    {
-        game_console_send("server: respawn player.");
-        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-        void * vars = storage ? storage->vars : NULL;
-        entity_respawn(entity, vars);
-        return;
-    }
-
-    const entity_action_t * action = server_entity_action_find(entity, event->data.REMOTE_PLAYER_ACTION.action);
+    const entity_action_t * action = game_player_action_find(event->data.REMOTE_PLAYER_ACTION.action);
 
     if(!action)
     {

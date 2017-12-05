@@ -10,11 +10,6 @@
 #include "ent_explode.h"
 #include "ent_player.h"
 
-static var_descr_t explode_vars[] =
-{
-        ENTITY_VARS_COMMON,
-};
-
 
 //оружия
 explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
@@ -32,7 +27,7 @@ static void explode_common_destroy_walls(ENTITY self, const explodeinfo_t * expl
     vec_t iy;
 
     vec_t halfbox = entity_bodybox_get(self) * 0.5f;
-    entity_explode_t * explode = entity_vars(self);
+    explode_vars_t * explode = entity_vars(self);
 
     //проверка попаданий в стены
     for(iy = -halfbox; iy <= halfbox; iy++)
@@ -61,7 +56,7 @@ static void explode_touch_common(ENTITY self, ENTITY other, const explodeinfo_t 
     bool self_attack;
 
     vec_t other_halfbox = entity_bodybox_get(self) * 0.5f;
-    entity_explode_t * self_vars = entity_vars(self);
+    explode_vars_t * self_vars = entity_vars(self);
     entity_vars_common_t  * other_vars = entity_vars(other);
 
     VEC2_SUB(d, other_vars->origin, self_vars->origin);
@@ -92,21 +87,17 @@ static void explode_detonate(ENTITY self, explodetype_t type)
 
     explode_common_destroy_walls(self, explodeinfo);
     //проверка попаданий в игрока
-    ENTITY ent_attacked;
+    ENTITY attacked;
 
-    ENTITIES_FOREACH_NAME("player", ent_attacked)
+    ENTITIES_FOREACH(attacked)
     {
-        explode_touch_common(self, ent_attacked, explodeinfo);
+        if(
+                entity_classname_cmp(attacked, "player") == 0 ||
+                entity_classname_cmp(attacked, "enemy") == 0 ||
+                entity_classname_cmp(attacked, "boss") == 0
+        )
+            explode_touch_common(self, attacked, explodeinfo);
     }
-    ENTITIES_FOREACH_NAME("enemy", ent_attacked)
-    {
-        explode_touch_common(self, ent_attacked, explodeinfo);
-    }
-    ENTITIES_FOREACH_NAME("boss", ent_attacked)
-    {
-        explode_touch_common(self, ent_attacked, explodeinfo);
-    }
-
 }
 
 static void explode_common_modelaction_startframef(ENTITY self, unsigned int imodel)
@@ -168,60 +159,41 @@ static const entity_framessequence_t explode_big_fseq_explode =
         .lastframef = explode_common_modelaction_endframef
 };
 
-static ENTITY_FUNCTION_INIT(explode_artillery_init)
+ENTITY explode_artillery_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("explode_artillery", parent);
+
     entity_bodybox_set(self, 14.0f);
     entity_model_set(self, 0, ":/explode_small", 14.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_small_fseq_explode);
     entity_model_play_start(self, 0);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static ENTITY_FUNCTION_INIT(explode_missile_init)
+ENTITY explode_missile_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("explode_missile", parent);
+
     entity_bodybox_set(self, 22.0f);
     entity_model_set(self, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_big_fseq_explode);
     entity_model_play_start(self, 0);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static ENTITY_FUNCTION_INIT(explode_mine_init)
+ENTITY explode_mine_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("explode_mine", parent);
+
     entity_bodybox_set(self, 22.0f);
     entity_model_set(self, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_big_fseq_explode);
     entity_model_play_start(self, 0);
-}
 
-static const entityinfo_t explode_artillery_reginfo = {
-        .name_ = "explode_artillery",
-        ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        .models_num = 1,
-        .init = explode_artillery_init,
-        .done = ENTITY_FUNCTION_NONE,
-        .handle = ENTITY_FUNCTION_NONE,
-};
-
-static const entityinfo_t explode_missile_reginfo = {
-        .name_ = "explode_missile",
-        ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        .models_num = 1,
-        .init = explode_missile_init,
-        .done = ENTITY_FUNCTION_NONE,
-        .handle = ENTITY_FUNCTION_NONE,
-};
-
-static const entityinfo_t explode_mine_reginfo = {
-        .name_ = "explode_mine",
-        ENTITYINFO_VARS(entity_explode_t, explode_vars),
-        .models_num = 1,
-        .init = explode_mine_init,
-        .done = ENTITY_FUNCTION_NONE,
-        .handle = ENTITY_FUNCTION_NONE,
-};
-
-void entity_explode_init(void)
-{
-    entity_register(&explode_artillery_reginfo);
-    entity_register(&explode_missile_reginfo);
-    entity_register(&explode_mine_reginfo);
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }

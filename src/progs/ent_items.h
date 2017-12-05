@@ -8,14 +8,12 @@
 #ifndef SRC_ENT_ITEMS_H_
 #define SRC_ENT_ITEMS_H_
 
-#include "progs.h"
+#include "progs_main.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    INTEGER amount;
-} entity_item_t;
-
-extern void entity_items_init(void);
+ENTITY item_scores_spawn(ENTITY parent, const char * spawninfo);
+ENTITY item_health_spawn(ENTITY parent, const char * spawninfo);
+ENTITY item_armor_spawn(ENTITY parent, const char * spawninfo);
+ENTITY item_ammo_missile_spawn(ENTITY parent, const char * spawninfo);
+ENTITY item_ammo_mine_spawn(ENTITY parent, const char * spawninfo);
 
 #endif /* SRC_ENT_ITEMS_H_ */

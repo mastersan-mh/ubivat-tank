@@ -10,14 +10,8 @@
 #ifndef SRC_ENT_MESSAGE_H_
 #define SRC_ENT_MESSAGE_H_
 
-#include "progs.h"
+#include "progs_main.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    STRING text;
-} entity_message_t;
-
-extern void entity_message_init(void);
+ENTITY message_spawn(ENTITY parent, const char * spawninfo);
 
 #endif /* SRC_ENT_MESSAGE_H_ */

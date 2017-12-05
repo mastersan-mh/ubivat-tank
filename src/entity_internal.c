@@ -44,7 +44,7 @@ entity_registered_t * entityregisteredinfo_get(const char * name)
     size_t i;
     for(i = 0; i < entityregs_num; i++)
     {
-        if(!strncmp(entityregs[i].info->name_, name, ENTITY_CLASSNAME_SIZE))
+        if(!strncmp(entityregs[i].info->classname, name, ENTITY_CLASSNAME_SIZE))
             return &entityregs[i];
     }
     return NULL;
@@ -55,12 +55,12 @@ entity_registered_t * entityregisteredinfo_get(const char * name)
  */
 static void entity_freemem(entity_t * entity)
 {
-    const entityinfo_t * info = entity->info;
-    if(info != NULL)
-    {
-        if(info->done != NULL)
-            info->done((ENTITY)entity);
-    }
+    const game_exports_entityinfo_t * info = entity->info;
+
+    VARS_DUMP(entity->vars, entity->info->vars_descr, entity->info->vars_descr_num, "==== Enity \"%s\" free ====", entity->info->classname);
+
+    if(entity->done)
+        entity->done((ENTITY)entity);
 
     vars_free(entity->vars, info->vars_descr, info->vars_descr_num);
 
@@ -121,8 +121,8 @@ static void P_entity_touchs(entity_t * self)
 
     for( other = CIRCLEQ_NEXT(self, list); !CIRCLEQ_END(other, &entities); other = CIRCLEQ_NEXT(other, list) )
     {
-        bool self_touch = (self->info->touch != NULL);
-        bool other_touch = (other->info->touch != NULL);
+        bool self_touch = (self->touch != NULL);
+        bool other_touch = (other->touch != NULL);
 
         if( !(self_touch || other_touch) )
             continue;
@@ -140,9 +140,9 @@ static void P_entity_touchs(entity_t * self)
             continue;
 
         if(self_touch)
-            self->info->touch((ENTITY)self, (ENTITY)other);
+            self->touch((ENTITY)self, (ENTITY)other);
         if(other_touch)
-            other->info->touch((ENTITY)other, (ENTITY)self);
+            other->touch((ENTITY)other, (ENTITY)self);
 
     }
 }
@@ -181,7 +181,7 @@ static void model_nextframe(float * frame, unsigned int fps, unsigned int startf
  */
 static void P_entity_modelplay(entity_t * entity)
 {
-    const entityinfo_t * info = entity->info;
+    const game_exports_entityinfo_t * info = entity->info;
     size_t imodel;
     for(imodel = 0; imodel < info->models_num; imodel++)
     {
@@ -268,8 +268,6 @@ void entities_handle(void)
     while(!CIRCLEQ_END(entity, &entities))
     {
 
-        const entityinfo_t * info = entity->info;
-
         entity_vars_common_t * vars = entity->vars;
         if(entity->erase)
         {
@@ -293,9 +291,9 @@ void entities_handle(void)
         }
 
         VEC2_COPY(vars->origin_prev, vars->origin);
-        if(info->handle != NULL)
+        if(entity->think != NULL)
         {
-            info->handle((ENTITY)entity);
+            entity->think((ENTITY)entity);
         }
 
         P_entity_touchs(entity);
@@ -338,7 +336,7 @@ static void ent_models_render(
         entity_model_t * model = &models[i];
         if(!model->model)
         {
-            game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ", no imodel %d.", ENTITY_PRINTF_VALUE(entity), (int)i);
+            game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ": no model index #%d, could not render.", ENTITY_PRINTF_VALUE(entity), (int)i);
             continue;
         }
         int frame = VEC_TRUNC(model->player.frame);
@@ -425,7 +423,7 @@ void * entity_build_storage(const char * name, const var_value_t * vars_values, 
     if(vars_values_num == 0)
         return NULL;
 
-    const entityinfo_t * info = entityinfo_reg->info;
+    const game_exports_entityinfo_t * info = entityinfo_reg->info;
 
     size_t bufsize = var_buffersize_calculate(info->vars_descr, info->vars_descr_num);
     void * buf = Z_malloc(bufsize);
@@ -460,11 +458,11 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
     if(!entityinfo_reg)
     {
-        game_console_send("Error: Cannot create unknown entity \"%s\".", name);
+        game_console_send("Error: Cannot create unknown entity \"%s\", entity not registered.", name);
         return NULL;
     }
 
-    const entityinfo_t * info = entityinfo_reg->info;
+    const game_exports_entityinfo_t * info = entityinfo_reg->info;
 
     entity_t * entity = Z_malloc(sizeof(entity_t));
 
@@ -494,6 +492,7 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     entity->info = info;
 
     entity->vars = Z_malloc(info->vars_size);
+    memset(entity->vars, 0, info->vars_size);
 
     entity->parent = (entity_t*)parent;
     entity->cam_entity = entity;
@@ -509,10 +508,6 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
     entity_vars_common_t * common = entity->vars;
     void * storage = entity_build_storage(name, vars_values, vars_values_num);
     entity_restore((ENTITY)entity, storage);
-    if(info->init)
-        info->init((ENTITY)entity, (ENTITY)parent);
-    if(info->spawn)
-        info->spawn((ENTITY)entity);
 
     entity->spawned = true;
     common->alive = true;
@@ -521,46 +516,3 @@ entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t *
 
     return entity;
 }
-
-
-/**
- * @brief
- * @descrition Обработка событий объектов присоедениения клиента к игре.
- * Как только обработчик объекта возвращает объект (не NULL),
- * этот возвращённый объект становится "телом" клиента.
- * @param vars  Буфер, в котором хранятся значения переменных entity, которые необходимо восстановить
- */
-entity_t * entity_player_spawn_random(void * storage)
-{
-    entity_t * entity;
-    CIRCLEQ_FOREACH(entity, &entities, list)
-    {
-
-        const entityinfo_t * info = entity->info;
-        if(!info->player_spawn)
-            continue;
-
-        entity_t * ent = (entity_t*)info->player_spawn((ENTITY)entity, storage);
-        return ent;
-    }
-
-    return NULL;
-}
-
-/**
- * @params vars     Буфер хранилища переменных
- */
-void entity_respawn(entity_t * entity, const void * vars)
-{
-    if(entity->spawned)
-        return;
-    entity_restore((ENTITY)entity, vars);
-    const entityinfo_t * info = entity->info;
-    if(info->spawn)
-        info->spawn((ENTITY)entity);
-    entity->spawned = true;
-    entity_vars_common_t * common = entity->vars;
-    common->alive = true;
-}
-
-

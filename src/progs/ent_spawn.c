@@ -10,98 +10,46 @@
 #include "ent_spawn.h"
 #include "ent_player.h"
 
-static var_descr_t spawn_player_vars[] =
+ENTITY spawner_player_spawn(ENTITY parent, const char * spawninfo)
 {
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_scores ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_health ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_armor  ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_missile ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_mine    ),
-};
+    ENTITY self = entity_spawn("spawner_player", parent);
 
-static ENTITY_FUNCTION_INIT(spawn_player_init)
-{
     entity_bodybox_set(self, 16.0f);
+
+    entity_vars_set_all(self, spawninfo);
+    return self;
 }
 
-static ENTITY_FUNCTION_INIT(spawn_enemy_init)
+ENTITY spawner_enemy_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("spawner_enemy", parent);
     entity_bodybox_set(self, 16.0f);
-
+    entity_vars_set_all(self, spawninfo);
     spawn_vars_t * sp = entity_vars(self);
-    ENTITY ent = entity_new("enemy", self);
+
+    ENTITY ent = enemy_spawn(self, NULL);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
+    return self;
 }
 
-static ENTITY_FUNCTION_INIT(spawn_boss_init)
+ENTITY spawner_boss_spawn(ENTITY parent, const char * spawninfo)
 {
+    ENTITY self = entity_spawn("spawner_boss", parent);
     entity_bodybox_set(self, 16.0f);
-
+    entity_vars_set_all(self, spawninfo);
     spawn_vars_t * sp = entity_vars(self);
-    ENTITY ent = entity_new("boss", self);
+
+    ENTITY ent = boss_spawn(self, NULL);
     player_vars_t * vars = entity_vars(ent);
     VEC2_COPY(vars->origin, sp->origin);
     vars->dir = sp->dir;
+    return self;
 }
 
-static ENTITY_FUNCTION_PLAYER_SPAWN(spawn_player_spawn)
+ENTITY client_player_spawn(const char * spawninfo)
 {
-    ENTITY spawn = entity_get_random("spawn_player");
-
-    ENTITY player = entity_new("player", spawn);
-
-    if(!player)
-        return NULL;
-
-    entity_restore(player, storage);
-
-    /*
-    spawn_vars_t * sp = entity_vars(spawn);
-    player_vars_t * vars = entity_vars(player);
-    VEC2_COPY(vars->origin, sp->origin);
-    vars->dir = sp->dir;
-    vars->scores = sp->item_scores;
-    vars->item_health = sp->item_health;
-    vars->item_armor = sp->item_armor;
-    vars->item_ammo_missile = sp->item_ammo_missile;
-    vars->item_ammo_mine = sp->item_ammo_mine;
-*/
-    player_spawn_init(player , spawn);
-
-    return player;
-}
-
-static const entityinfo_t spawn_player_reginfo = {
-		.name_ = "spawn_player",
-		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
-		.init = spawn_player_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-		.player_spawn = spawn_player_spawn,
-};
-
-static const entityinfo_t spawn_enemy_reginfo = {
-		.name_ = "spawn_enemy",
-		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
-		.init = spawn_enemy_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-static const entityinfo_t spawn_boss_reginfo = {
-		.name_ = "spawn_boss",
-		ENTITYINFO_VARS(spawn_vars_t, spawn_player_vars),
-		.init = spawn_boss_init,
-		.done = ENTITY_FUNCTION_NONE,
-		.handle = ENTITY_FUNCTION_NONE,
-};
-
-void entity_spawn_init(void)
-{
-	entity_register(&spawn_player_reginfo);
-	entity_register(&spawn_enemy_reginfo);
-	entity_register(&spawn_boss_reginfo);
+    ENTITY spawn = entity_get_random("spawner_player");
+    return player_spawn(spawn, spawninfo);
 }

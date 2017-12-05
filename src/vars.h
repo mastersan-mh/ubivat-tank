@@ -25,7 +25,6 @@ typedef enum
     VARTYPE_BOOL,
     VARTYPE_INTEGER,
     VARTYPE_FLOAT,
-    VARTYPE_VECTOR1,
     VARTYPE_VECTOR2,
     VARTYPE_DIRECTION,
     VARTYPE_STRING,
@@ -50,13 +49,9 @@ typedef struct
 #define BOOL bool
 #define INTEGER int64_t
 #define FLOAT float
-#define VECTOR1 vec_t
 #define VECTOR2 vec2_t
 #define DIRECTION direction_t
 #define STRING char *
-
-typedef int64_t var_int_t;
-
 
 #define VARIABLE_STRING_DUP(text) \
 	Z_strdup((text))
@@ -75,7 +70,6 @@ typedef struct
         BOOL vbool;
         INTEGER vinteger;
         FLOAT vfloat;
-        VECTOR1 vvector1;
         VECTOR2 vvector2;
         DIRECTION vdirection;
         STRING vstring;
@@ -91,9 +85,6 @@ typedef struct
 #define VAR_VALUE_FLOAT(NAME, VALUE) \
         { .type = VARTYPE_FLOAT, .name = (NAME), .vfloat = (VALUE) }
 
-#define VAR_VALUE_VECTOR1(NAME, VALUE) \
-        { .type = VARTYPE_VECTOR1, .name = (NAME), .vvector1 = (VALUE) }
-
 #define VAR_VALUE_VECTOR2(NAME, VALUE_X, VALUE_Y) \
         { .type = VARTYPE_VECTOR2, .name = (NAME), .vvector2 = {(VALUE_X), (VALUE_Y)} }
 
@@ -103,18 +94,48 @@ typedef struct
 #define VAR_VALUE_STRING(NAME, VALUE) \
         { .type = VARTYPE_STRING, .name = (NAME), .vstring = (VALUE) }
 
-extern const var_descr_t * var_find(const var_descr_t * vars_descr, size_t vars_descr_num, const char * name);
+const var_descr_t * var_find(const var_descr_t * vars_descr, size_t vars_descr_num, const char * name);
+
+int var_set(
+    void * vars,
+    const var_descr_t * vars_descr,
+    size_t vars_descr_num,
+    const char * key,
+    const char * value
+);
 
 extern void vars_free(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num);
 
 extern size_t var_buffersize_calculate(const var_descr_t * vars_descr, size_t vars_descr_num);
 
-extern void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num, const char * title);
+bool vars_descr_eq(const var_descr_t * vds1, const var_descr_t * vds2, size_t size);
+
+void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_num);
+
+bool infovars_get_next_key(
+    const char ** info,
+    const char ** key_begin,
+    const char ** key_end,
+    const char ** value_begin,
+    const char ** value_end
+    );
+
+void vars_dump_info(const char * info);
 
 #ifdef VARS_DUMP_ALLOW
-#define VARS_DUMP(vars, vars_descr, vars_descr_num, title) vars_dump((vars), (vars_descr), (vars_descr_num), (title))
+#  define VARS_DUMP(vars, vars_descr, vars_descr_num, title, ...) \
+        do { \
+            if(title != NULL) game_console_send(title, ##__VA_ARGS__); \
+            vars_dump((vars), (vars_descr), (vars_descr_num)); \
+        } while (0)
+#  define VARS_INFO_DUMP(info, title, ...) \
+        do { \
+            if(title) game_console_send((title), ##__VA_ARGS__); \
+            vars_dump_info((info)); \
+        } while (0)
 #else
-#define VARS_DUMP(vars, vars_descr, vars_descr_num, title)
+#  define VARS_DUMP(vars, vars_descr, vars_descr_num, title, ...)
+#  define VARS_INFO_DUMP(info, title, ...)
 #endif
 
 #endif /* SRC_VARS_H_ */

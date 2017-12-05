@@ -13,10 +13,10 @@
 
 #include "../types.h"
 #include "../system.h"
+#include "../game_progs.h"
 #include "../world.h"
 #include "../map.h"
 #include "../entity.h"
-#include "../entity_helpers.h"
 #include "../model.h"
 #include "../img.h"
 #include "../sound.h"
@@ -27,7 +27,24 @@
 #include "../server.h"
 #include "../sv_game.h"
 #include "../client.h"
-
+#include "helpers.h"
 #include <stdlib.h>
+
+#define SPAWN_INFO(xclassname, xvarstype, xvars, xmodels_num) \
+    { \
+    .classname = (xclassname), \
+            .vars_size = sizeof(xvarstype), \
+            .vars_descr_num = ARRAYSIZE(xvars), \
+            .vars_descr = xvars, \
+            .models_num = (xmodels_num), \
+    }
+
+#define GAME_EXPORTS_ENTITIES_INFO(xinfos) \
+        .infos_num = ARRAYSIZE(xinfos), \
+        .infos = xinfos
+
+#define GAME_EXPORTS_ACTIONS(xactions) \
+        .actions_num = ARRAYSIZE(xactions), \
+        .actions = xactions
 
 #endif /* SRC_PROGS_PROGS_H_ */

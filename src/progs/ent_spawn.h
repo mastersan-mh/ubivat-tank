@@ -12,16 +12,10 @@
 
 #include "progs.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    INTEGER item_scores;
-    INTEGER item_health;
-    INTEGER item_armor ;
-    INTEGER item_ammo_missile;
-    INTEGER item_ammo_mine   ;
-} spawn_vars_t;
+ENTITY spawner_player_spawn(ENTITY parent, const char * spawninfo);
+ENTITY spawner_enemy_spawn(ENTITY parent, const char * spawninfo);
+ENTITY spawner_boss_spawn(ENTITY parent, const char * spawninfo);
 
-extern void entity_spawn_init(void);
+ENTITY client_player_spawn(const char * userinfo);
 
 #endif /* SRC_ENT_SPAWN_H_ */

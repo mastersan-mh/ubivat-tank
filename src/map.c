@@ -8,6 +8,7 @@
 #include "entity_internal.h"
 #include "video.h"
 #include "game.h"
+#include "game_progs_internal.h"
 #include "img.h"
 #include "fonts.h"
 #include "utf8.h"
@@ -82,145 +83,190 @@ void map_init(void)
  */
 static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entity_t * data)
 {
+#define PROTECT(res) \
+        if(res > INFOBUFSIZE) \
+        { \
+            game_console_send("Map load: temporary info build error"); \
+            break; \
+        }
 
+    int res;
     /* предмет не используется */
 #define PLAYER_ITEM_AMOUNT_NA  (0)
     /* бесконечно */
 #define PLAYER_ITEM_AMOUNT_INF (-1)
 
-#define STRBUFSIZE 2048
+#define STRBUFSIZE UT_VALUESIZE
     static char strbuf[STRBUFSIZE];
-    size_t strbuf_size;
-    STRING text;
-    entity_t * entity;
+#define INFOBUFSIZE (5120 + (UT_KEYSIZE + UT_VALUESIZE))
+    static char info[INFOBUFSIZE];
+
     switch(mapdata_mobj_type)
     {
         case MAPDATA_MOBJ_SPAWN_PLAYER:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("item_scores", data->spawn.scores),
-                        VAR_VALUE_INTEGER("item_health", data->spawn.health),
-                        VAR_VALUE_INTEGER("item_armor" , data->spawn.armor),
-                        VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
-                        VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
-                };
-                entity = entity_new_("spawn_player", NULL, values, ARRAYSIZE(values));
+                res = snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "item_scores: %d,"
+                    "item_health: %d,"
+                    "item_armor: %d,"
+                    "item_ammo_missile: %d,"
+                    "item_ammo_mine: %d",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->spawn.scores,
+                    data->spawn.health,
+                    data->spawn.armor,
+                    PLAYER_ITEM_AMOUNT_NA,
+                    PLAYER_ITEM_AMOUNT_NA
+                );
+                PROTECT(res);
+                game_entity_on_read("spawner_player", info);
             }
             break;
         case MAPDATA_MOBJ_SPAWN_ENEMY:
         {
-            var_value_t values[] =
-            {
-                    VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                    VAR_VALUE_DIRECTION("dir", DIR_UP),
-                    VAR_VALUE_INTEGER("item_scores", data->spawn.scores),
-                    VAR_VALUE_INTEGER("item_health", data->spawn.health),
-                    VAR_VALUE_INTEGER("item_armor" , data->spawn.armor),
-                    VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
-                    VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
-            };
-            entity = entity_new_("spawn_enemy", NULL, values, ARRAYSIZE(values));
+            snprintf(info, INFOBUFSIZE,
+                "origin: {%d %d},"
+                "dir: %d,"
+                "item_scores: %d,"
+                "item_health: %d,"
+                "item_armor: %d,"
+                "item_ammo_missile: %d,"
+                "item_ammo_mine: %d",
+                data->pos.x, data->pos.y,
+                DIR_UP,
+                data->spawn.scores,
+                data->spawn.health,
+                data->spawn.armor,
+                PLAYER_ITEM_AMOUNT_NA,
+                PLAYER_ITEM_AMOUNT_NA
+            );
+            PROTECT(res);
+            game_entity_on_read("spawner_enemy", info);
             break;
         }
         case MAPDATA_MOBJ_SPAWN_BOSS:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("item_scores", data->spawn.scores),
-                        VAR_VALUE_INTEGER("item_health", data->spawn.health),
-                        VAR_VALUE_INTEGER("item_armor" , data->spawn.armor),
-                        VAR_VALUE_INTEGER("item_ammo_missile", PLAYER_ITEM_AMOUNT_NA),
-                        VAR_VALUE_INTEGER("item_ammo_mine"   , PLAYER_ITEM_AMOUNT_NA),
-                };
-                entity = entity_new_("spawn_boss", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "item_scores: %d,"
+                    "item_health: %d,"
+                    "item_armor: %d,"
+                    "item_ammo_missile: %d,"
+                    "item_ammo_mine: %d",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->spawn.scores,
+                    data->spawn.health,
+                    data->spawn.armor,
+                    PLAYER_ITEM_AMOUNT_NA,
+                    PLAYER_ITEM_AMOUNT_NA
+                );
+                PROTECT(res);
+                game_entity_on_read("spawner_boss", info);
                 break;
             }
         case MAPDATA_MOBJ_ITEM_HEALTH :
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("amount", data->item.amount),
-                };
-                entity = entity_new_("item_health", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "amount: %d,",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->item.amount
+                );
+                PROTECT(res);
+                game_entity_on_read("item_health", info);
                 break;
             }
         case MAPDATA_MOBJ_ITEM_ARMOR:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("amount", data->item.amount),
-                };
-                entity = entity_new_("item_armor", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "amount: %d,",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->item.amount
+                );
+                PROTECT(res);
+                game_entity_on_read("item_armor", info);
                 break;
             }
         case MAPDATA_MOBJ_ITEM_STAR:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("amount", data->item.amount),
-                };
-                entity = entity_new_("item_scores", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "amount: %d,",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->item.amount
+                );
+                PROTECT(res);
+                game_entity_on_read("item_scores", info);
                 break;
             }
         case MAPDATA_MOBJ_ITEM_ROCKET:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("amount", data->item.amount),
-                };
-                entity = entity_new_("item_ammo_missile", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "amount: %d,",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->item.amount
+                );
+                PROTECT(res);
+                game_entity_on_read("item_ammo_missile", info);
                 break;
             }
         case MAPDATA_MOBJ_ITEM_MINE:
             {
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_INTEGER("amount", data->item.amount),
-                };
-                entity = entity_new_("item_ammo_mine", NULL, values, ARRAYSIZE(values));
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "amount: %d,",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    data->item.amount
+                );
+                PROTECT(res);
+                game_entity_on_read("item_ammo_mine", info);
                 break;
             }
         case MAPDATA_MOBJ_OBJ_EXIT:
             {
-                strbuf_size = strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message) + 1;
-                text = Z_malloc(strbuf_size);
-                memcpy(text, strbuf, strbuf_size);
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_STRING("text", text),
-                };
-                entity = entity_new_("exit", NULL, values, ARRAYSIZE(values));
+                strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "text: \"%s\",",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    strbuf
+                );
+                PROTECT(res);
+                game_entity_on_read("exit", info);
                 break;
             }
         case MAPDATA_MOBJ_OBJ_MESS:
             {
-                strbuf_size = strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message) + 1;
-                text = Z_malloc(strbuf_size);
-                memcpy(text, strbuf, strbuf_size);
-                var_value_t values[] =
-                {
-                        VAR_VALUE_VECTOR2("origin", data->pos.x, data->pos.y),
-                        VAR_VALUE_DIRECTION("dir", DIR_UP),
-                        VAR_VALUE_STRING("text", text),
-                };
-                entity = entity_new_("message", NULL, values, ARRAYSIZE(values));
+                strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
+                snprintf(info, INFOBUFSIZE,
+                    "origin: {%d %d},"
+                    "dir: %d,"
+                    "text: \"%s\",",
+                    data->pos.x, data->pos.y,
+                    DIR_UP,
+                    strbuf
+                );
+                PROTECT(res);
+                game_entity_on_read("message", info);
                 break;
             }
         default: ;

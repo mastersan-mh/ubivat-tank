@@ -37,10 +37,11 @@ void server_reply_send_info(const net_addr_t * net_addr)
     server_reply_send(net_addr, &reply);
 }
 
-void server_reply_send_connection_accepted(server_client_t * client)
+void server_reply_send_connection_result(server_client_t * client, bool accepted)
 {
     server_reply_t reply;
-    reply.type = G_SERVER_REPLY_CONNECTION_ACCEPTED;
+    reply.type = G_SERVER_REPLY_CONNECTION_RESULT;
+    reply.data.CONNECTION_RESULT.accepted = accepted;
     server_reply_client_send(client, &reply);
 }
 

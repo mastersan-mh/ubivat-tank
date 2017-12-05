@@ -12,12 +12,6 @@
 
 #include "progs.h"
 
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    STRING text;
-} entity_exit_t;
-
-extern void entity_exit_init(void);
+ENTITY exit_spawn(ENTITY parent, const char * spawninfo);
 
 #endif /* SRC_ENT_EXIT_H_ */
