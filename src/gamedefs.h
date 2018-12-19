@@ -12,6 +12,10 @@
 
 #include "config.h"
 
+#define CLIENT_PLAYERS_MAX 2
+#define CLIENTS_MAX 4
+#define PLAYERS_MAX (CLIENTS_MAX * CLIENT_PLAYERS_MAX)
+
 #define UT_KEYSIZE 64
 #define UT_VALUESIZE 2048
 

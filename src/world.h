@@ -16,11 +16,11 @@ typedef struct
     map_t * map;
 } world_t;
 
-extern int world_create(const char * mapfilename);
-extern void world_destroy(void);
-extern bool world_valid(void);
-extern const char * world_mapfilename_get(void);
-extern map_t * world_map_get(void);
-extern void world_handle(void);
+int world_create(const char * mapfilename);
+void world_destroy(void);
+bool world_valid(void);
+const char * world_mapfilename_get(void);
+map_t * world_map_get(void);
+void world_handle(void);
 
 #endif /* SRC_WORLD_H_ */

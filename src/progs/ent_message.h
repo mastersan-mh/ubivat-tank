@@ -12,6 +12,6 @@
 
 #include "progs_main.h"
 
-ENTITY message_spawn(ENTITY parent, const char * spawninfo);
+entity_t * message_spawn(entity_t * parent, const char * spawninfo);
 
 #endif /* SRC_ENT_MESSAGE_H_ */

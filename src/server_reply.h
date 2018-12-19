@@ -32,14 +32,15 @@ typedef union
     struct
     {
         bool accepted;
-    }CONNECTION_RESULT;
+        size_t clients_max;
+        size_t entities_max;
+    } CONNECTION_RESULT;
     struct
     {
         int players_num; /**< amount of client local players */
         struct
         {
-            char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
-            entity_id_t entityId;
+            size_t gclient; /* номер игрового клиента */
         } ent[2];
     } PLAYERS_ENTITY_SET;
     struct

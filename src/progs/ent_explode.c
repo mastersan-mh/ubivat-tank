@@ -6,6 +6,7 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 
 #include "ent_explode.h"
 #include "ent_player.h"
@@ -19,23 +20,22 @@ explodeinfo_t explodeinfo_table[EXPLODE_NUM] =
         { 200, 100, MAP_WALL_brick | MAP_WALL_W1 , SOUND_EXPLODE_GRENADE  }
 };
 
-static void explode_common_destroy_walls(ENTITY self, const explodeinfo_t * explodeinfo)
+static void explode_common_destroy_walls(entity_t * self, const explodeinfo_t * explodeinfo)
 {
     map_t * map = world_map_get();
 
     vec_t ix;
     vec_t iy;
 
-    vec_t halfbox = entity_bodybox_get(self) * 0.5f;
-    explode_vars_t * explode = entity_vars(self);
+    vec_t halfbox = self->c.bodybox * 0.5f;
 
     //проверка попаданий в стены
     for(iy = -halfbox; iy <= halfbox; iy++)
     {
         for(ix = -halfbox; ix <= halfbox; ix++)
         {
-            int x8 = VEC_TRUNC((explode->origin[0] + ix) / 8);
-            int y8 = VEC_TRUNC((explode->origin[1] + iy) / 8);
+            int x8 = VEC_TRUNC((self->c.origin[0] + ix) / 8);
+            int y8 = VEC_TRUNC((self->c.origin[1] + iy) / 8);
             if(
                     0 <= x8 && x8 < MAP_SX &&
                     0 <= y8 && y8 < MAP_SY
@@ -49,17 +49,15 @@ static void explode_common_destroy_walls(ENTITY self, const explodeinfo_t * expl
     }
 }
 
-static void explode_touch_common(ENTITY self, ENTITY other, const explodeinfo_t * explodeinfo)
+static void explode_touch_common(entity_t * self, entity_t * other, const explodeinfo_t * explodeinfo)
 {
     vec_t r;
     vec2_t d;
     bool self_attack;
 
-    vec_t other_halfbox = entity_bodybox_get(self) * 0.5f;
-    explode_vars_t * self_vars = entity_vars(self);
-    entity_vars_common_t  * other_vars = entity_vars(other);
+    vec_t other_halfbox = self->c.bodybox * 0.5f;
 
-    VEC2_SUB(d, other_vars->origin, self_vars->origin);
+    VEC2_SUB(d, other->c.origin, self->c.origin);
     if(
             (VEC_ABS(d[0]) <= other_halfbox) &&
             (VEC_ABS(d[1]) <= other_halfbox)
@@ -69,17 +67,17 @@ static void explode_touch_common(ENTITY self, ENTITY other, const explodeinfo_t 
     {
         r = VEC_SQRT(DOT_PRODUCT2(d, d)) - VEC_SQRT(sqrf(other_halfbox) + VEC_SQRT(other_halfbox))/2;
     }
-    if(r <= entity_bodybox_get(self) * 0.5f)
+    if(r <= self->c.bodybox * 0.5f)
     {
         //r = dx < dy ? dx : dy;
         //взрывом задели себя или товарища по команде(не для монстров)
-        self_attack = ( entity_parent(self) == other ) && entity_classname_cmp(other, "player") == 0 ;
+        self_attack = ( self->owner == other ) && entity_classname_cmp(other, "player") == 0 ;
         player_getdamage(other, self, self_attack, r, explodeinfo);
     }
 
 }
 
-static void explode_detonate(ENTITY self, explodetype_t type)
+static void explode_detonate(entity_t * self, explodetype_t type)
 {
     const explodeinfo_t * explodeinfo = &explodeinfo_table[type];
 
@@ -87,9 +85,9 @@ static void explode_detonate(ENTITY self, explodetype_t type)
 
     explode_common_destroy_walls(self, explodeinfo);
     //проверка попаданий в игрока
-    ENTITY attacked;
-
-    ENTITIES_FOREACH(attacked)
+    entity_t * attacked;
+    size_t i;
+    ENTITIES_FOREACH(attacked, i)
     {
         if(
                 entity_classname_cmp(attacked, "player") == 0 ||
@@ -100,7 +98,7 @@ static void explode_detonate(ENTITY self, explodetype_t type)
     }
 }
 
-static void explode_common_modelaction_startframef(ENTITY self, unsigned int imodel)
+static void explode_common_modelaction_startframef(entity_t * self, unsigned int imodel)
 {
     if(entity_classname_cmp(self, "explode_artillery") == 0)
     {
@@ -119,20 +117,19 @@ static void explode_common_modelaction_startframef(ENTITY self, unsigned int imo
     }
 }
 
-static void explode_common_modelaction_endframef(ENTITY self, unsigned int imodel)
+static void explode_common_modelaction_endframef(entity_t * self, unsigned int imodel)
 {
-    ENTITY parent;
-    if((parent = entity_parent(self)))
+    entity_t * owner;
+    if((owner = self->owner))
     {
-        player_vars_t * player_vars = entity_vars(parent);
-        if(player_vars->bull == self)
+        if(owner->bull == self)
         {
-            player_vars->bull = NULL;
+            owner->bull = NULL;
             /* вернуть камеру игроку */
-            entity_cam_reset(parent);
+            entity_cam_reset(owner);
         }
     }
-    entity_erase(self);
+    gi->unlink(self);
 }
 
 /*
@@ -159,11 +156,11 @@ static const entity_framessequence_t explode_big_fseq_explode =
         .lastframef = explode_common_modelaction_endframef
 };
 
-ENTITY explode_artillery_spawn(ENTITY parent, const char * spawninfo)
+entity_t * explode_artillery_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("explode_artillery", parent);
+    entity_t * self = entity_init("explode_artillery", parent);
 
-    entity_bodybox_set(self, 14.0f);
+    self->c.bodybox = 14.0f;
     entity_model_set(self, 0, ":/explode_small", 14.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_small_fseq_explode);
     entity_model_play_start(self, 0);
@@ -172,11 +169,11 @@ ENTITY explode_artillery_spawn(ENTITY parent, const char * spawninfo)
     return self;
 }
 
-ENTITY explode_missile_spawn(ENTITY parent, const char * spawninfo)
+entity_t * explode_missile_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("explode_missile", parent);
+    entity_t * self = entity_init("explode_missile", parent);
 
-    entity_bodybox_set(self, 22.0f);
+    self->c.bodybox = 22.0f;
     entity_model_set(self, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_big_fseq_explode);
     entity_model_play_start(self, 0);
@@ -185,11 +182,11 @@ ENTITY explode_missile_spawn(ENTITY parent, const char * spawninfo)
     return self;
 }
 
-ENTITY explode_mine_spawn(ENTITY parent, const char * spawninfo)
+entity_t * explode_mine_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("explode_mine", parent);
+    entity_t * self = entity_init("explode_mine", parent);
 
-    entity_bodybox_set(self, 22.0f);
+    self->c.bodybox = 22.0f;
     entity_model_set(self, 0, ":/explode_big", 22.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &explode_big_fseq_explode);
     entity_model_play_start(self, 0);

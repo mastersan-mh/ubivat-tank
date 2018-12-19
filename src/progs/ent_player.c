@@ -6,6 +6,7 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 #include "progs_main.h"
 
 #include "ent_player.h"
@@ -22,7 +23,7 @@
 #define PLAYER_SOUND_MOVE 0
 #define PLAYER_SOUND_ATTACK 1
 
-player_invitemtype_t player_entity_to_itemtype(const ENTITY entity)
+player_invitemtype_t player_entity_to_itemtype(const entity_t * entity)
 {
     static const char *entityclassnames[] =
     {
@@ -39,35 +40,31 @@ player_invitemtype_t player_entity_to_itemtype(const ENTITY entity)
         if(entity_classname_cmp(entity, entityclassnames[i]) == 0)
             return i;
     }
-    game_halt("player_entity_to_itemtype(): invalid item = %s\n", entity_classname_get(entity));
+    gi->eprint("player_entity_to_itemtype(): invalid item = %s\n", entity->classname);
     return -1;
 }
 
 /*
  * инициализируем игрока при спавне
  */
-void player_spawn_init(ENTITY player)
+void player_spawn_init(entity_t * player)
 {
-    ENTITY spawn = entity_parent(player);
+    entity_t * spawn = player->owner;
     if(!spawn)
-        game_halt("Error: Player spawn is NULL, can not create player.");
+        gi->eprint("Error: Player spawn is NULL, can not create player.");
 
-    player_vars_t * pvars = entity_vars(player);
+    VEC2_COPY(player->c.origin, spawn->c.origin);
 
-    spawn_vars_t * sp = entity_vars(spawn);
-
-    VEC2_COPY(pvars->origin, sp->origin);
-
-    INTEGER spawn_scores = sp->item_scores;
+    INTEGER spawn_scores = spawn->item_scores;
     if(0 <= spawn_scores && spawn_scores <= PLAYER_SCORES_MAX)
-        pvars->scores = spawn_scores;
+        player->scores = spawn_scores;
 
-    player_class_init(player, pvars);
+    player_class_init(player);
 
 
-    playerinfo_t * playerinfo = &playerinfo_table[pvars->level];
+    playerinfo_t * playerinfo = &playerinfo_table[player->level];
 
-    void inventory_item_init(ENTITY player, INTEGER * playervar, INTEGER infovar, INTEGER spawn_value)
+    void inventory_item_init(entity_t * player, INTEGER * playervar, INTEGER infovar, INTEGER spawn_value)
     {
         if( spawn_value > infovar )
             spawn_value = infovar;
@@ -78,12 +75,12 @@ void player_spawn_init(ENTITY player)
             else
             {
                 /* игрок-человек */
-                if(sv_game_flag_localgame())
+                if(gi->sv_game_flag_localgame())
                     spawn_value = infovar;
                 else
                 {
                     //по уровням
-                    if(sv_game_is_first_map()) // первая карта
+                    if(gi->sv_game_is_first_map()) // первая карта
                         spawn_value = infovar;
                     else // не первая карта
                         spawn_value = *playervar;
@@ -93,27 +90,27 @@ void player_spawn_init(ENTITY player)
         *playervar = spawn_value;
     }
 
-    INTEGER player_health = pvars->item_health;
+    INTEGER player_health = player->item_health;
     if(player_health < 0)
     {
-        player_health = sp->item_health;
+        player_health = spawn->item_health;
         if(player_health < 0)
             player_health = playerinfo->items[ITEM_SCORES];
-        pvars->item_health = player_health;
+        player->item_health = player_health;
     }
 
     /* инициализация инвентаря */
-    inventory_item_init(player, &pvars->item_health      , playerinfo->items[ITEM_HEALTH]      , sp->item_health);
-    inventory_item_init(player, &pvars->item_armor       , playerinfo->items[ITEM_ARMOR]       , sp->item_armor );
-    inventory_item_init(player, &pvars->item_ammo_missile, playerinfo->items[ITEM_AMMO_MISSILE], sp->item_ammo_missile);
-    inventory_item_init(player, &pvars->item_ammo_mine   , playerinfo->items[ITEM_AMMO_MINE]   , sp->item_ammo_mine);
+    inventory_item_init(player, &player->item_health      , playerinfo->items[ITEM_HEALTH]      , spawn->item_health);
+    inventory_item_init(player, &player->item_armor       , playerinfo->items[ITEM_ARMOR]       , spawn->item_armor );
+    inventory_item_init(player, &player->item_ammo_missile, playerinfo->items[ITEM_AMMO_MISSILE], spawn->item_ammo_missile);
+    inventory_item_init(player, &player->item_ammo_mine   , playerinfo->items[ITEM_AMMO_MINE]   , spawn->item_ammo_mine);
 
-    pvars->frags = 0;
-    pvars->bull         = NULL;
-    pvars->move.speed   = 0;
-    pvars->move.go      = false;
-    pvars->attack       = false;
-    pvars->reloadtime_d = 0;
+    player->frags = 0;
+    player->bull         = NULL;
+    player->move.speed   = 0;
+    player->move.go      = false;
+    player->attack       = false;
+    player->reloadtime_d = 0;
 };
 
 
@@ -128,7 +125,7 @@ playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM] =
         { { PLAYER_SCOREPERCLASS * 6,   5000,  5000, PLAYER_ITEM_AMOUNT_INF, 50            , 50             }, 90/2 * SPEEDSCALE, ":/tank5"}  /* BOSS */
 };
 
-static void tank_common_modelaction_lastframef(ENTITY entity, unsigned int imodel)
+static void tank_common_modelaction_lastframef(entity_t * entity, unsigned int imodel)
 {
     entity_model_play_start(entity, imodel);
 }
@@ -140,81 +137,71 @@ static const entity_framessequence_t tank_fseq_run =
         .lastframef = tank_common_modelaction_lastframef
 };
 
-static void player_done(ENTITY self);
-static ENTITY_FUNCTION_THINK(player_think);
+static void player_think(entity_t * self);
 
-static void enemy_done(ENTITY self);
-static ENTITY_FUNCTION_THINK(enemy_think);
+static void enemy_think(entity_t * self);
 
-static void boss_done(ENTITY self);
-static ENTITY_FUNCTION_THINK(boss_think);
+static void boss_think(entity_t * self);
 
 
 /*
  * touchs
  */
-static void player_touch_message(ENTITY self, ENTITY exposed)
+static void player_touch_message(entity_t * self, entity_t * other)
 {
-    message_vars_t * msg = entity_vars(exposed);
     //отправим сообщение игроку
-    sv_game_message_send(msg->text);
+    gi->centerprint(other->text);
 }
 
-static void player_touch_exit(ENTITY self, ENTITY exposed)
+static void player_touch_exit(entity_t * self, entity_t * other)
 {
-    exit_vars_t * msg = entity_vars(exposed);
-    //отправим сообщение игроку
-    sv_game_message_send(msg->text);
-    sv_game_win();
+    gi->centerprint(other->text);
+    gi->sv_game_win();
 }
 
-static void player_item_pickup_scores(ENTITY player, ENTITY item)
+static void player_item_pickup_scores(entity_t * player, entity_t * item)
 {
-    player_vars_t * pl = entity_vars(player);
-    INTEGER level = pl->level;
+    INTEGER level = player->level;
     playerinfo_t *playerinfo = &playerinfo_table[level];
 
-    entity_unspawn(item);
+    gi->unlink(item);
+    entity_done(item);
 
-    item_vars_t * it = entity_vars(item);
+    INTEGER scores = ( player->scores += item->amount );
 
-    INTEGER scores = ( pl->scores += it->amount );
-
-    player_class_init(player, entity_vars(player));
+    player_class_init(player);
     if(scores / PLAYER_SCOREPERCLASS >= 5)
     {
-        if(pl->item_health < playerinfo->items[ITEM_HEALTH])
-            pl->item_health = playerinfo->items[ITEM_HEALTH];
-        if(pl->item_armor < playerinfo->items[ITEM_ARMOR])
-            pl->item_armor = playerinfo->items[ITEM_ARMOR];
+        if(player->item_health < playerinfo->items[ITEM_HEALTH])
+            player->item_health = playerinfo->items[ITEM_HEALTH];
+        if(player->item_armor < playerinfo->items[ITEM_ARMOR])
+            player->item_armor = playerinfo->items[ITEM_ARMOR];
     }
 }
 
 
-static void player_item_pickup(ENTITY player, ENTITY item)
+static void player_item_pickup(entity_t * player, entity_t * item)
 {
-    player_vars_t * pl = entity_vars(player);
-    INTEGER level = pl->level;
+    INTEGER level = player->level;
 
-    item_vars_t * it = entity_vars(item);
     player_invitemtype_t invitemtype = player_entity_to_itemtype(item);
 
     INTEGER * amount;
 
     switch(invitemtype)
     {
-        /* case ITEM_SCORES: amount = &pl->scores; break; */
-        case ITEM_HEALTH: amount = &pl->item_health; break;
-        case ITEM_ARMOR : amount = &pl->item_armor; break;
-        /* case ITEM_AMMO_ARTILLERY: amount = &pl->item_ammo_artillery; break; */
-        case ITEM_AMMO_MISSILE  : amount = &pl->item_ammo_missile; break;
-        case ITEM_AMMO_MINE     : amount = &pl->item_ammo_mine; break;
+        /* case ITEM_SCORES: amount = &player->scores; break; */
+        case ITEM_HEALTH: amount = &player->item_health; break;
+        case ITEM_ARMOR : amount = &player->item_armor; break;
+        /* case ITEM_AMMO_ARTILLERY: amount = &player->item_ammo_artillery; break; */
+        case ITEM_AMMO_MISSILE  : amount = &player->item_ammo_missile; break;
+        case ITEM_AMMO_MINE     : amount = &player->item_ammo_mine; break;
         default: return;
     }
 
     playerinfo_t *playerinfo = &playerinfo_table[level];
 
-    INTEGER itemamount = it->amount;
+    INTEGER itemamount = item->amount;
 
     INTEGER itemamount_setted;
     if(
@@ -225,20 +212,21 @@ static void player_item_pickup(ENTITY player, ENTITY item)
             )
     )
     {
-        entity_unspawn(item);
+        entity_done(item);
+        gi->unlink(item);
         itemamount_setted += itemamount;
         coerce_value_int(&itemamount_setted, 0, playerinfo->items[invitemtype]);
         *amount = itemamount_setted;
     }
 }
 
-void player_action_move(player_vars_t * pl, direction_t dir, bool go)
+void player_action_move(entity_t * player, direction_t dir, bool go)
 {
 
 /*
-    if(server.flags.allow_respawn && !pl->item_health <=0)
+    if(server.flags.allow_respawn && !player->item_health <=0)
     {
-        game_console_send("server: respawn player.");
+        game_cprint("server: respawn player.");
         server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
         void * vars = storage ? storage->vars : NULL;
 
@@ -246,13 +234,13 @@ void entity_respawn(entity_t * entity, const void * vars)
 {
     if(entity->spawned)
         return;
-    entity_restore((ENTITY)entity, vars);
+    entity_restore((entity_t *)entity, vars);
     const game_exports_entityinfo_t * info = entity->info;
     if(info->spawn)
-        info->spawn((ENTITY)entity, NULL);
+        info->spawn((entity_t *)entity, NULL);
     entity->spawned = true;
     entity_vars_common_t * common = entity->vars;
-    common->alive = true;
+    common->c.alive = true;
 }
 
         entity_respawn(entity, vars);
@@ -261,23 +249,23 @@ void entity_respawn(entity_t * entity, const void * vars)
 */
 
     if(go)
-        pl->dir = dir;
+        player->c.dir = dir;
     else
     {
-        if(pl->dir != dir)
+        if(player->c.dir != dir)
             return;
     }
-    pl->move.go = go;
+    player->move.go = go;
 }
 
-void player_action_attack(player_vars_t * pl, bool attack, weapontype_t weap)
+void player_action_attack(entity_t * player, bool attack, weapontype_t weap)
 {
     if(attack)
-        pl->weap = weap;
-    pl->attack = attack;
+        player->weap = weap;
+    player->attack = attack;
 }
 
-static void player_touch(ENTITY self, ENTITY other)
+static void player_touch(entity_t * self, entity_t * other)
 {
     if(entity_classname_cmp(other, "item_scores") == 0 ){ player_item_pickup_scores(self, other); return; }
     if(entity_classname_cmp(other, "item_health") == 0 ){ player_item_pickup(self, other); return; }
@@ -288,42 +276,39 @@ static void player_touch(ENTITY self, ENTITY other)
     if(entity_classname_cmp(other, "exit"   ) == 0 ){ player_touch_exit(self, other); return; }
 };
 
-static void player_think_common(ENTITY self);
+static void player_think_common(entity_t * self);
 
-ENTITY player_spawn(ENTITY parent, const char * spawninfo)
+entity_t * player_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("player", parent);
+    entity_t * self = entity_init("player", parent);
     if(!self)
         return NULL;
 
-    entity_done_set(self, player_done);
-    entity_thinker_set(self, player_think);
-    entity_toucher_set(self, player_touch);
+    self->c.flags =  ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 16.0f;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 16.0f);
+    self->think = player_think;
+    self->touch = player_touch;
 
     entity_model_set(self, 0, ":/tank1"      , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(self, 1, ":/flag_player", 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &tank_fseq_run);
 
 
-    player_vars_t * pl = entity_vars(self);
-
 #if defined(_DEBUG_PLAYERMAXLEVEL)
-    pl->scores      = 9000;
-    pl->item_health = 100;
-    pl->item_armor  = 100;
-    pl->item_ammo_missile = 100;
-    pl->item_ammo_mine    = 100;
+    self->scores      = 9000;
+    self->item_health = 100;
+    self->item_armor  = 100;
+    self->item_ammo_missile = 100;
+    self->item_ammo_mine    = 100;
 #endif
 
-    //    entity_restore(player, storage);
     /*
+        entity_restore(player, storage);
         spawn_vars_t * sp = entity_vars(spawn);
         player_vars_t * vars = entity_vars(player);
-        VEC2_COPY(vars->origin, sp->origin);
-        vars->dir = sp->dir;
+        VEC2_COPY(vars->c.origin, sp->c.origin);
+        vars->c.dir = sp->c.dir;
         vars->scores = sp->item_scores;
         vars->item_health = sp->item_health;
         vars->item_armor = sp->item_armor;
@@ -334,30 +319,25 @@ ENTITY player_spawn(ENTITY parent, const char * spawninfo)
 
     player_spawn_init(self);// parent = spawn
 
+    gi->link(self);
+
     return self;
 }
 
-static void player_done(ENTITY self)
-{
-    sound_play_stop(self, -1);
-    player_vars_t * pl = entity_vars(self);
-    ctrl_AI_done(&(pl->brain));
-}
-
-ENTITY_FUNCTION_THINK(player_think)
+void player_think(entity_t * self)
 {
     player_think_common(self);
 }
 
-ENTITY enemy_spawn(ENTITY parent, const char * spawninfo)
+entity_t * enemy_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("enemy", parent);
+    entity_t * self = entity_init("enemy", parent);
 
-    entity_done_set(self, enemy_done);
-    entity_thinker_set(self, enemy_think);
+    self->c.flags =  ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 16.0f;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 16.0f);
+    self->think = enemy_think;
+
     entity_model_set(self, 0, ":/tank1"     , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(self, 1, ":/flag_enemy", 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &tank_fseq_run);
@@ -365,31 +345,25 @@ ENTITY enemy_spawn(ENTITY parent, const char * spawninfo)
     entity_vars_set_all(self, spawninfo);
 
     player_spawn_init(self);
-    player_vars_t * pl = entity_vars(self);
-    ctrl_AI_init(&pl->brain);
+    ctrl_AI_init(&self->brain);
     return self;
 }
 
-static void enemy_done(ENTITY self)
-{
-    player_done(self);
-}
-
-ENTITY_FUNCTION_THINK(enemy_think)
+void enemy_think(entity_t * self)
 {
     think_enemy(self);
     player_think_common(self);
 }
 
-ENTITY boss_spawn(ENTITY parent, const char * spawninfo)
+entity_t * boss_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("boss", parent);
+    entity_t * self = entity_init("boss", parent);
 
-    entity_done_set(self, boss_done);
-    entity_thinker_set(self, boss_think);
+    self->c.flags =  ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 16.0f;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 16.0f);
+    self->think = boss_think;
+
     entity_model_set(self, 0, ":/tank1"    , 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_set(self, 1, ":/flag_boss", 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &tank_fseq_run);
@@ -397,45 +371,36 @@ ENTITY boss_spawn(ENTITY parent, const char * spawninfo)
     entity_vars_set_all(self, spawninfo);
 
     player_spawn_init(self);
-    player_vars_t * pl = entity_vars(self);
-    ctrl_AI_init(&pl->brain);
+    ctrl_AI_init(&self->brain);
     return self;
 }
 
-static void boss_done(ENTITY self)
-{
-    player_done(self);
-}
-
-ENTITY_FUNCTION_THINK(boss_think)
+void boss_think(entity_t * self)
 {
     think_enemy(self);
     player_think_common(self);
 }
 
-void player_handle_common_shoot(ENTITY player, int info_item, INTEGER * item)
+void player_handle_common_shoot(entity_t * player, int info_item, INTEGER * item)
 {
-    player_vars_t * pl = entity_vars(player);
-
     if(
             (info_item == PLAYER_ITEM_AMOUNT_INF)||
             (*item > 0)
     )
     {
         // пули не кончились
-        pl->reloadtime_d = c_p_WEAP_reloadtime;
+        player->reloadtime_d = c_p_WEAP_reloadtime;
         //создаем пулю
-        weaponinfo_t * weaponinfo = &weaponinfo_table[pl->weap];
+        weaponinfo_t * weaponinfo = &weaponinfo_table[player->weap];
         direction_t dir;
-        if(pl->weap != WEAP_MINE)
-            dir = pl->dir;
+        if(player->weap != WEAP_MINE)
+            dir = player->c.dir;
         else
-            dir = entity_direction_invert(pl->dir);
+            dir = entity_direction_invert(player->c.dir);
 
-        ENTITY bull = spawn_entity_by_class(weaponinfo->entityname, NULL, player);
-        bull_vars_t * bool_vars = entity_vars(bull);
-        VEC2_COPY(bool_vars->origin, pl->origin);
-        bool_vars->dir = dir;
+        entity_t * bull = spawn_entity_by_class(weaponinfo->entityname, NULL, player);
+        VEC2_COPY(bull->c.origin, player->c.origin);
+        bull->c.dir = dir;
         sound_play_start(player, PLAYER_SOUND_ATTACK, weaponinfo->sound_index, 1);
 
         if(
@@ -449,12 +414,10 @@ void player_handle_common_shoot(ENTITY player, int info_item, INTEGER * item)
 /*
  * обработка игрока
  */
-static void player_think_common(ENTITY self)
+static void player_think_common(entity_t * self)
 {
 
     map_t * map = world_map_get();
-
-    player_vars_t * pl = entity_vars(self);
 
     enum
     {
@@ -468,30 +431,30 @@ static void player_think_common(ENTITY self)
     vec2_t Sorig;
     vec_t L,R,U,D;
 
-    INTEGER level = pl->level;
+    INTEGER level = self->level;
     playerinfo_t *playerinfo = &playerinfo_table[level];
 
-    pl->alive = ( pl->item_health > 0 );
+    self->c.alive = ( self->item_health > 0 );
 
-    if(!pl->alive)
+    if(!self->c.alive)
     {
         state = STATE_DEAD;
     }
     else
     {
-        if(pl->move.go)
+        if(self->move.go)
         {
-            if(!pl->move.prev_go)
+            if(!self->move.prev_go)
                 state = STATE_RUN_BEGIN;
             else
                 state = STATE_RUN;
         }
         else
         {
-            if(pl->move.prev_go)
+            if(self->move.prev_go)
                 state = STATE_RUN_END;
         }
-        pl->move.prev_go = pl->move.go;
+        self->move.prev_go = self->move.go;
     }
 
     switch(state)
@@ -505,41 +468,40 @@ static void player_think_common(ENTITY self)
 
         sound_play_stop(self, -1);
 
-        if(entity_is_spawned(self))
+        if(self->spawned)
         {
-            ENTITY explode = explode_missile_spawn(self, NULL);
-            entity_vars_common_t * vars = entity_vars(explode);
-            VEC2_COPY(vars->origin, pl->origin);
-            vars->dir = pl->dir;
+            entity_t * explode = explode_missile_spawn(self, NULL);
+            VEC2_COPY(explode->c.origin, self->c.origin);
+            explode->c.dir = self->c.dir;
 
-            entity_unspawn(self);
+            self->spawned = false;
 
             if(entity_classname_cmp(self, "player") != 0)
-                entity_hide(self);
-            pl->item_armor = 0;
-            pl->item_ammo_missile = 0;
-            pl->item_ammo_mine = 0;
+                gi->unlink(self);
+            self->item_armor = 0;
+            self->item_ammo_missile = 0;
+            self->item_ammo_mine = 0;
         };
         if(entity_classname_cmp(self, "boss") == 0)
-            sv_game_win();
+            gi->sv_game_win();
         break;
     }
 
 
-    if(pl->alive)
+    if(self->c.alive)
     {
         //игрок жив
-        if(pl->bull)
+        if(self->bull)
         {
-            bull_vars_t * bull_vars = entity_vars(pl->bull);
-            bull_vars->dir = pl->dir;
-            pl->move.go = false;
+            entity_t * bull = self->bull;
+            bull->c.dir = self->c.dir;
+            self->move.go = false;
         };
-        if(pl->move.go)
+        if(self->move.go)
         {
             //игрок едет
-            pl->move.speed += PLAYER_ACCEL * dtime;
-            if(pl->move.speed > playerinfo->speed) pl->move.speed = playerinfo->speed;
+            self->move.speed += PLAYER_ACCEL * gi->dtime();
+            if(self->move.speed > playerinfo->speed) self->move.speed = playerinfo->speed;
             if(!sound_started(self, PLAYER_SOUND_MOVE))
             {
                 sound_play_start(self, PLAYER_SOUND_MOVE, SOUND_PLAYER_TANKMOVE, -1);
@@ -549,73 +511,73 @@ static void player_think_common(ENTITY self)
         else
         {
             //игрок останавливается
-            pl->move.speed -= PLAYER_DECEL * dtime;
+            self->move.speed -= PLAYER_DECEL * gi->dtime();
         };
-        if(pl->move.speed < 0)
+        if(self->move.speed < 0)
         {
             sound_play_stop(self, PLAYER_SOUND_MOVE);
-            pl->move.speed = 0;
+            self->move.speed = 0;
         }
-        entity_move(self, pl->dir, pl->move.speed, true);
+        entity_move(self, self->c.dir, self->move.speed, true);
 
         vec_t speed_s = playerinfo->speed / 4;
 
-        vec_t halfbox = entity_bodybox_get(self) * 0.5;
+        vec_t halfbox = self->c.bodybox * 0.5;
         vec_t quarterbox = halfbox * 0.5f;
         //стрейф
-        switch(pl->dir)
+        switch(self->c.dir)
         {
         case DIR_UP:
         case DIR_DOWN:
-            VEC2_COPY(Sorig, pl->origin);
+            VEC2_COPY(Sorig, self->c.origin);
             Sorig[0] -= quarterbox;
-            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &L);
-            VEC2_COPY(Sorig, pl->origin);
+            map_clip_find_near(map, Sorig, halfbox, self->c.dir, MAP_WALL_CLIP, halfbox + 2, &L);
+            VEC2_COPY(Sorig, self->c.origin);
             Sorig[0] += quarterbox;
-            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &R);
+            map_clip_find_near(map, Sorig, halfbox, self->c.dir, MAP_WALL_CLIP, halfbox + 2, &R);
             if((halfbox<L) && (R-1<=halfbox)) entity_move(self, DIR_LEFT, speed_s, true);//strafe left
             if((halfbox<R) && (L-1<=halfbox)) entity_move(self, DIR_RIGHT, speed_s, true);//strafe right
             break;
         case DIR_LEFT:
         case DIR_RIGHT:
-            VEC2_COPY(Sorig, pl->origin);
+            VEC2_COPY(Sorig, self->c.origin);
             Sorig[1] -= quarterbox;
-            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &D);
-            VEC2_COPY(Sorig, pl->origin);
+            map_clip_find_near(map, Sorig, halfbox, self->c.dir, MAP_WALL_CLIP, halfbox + 2, &D);
+            VEC2_COPY(Sorig, self->c.origin);
             Sorig[1] += quarterbox;
-            map_clip_find_near(map, Sorig, halfbox, pl->dir, MAP_WALL_CLIP, halfbox + 2, &U);
+            map_clip_find_near(map, Sorig, halfbox, self->c.dir, MAP_WALL_CLIP, halfbox + 2, &U);
             if((halfbox < U)&&(D-1 <= halfbox)) entity_move(self, DIR_UP  , speed_s, true);//strafe up
             if((halfbox < D)&&(U-1 <= halfbox)) entity_move(self, DIR_DOWN, speed_s, true);//strafe down
             break;
         }
     }
     //стрельба
-    if(!pl->attack)
+    if(!self->attack)
     {
         //игрок не атакует
-        if(pl->reloadtime_d>0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
+        if(self->reloadtime_d>0) self->reloadtime_d -= gi->dtime();//учитываем время на перезарядку
     }
     else
     {
         //игрок атакует
-        if(pl->alive)
+        if(self->c.alive)
         {
-            if(pl->reloadtime_d > 0) pl->reloadtime_d -= dtime;//учитываем время на перезарядку
+            if(self->reloadtime_d > 0) self->reloadtime_d -= gi->dtime();//учитываем время на перезарядку
             else
             {
-                if(!pl->bull)
+                if(!self->bull)
                 {
 
-                    switch(pl->weap)
+                    switch(self->weap)
                     {
                     case WEAP_ARTILLERY:
-                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_ARTILLERY], &pl->item_ammo_artillery);
+                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_ARTILLERY], &self->item_ammo_artillery);
                         break;
                     case WEAP_MISSILE  :
-                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_MISSILE], &pl->item_ammo_missile  );
+                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_MISSILE], &self->item_ammo_missile  );
                         break;
                     case WEAP_MINE     :
-                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_MINE], &pl->item_ammo_mine);
+                        player_handle_common_shoot(self, playerinfo->items[ITEM_AMMO_MINE], &self->item_ammo_mine);
                         break;
                     default: ;
                     }
@@ -624,13 +586,13 @@ static void player_think_common(ENTITY self)
             }
         }
     }
-    if(pl->reloadtime_d < 0) pl->reloadtime_d = 0;
+    if(self->reloadtime_d < 0) self->reloadtime_d = 0;
 }
 
 /*
  * инициализация класса танка
  */
-void player_class_init_item_amount(ENTITY player, INTEGER * item_amount_dest, INTEGER item_amount_src)
+void player_class_init_item_amount(entity_t * player, INTEGER * item_amount_dest, INTEGER item_amount_src)
 {
     if(
             item_amount_src == PLAYER_ITEM_AMOUNT_NA ||
@@ -646,24 +608,24 @@ void player_class_init_item_amount(ENTITY player, INTEGER * item_amount_dest, IN
         *item_amount_dest = item_amount_src;
 }
 
-void player_class_init(ENTITY player, player_vars_t * pl)
+void player_class_init(entity_t * player)
 {
 
-    int level = pl->scores / PLAYER_SCOREPERCLASS;
+    int level = player->scores / PLAYER_SCOREPERCLASS;
     if(level > PLAYER_LEVEL5) level = PLAYER_LEVEL5;
     if( entity_classname_cmp(player, "boss") == 0 )
         level = PLAYER_LEVEL_BOSS;
 
-    pl->level = level;
+    player->level = level;
 
     playerinfo_t * playerinfo = &playerinfo_table[level];
 
-    player_class_init_item_amount(player, &pl->scores     , playerinfo->items[ITEM_SCORES]);
-    player_class_init_item_amount(player, &pl->item_health, playerinfo->items[ITEM_HEALTH]);
-    player_class_init_item_amount(player, &pl->item_armor , playerinfo->items[ITEM_ARMOR]);
-    player_class_init_item_amount(player, &pl->item_ammo_artillery, playerinfo->items[ITEM_AMMO_ARTILLERY]);
-    player_class_init_item_amount(player, &pl->item_ammo_missile  , playerinfo->items[ITEM_AMMO_MISSILE]);
-    player_class_init_item_amount(player, &pl->item_ammo_mine     , playerinfo->items[ITEM_AMMO_MINE]);
+    player_class_init_item_amount(player, &player->scores     , playerinfo->items[ITEM_SCORES]);
+    player_class_init_item_amount(player, &player->item_health, playerinfo->items[ITEM_HEALTH]);
+    player_class_init_item_amount(player, &player->item_armor , playerinfo->items[ITEM_ARMOR]);
+    player_class_init_item_amount(player, &player->item_ammo_artillery, playerinfo->items[ITEM_AMMO_ARTILLERY]);
+    player_class_init_item_amount(player, &player->item_ammo_missile  , playerinfo->items[ITEM_AMMO_MISSILE]);
+    player_class_init_item_amount(player, &player->item_ammo_mine     , playerinfo->items[ITEM_AMMO_MINE]);
 
     entity_model_set(player, 0, playerinfo->modelname, 16.0f / 2.0f, 0.0f, 0.0f);
     entity_model_sequence_set(player, 0, &tank_fseq_run);
@@ -673,17 +635,16 @@ void player_class_init(ENTITY player, player_vars_t * pl)
 /*
  * вычисление повреждения наносимого игроку
  */
-void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo)
+void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo)
 {
-    player_vars_t * pl = entity_vars(player);
     int damage_full;
     int armor;
 
-    vec_t radius = entity_bodybox_get(explode) * 0.5f;
+    vec_t radius = explode->c.bodybox * 0.5f;
 
     //weapon_info_t * weapinfo = &wtable[explode->explode.type];
 
-    if( pl->item_health > 0 && distance <= radius )
+    if( player->item_health > 0 && distance <= radius )
     {
         if(self)
             damage_full = explodeinfo->selfdamage * (1-distance/radius);
@@ -693,36 +654,35 @@ void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, 
         int damage_armor = damage_full*2/3;
         int damage_health = damage_full - damage_armor;
 
-        armor = pl->item_armor - damage_armor;
-        pl->item_health -= damage_health;
+        armor = player->item_armor - damage_armor;
+        player->item_health -= damage_health;
         if(armor < 0)
         {
-            pl->item_health += armor;
-            pl->item_armor = 0;
+            player->item_health += armor;
+            player->item_armor = 0;
         }
         else
-            pl->item_armor = armor;
-        if(pl->item_health <= 0)
+            player->item_armor = armor;
+        if(player->item_health <= 0)
         {
-            ENTITY killer = entity_parent(explode);
+            entity_t * killer = explode->owner;
             if(killer)
             {
-                player_vars_t * pl = entity_vars(killer);
                 if(!self)
                 {
                     //атакующему добавим очки
-                    pl->fragstotal++;
-                    pl->frags++;
-                    pl->scores += PLAYER_SCORES_PER_ENEMY;
+                    killer->fragstotal++;
+                    killer->frags++;
+                    killer->scores += PLAYER_SCORES_PER_ENEMY;
                 }
                 else
                 {
                     //атакующий умер от своей пули
-                    pl->fragstotal--;
-                    pl->frags--;
-                    pl->scores = 0;
+                    killer->fragstotal--;
+                    killer->frags--;
+                    killer->scores = 0;
                 }
-                player_class_init(killer, pl);
+                player_class_init(killer);
             }
         }
     }
@@ -734,11 +694,10 @@ void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, 
 /*
  * вывод информации об игроке
  */
-void player_ui_draw(camera_t * cam, ENTITY player)
+void player_ui_draw(camera_t * cam, entity_common_t * entity)
 {
     if(!world_valid())
         return;
-    player_vars_t * pl = entity_vars(player);
     static image_index_t list[] =
     {
             IMG_HUD_ICON_TANK0,
@@ -748,7 +707,8 @@ void player_ui_draw(camera_t * cam, ENTITY player)
             IMG_HUD_ICON_TANK4,
     };
 
-    INTEGER level = pl->level;
+    entity_t * player = (entity_t*)entity;
+    INTEGER level = player->level;
     playerinfo_t *playerinfo = &playerinfo_table[level];
 
     int ref_y = VIDEO_SCREEN_H - 16 * 2;
@@ -760,8 +720,8 @@ void player_ui_draw(camera_t * cam, ENTITY player)
     ui_drawimage(cam, 16 * 0     , ref_y, IMG_ITEM_HEALTH);
     ui_drawimage(cam, 16 * 6     , ref_y, IMG_ITEM_ARMOR);
 
-    ui_printf(cam, 16 * 0 + 16, ref_y, "%ld", pl->item_health);
-    ui_printf(cam, 16 * 6 + 16, ref_y, "%ld", pl->item_armor);
+    ui_printf(cam, 16 * 0 + 16, ref_y, "%ld", player->item_health);
+    ui_printf(cam, 16 * 6 + 16, ref_y, "%ld", player->item_armor);
     ui_printf(cam, 16 * 0 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_HEALTH]);
     ui_printf(cam, 16 * 6 + 16, ref_y + 8, "%d", playerinfo->items[ITEM_ARMOR]);
 
@@ -773,10 +733,10 @@ void player_ui_draw(camera_t * cam, ENTITY player)
     ui_drawimage(cam, 16 * 8, ref_y, weaponinfo_table[2].icon);
 
     ui_printf(cam, 16 * 4 + 16, ref_y + 4, "@"); // player->items[ITEM_AMMO_ARTILLERY]
-    if(pl->item_ammo_missile >= 0)
-        ui_printf(cam, 16 * 6 + 16, ref_y + 4, "%ld", pl->item_ammo_missile);
-    if(pl->item_ammo_mine >= 0)
-        ui_printf(cam, 16 * 8 + 16, ref_y + 4, "%ld", pl->item_ammo_mine);
-    ui_printf(cam, 16 * 0 + 16, ref_y +  4, "%ld", pl->scores);
+    if(player->item_ammo_missile >= 0)
+        ui_printf(cam, 16 * 6 + 16, ref_y + 4, "%ld", player->item_ammo_missile);
+    if(player->item_ammo_mine >= 0)
+        ui_printf(cam, 16 * 8 + 16, ref_y + 4, "%ld", player->item_ammo_mine);
+    ui_printf(cam, 16 * 0 + 16, ref_y +  4, "%ld", player->scores);
 
 }

@@ -10,6 +10,8 @@
 #include "common/common_hash.h"
 #include "game.h"
 
+#include "progs/helpers.h"
+
 #include <stddef.h>
 #include <string.h>
 
@@ -24,8 +26,6 @@ const var_descr_t * var_find(const var_descr_t * vars_descr, size_t vars_descr_n
     return NULL;
 }
 
-#include "progs/progs_main.h"
-
 int var_set(
     void * vars,
     const var_descr_t * vars_descr,
@@ -37,7 +37,7 @@ int var_set(
     const var_descr_t * vd = var_find(vars_descr, vars_descr_num, key);
     if(!vd)
     {
-        game_console_send("Error: On var set variable \"%s\" not found.", key);
+        game_cprint("Error: On var set variable \"%s\" not found.", key);
         return -1;
     }
 
@@ -180,7 +180,7 @@ void vars_dump(void * vars, const var_descr_t * vars_descr, size_t vars_descr_nu
                 strncpy(buf, *(STRING*)ofs, 64);
                 break;
         }
-        game_console_send("  var dump binary: (%s)%s = %s", list[var_descr->type], var_descr->name, buf);
+        game_cprint("  var dump binary: (%s)%s = %s", list[var_descr->type], var_descr->name, buf);
     }
 
 }
@@ -211,7 +211,7 @@ bool infovars_get_next_key(
 {
 #define PARSEERROR(format, ...) \
     do { \
-        game_console_send("Parse error: "format, ##__VA_ARGS__); \
+        game_cprint("Parse error: "format, ##__VA_ARGS__); \
         return false; \
     }while (0)
 
@@ -328,7 +328,7 @@ void vars_dump_info(const char * info)
 #define STRBUFSIZE 32
 char str[STRBUFSIZE];
 
-        game_console_send("  var dump info: %s%s = \"%s%s\"",
+        game_cprint("  var dump info: %s%s = \"%s%s\"",
             key,
             key_size > key_buf_size ? s_snprintf(str, STRBUFSIZE, "...[%ld]", (long)(key_size - key_buf_size)) : "",
             value,

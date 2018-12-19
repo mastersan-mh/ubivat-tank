@@ -76,7 +76,7 @@ bool game_quit_get(void)
 
 void game_quit_set(void)
 {
-    game_console_send("Quit from game.");
+    game_cprint("Quit from game.");
     if(!game.remotegame)
         server_stop();
     client_stop();
@@ -156,6 +156,9 @@ void game_init(void)
 
     model_resources_register();
 
+    if(game_progs_load())
+        game_halt("Error game progs initalization.");
+
     game_progs_init();
 
     game_menu_show(MENU_MAIN);
@@ -201,6 +204,8 @@ void game_servers_freeall(void)
  */
 void game_done(void)
 {
+    game_progs_done();
+
     game_servers_freeall();
 
     Z_free(game_dir_home);
@@ -354,7 +359,7 @@ void game_abort(void)
     if(!game.remotegame)
         server_stop();
     client_event_local_stop();
-    game_console_send("Game aborted.");
+    game_cprint("Game aborted.");
 }
 
 
@@ -424,7 +429,7 @@ int game_pal_get(void)
     return img_palette_read(BASEDIR FILENAME_PALETTE);
 }
 
-void game_console_send(const char *format, ...)
+void game_cprint(const char *format, ...)
 {
     static char errmsg[MAX_MESSAGE_SIZE];
     va_list argptr;

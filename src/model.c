@@ -44,24 +44,24 @@ void model_register(const model_t * model)
 	const model_t ** tmp;
 	if(model == NULL)
 	{
-		game_console_send("Model registration failed: Model data is NULL.");
+		game_cprint("Model registration failed: Model data is NULL.");
 		return;
 	}
 
 	if(model->name == NULL || strlen(model->name) == 0)
 	{
-		game_console_send("Model registration failed: Model name is empty.");
+		game_cprint("Model registration failed: Model name is empty.");
 		return;
 	}
 
 	if(model_get(model->name) != NULL)
 	{
-			game_console_send("Model \"%s\" registration failed: Duplicate model name.", model->name);
+			game_cprint("Model \"%s\" registration failed: Duplicate model name.", model->name);
 			return;
 	}
 
 	if(model->frames_num == 0)
-		game_console_send("Model \"%s\" registration warning: .frames_num == 0.", model->name);
+		game_cprint("Model \"%s\" registration warning: .frames_num == 0.", model->name);
 
     if(models_size < models_num + 1)
     {
@@ -76,7 +76,7 @@ void model_register(const model_t * model)
     }
     models[models_num] = model;
     models_num++;
-    game_console_send("Model \"%s\" registered.", model->name);
+    game_cprint("Model \"%s\" registered.", model->name);
 }
 
 void model_render(
@@ -92,13 +92,13 @@ void model_render(
 
 	if(!model)
 	{
-		game_console_send("Error: No entity model.");
+		game_cprint("Error: No entity model.");
 		return;
 	}
 
 	if(iframe >= model->frames_num)
 	{
-		game_console_send("Model %s: iframe = %d is greater than or equal to frames_num = %d.", model->name, iframe, model->frames_num);
+		game_cprint("Model %s: iframe = %d is greater than or equal to frames_num = %d.", model->name, iframe, model->frames_num);
 		return;
 	}
 

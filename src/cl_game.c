@@ -20,6 +20,7 @@
 #include "video.h"
 #include "ui.h"
 #include "game.h"
+#include "game_progs.h"
 
 static void client_game_draw_nogame(void)
 {
@@ -66,6 +67,12 @@ static void client_game_draw_spawn_awaiting(void)
  */
 static void cl_game_state_intermission_draw(void)
 {
+    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
+    font_color_set3i(COLOR_15);
+    video_printf(160 - 6 * 4 , 8 * 5, "РАНГИ");
+    video_printf(108,191,"НАЖМИ ПРОБЕЛ");
+/* TODO cl_game_state_intermission_draw
+
     static image_index_t list[] =
     {
             IMG_HUD_ICON_TANK0,
@@ -74,11 +81,7 @@ static void cl_game_state_intermission_draw(void)
             IMG_HUD_ICON_TANK3,
             IMG_HUD_ICON_TANK4
     };
-    video_image_draw(0, 0, IMG_MENU_I_INTERLV);
-    font_color_set3i(COLOR_15);
-    video_printf(160 - 6 * 4 , 8 * 5, "РАНГИ");
-    video_printf(108,191,"НАЖМИ ПРОБЕЛ");
-/* TODO cl_game_state_intermission_draw
+
     int i;
     int num = server_client_num_get();
 
@@ -128,33 +131,36 @@ static void cl_draw(void)
 
     client_player_t * player;
 
-    LIST2_FOREACH(client.players, player)
+    size_t i;
+    for(i = 0; i < CLIENT_PLAYERS_MAX; i++)
     {
-        entity_t * entity = player->entity;
-        if(entity)
-        {
-            camera_t * cam = &player->cam;
+        player = &client.players[i];
+        if(!player->used)
+            continue;
 
-            video_viewport_set(
-                cam->x,
-                cam->y,
-                cam->sx,
-                cam->sy
-            );
-            if(entity->cam_entity)
-            {
-                entity_vars_common_t * vars = entity->cam_entity->vars;
-                if(vars)
-                    VEC2_COPY(cam->origin, vars->origin);
-            }
-            else
-            {
-                static vec2_t cam_origin_default = {0.0, 0.0};
-                VEC2_COPY(cam->origin, cam_origin_default);
-            }
-            client_game_draw_cam(cam);
-            ui_draw(cam, entity);
+        body_t * body_cam = player->body_cam;
+
+        camera_t * cam = &player->cam;
+        video_viewport_set(
+            cam->x,
+            cam->y,
+            cam->sx,
+            cam->sy
+        );
+        if(body_cam)
+        {
+            entity_common_t * entity = body_cam->entity;
+            if(entity)
+                VEC2_COPY(cam->origin, entity->origin);
         }
+        else
+        {
+            static vec2_t cam_origin_default = {0.0, 0.0};
+            VEC2_COPY(cam->origin, cam_origin_default);
+        }
+        client_game_draw_cam(cam);
+        ui_draw(cam, player->body);
+
     }
 
     video_viewport_set(

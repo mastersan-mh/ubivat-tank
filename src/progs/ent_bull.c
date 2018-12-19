@@ -6,6 +6,7 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 
 #include "ent_bull.h"
 #include "ent_explode.h"
@@ -39,54 +40,45 @@ static const bullinfo_t bullinfo_table[BULL_NUM] =
         {200, 100, 100,  80 }
 };
 
-static void bull_artillery_detonate(ENTITY self, ENTITY other)
+static void bull_artillery_detonate(entity_t * self, entity_t * other)
 {
-    ENTITY parent = entity_parent(self);
+    entity_t * parent = self->owner;
     if (other && parent == other)
         return;
 
-    ENTITY explode = explode_artillery_spawn(parent, NULL);
-    entity_vars_common_t* self_vars = entity_vars(self);
-    explode_vars_t* explode_vars = entity_vars(explode);
-    VEC2_COPY(explode_vars->origin, self_vars->origin);
-    explode_vars->dir = self_vars->dir;
-    entity_erase(self);
+    entity_t * explode = explode_artillery_spawn(parent, NULL);
+    VEC2_COPY(explode->c.origin, self->c.origin);
+    explode->c.dir = self->c.dir;
+    gi->unlink(self);
 }
 
-static void bull_missile_detonate(ENTITY self, ENTITY other)
+static void bull_missile_detonate(entity_t * self, entity_t * other)
 {
-    ENTITY parent = entity_parent(self);
-    if(other && parent == other)
+    entity_t * owner = self->owner;
+    if(other && owner == other)
         return;
 
-    ENTITY explode = explode_missile_spawn(parent, NULL);
+    entity_t * explode = explode_missile_spawn(owner, NULL);
 
-    bull_vars_t * bull_vars = entity_vars(self);
-    explode_vars_t * explode_vars = entity_vars(explode);
-    VEC2_COPY(explode_vars->origin, bull_vars->origin);
-    explode_vars->dir = bull_vars->dir;
+    VEC2_COPY(explode->c.origin, self->c.origin);
+    explode->c.dir = self->c.dir;
 
-    player_vars_t * player_vars = entity_vars(parent);
-    player_vars->bull = explode;
-    entity_cam_set(parent, explode);
-
-    entity_erase(self);
+    owner->bull = explode;
+    entity_cam_set(owner, explode);
+    gi->unlink(self);
 }
 
-static void bull_mine_detonate(ENTITY self, ENTITY other)
+static void bull_mine_detonate(entity_t * self, entity_t * other)
 {
-    ENTITY parent = entity_parent(self);
-    if(other && parent == other)
+    entity_t * owner = self->owner;
+    if(other && owner == other)
         return;
 
-    ENTITY e = explode_mine_spawn(parent, NULL);
+    entity_t * explode = explode_mine_spawn(owner, NULL);
+    VEC2_COPY(explode->c.origin, self->c.origin);
+    explode->c.dir = self->c.dir;
 
-    entity_vars_common_t * self_vars = entity_vars(self);
-    explode_vars_t * explode_vars = entity_vars(e);
-    VEC2_COPY(explode_vars->origin, self_vars->origin);
-    explode_vars->dir = self_vars->dir;
-
-    entity_erase(self);
+    gi->unlink(self);
 }
 
 /*
@@ -94,23 +86,22 @@ static void bull_mine_detonate(ENTITY self, ENTITY other)
  * @return true  = сдетонировала
  * @return false = полёт продолжается
  */
-static bool bull_common_think(ENTITY self, const bullinfo_t * bullinfo)
+static bool bull_common_think(entity_t * self, const bullinfo_t * bullinfo)
 {
     map_t * map = world_map_get();
 
-    bull_vars_t * bull = entity_vars(self);
-    entity_move(self, bull->dir, bullinfo->speed, false);
+    entity_move(self, self->c.dir, bullinfo->speed, false);
 
     //предельное расстояние пройдено
-    if(bullinfo->range > -1 && bull->stat_traveled_distance > bullinfo->range)
+    if(bullinfo->range > -1 && self->stat_traveled_distance > bullinfo->range)
         return true;
 
     //найдем препятствия
     bool Ul,Ur,Dl,Dr,Lu,Ld,Ru,Rd;
     map_clip_find(
         map,
-        bull->origin,
-        entity_bodybox_get(self),
+        self->c.origin,
+        self->c.bodybox,
         MAP_WALL_W0 | MAP_WALL_W1 | MAP_WALL_brick,
         &Ul,&Ur,&Dl,&Dr,&Lu,&Ld,&Ru,&Rd
     );
@@ -119,12 +110,12 @@ static bool bull_common_think(ENTITY self, const bullinfo_t * bullinfo)
     return false;
 }
 
-static void bull_common_modelaction_startplay(ENTITY self, unsigned int imodel)
+static void bull_common_modelaction_startplay(entity_t * self, unsigned int imodel)
 {
     entity_model_play_start(self, imodel);
 }
 
-static ENTITY_FUNCTION_THINK(bull_artillery_think)
+static void bull_artillery_think(entity_t * self)
 {
     const bullinfo_t * bullinfo = &bullinfo_table[BULL_ARTILLERY];
     bool detonate = bull_common_think(self, bullinfo);
@@ -132,7 +123,7 @@ static ENTITY_FUNCTION_THINK(bull_artillery_think)
         bull_artillery_detonate(self, NULL);
 }
 
-static ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
+static void bull_artillery_touch(entity_t * self, entity_t * other)
 {
     if(
             entity_classname_cmp(other, "player") == 0 ||
@@ -142,15 +133,16 @@ static ENTITY_FUNCTION_TOUCH(bull_artillery_touch)
         bull_artillery_detonate(self, other);
 }
 
-ENTITY bull_artillery_spawn(ENTITY parent, const char * spawninfo)
+entity_t * bull_artillery_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("bull_artillery", parent);
+    entity_t * self = entity_init("bull_artillery", parent);
 
-    entity_thinker_set(self, bull_artillery_think);
-    entity_toucher_set(self, bull_artillery_touch);
+    self->c.flags = ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 2.0f;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 2.0f);
+    self->think = bull_artillery_think;
+    self->touch = bull_artillery_touch;
+
     entity_model_set(self, 0, ":/bull_artillery", 2.0f / 2.0f /* picturesize = 2 x 2 */, 0.0f, 0.0f);
 
     entity_vars_set_all(self, spawninfo);
@@ -170,7 +162,7 @@ static const entity_framessequence_t bull_missile_fseq_fly =
         .lastframef = bull_common_modelaction_startplay
 };
 
-static ENTITY_FUNCTION_THINK(bull_missile_handle)
+static void bull_missile_handle(entity_t * self)
 {
     const bullinfo_t * bullinfo = &bullinfo_table[BULL_MISSILE];
     bool detonate = bull_common_think(self, bullinfo);
@@ -178,7 +170,7 @@ static ENTITY_FUNCTION_THINK(bull_missile_handle)
         bull_missile_detonate(self, NULL);
 }
 
-static ENTITY_FUNCTION_TOUCH(bull_missile_touch)
+static void bull_missile_touch(entity_t * self, entity_t * other)
 {
     if(
             entity_classname_cmp(other, "player") == 0 ||
@@ -188,15 +180,16 @@ static ENTITY_FUNCTION_TOUCH(bull_missile_touch)
     bull_missile_detonate(self, other);
 }
 
-ENTITY bull_missile_spawn(ENTITY parent, const char * spawninfo)
+entity_t * bull_missile_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("bull_missile", parent);
+    entity_t * self = entity_init("bull_missile", parent);
 
-    entity_thinker_set(self, bull_missile_handle);
-    entity_toucher_set(self, bull_missile_touch);
+    self->c.flags = ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 8.0f;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 8.0f);
+    self->think = bull_missile_handle;
+    self->touch = bull_missile_touch;
+
     entity_model_set(self, 0, ":/bull_missile", 8.0f / 2.0f /* picturesize = 8 x 64 */, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &bull_missile_fseq_fly);
     bull_common_modelaction_startplay(self, 0);
@@ -205,8 +198,7 @@ ENTITY bull_missile_spawn(ENTITY parent, const char * spawninfo)
 
     if(parent)
     {
-        player_vars_t * parent_vars = entity_vars(parent);
-        parent_vars->bull = self;
+        parent->bull = self;
         entity_cam_set(parent, self);
     }
     return self;
@@ -223,7 +215,7 @@ static const entity_framessequence_t bull_mine_fseq_fly =
         .lastframef = bull_common_modelaction_startplay
 };
 
-static ENTITY_FUNCTION_THINK(bull_mine_think)
+static void bull_mine_think(entity_t * self)
 {
     const bullinfo_t * bullinfo = &bullinfo_table[BULL_MINE];
     bool detonate = bull_common_think(self, bullinfo);
@@ -231,7 +223,7 @@ static ENTITY_FUNCTION_THINK(bull_mine_think)
         bull_mine_detonate(self, NULL);
 }
 
-static ENTITY_FUNCTION_TOUCH(bull_mine_touch)
+static void bull_mine_touch(entity_t * self, entity_t * other)
 {
     if(
             entity_classname_cmp(other, "player") == 0 ||
@@ -241,15 +233,15 @@ static ENTITY_FUNCTION_TOUCH(bull_mine_touch)
         bull_mine_detonate(self, other);
 }
 
-ENTITY bull_mine_spawn(ENTITY parent, const char * spawninfo)
+entity_t * bull_mine_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("bull_mine", parent);
+    entity_t * self = entity_init("bull_mine", parent);
 
-    entity_thinker_set(self, bull_mine_think);
-    entity_toucher_set(self, bull_mine_touch);
+    self->think = bull_mine_think;
+    self->touch = bull_mine_touch;
 
-    entity_flags_set(self, ENTITYFLAG_SOLIDWALL);
-    entity_bodybox_set(self, 8.0f);
+    self->c.flags =  ENTITYFLAG_SOLIDWALL;
+    self->c.bodybox = 8.0f;
     entity_model_set(self, 0, ":/bull_mine", 8.0f / 2.0f /* picturesize = 8 x 64 */, 0.0f, 0.0f);
     entity_model_sequence_set(self, 0, &bull_mine_fseq_fly);
     bull_common_modelaction_startplay(self, 0);

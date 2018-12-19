@@ -10,6 +10,10 @@
 
 #include "progs.h"
 
+#include "../server_private.h"
+
+extern const game_imports_t * gi;
+
 typedef enum
 {
     WEAP_ARTILLERY,
@@ -24,51 +28,9 @@ typedef struct
     char * name;
     //изображение оружия
     image_index_t icon;
-
-
-
     char * entityname;
-    sound_index_t sound_index;
+    int /* sound_index_t */ sound_index;
 } weaponinfo_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-} bull_vars_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-} explode_vars_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    STRING text;
-} message_vars_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    INTEGER item_scores;
-    INTEGER item_health;
-    INTEGER item_armor ;
-    INTEGER item_ammo_missile;
-    INTEGER item_ammo_mine   ;
-} spawn_vars_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    STRING text;
-} exit_vars_t;
-
-typedef struct
-{
-    ENTITY_VARS_COMMON_STRUCT;
-    INTEGER amount;
-} item_vars_t;
-extern var_descr_t item_vars_descr[];
 
 typedef struct
 {
@@ -80,6 +42,8 @@ typedef struct
     //направление движения
 } move_t;
 
+typedef struct entity_s entity_t;
+
 //искуственный интеллект
 typedef struct
 {
@@ -90,28 +54,46 @@ typedef struct
     bool attack;
     weapontype_t weap;
     //цель
-    ENTITY target;
+    entity_t * target;
     //счетчик
     long count;
 } player_ai_t;
 
-typedef struct
+struct entity_s
 {
-    ENTITY_VARS_COMMON_STRUCT;
+    entity_common_t c;
 
-    INTEGER fragstotal; /* фрагов за пройденые карты */
-    INTEGER frags;      /* фрагов за карту */
-    INTEGER scores;     /* набрано очков */
-    INTEGER level;      /* уровень игрока */
+    BOOL used;
 
+    entity_t * owner;
+
+    const STRING classname;
+
+    BOOL spawned;
+
+    /* message, exit */
+    STRING text;
+
+    /* player, spawner */
+    INTEGER item_scores;
     INTEGER item_health;
     INTEGER item_armor;
     INTEGER item_ammo_artillery;
     INTEGER item_ammo_missile;
     INTEGER item_ammo_mine;
 
+    /* item */
+    INTEGER amount;
+
+    /* player */
+    INTEGER fragstotal; /* фрагов за пройденые карты */
+    INTEGER frags;      /* фрагов за карту */
+    INTEGER scores;     /* набрано очков */
+    INTEGER level;      /* уровень игрока */
+
+
     //для управляемой ракеты
-    ENTITY bull;
+    entity_t * bull;
 
     //передвижения
     move_t move;
@@ -120,13 +102,23 @@ typedef struct
     //время на перезарядку
     long reloadtime_d;
 
+    void (*think)(entity_t * self);
+    void (*touch)(entity_t * self, entity_t * other);
+
     // мозг
     player_ai_t brain;
 
-} player_vars_t;
+    /* статистика */
+    /* пройденое расстояние */
+    FLOAT stat_traveled_distance;
 
-ENTITY spawn_entity_by_class(const char * classname, const char * info, ENTITY parent);
+};
 
-game_exports_t * progs_init(void);
+extern size_t g_entities_num;
+extern entity_t * g_entities;
+
+entity_t * spawn_entity_by_class(const char * classname, const char * info, entity_t * parent);
+
+game_exports_t * progs_init(const game_imports_t * gi);
 
 #endif /* SRC_PROGS_PROGS_MAIN_H_ */

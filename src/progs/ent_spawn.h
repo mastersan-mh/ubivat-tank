@@ -11,11 +11,12 @@
 #define SRC_ENT_SPAWN_H_
 
 #include "progs.h"
+#include "progs_main.h"
 
-ENTITY spawner_player_spawn(ENTITY parent, const char * spawninfo);
-ENTITY spawner_enemy_spawn(ENTITY parent, const char * spawninfo);
-ENTITY spawner_boss_spawn(ENTITY parent, const char * spawninfo);
+entity_t * spawner_player_spawn(entity_t * parent, const char * spawninfo);
+entity_t * spawner_enemy_spawn(entity_t * parent, const char * spawninfo);
+entity_t * spawner_boss_spawn(entity_t * parent, const char * spawninfo);
 
-ENTITY client_player_spawn(const char * userinfo);
+entity_common_t * client_player_spawn(const char * userinfo);
 
 #endif /* SRC_ENT_SPAWN_H_ */

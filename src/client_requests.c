@@ -16,7 +16,7 @@ static void client_req_send(const net_addr_t * dest_addr, const client_request_t
 {
     if(client.tx_queue_num >= CLIENT_REQ_QUEUE_SIZE)
     {
-        game_console_send("CLIENT: REQ queue overflow.");
+        game_cprint("CLIENT: REQ queue overflow.");
         return;
     }
 

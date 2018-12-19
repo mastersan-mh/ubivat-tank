@@ -10,6 +10,7 @@
 #include "sv_game.h"
 
 #include "game.h"
+#include "game_progs.h"
 
 #include "server.h"
 #include "server_events.h"
@@ -19,11 +20,6 @@
 #include "common/common_list2.h"
 
 extern server_t server;
-
-void sv_game_message_send(const char * mess)
-{
-    server.gstate.msg = (char*)mess;
-};
 
 int sv_game_flag_localgame(void)
 {
@@ -43,22 +39,20 @@ void sv_game_win(void)
     bool alive = true;
     // проверим что все игроки живы
 
-    server_client_t * client;
-    LIST2_FOREACHR(server.clients, client)
+    size_t i;
+    server_player_t * player;
+    FOREACH_SERVER_PLAYERS(player, i)
     {
-        server_player_t * player;
-        LIST2_FOREACHR(client->players, player)
+        entity_common_t * common = player->body->entity;
+        if( !common->alive )
         {
-            entity_vars_common_t * common = player->entity->vars;
-            if( !common->alive )
-            {
-                alive = false;
-                break;
-            }
-            if(!alive)
-                break;
+            alive = false;
+            break;
         }
+        if(!alive)
+            break;
     }
+
     if( alive )
     {
         server_event_local_win();

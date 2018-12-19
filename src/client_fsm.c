@@ -26,21 +26,21 @@
 
 #define GAME_SOUND_MENU 10
 
-#define INVALID_EVENT() game_console_send("client: invalid server gamestate %s event %d.", game_gamestate_to_str(gamestate), event->type)
+#define INVALID_EVENT() game_cprint("client: invalid server gamestate %s event %d.", game_gamestate_to_str(gamestate), event->type)
 
 #define FSM_GAMESTATE_SET(gs) \
         do { \
             gamestate = (gs); \
-            game_console_send("client: gamestate changed to %s.", client_gamestate_to_str(gamestate)); \
+            game_cprint("client: gamestate changed to %s.", client_gamestate_to_str(gamestate)); \
         } while (0)
 
 #define FSM_WARNING_ALREADY_CONNECTED() \
-        game_console_send("You already connected to the game, disconnect first.");
+        game_cprint("You already connected to the game, disconnect first.");
 
 #define FSM_CLIENT_DISCONECT() \
         do { \
             client_disconnect(); \
-            game_console_send("client: server close the connection."); \
+            game_cprint("client: server close the connection."); \
         } while (0);
 
 static void client_fsm_local_connect(const client_event_t * event)
@@ -60,7 +60,7 @@ static void client_fsm_local_connect(const client_event_t * event)
     client.dest_port = ntohs(net_addr->addr_in.sin_port);
     client.dest_addr = ntohl(net_addr->addr_in.sin_addr.s_addr);
 
-    game_console_send("client: connecting to " PRINTF_NETADDR_FMT "...", PRINTF_NETADDR_VAL(*net_addr));
+    game_cprint("client: connecting to " PRINTF_NETADDR_FMT "...", PRINTF_NETADDR_VAL(*net_addr));
 
     client_req_send_connect();
 }
@@ -77,16 +77,16 @@ static void client_fsm_local_world_recreate(const client_event_t * event)
         client_world_valid_set(true);
         return;
     }
-    game_console_send("client: Recreating world...");
+    game_cprint("client: Recreating world...");
     world_destroy();
     if(world_create(event->data.LOCAL_WORLD_RECREATE.mapfilename))
     {
         client_world_valid_set(false);
-        game_console_send("client: Error: Can not create world.");
+        game_cprint("client: Error: Can not create world.");
         return;
     }
     client_world_valid_set(true);
-    game_console_send("client: World created.");
+    game_cprint("client: World created.");
 }
 
 int client_fsm_remote_connection_result(const client_event_t * event)
@@ -94,11 +94,19 @@ int client_fsm_remote_connection_result(const client_event_t * event)
     sound_play_stop(NULL, GAME_SOUND_MENU);
     if(!event->data.REMOTE_CONNECTION_RESULT.accepted)
     {
-        game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " reject connection.", PRINTF_NETADDR_VAL(event->sender));
+        game_cprint("client: server " PRINTF_NETADDR_IPv4_FMT " reject connection.", PRINTF_NETADDR_VAL(event->sender));
         client_event_local_stop();
         return -1;
     }
-    game_console_send("client: server " PRINTF_NETADDR_IPv4_FMT " accept connection.", PRINTF_NETADDR_VAL(event->sender));
+
+    size_t clients_max = event->data.REMOTE_CONNECTION_RESULT.clients_max;
+    size_t entities_max = event->data.REMOTE_CONNECTION_RESULT.entities_max;
+
+    game_cprint("client: server " PRINTF_NETADDR_IPv4_FMT " accept connection with maxclients %d, maxentities %d.",
+        PRINTF_NETADDR_VAL(event->sender),
+        clients_max,
+        entities_max
+        );
     sound_play_start(NULL, GAME_SOUND_MENU, SOUND_MUSIC1, -1);
     client_req_send_ready();
     client.gstate.win = false;
@@ -119,7 +127,7 @@ static void client_fsm_remote_game_nextmap(const client_event_t * event)
     client.gstate.endgame = event->data.REMOTE_GAME_NEXTMAP.endgame;
 
     if(client.gstate.win)
-        game_console_send("client: server say: PLAYER WIN!");
+        game_cprint("client: server say: PLAYER WIN!");
 
     if(client.gstate.endgame)
         strncpy(client.gstate.next_mapfilename, "", MAP_FILENAME_SIZE);
@@ -358,38 +366,43 @@ void client_fsm(const client_event_t * event)
                     if(players_num > GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT)
                     {
                         client.gstate.players_num = players_num;
-                        game_console_send("CLIENT: server assign players amount equal %d", players_num);
+                        game_cprint("CLIENT: server assign players amount equal %d", players_num);
                     }
                     else
                     {
-                        game_console_send("CLIENT: server not assign players amount, client set equal %d", client.gstate.players_num);
+                        game_cprint("CLIENT: server not assign players amount, client set equal %d", client.gstate.players_num);
                     }
 
                     bool success = true;
-                    entity_t *entities[client.gstate.players_num];
-                    for(size_t i = 0; i < client.gstate.players_num; i++)
+                    players_num = MIN(client.gstate.players_num, CLIENT_PLAYERS_MAX);
+
+                    /*
+                    body_t * tmp_bodies[players_num];
+                    for(size_t i = 0; i < players_num; i++)
                     {
                         entity_id_t entityId = event->data.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityId;
-                        entities[i] = entity_find_by_id(entityId);
-                        if(!entities[i])
+                        tmp_bodies[i] = entity_find_by_id(entityId);
+                        if(!tmp_bodies[i])
                         {
-                            game_console_send("client: No entity #%ld, can not create player #%d", (long)entityId, i);
+                            game_cprint("client: No entity #%ld, can not create player #%d", (long)entityId, i);
                             success = false;
                             break;
                         }
+
+                            client_player_t * player = client.players[i];
+                            player->valid = true;
+                            player->body = tmp_bodies[i];
+
                     }
+                    */
+
+                    game_halt("ENRELEASED G_CLIENT_EVENT_REMOTE_PLAYERS_ENTITY_SET");
                     if(!success)
                     {
                         game_abort();
                         break;
                     }
 
-                    for(size_t i = 0; i < client.gstate.players_num; i++)
-                    {
-                        client_player_t * player = Z_malloc(sizeof(client_player_t));
-                        LIST2_PUSH(client.players, player);
-                        player->entity = entities[i];
-                    }
                     client_initcams();
 
                     if(client.sv_dedicated)

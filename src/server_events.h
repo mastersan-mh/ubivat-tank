@@ -41,7 +41,7 @@ typedef union
     } REMOTE_JOIN;
     struct
     {
-        int playerId;
+        int iplayer;
         char action[GAME_ACTION_SIZE];
     } REMOTE_PLAYER_ACTION;
     struct

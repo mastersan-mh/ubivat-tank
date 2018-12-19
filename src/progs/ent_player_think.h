@@ -13,7 +13,6 @@
 #include "ent_weap.h"
 
 extern void ctrl_AI_init(player_ai_t * brain);
-extern void ctrl_AI_done(player_ai_t * brain);
-extern void think_enemy(ENTITY player);
+extern void think_enemy(entity_t * player);
 
 #endif /* SRC_ENT_PLAYER_THINK_H_ */

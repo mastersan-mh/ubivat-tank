@@ -36,7 +36,7 @@
 #define FSM_CLIENT_CHECK(client) \
         if(!client) \
         { \
-            game_console_send("server: no client " PRINTF_NETADDR_FMT ".", PRINTF_NETADDR_VAL(event->sender)); \
+            game_cprint("server: no client " PRINTF_NETADDR_FMT ".", PRINTF_NETADDR_VAL(event->sender)); \
                 break; \
         }
 
@@ -47,26 +47,29 @@
 #define FSM_GAMESTATE_SET(gs) \
         do { \
             gamestate = (gs); \
-            game_console_send("SERVER: change gamestate to %s.", server_gamestate_to_str(gamestate)); \
+            game_cprint("SERVER: change gamestate to %s.", server_gamestate_to_str(gamestate)); \
         } while (0)
 
 #define FSM_CLIENT_CONNECT_CHECK(client) \
                 if((client)) \
                 { \
-                    game_console_send("server: client from " PRINTF_NETADDR_FMT " already connected.", PRINTF_NETADDR_VAL((client)->net_addr)); \
+                    game_cprint("server: client from " PRINTF_NETADDR_FMT " already connected.", PRINTF_NETADDR_VAL((client)->net_addr)); \
                     break; \
                 }
 
 static int server_world_recreate(const char * mapname)
 {
+    size_t i;
     server_client_t * client;
     world_destroy();
 
     if(world_create(mapname))
     {
-        game_console_send("server: Error: Could not create world");
-        LIST2_FOREACH(server.clients, client)
+        game_cprint("server: Error: Could not create world");
+        FOREACH_SERVER_CLIENTS(client, i)
         {
+            if(!client->used)
+                continue;
             server_reply_send_game_nextmap(client, true, NULL);
         }
         server_event_local_stop();
@@ -75,8 +78,10 @@ static int server_world_recreate(const char * mapname)
 
 
     //игра по уровням
-    LIST2_FOREACH(server.clients, client)
+    FOREACH_SERVER_CLIENTS(client, i)
     {
+        if(!client->used)
+            continue;
         server_reply_send_game_nextmap(client, true, world_mapfilename_get());
     }
     return 0;
@@ -92,8 +97,11 @@ static void server_fsm_local_win(void)
     if(!server.flags.localgame)
     {
         //игра по выбору
-        LIST2_FOREACH(server.clients, client)
+        size_t i;
+        FOREACH_SERVER_CLIENTS(client, i)
         {
+            if(!client->used)
+                continue;
             server_reply_send_game_nextmap(client, true, NULL);
         }
         server_event_local_stop();
@@ -106,10 +114,13 @@ static void server_fsm_local_win(void)
     if(!server.gstate.gamemap)
     {
         world_destroy();
-        game_console_send("server: can't set next map.");
+        game_cprint("server: can't set next map.");
         // конец игры, последняя карта
-        LIST2_FOREACH(server.clients, client)
+        size_t i;
+        FOREACH_SERVER_CLIENTS(client, i)
         {
+            if(!client->used)
+                continue;
             server_reply_send_game_nextmap(client, true, NULL);
         }
         server_event_local_stop();
@@ -128,13 +139,13 @@ static void server_fsm_client_connect(const server_event_t * event)
 {
     bool accepted = false;
     server_client_t * client;
-    game_console_send("server: client request connection from " PRINTF_NETADDR_IPv4_FMT ".", PRINTF_NETADDR_VAL(event->sender));
+    game_cprint("server: client request connection from " PRINTF_NETADDR_IPv4_FMT ".", PRINTF_NETADDR_VAL(event->sender));
     bool mainclient = true;
     client = server_client_create(server.sock, &event->sender, mainclient);
     if(client)
     {
         char clientinfo[] = "name1: \"player\", name2: \"player\"";
-        accepted = game_client_player_connect(clientinfo);
+        accepted = game_progs_client_connect(clientinfo);
         if(!accepted)
             server_client_delete(client);
     }
@@ -147,10 +158,10 @@ static void server_fsm_client_disconnect(const server_event_t * event, server_cl
 {
     if(!client)
     {
-        game_console_send("SERVER: client " PRINTF_NETADDR_FMT " not found.", PRINTF_NETADDR_VAL(event->sender));
+        game_cprint("SERVER: client " PRINTF_NETADDR_FMT " not found.", PRINTF_NETADDR_VAL(event->sender));
         return;
     }
-    game_console_send("SERVER: client " PRINTF_NETADDR_FMT " require disconnection.", PRINTF_NETADDR_VAL(event->sender));
+    game_cprint("SERVER: client " PRINTF_NETADDR_FMT " require disconnection.", PRINTF_NETADDR_VAL(event->sender));
 
     server_reply_send_connection_close(client);
     server_client_delete(client);
@@ -158,9 +169,12 @@ static void server_fsm_client_disconnect(const server_event_t * event, server_cl
 
 static void server_fsm_remote_game_abort(const server_event_t * event, server_client_t * client)
 {
-    game_console_send("server: client " PRINTF_NETADDR_FMT " aborted game.", PRINTF_NETADDR_VAL(event->sender));
-    LIST2_FOREACH(server.clients, client)
+    game_cprint("server: client " PRINTF_NETADDR_FMT " aborted game.", PRINTF_NETADDR_VAL(event->sender));
+    size_t i;
+    FOREACH_SERVER_CLIENTS(client, i)
     {
+        if(!client->used)
+            continue;
         server_fsm_client_disconnect(event, client);
     }
     server_event_local_stop();
@@ -172,7 +186,7 @@ static void server_fsm_game_setmap(const server_event_t * event)
     server.gstate.gamemap = map_find(mapname);
     if(!server.gstate.gamemap)
     {
-        game_console_send("Error: Map \"%s\" not found.", mapname);
+        game_cprint("Error: Map \"%s\" not found.", mapname);
         //game_abort();
         return;
     }
@@ -191,7 +205,7 @@ static int server_fsm_gamesave_load(int isave)
     if(res)
     {
         world_destroy();
-        game_console_send("server: Error: Could not load gamesave.");
+        game_cprint("server: Error: Could not load gamesave.");
         return -1;
     }
 
@@ -225,32 +239,33 @@ static int server_fsm_gamesave_load(int isave)
 
 static void server_fsm_control_handle(const server_event_t * event, server_client_t * client)
 {
-    size_t playerId = event->data.REMOTE_PLAYER_ACTION.playerId;
-    server_player_t * player = server_client_player_get_by_id(client, playerId);
+    size_t iplayer = event->data.REMOTE_PLAYER_ACTION.iplayer;
 
-    if(!player)
+/* TODO: check if iplayer belong to client */
+    entity_common_t * entity = game_entity_find(iplayer);
+
+    if(!entity)
         return;
-    game_console_send("server: from client " PRINTF_NETADDR_FMT " player %d received action \"%s\".",
+    game_cprint("server: from client " PRINTF_NETADDR_FMT " player %d received action \"%s\".",
         PRINTF_NETADDR_VAL(event->sender),
-        event->data.REMOTE_PLAYER_ACTION.playerId,
+        event->data.REMOTE_PLAYER_ACTION.iplayer,
         event->data.REMOTE_PLAYER_ACTION.action);
 
     /* execute action */
-    entity_t * entity = player->entity;
 
     if(!entity)
         return;
 
-    const entity_action_t * action = game_player_action_find(event->data.REMOTE_PLAYER_ACTION.action);
+    const entity_action_t * action = game_progs_player_action_find(event->data.REMOTE_PLAYER_ACTION.action);
 
     if(!action)
     {
-        game_console_send("server: unknown action \"%d.\"", event->data.REMOTE_PLAYER_ACTION.action);
+        game_cprint("server: unknown action \"%d.\"", event->data.REMOTE_PLAYER_ACTION.action);
         return;
     }
 
     if(action->action_f)
-        action->action_f((ENTITY)entity, action->action);
+        action->action_f(entity, action->action);
 
 }
 
@@ -332,7 +347,7 @@ void server_fsm(const server_event_t * event)
                 FSM_CLIENT_CHECK(client);
                 if(client->joined)
                 {
-                    game_console_send("server: client already joined.");
+                    game_cprint("server: client already joined.");
                     break;
                 }
                 int players_num = event->data.REMOTE_JOIN.players_num;
@@ -345,13 +360,13 @@ void server_fsm(const server_event_t * event)
                 }
                 if(server_client_spawn(client, players_num) != 0)
                 {
-                    game_console_send("server: can not spawn players, no entities or players to spawn.");
+                    game_cprint("server: can not spawn players, no entities or players to spawn.");
                     break;
                 }
 
                 server_gamesave_client_info_mark(clientId);
                 server_reply_send_players_entity_set(client);
-                game_console_send("server: client joined to game.");
+                game_cprint("server: client joined to game.");
                 FSM_GAMESTATE_SET(gamestate);
                 break;
             }

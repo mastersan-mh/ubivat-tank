@@ -84,9 +84,9 @@ void map_init(void)
 static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entity_t * data)
 {
 #define PROTECT(res) \
-        if(res > INFOBUFSIZE) \
+        if((res) > INFOBUFSIZE) \
         { \
-            game_console_send("Map load: temporary info build error"); \
+            game_cprint("Map load: temporary info build error"); \
             break; \
         }
 
@@ -127,7 +127,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             break;
         case MAPDATA_MOBJ_SPAWN_ENEMY:
         {
-            snprintf(info, INFOBUFSIZE,
+            res = snprintf(info, INFOBUFSIZE,
                 "origin: {%d %d},"
                 "dir: %d,"
                 "item_scores: %d,"
@@ -149,7 +149,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
         }
         case MAPDATA_MOBJ_SPAWN_BOSS:
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "item_scores: %d,"
@@ -171,7 +171,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             }
         case MAPDATA_MOBJ_ITEM_HEALTH :
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "amount: %d,",
@@ -185,7 +185,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             }
         case MAPDATA_MOBJ_ITEM_ARMOR:
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "amount: %d,",
@@ -199,7 +199,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             }
         case MAPDATA_MOBJ_ITEM_STAR:
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "amount: %d,",
@@ -213,7 +213,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             }
         case MAPDATA_MOBJ_ITEM_ROCKET:
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "amount: %d,",
@@ -227,7 +227,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
             }
         case MAPDATA_MOBJ_ITEM_MINE:
             {
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "amount: %d,",
@@ -242,7 +242,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
         case MAPDATA_MOBJ_OBJ_EXIT:
             {
                 strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "text: \"%s\",",
@@ -257,7 +257,7 @@ static void map_mobj_add(mapdata_entity_type_t mapdata_mobj_type, map_data_entit
         case MAPDATA_MOBJ_OBJ_MESS:
             {
                 strn_cpp866_to_utf8(strbuf, STRBUFSIZE - 1, data->obj.message);
-                snprintf(info, INFOBUFSIZE,
+                res = snprintf(info, INFOBUFSIZE,
                     "origin: {%d %d},"
                     "dir: %d,"
                     "text: \"%s\",",
@@ -534,7 +534,7 @@ static int map_load_mobj(int fd, mapdata_entity_type_t * mapdata_mobj_type, map_
     *mapdata_mobj_type = map_entity_name_to_entity_type(class);
     if(*mapdata_mobj_type == MAPDATA_MOBJ_UNKNOWN)
     {
-        game_console_send("map load error: no map object type %s", class);
+        game_cprint("map load error: no map object type %s", class);
         return -1;
     }
     count = read(fd, data, datasize[*mapdata_mobj_type]);
@@ -743,7 +743,7 @@ void map_render(const map_t * map, camera_t * cam)
         }
     }
 
-    entities_render(cam);
+    bodies_render(cam);
 
 }
 /*

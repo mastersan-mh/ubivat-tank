@@ -48,7 +48,6 @@ void client_disconnect()
  */
 void client_initcams(void)
 {
-    client_player_t * player;
     int players_num = client.gstate.players_num;
 
     float cam_sx = (float)VIDEO_SCREEN_W * (float)VIDEO_SCALEX / (float)VIDEO_SCALE;
@@ -60,10 +59,14 @@ void client_initcams(void)
 
     float border = 1.0;
     float x = border;
-    LIST2_FOREACH(client.players, player)
+    size_t i;
+    for(i = 0; i < CLIENT_PLAYERS_MAX; i++)
     {
-        VEC2_CLEAR(player->cam.origin);
+        client_player_t * player = &client.players[i];
+        if(!player->used)
+            continue;
 
+        VEC2_CLEAR(player->cam.origin);
         player->cam.x     = x;
         player->cam.y     = 0;
         player->cam.sx    = cam_sx - (border * 2.0);
@@ -73,37 +76,21 @@ void client_initcams(void)
 
 }
 
-int client_player_num_get(void)
+client_player_t * client_player_get(size_t iplayer)
 {
-    client_player_t * player;
-    size_t clients_num = 0;
-    LIST2_FOREACH_I(client.players, player, clients_num);
-    return clients_num;
-}
-
-client_player_t * client_player_get(int playerId)
-{
-    int num, i;
-    num = client_player_num_get();
-    if(playerId < 0 || playerId >= num)
-        return NULL;
-    client_player_t * player;
-    LIST2_LIST_TO_IENT(client.players, player, i, num - 1 - playerId);
-    return player;
+    return &client.players[iplayer];
 }
 
 void client_player_delete(client_player_t * player)
 {
-    LIST2_UNLINK(client.players, player);
-    Z_free(player);
+    player->used = false;
 }
 
 void client_players_delete(void)
 {
-    client_player_t * player;
-    while(!LIST2_IS_EMPTY(client.players))
+    size_t i;
+    for(i = 0; i < CLIENT_PLAYERS_MAX; i++)
     {
-        player = client.players;
-        client_player_delete(player);
+        client_player_delete(&client.players[i]);
     }
 }

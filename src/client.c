@@ -127,6 +127,10 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_RESULT;
                 PDU_POP_BUF(&value16, sizeof(value16));
                 evdata.REMOTE_CONNECTION_RESULT.accepted = (ntohs(value16) != 0);
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_CONNECTION_RESULT.clients_max = ntohs(value16);
+                PDU_POP_BUF(&value16, sizeof(value16));
+                evdata.REMOTE_CONNECTION_RESULT.entities_max = ntohs(value16);
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 evtype = G_CLIENT_EVENT_REMOTE_CONNECTION_CLOSE;
@@ -146,7 +150,6 @@ static int client_pdu_parse(const net_addr_t * sender, const char * buf, size_t 
                 evdata.REMOTE_PLAYERS_ENTITY_SET.players_num = ntohs(value16);
                 for(int i = 0; i < evdata.REMOTE_PLAYERS_ENTITY_SET.players_num; i++)
                 {
-                    PDU_POP_BUF(evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
                     PDU_POP_BUF(&valueu32, sizeof(valueu32));
                     evdata.REMOTE_PLAYERS_ENTITY_SET.ent[i].entityId = ntohl(valueu32);
 
@@ -254,7 +257,7 @@ static void client_net_io(void)
 
     if(time_current - client.time > CLIENT_TIMEOUT)
     {
-        // game_console_send("client: server reply timeout.");
+        // game_cprint("client: server reply timeout.");
     }
 
     while(net_recv(client.sock, buf, &buf_len, PDU_BUF_SIZE, &net_addr) == 0)
@@ -263,14 +266,14 @@ static void client_net_io(void)
         err = client_pdu_parse(&net_addr, buf, buf_len);
         if(err)
         {
-            game_console_send("CLIENT: TX PDU parse error.");
+            game_cprint("CLIENT: TX PDU parse error.");
         }
     }
 
     err = client_pdu_build(buf, &buf_len, PDU_BUF_SIZE, &net_addr);
     if(err)
     {
-        game_console_send("CLIENT: TX buffer overflow.");
+        game_cprint("CLIENT: TX buffer overflow.");
         return;
     }
     if(buf_len > 0)

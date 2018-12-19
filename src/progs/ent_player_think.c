@@ -5,6 +5,7 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 
 #include "ent_bull.h"
 #include "ent_explode.h"
@@ -40,19 +41,11 @@ void ctrl_AI_init(player_ai_t * thiker)
 	thiker->target  = NULL;
 	thiker->count   = xrand(BOT_THINK_TIME*2);
 };
-/*
- * удаление AI
- */
-void ctrl_AI_done(player_ai_t * thinker)
-{
-	thinker->target = NULL;
-};
-
 
 /*
  * уворачивание от снарядов
  */
-static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
+static bool ctrl_AI_checkdanger(entity_t * player, entity_t * dangerous)
 {
     map_t * map = world_map_get();
 	vec_t Udist;
@@ -64,73 +57,70 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 	vec_t Ld;
 	vec_t Rd;
 
-	player_vars_t * pl = entity_vars(player);
-    player_vars_t * dng = entity_vars(dangerous);
-
 	bool danger = false;
-	if(pl->bull)
+	if(player->bull)
 		return false;
-	if(entity_parent(dangerous) == player)
+	if(dangerous->owner == player)
 		return false;
 
-	vec_t radius = entity_bodybox_get(dangerous) * 0.5f;
+	vec_t radius = dangerous->c.bodybox * 0.5f;
 
-	vec_t halfbox = entity_bodybox_get(player) * 0.5;
+	vec_t halfbox = player->c.bodybox * 0.5;
 
 	//верхняя ближайшая стена
-	map_clip_find_near(map, pl->origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
+	map_clip_find_near(map, player->c.origin, 0, DIR_UP, MAP_WALL_CLIP, 100, &Udist);
 	//нижняя ближайшая стена
-	map_clip_find_near(map, pl->origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
+	map_clip_find_near(map, player->c.origin, 0, DIR_DOWN, MAP_WALL_CLIP, 100, &Ddist);
 	//левая ближайшая стена
-	map_clip_find_near(map, pl->origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
+	map_clip_find_near(map, player->c.origin, 0, DIR_LEFT, MAP_WALL_CLIP, 160, &Ldist);
 	//правая ближайшая стена
-	map_clip_find_near(map, pl->origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
-	Ud = (pl->origin_y + Udist - halfbox) - (dng->origin_y + radius);
-	Dd = (dng->origin_y - radius) - (pl->origin_y-Ddist + halfbox);
-	Rd = (pl->origin_x + Rdist - halfbox) - (dng->origin_x + radius);
-	Ld = (dng->origin_x - radius) - (pl->origin_x - Ldist + halfbox);
+	map_clip_find_near(map, player->c.origin, 0, DIR_RIGHT, MAP_WALL_CLIP, 160, &Rdist);
+	Ud = (player->c.origin_y + Udist - halfbox) - (dangerous->c.origin_y + radius);
+	Dd = (dangerous->c.origin_y - radius) - (player->c.origin_y-Ddist + halfbox);
+	Rd = (player->c.origin_x + Rdist - halfbox) - (dangerous->c.origin_x + radius);
+	Ld = (dangerous->c.origin_x - radius) - (player->c.origin_x - Ldist + halfbox);
 	if(
-			(pl->origin_x - halfbox <= dng->origin_x + radius)&&
-			(dng->origin_x - radius <= pl->origin_x + halfbox)&&
-			(VEC_ABS(pl->origin_y-dng->origin_y) < 128)
+			(player->c.origin_x - halfbox <= dangerous->c.origin_x + radius)&&
+			(dangerous->c.origin_x - radius <= player->c.origin_x + halfbox)&&
+			(VEC_ABS(player->c.origin_y-dangerous->c.origin_y) < 128)
 	)
 	{
 		if(
-				(dng->dir == DIR_UP) &&
-				(VEC_ABS(pl->origin_y-dng->origin_y)<Ddist) &&
-				(dng->origin_y + radius < pl->origin_y-halfbox)
+				(dangerous->c.dir == DIR_UP) &&
+				(VEC_ABS(player->c.origin_y-dangerous->c.origin_y)<Ddist) &&
+				(dangerous->c.origin_y + radius < player->c.origin_y-halfbox)
 		)
 		{
 			danger = true;
-			if(!pl->brain.Fdanger)
+			if(!player->brain.Fdanger)
 			{
-				pl->move.go = true;
-				pl->brain.Fdanger = true;
+				player->move.go = true;
+				player->brain.Fdanger = true;
 				if(0 <= Ld && 0 <= Rd)
-					pl->dir = xrand(2) + 2;
+					player->c.dir = xrand(2) + 2;
 				else
-					if(0 < Ld) pl->dir = DIR_LEFT;
+					if(0 < Ld) player->c.dir = DIR_LEFT;
 					else
-						if(0 < Rd) pl->dir = DIR_RIGHT;
+						if(0 < Rd) player->c.dir = DIR_RIGHT;
 			}
 		}
 		else
 		{
 			if(
-					(dng->dir == DIR_DOWN) &&
-					(VEC_ABS(pl->origin_y-dng->origin_y)<Udist) &&
-					(pl->origin_y+halfbox < dng->origin_y - radius)
+					(dangerous->c.dir == DIR_DOWN) &&
+					(VEC_ABS(player->c.origin_y-dangerous->c.origin_y)<Udist) &&
+					(player->c.origin_y+halfbox < dangerous->c.origin_y - radius)
 			)
 			{
 				danger = true;
-				if(!pl->brain.Fdanger) {
-					pl->move.go = true;
-					pl->brain.Fdanger = true;
-					if( 0 <= Ld && 0 <= Rd) pl->dir = xrand(2)+2;
+				if(!player->brain.Fdanger) {
+					player->move.go = true;
+					player->brain.Fdanger = true;
+					if( 0 <= Ld && 0 <= Rd) player->c.dir = xrand(2)+2;
 					else
-						if(0 < Ld) pl->dir = DIR_LEFT;
+						if(0 < Ld) player->c.dir = DIR_LEFT;
 						else
-							if(0 < Rd) pl->dir = DIR_RIGHT;
+							if(0 < Rd) player->c.dir = DIR_RIGHT;
 				}
 			}
 		}
@@ -138,50 +128,50 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 	else
 	{
 		if(
-				(pl->origin_y - halfbox <= dng->origin_y + radius) &&
-				(dng->origin_y - radius <= pl->origin_y + halfbox) &&
-				(VEC_ABS(pl->origin_x - dng->origin_x) < 128)
+				(player->c.origin_y - halfbox <= dangerous->c.origin_y + radius) &&
+				(dangerous->c.origin_y - radius <= player->c.origin_y + halfbox) &&
+				(VEC_ABS(player->c.origin_x - dangerous->c.origin_x) < 128)
 		)
 		{
 			if (
-					(dng->dir == DIR_LEFT)&&
-					(VEC_ABS(pl->origin_x-dng->origin_x)<Rdist)&&
-					(pl->origin_x+halfbox < dng->origin_x- radius)
+					(dangerous->c.dir == DIR_LEFT)&&
+					(VEC_ABS(player->c.origin_x-dangerous->c.origin_x)<Rdist)&&
+					(player->c.origin_x+halfbox < dangerous->c.origin_x- radius)
 			)
 			{
 				danger = true;
-				if(!pl->brain.Fdanger)
+				if(!player->brain.Fdanger)
 				{
-					pl->move.go = true;
-					pl->brain.Fdanger = true;
+					player->move.go = true;
+					player->brain.Fdanger = true;
 					if(0 <= Ud && 0 <= Dd)
-						pl->dir = xrand(2);
+						player->c.dir = xrand(2);
 					else
 						if(0 < Ud)
-							pl->dir = DIR_UP;
+							player->c.dir = DIR_UP;
 						else
 							if(0 < Dd)
-								pl->dir = DIR_DOWN;
+								player->c.dir = DIR_DOWN;
 				}
 			}
 			else
 			{
 				if(
-						(dng->dir == DIR_RIGHT) &&
-						(VEC_ABS(pl->origin_x - dng->origin_x)<Ldist) &&
-						(dng->origin_x + radius < pl->origin_x - halfbox)
+						(dangerous->c.dir == DIR_RIGHT) &&
+						(VEC_ABS(player->c.origin_x - dangerous->c.origin_x)<Ldist) &&
+						(dangerous->c.origin_x + radius < player->c.origin_x - halfbox)
 				)
 				{
 					danger = true;
-					if(!pl->brain.Fdanger)
+					if(!player->brain.Fdanger)
 					{
-						pl->move.go = true;
-						pl->brain.Fdanger = true;
-						if(0 <= Ud && 0 <= Dd) pl->dir = xrand(2);
+						player->move.go = true;
+						player->brain.Fdanger = true;
+						if(0 <= Ud && 0 <= Dd) player->c.dir = xrand(2);
 						else
-							if(0 < Ud) pl->dir = DIR_UP;
+							if(0 < Ud) player->c.dir = DIR_UP;
 							else
-								if(0 < Dd) pl->dir = DIR_DOWN;
+								if(0 < Dd) player->c.dir = DIR_DOWN;
 					}
 				}
 			}
@@ -195,13 +185,13 @@ static bool ctrl_AI_checkdanger(ENTITY player, ENTITY dangerous)
 /*
  * уворачивание от снарядов
  */
-static void ctrl_AI_checkdangers(ENTITY player)
+static void ctrl_AI_checkdangers(entity_t * player)
 {
-    player_vars_t * pl = entity_vars(player);
     bool danger = false;
-    ENTITY dangerous;
+    entity_t * dangerous;
 
-    ENTITIES_FOREACH(dangerous)
+    size_t i;
+    ENTITIES_FOREACH(dangerous, i)
     {
         if(entity_classname_cmp(dangerous, "bull_artillery") == 0)
         {
@@ -219,10 +209,10 @@ static void ctrl_AI_checkdangers(ENTITY player)
             break;
     }
 
-    pl->brain.danger = danger;
-    if(!pl->brain.danger)
+    player->brain.danger = danger;
+    if(!player->brain.danger)
     {
-        pl->brain.Fdanger = false;
+        player->brain.Fdanger = false;
         //player->move.go = false;
     }
 }
@@ -232,26 +222,24 @@ static void ctrl_AI_checkdangers(ENTITY player)
  * @return true - успешно
  * @return false - не можем повернуться к цели
  */
-static bool turn_to_target(ENTITY player, ENTITY target)
+static bool turn_to_target(entity_t * player, entity_t * target)
 {
-    player_vars_t * pl = entity_vars(player);
-    entity_vars_common_t * trg = entity_vars(target);
-	/* повернёмся к противнику */
-    FLOAT player_bodybox_half = entity_bodybox_get(player) * 0.5f;
-	if( (pl->origin_x - player_bodybox_half < trg->origin_x) && (trg->origin_x < pl->origin_x + player_bodybox_half) )
+    /* повернёмся к противнику */
+    FLOAT player_bodybox_half = player->c.bodybox * 0.5f;
+    if( (player->c.origin_x - player_bodybox_half < target->c.origin_x) && (target->c.origin_x < player->c.origin_x + player_bodybox_half) )
 	{
-		if(trg->origin_y < pl->origin_y)
-			pl->dir = DIR_DOWN;
+		if(target->c.origin_y < player->c.origin_y)
+			player->c.dir = DIR_DOWN;
 		else
-			pl->dir = DIR_UP;
+			player->c.dir = DIR_UP;
 		return true;
 	}
-	if( (pl->origin_y - player_bodybox_half < trg->origin_y) && (trg->origin_y < pl->origin_y + player_bodybox_half) )
+	if( (player->c.origin_y - player_bodybox_half < target->c.origin_y) && (target->c.origin_y < player->c.origin_y + player_bodybox_half) )
 	{
-		if(trg->origin_x < pl->origin_x)
-			pl->dir = DIR_LEFT;
+		if(target->c.origin_x < player->c.origin_x)
+			player->c.dir = DIR_LEFT;
 		else
-			pl->dir = DIR_RIGHT;
+			player->c.dir = DIR_RIGHT;
 		return true;
 	}
 	return false;
@@ -261,42 +249,41 @@ static bool turn_to_target(ENTITY player, ENTITY target)
 /*
  * атака
  */
-static void ctrl_AI_attack(ENTITY player, ENTITY target)
+static void ctrl_AI_attack(entity_t * player, entity_t * target)
 {
     map_t * map = world_map_get();
 
 	/* противник в прямой видимости */
-	void P_weapon_select_direct_view(ENTITY player)
+	void P_weapon_select_direct_view(entity_t * player)
 	{
-		player_vars_t * pl = entity_vars(player);
-		if(pl->item_ammo_mine > 0)
+		if(player->item_ammo_mine > 0)
 		{
 			//выбираем наугад ракету или мину
-			pl->brain.weap = 1 + xrand(2);
-			if(pl->brain.weap == WEAP_MINE)
-				pl->dir = entity_direction_invert(pl->dir);
+			player->brain.weap = 1 + xrand(2);
+			if(player->brain.weap == WEAP_MINE)
+				player->c.dir = entity_direction_invert(player->c.dir);
 		}
 		else
 		{
-			if(pl->item_ammo_missile > 0)
-				pl->brain.weap = WEAP_MISSILE;
+			if(player->item_ammo_missile > 0)
+				player->brain.weap = WEAP_MISSILE;
 			else
-				pl->brain.weap = WEAP_ARTILLERY;
+				player->brain.weap = WEAP_ARTILLERY;
 		}
-		pl->brain.attack = true;
+		player->brain.attack = true;
 	}
 
 	/* противник за стеной, пытаемся пробиться через стену */
-	void P_weapon_select_behind_wall(ENTITY player, player_vars_t* pl, char wall, vec_t dist, vec_t explode_radius)
+	void P_weapon_select_behind_wall(entity_t * player, char wall, vec_t dist, vec_t explode_radius)
 	{
 		if (MAP_WALL_TEXTURE(wall) == MAP_WALL_W0)
-			pl->brain.attack = false; //сильная броня, не стреляем
+			player->brain.attack = false; //сильная броня, не стреляем
 		else
 		{
 			if (MAP_WALL_TEXTURE(wall) == MAP_WALL_brick) /* кирпич */
 			{
-				pl->brain.weap = WEAP_ARTILLERY;
-				pl->brain.attack = true;
+				player->brain.weap = WEAP_ARTILLERY;
+				player->brain.attack = true;
 			}
 			else
 			{
@@ -305,17 +292,14 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 			}
 		}
 		if(
-				(dist - entity_bodybox_get(player) < explode_radius) &&
+				(dist - player->c.bodybox < explode_radius) &&
 				(
 						MAP_WALL_CLIPPED(wall) &&
 						( MAP_WALL_TEXTURE(wall) == MAP_WALL_W0 || MAP_WALL_TEXTURE(wall) == MAP_WALL_W1)
 				)
 		)
-			pl->brain.attack = false;
+			player->brain.attack = false;
 	}
-
-
-	player_vars_t * pl = entity_vars(player);
 
 	FLOAT dist;
 	char wall;
@@ -326,55 +310,53 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
             22.0f, /* missile */
             22.0f, /* mine */
     };
-    FLOAT explode_radius = list_explode_diameter[weapontype_to_explodetype(pl->brain.weap)] * 0.5f;
+    FLOAT explode_radius = list_explode_diameter[weapontype_to_explodetype(player->brain.weap)] * 0.5f;
 
 	/* управляемый снаряд */
-	if( pl->bull && pl->brain.target )
+	if( player->bull && player->brain.target )
 	{
-	    bull_vars_t * bull_vars = entity_vars(pl->bull);
-        player_vars_t * target_vars = entity_vars(pl->brain.target);
+	    entity_t * bull = player->bull;
+        entity_t * target = player->brain.target;
 		if(
-				VEC_ABS(bull_vars->origin_y - target_vars->origin_y) <
-				VEC_ABS(bull_vars->origin_x - target_vars->origin_x)
+				VEC_ABS(bull->c.origin_y - target->c.origin_y) <
+				VEC_ABS(bull->c.origin_x - target->c.origin_x)
 		)
 		{
-			if(bull_vars->origin_x < target_vars->origin_x)
-				pl->dir = DIR_RIGHT;
+			if(bull->c.origin_x < target->c.origin_x)
+				player->c.dir = DIR_RIGHT;
 			else
-				pl->dir = DIR_LEFT;
+				player->c.dir = DIR_LEFT;
 		}
 		else
 		{
-			if(bull_vars->origin_y < target_vars->origin_y)
-				pl->dir = DIR_UP;
+			if(bull->c.origin_y < target->c.origin_y)
+				player->c.dir = DIR_UP;
 			else
-				pl->dir = DIR_DOWN;
+				player->c.dir = DIR_DOWN;
 		}
 		return;
 	}
 
-    entity_vars_common_t * trg = entity_vars(target);
-
 	if
 	(
-			VEC_ABS(pl->origin_x - trg->origin_x) > 160.0 ||
-			VEC_ABS(pl->origin_y - trg->origin_y) > 100.0
+			VEC_ABS(player->c.origin_x - target->c.origin_x) > 160.0 ||
+			VEC_ABS(player->c.origin_y - target->c.origin_y) > 100.0
 	)
 	{
-		pl->attack = false;
+		player->attack = false;
 		return;
 	}
 
 	//если оружие не перезарядилось
-	if(0 < pl->reloadtime_d)
+	if(0 < player->reloadtime_d)
 		return;
 
-	vec_t halfbox = entity_bodybox_get(player) * 0.5f;
+	vec_t halfbox = player->c.bodybox * 0.5f;
 
-	pl->brain.target = NULL;
-	if(pl->item_ammo_missile > 0)
+	player->brain.target = NULL;
+	if(player->item_ammo_missile > 0)
 	{
-		map_clip_find_near_wall(map, pl->origin, pl->dir, &dist, &wall);
+		map_clip_find_near_wall(map, player->c.origin, player->c.dir, &dist, &wall);
 		if(
 				MAP_WALL_CLIPPED(wall) &&
 				(
@@ -382,115 +364,107 @@ static void ctrl_AI_attack(ENTITY player, ENTITY target)
 						( MAP_WALL_TEXTURE(wall) == MAP_WALL_W1 && dist - halfbox < explode_radius )
 				)
 		)
-			pl->brain.attack = false;
+			player->brain.attack = false;
 		else
 		{
-			pl->brain.weap = WEAP_MISSILE;
-			pl->brain.attack = true;
+			player->brain.weap = WEAP_MISSILE;
+			player->brain.attack = true;
 		}
 	}
 	else
 	{
 		if(turn_to_target(player, target))
 		{
-			map_clip_find_near_wall(map, pl->origin, pl->dir, &dist, &wall);
+			map_clip_find_near_wall(map, player->c.origin, player->c.dir, &dist, &wall);
 			if(
-					( (pl->dir == DIR_DOWN || pl->dir == DIR_UP   ) && VEC_ABS(pl->origin_y - trg->origin_y) < dist ) ||
-					( (pl->dir == DIR_LEFT || pl->dir == DIR_RIGHT) && VEC_ABS(pl->origin_x - trg->origin_x) < dist ) ||
+					( (player->c.dir == DIR_DOWN || player->c.dir == DIR_UP   ) && VEC_ABS(player->c.origin_y - target->c.origin_y) < dist ) ||
+					( (player->c.dir == DIR_LEFT || player->c.dir == DIR_RIGHT) && VEC_ABS(player->c.origin_x - target->c.origin_x) < dist ) ||
 					!MAP_WALL_CLIPPED(wall) ||
 					MAP_WALL_TEXTURE(wall) == MAP_WALL_water
 			)
 				P_weapon_select_direct_view(player); /* противник в прямой видимости */
 			else
-				P_weapon_select_behind_wall(player, pl, wall, dist, explode_radius); /* противник за стеной, пытаемся пробиться через стену */
+				P_weapon_select_behind_wall(player, wall, dist, explode_radius); /* противник за стеной, пытаемся пробиться через стену */
 		}
 
 	}
-	pl->weap = pl->brain.weap;
-	pl->attack = pl->brain.attack;
-	if(pl->brain.weap == WEAP_MISSILE)
-		pl->brain.target = target; //если выпустил ракету, тогда цель постоянная
-	pl->brain.attack = false;
+	player->weap = player->brain.weap;
+	player->attack = player->brain.attack;
+	if(player->brain.weap == WEAP_MISSILE)
+		player->brain.target = target; //если выпустил ракету, тогда цель постоянная
+	player->brain.attack = false;
 }
 /*
  * поиск врага
  */
-static void ctrl_AI_findenemy(ENTITY player, ENTITY target)
+static void ctrl_AI_findenemy(entity_t * player, entity_t * target)
 {
-    player_vars_t * pl = entity_vars(player);
-    entity_vars_common_t * trg = entity_vars(target);
-
 	if(
-			(160<VEC_ABS(pl->origin_x-trg->origin_x))||
-			(100<VEC_ABS(pl->origin_y-trg->origin_y))
+			(160<VEC_ABS(player->c.origin_x-target->c.origin_x))||
+			(100<VEC_ABS(player->c.origin_y-target->c.origin_y))
 	)
 	{
-		pl->attack = false;
+		player->attack = false;
 		return;
 	}
-	if(pl->brain.count == 0) {
-		pl->dir = xrand(4);
-		pl->move.go = true;
+	if(player->brain.count == 0) {
+		player->c.dir = xrand(4);
+		player->move.go = true;
 	}
 	else
 	{
-		if(BOT_THINK_TIME + xrand(BOT_THINK_TIME) < pl->brain.count)
+		if(BOT_THINK_TIME + xrand(BOT_THINK_TIME) < player->brain.count)
 		{
-			if(VEC_ABS(pl->origin_x-trg->origin_x)>VEC_ABS(pl->origin_y-trg->origin_y))
+			if(VEC_ABS(player->c.origin_x-target->c.origin_x)>VEC_ABS(player->c.origin_y-target->c.origin_y))
 			{
-				if(pl->origin_x < trg->origin_x)
-					pl->dir = DIR_RIGHT;
+				if(player->c.origin_x < target->c.origin_x)
+					player->c.dir = DIR_RIGHT;
 				else
-					pl->dir = DIR_LEFT;
+					player->c.dir = DIR_LEFT;
 			}
 			else
 			{
-				if(pl->origin_y < trg->origin_y)
-					pl->dir = DIR_UP;
+				if(player->c.origin_y < target->c.origin_y)
+					player->c.dir = DIR_UP;
 				else
-					pl->dir = DIR_DOWN;
+					player->c.dir = DIR_DOWN;
 			}
 			if(
-					(VEC_ABS(pl->origin_x - trg->origin_x) < c_BOT_dist)&&
-					(VEC_ABS(pl->origin_y - trg->origin_y) < c_BOT_dist)
+					(VEC_ABS(player->c.origin_x - target->c.origin_x) < c_BOT_dist)&&
+					(VEC_ABS(player->c.origin_y - target->c.origin_y) < c_BOT_dist)
 			)
-				pl->move.go = false;
+				player->move.go = false;
 			else
-				pl->move.go = true;
+				player->move.go = true;
 		}
 	}
-	pl->brain.count += dtime;
-	if(BOT_THINK_TIME * 2 < pl->brain.count)
-		pl->brain.count = 0;
+	player->brain.count += gi->dtime();
+	if(BOT_THINK_TIME * 2 < player->brain.count)
+		player->brain.count = 0;
 }
 
 /*
  * управление вражеским игроком
  */
-void think_enemy(ENTITY player)
+void think_enemy(entity_t * player)
 {
-
-    player_vars_t * pl = entity_vars(player);
-
 	if(debug_noAI)
 		return;
-	if(!pl->alive)
+	if(!player->c.alive)
 		return;
 	ctrl_AI_checkdangers(player);
-	if(pl->brain.danger)
+	if(player->brain.danger)
 		return;
-	ENTITY target = entity_get_random("player");
+	entity_t * target = entity_get_random("player");
 
 	if(!target)
 		return;
 
-    entity_vars_common_t * trg = entity_vars(target);
-
-	if(!trg->alive)
-		pl->attack = false;
+	if(!target->c.alive)
+		player->attack = false;
 	else
 	{
-		if(!pl->bull && !pl->attack)
+		if(!player->bull && !player->attack)
 			ctrl_AI_findenemy(player, target);
 		ctrl_AI_attack(player, target);
 	}

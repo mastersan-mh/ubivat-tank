@@ -125,7 +125,7 @@ int net_recv(int sock, void * buf, size_t * buf_len, size_t buf_size, net_addr_t
     }
     if(addr_len > src_addr->addr_len)
     {
-        game_console_send("WARNING: recvfrom() return truncated address.");
+        game_cprint("WARNING: recvfrom() return truncated address.");
     }
     *buf_len = size;
     return 0;

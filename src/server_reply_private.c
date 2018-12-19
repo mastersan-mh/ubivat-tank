@@ -8,13 +8,15 @@
 #include "common/common_list2.h"
 #include "server_private.h"
 
+#include "game_progs_internal.h"
+
 #include "common/common_queue.h"
 
 static void server_reply_client_send(server_client_t * client, const server_reply_t * req)
 {
     if(client->tx_queue_num >= SERVER_CLIENT_TX_QUEUE_SIZE)
     {
-        game_console_send("SERVER: TX queue overflow.");
+        game_cprint("SERVER: TX queue overflow.");
         return;
     }
     client->tx_queue[client->tx_queue_num].reply = *req;
@@ -42,6 +44,9 @@ void server_reply_send_connection_result(server_client_t * client, bool accepted
     server_reply_t reply;
     reply.type = G_SERVER_REPLY_CONNECTION_RESULT;
     reply.data.CONNECTION_RESULT.accepted = accepted;
+    reply.data.CONNECTION_RESULT.clients_max = game_progs_clients_max_get();
+    reply.data.CONNECTION_RESULT.entities_max = game_progs_entities_max_get();
+
     server_reply_client_send(client, &reply);
 }
 
@@ -67,15 +72,16 @@ void server_reply_send_players_entity_set(server_client_t * client)
     server_reply_t reply;
     reply.type = G_SERVER_REPLY_PLAYERS_ENTITY_SET;
     reply.data.PLAYERS_ENTITY_SET.players_num = client->players_num;
-    int i = 0;
-    server_player_t * player;
 
-    LIST2_FOREACHR(client->players, player)
+    size_t iclient = server_client_id_get(client);
+    server_player_t * player;
+    size_t i;
+    FOREACH_SERVER_PLAYERS(player, i)
     {
-        if(i >= client->players_num)
+        if(player->iclient != iclient)
             break;
-        strncpy(reply.data.PLAYERS_ENTITY_SET.ent[i].entityname, player->entity->classname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-        reply.data.PLAYERS_ENTITY_SET.ent[i].entityId = player->entity->id;
+        body_t body = entity_body_get(player->entity);
+        reply.data.PLAYERS_ENTITY_SET.ent[i].entityId = entity_body_get(player->entity)->id;
         i++;
     }
     server_reply_client_send(client, &reply);

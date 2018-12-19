@@ -14,9 +14,9 @@
 
 typedef struct uient_s
 {
-	struct uient_s * prev;
-	struct uient_s * next;
-	void (*cb)(camera_t * cam, ENTITY entity);
+    struct uient_s * prev;
+    struct uient_s * next;
+    void (*cb)(camera_t * cam, entity_common_t * entity);
 
 } uient_t;
 
@@ -28,43 +28,42 @@ void ui_init()
 
 void ui_done()
 {
-	uient_t * uient;
-	while(uients)
-	{
-		uient = uients;
-		uients = uients->next;
-		Z_free(uient);
-	}
+    uient_t * uient;
+    while(uients)
+    {
+        uient = uients;
+        uients = uients->next;
+        Z_free(uient);
+    }
 }
 
-void ui_draw(camera_t * cam, entity_t * entity)
+void ui_draw(camera_t * cam, body_t * body)
 {
-	uient_t * uient;
-	LIST2_FOREACH(uients, uient)
-	{
-		uient->cb(cam, (ENTITY)entity);
-	}
-
+    uient_t * uient;
+    LIST2_FOREACH(uients, uient)
+    {
+        uient->cb(cam, body->entity);
+    }
 }
 
 void ui_register(
-	void (*cb)(camera_t * cam, ENTITY entity)
+    void (*cb)(camera_t * cam, entity_common_t * entity)
 )
 {
-	uient_t * uient = Z_malloc(sizeof(uient_t));
-	uient->cb = cb;
-	LIST2_PUSH(uients, uient);
+    uient_t * uient = Z_malloc(sizeof(uient_t));
+    uient->cb = cb;
+    LIST2_PUSH(uients, uient);
 }
 
 void ui_drawimage(camera_t * cam, int x, int y, image_index_t iimage)
 {
-	video_image_draw(cam->x + x, cam->y + y, iimage);
+    video_image_draw(cam->x + x, cam->y + y, iimage);
 }
 
 void ui_printf(camera_t * cam, int x, int y, const char * format, ...)
 {
-	va_list argptr;
-	va_start(argptr, format);
-	video_vprintf(cam->x + x, cam->y + y, format, argptr);
-	va_end(argptr);
+    va_list argptr;
+    va_start(argptr, format);
+    video_vprintf(cam->x + x, cam->y + y, format, argptr);
+    va_end(argptr);
 }

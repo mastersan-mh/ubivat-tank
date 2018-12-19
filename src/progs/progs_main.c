@@ -13,87 +13,36 @@
 
 #include "helpers.h"
 
+#define SPAWN_INFO(xclassname, xmodels_num) \
+    { \
+        .classname = (xclassname), \
+        .models_num = (xmodels_num), \
+    }
 
+const game_imports_t * gi = NULL;
 
-static var_descr_t bull_vars[] =
+static var_descr_t entity_vars_descr[] =
 {
         ENTITY_VARS_COMMON,
-};
-
-static var_descr_t explode_vars[] =
-{
-        ENTITY_VARS_COMMON,
-};
-
-static var_descr_t message_vars[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_STRING, message_vars_t, text )
-};
-
-static var_descr_t exit_vars[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_STRING, exit_vars_t, text)
-};
-
-var_descr_t item_vars_descr[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_INTEGER, item_vars_t, amount )
-};
-
-static var_descr_t spawner_player_vars[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_scores ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_health ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_armor  ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_missile ),
-        VAR_DESCR( VARTYPE_INTEGER, spawn_vars_t, item_ammo_mine    ),
-};
-
-static var_descr_t player_vars[] =
-{
-        ENTITY_VARS_COMMON,
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, fragstotal), /* фрагов за пройденые карты */
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, frags      ), /* фрагов за карту */
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, scores     ), /* набрано очков */
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, level      ), /* уровень игрока */
-
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_health         ),
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_armor          ),
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_ammo_artillery ),
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_ammo_missile   ),
-        VAR_DESCR( VARTYPE_INTEGER, player_vars_t, item_ammo_mine      ),
-};
-
-static const game_exports_entityinfo_t ge_entities_info[] = {
-        SPAWN_INFO("bull_artillery", bull_vars_t, bull_vars, 1),
-        SPAWN_INFO("bull_missile"  , bull_vars_t, bull_vars, 1),
-        SPAWN_INFO("bull_mine"     , bull_vars_t, bull_vars, 1),
-        SPAWN_INFO("explode_artillery", explode_vars_t, explode_vars, 1),
-        SPAWN_INFO("explode_missile"  , explode_vars_t, explode_vars, 1),
-        SPAWN_INFO("explode_mine"     , explode_vars_t, explode_vars, 1),
-        SPAWN_INFO("message", message_vars_t, message_vars, 0),
-        SPAWN_INFO("exit"   , exit_vars_t   , exit_vars   , 1),
-        SPAWN_INFO("item_scores", item_vars_t, item_vars_descr, 1),
-        SPAWN_INFO("item_health", item_vars_t, item_vars_descr, 1),
-        SPAWN_INFO("item_armor" , item_vars_t, item_vars_descr, 1),
-        SPAWN_INFO("item_ammo_missile", item_vars_t, item_vars_descr, 1),
-        SPAWN_INFO("item_ammo_mine"   , item_vars_t, item_vars_descr, 1),
-        SPAWN_INFO("spawner_player", spawn_vars_t, spawner_player_vars, 0),
-        SPAWN_INFO("spawner_enemy" , spawn_vars_t, spawner_player_vars, 0),
-        SPAWN_INFO("spawner_boss"  , spawn_vars_t, spawner_player_vars, 0),
-        SPAWN_INFO("player", player_vars_t, player_vars, 2),
-        SPAWN_INFO("enemy" , player_vars_t, player_vars, 2),
-        SPAWN_INFO("boss"  , player_vars_t, player_vars, 2),
+        VAR_DESCR( VARTYPE_STRING, entity_t, text ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, amount ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_scores ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_health ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_armor  ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_ammo_artillery ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_ammo_missile ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, item_ammo_mine    ),
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, fragstotal), /* фрагов за пройденые карты */
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, frags      ), /* фрагов за карту */
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, scores     ), /* набрано очков */
+        VAR_DESCR( VARTYPE_INTEGER, entity_t, level      ), /* уровень игрока */
+        VAR_DESCR( VARTYPE_FLOAT  , entity_t, stat_traveled_distance)
 };
 
 typedef struct
 {
     char * classname;
-    ENTITY (*spawn) (ENTITY parent, const char * info);
+    entity_t * (*spawn) (entity_t * parent, const char * info);
 } spawninfo_t;
 
 static const spawninfo_t sinfos[] = {
@@ -118,7 +67,7 @@ static const spawninfo_t sinfos[] = {
         {"boss"  , boss_spawn  },
 };
 
-ENTITY spawn_entity_by_class(const char * classname, const char * info, ENTITY parent)
+entity_t * spawn_entity_by_class(const char * classname, const char * info, entity_t * parent)
 {
     size_t i;
     for(i = 0; i < ARRAYSIZE(sinfos); i++)
@@ -134,22 +83,22 @@ ENTITY spawn_entity_by_class(const char * classname, const char * info, ENTITY p
     return NULL;
 }
 
-static ENTITY_FUNCTION_ACTION(player_action_move_north_on ) { player_action_move(entity_vars(self), DIR_UP   , true ); }
-static ENTITY_FUNCTION_ACTION(player_action_move_north_off) { player_action_move(entity_vars(self), DIR_UP   , false); }
-static ENTITY_FUNCTION_ACTION(player_action_move_south_on ) { player_action_move(entity_vars(self), DIR_DOWN , true ); }
-static ENTITY_FUNCTION_ACTION(player_action_move_south_off) { player_action_move(entity_vars(self), DIR_DOWN , false); }
-static ENTITY_FUNCTION_ACTION(player_action_move_west_on  ) { player_action_move(entity_vars(self), DIR_LEFT , true ); }
-static ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move(entity_vars(self), DIR_LEFT , false); }
-static ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move(entity_vars(self), DIR_RIGHT, true ); }
-static ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move(entity_vars(self), DIR_RIGHT, false); }
+static ENTITY_FUNCTION_ACTION(player_action_move_north_on ) { player_action_move((entity_t *)self, DIR_UP   , true ); }
+static ENTITY_FUNCTION_ACTION(player_action_move_north_off) { player_action_move((entity_t *)self, DIR_UP   , false); }
+static ENTITY_FUNCTION_ACTION(player_action_move_south_on ) { player_action_move((entity_t *)self, DIR_DOWN , true ); }
+static ENTITY_FUNCTION_ACTION(player_action_move_south_off) { player_action_move((entity_t *)self, DIR_DOWN , false); }
+static ENTITY_FUNCTION_ACTION(player_action_move_west_on  ) { player_action_move((entity_t *)self, DIR_LEFT , true ); }
+static ENTITY_FUNCTION_ACTION(player_action_move_west_off ) { player_action_move((entity_t *)self, DIR_LEFT , false); }
+static ENTITY_FUNCTION_ACTION(player_action_move_east_on  ) { player_action_move((entity_t *)self, DIR_RIGHT, true ); }
+static ENTITY_FUNCTION_ACTION(player_action_move_east_off ) { player_action_move((entity_t *)self, DIR_RIGHT, false); }
 
-static ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack(entity_vars(self), true , WEAP_ARTILLERY); }
-static ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack(entity_vars(self), false, WEAP_ARTILLERY); }
-static ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack(entity_vars(self), true , WEAP_MISSILE); }
-static ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack(entity_vars(self), false, WEAP_MISSILE); }
-static ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack(entity_vars(self), true , WEAP_MINE); }
-static ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack(entity_vars(self), false, WEAP_MINE); }
-static ENTITY_FUNCTION_ACTION(player_win) { sv_game_win(); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon1_on ) { player_action_attack((entity_t *)self, true , WEAP_ARTILLERY); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon1_off) { player_action_attack((entity_t *)self, false, WEAP_ARTILLERY); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon2_on ) { player_action_attack((entity_t *)self, true , WEAP_MISSILE); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon2_off) { player_action_attack((entity_t *)self, false, WEAP_MISSILE); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon3_on ) { player_action_attack((entity_t *)self, true , WEAP_MINE); }
+static ENTITY_FUNCTION_ACTION(player_attack_weapon3_off) { player_action_attack((entity_t *)self, false, WEAP_MINE); }
+static ENTITY_FUNCTION_ACTION(player_win) { gi->sv_game_win(); }
 
 static entity_action_t player_actions[] =
 {
@@ -171,22 +120,138 @@ static entity_action_t player_actions[] =
 };
 
 
-void entity_on_read(const char *classname, const char * info)
+size_t g_entities_num = 0;
+entity_t * g_entities;
+static void g_world_create(size_t entities_num)
 {
-    VARS_INFO_DUMP(info, "==== Entity \"%s\" spawn ====", classname);
-    spawn_entity_by_class(classname, info, NULL);
+    size_t size = entities_num * sizeof(g_entities);
+    g_entities_num = entities_num;
+    g_entities = Z_malloc(size);
+    memset(g_entities, 0, size);
+}
+static void g_world_destroy(void)
+{
+    Z_free(g_entities);
 }
 
-game_exports_t * progs_init(void)
+
+
+
+static void g_world_handle(void)
 {
+    /*
+// touchs
+static void P_entity_touchs(body_t * self)
+{
+    entity_common_t * self_vars = self->entity_;
+    if(
+            self->erase ||
+            self->freezed ||
+            !self->spawned ||
+            !self_vars->alive
+    )
+        return;
+
+    body_t * other;
+
+    for( other = CIRCLEQ_NEXT(self, list); !CIRCLEQ_END(other, &bodies); other = CIRCLEQ_NEXT(other, list) )
+    {
+        bool self_touch = (self->touch != NULL);
+        bool other_touch = (other->touch != NULL);
+
+        if( !(self_touch || other_touch) )
+            continue;
+
+        if( !entities_in_contact(self, other) )
+            continue;
+
+        entity_common_t * other_vars = other->entity_;
+        if(
+                other->erase ||
+                other->freezed ||
+                !other->spawned ||
+                !other_vars->alive
+        )
+            continue;
+
+        if(self_touch)
+            self->touch((entity_t *)self, (entity_t *)other);
+        if(other_touch)
+            other->touch((entity_t *)other, (entity_t *)self);
+
+    }
+}
+
+     */
+
+    size_t i;
+    entity_t * entity;
+    for(i = 0; i < g_entities_num; i++)
+    {
+        entity = &g_entities[i];
+
+    }
+}
+
+static void entity_on_read(const char *classname, const char * info)
+{
+
+    /*
+
+    entity_model_t * models; // TODO: deprecated, move to entity_t *
+
+    if(info->models_num == 0)
+    {
+        body->models = NULL;
+    }
+    else
+    {
+        body->models = Z_malloc(info->models_num * sizeof(entity_model_t));
+        for( i = 0; i < info->models_num; i++)
+        {
+            body->models[i].name = NULL;
+            body->models[i].player.frame = 0.0f;
+            body->models[i].player.fseq = NULL;
+            body->models[i].player.play_frames_seq = NULL;
+        }
+    }
+*/
+
+    VARS_INFO_DUMP(info, "==== Entity \"%s\" spawn ====", classname);
+    entity_t *entity = spawn_entity_by_class(classname, info, NULL);
+    gi->link(entity);
+}
+
+game_local_t glocal = {};
+
+void init(game_inits_t * init)
+{
+    glocal.maxclients = init->clients_max;
+    glocal.clients = Z_malloc(init->clients_max * sizeof(game_client_t));
+    glocal.maxentities = init->entities_max;
+}
+
+void done(void)
+{
+    Z_free(glocal.clients);
+}
+
+
+game_exports_t * progs_init(const game_imports_t * import)
+{
+    gi = import;
+
     static game_exports_t game_exports = {
-            GAME_EXPORTS_ENTITIES_INFO(ge_entities_info),
             GAME_EXPORTS_ACTIONS(player_actions),
+            GAME_EXPORTS_VARS_DESCR(entity_t, entity_vars_descr),
+            .init = init,
+            .world_create = g_world_create,
+            .world_destroy = g_world_destroy,
+            .world_handle = g_world_handle,
+            .entity_on_read = entity_on_read,
             .client_player_connect = NULL,
             .client_player_spawn = client_player_spawn,
             .client_player_disconnect = NULL,
-            .entity_on_read = entity_on_read
-
     };
 
     ui_register(player_ui_draw);

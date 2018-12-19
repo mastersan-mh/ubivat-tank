@@ -21,14 +21,8 @@
 
 #define SERVER_CLIENT_TX_QUEUE_SIZE 16
 
-typedef struct server_player_s
-{
-    struct server_player_s * prev;
-    struct server_player_s * next;
-
-    struct entity_s * entity;
-
-} server_player_t;
+#define FOREACH_SERVER_CLIENTS(client, i) \
+        for((client) = &server.clients[i = 0]; i < CLIENTS_MAX; (client) = &server.clients[i++])
 
 typedef struct
 {
@@ -51,21 +45,18 @@ typedef struct server_player_vars_storage_s
     size_t clientId;
     size_t playerId;
 
-    const game_exports_entityinfo_t * info;
     /* сохраняемые переменные */
     void * vars;
 } server_player_vars_storage_t;
 
 typedef struct server_client_s
 {
-    struct server_client_s * prev;
-    struct server_client_s * next;
+    bool used;
 
     /* адрес клиента */
     net_addr_t net_addr;
 
     /* состояние игры для клиента */
-    server_gamestate_t gamestate; /* TODO: erase it */
 
     bool joined;
 
@@ -76,8 +67,6 @@ typedef struct server_client_s
 
 
     int players_num;
-
-    server_player_t * players;
 
     size_t tx_queue_num;
     server_client_tx_t tx_queue[SERVER_CLIENT_TX_QUEUE_SIZE];
@@ -110,8 +99,6 @@ typedef struct
     //состояние игры
     struct
     {
-
-        char * msg;
         bool paused;
 
         maplist_t * gamemap;
@@ -122,7 +109,7 @@ typedef struct
     uint16_t sv_port;
     in_addr_t sv_addr;
 
-    server_client_t * clients;
+    server_client_t clients[CLIENTS_MAX];
 
     /* информация о клиентах из gamesave */
     size_t gamesave_clients_info_num;
@@ -155,17 +142,10 @@ extern void server_clients_delete(void);
 
 extern int server_client_spawn(server_client_t * client, int players_num);
 extern void server_clients_unspawn(void);
-extern int server_clients_num_get(void);
-extern size_t server_client_id_get(const server_client_t * client);
-extern int server_client_players_num_get(const server_client_t * client);
+extern size_t server_clients_num_get(void);
+ssize_t server_client_id_get(const server_client_t * client);
 extern void server_client_players_num_set(server_client_t * client, int players_num);
-extern server_client_t * server_client_get(int id);
-
-extern server_player_t * server_player_create();
-extern void server_player_delete(server_client_t * client, server_player_t * player);
-extern void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player);
-
-server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId);
+extern server_client_t * server_client_get(size_t iclient);
 
 extern int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len);
 extern int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_len, size_t buf_size);

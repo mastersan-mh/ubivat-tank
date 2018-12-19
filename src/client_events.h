@@ -68,6 +68,8 @@ typedef union
     struct
     {
         bool accepted;
+        size_t clients_max;
+        size_t entities_max;
     } REMOTE_CONNECTION_RESULT;
     struct
     {
@@ -80,8 +82,7 @@ typedef union
         int players_num; /**< amount of client local players */
         struct
         {
-            char entityname[GAME_SERVER_EVENT_ENTNAME_SIZE];
-            entity_id_t entityId;
+            size_t entityId;
         } ent[2];
     } REMOTE_PLAYERS_ENTITY_SET;
 } client_event_data_t;

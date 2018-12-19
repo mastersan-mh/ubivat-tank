@@ -91,19 +91,19 @@ typedef struct
 
 extern playerinfo_t playerinfo_table[__PLAYER_LEVEL_NUM];
 
-ENTITY player_spawn(ENTITY parent, const char * spawninfo);
-ENTITY enemy_spawn(ENTITY parent, const char * spawninfo);
-ENTITY boss_spawn(ENTITY parent, const char * spawninfo);
+entity_t * player_spawn(entity_t * parent, const char * spawninfo);
+entity_t * enemy_spawn(entity_t * parent, const char * spawninfo);
+entity_t * boss_spawn(entity_t * parent, const char * spawninfo);
 
-void player_spawn_init(ENTITY player);
+void player_spawn_init(entity_t * player);
 
-void player_action_move(player_vars_t * pl, direction_t dir, bool go);
-void player_action_attack(player_vars_t * pl, bool attack, weapontype_t weap);
+void player_action_move(entity_t * player, direction_t dir, bool go);
+void player_action_attack(entity_t * player, bool attack, weapontype_t weap);
 
-void player_getdamage(ENTITY player, ENTITY explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
+void player_getdamage(entity_t * player, entity_t * explode, bool self, vec_t distance, const explodeinfo_t * explodeinfo);
 
-void player_class_init(ENTITY player, player_vars_t * pl);
+void player_class_init(entity_t * player);
 
-void player_ui_draw(camera_t * cam, ENTITY player);
+void player_ui_draw(camera_t * cam, entity_common_t * player);
 
 #endif /* SRC_ENT_PLAYER_H_ */

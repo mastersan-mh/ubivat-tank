@@ -11,9 +11,10 @@
 #define SRC_ENT_BULL_H_
 
 #include "progs.h"
+#include "progs_main.h"
 
-ENTITY bull_artillery_spawn(ENTITY parent, const char * spawninfo);
-ENTITY bull_missile_spawn(ENTITY parent, const char * spawninfo);
-ENTITY bull_mine_spawn(ENTITY parent, const char * spawninfo);
+entity_t * bull_artillery_spawn(entity_t * parent, const char * spawninfo);
+entity_t * bull_missile_spawn(entity_t * parent, const char * spawninfo);
+entity_t * bull_mine_spawn(entity_t * parent, const char * spawninfo);
 
 #endif /* SRC_ENT_BULL_H_ */

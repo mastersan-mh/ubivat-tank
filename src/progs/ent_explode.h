@@ -11,6 +11,7 @@
 #define SRC_ENT_EXPLODE_H_
 
 #include "progs.h"
+#include "progs_main.h"
 
 typedef enum
 {
@@ -33,8 +34,8 @@ typedef struct
 
 extern explodeinfo_t explodeinfo_table[EXPLODE_NUM];
 
-ENTITY explode_artillery_spawn(ENTITY parent, const char * spawninfo);
-ENTITY explode_missile_spawn(ENTITY parent, const char * spawninfo);
-ENTITY explode_mine_spawn(ENTITY parent, const char * spawninfo);
+entity_t * explode_artillery_spawn(entity_t * parent, const char * spawninfo);
+entity_t * explode_missile_spawn(entity_t * parent, const char * spawninfo);
+entity_t * explode_mine_spawn(entity_t * parent, const char * spawninfo);
 
 #endif /* SRC_ENT_EXPLODE_H_ */

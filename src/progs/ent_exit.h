@@ -11,7 +11,8 @@
 #define SRC_ENT_EXIT_H_
 
 #include "progs.h"
+#include "progs_main.h"
 
-ENTITY exit_spawn(ENTITY parent, const char * spawninfo);
+entity_t * exit_spawn(entity_t * parent, const char * spawninfo);
 
 #endif /* SRC_ENT_EXIT_H_ */

@@ -6,14 +6,15 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 
 #include "ent_message.h"
 
-ENTITY message_spawn(ENTITY parent, const char * spawninfo)
+entity_t * message_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("message", parent);
+    entity_t * self = entity_init("message", parent);
 
-    entity_bodybox_set(self, 16.0f);
+    self->c.bodybox = 16.0f;
 
     entity_vars_set_all(self, spawninfo);
     return self;

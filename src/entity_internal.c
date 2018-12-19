@@ -7,45 +7,84 @@
 #include "entity_internal.h"
 #include "entity.h"
 #include "game.h"
+#include "sound.h"
+
+#include "game_progs.h" /* TODO: delete it; extern game_exports_t * ge; */
 
 #include <assert.h>
 
-/* зарегестрированные объекты */
-entity_registered_t * entityregs = NULL;
-
 /* существующие объекты (все одного типа) */
-entity_head_t entities = CIRCLEQ_HEAD_INITIALIZER(entities);
-/* удалённые объекты (все одного типа) */
-entity_head_t entities_erased = CIRCLEQ_HEAD_INITIALIZER(entities_erased);
+body_head_t bodies = CIRCLEQ_HEAD_INITIALIZER(bodies);
+
+static size_t bodies_amount = 0;
 
 
-size_t entityregs_size = 0;
-size_t entityregs_num = 0;
+static size_t body_last_id = 0;
 
-
-static entity_id_t entityId_last = 0;
-
-entity_t * entity_find_by_id(entity_id_t entityId)
+/**
+ * @description добавление объекта
+ */
+void body_link_entity(void * entity)
 {
-    entity_t * entity;
-    CIRCLEQ_FOREACH(entity, &entities, list)
-    {
-        if(entity->id == entityId)
-            return entity;
-    }
-    return NULL;
+    if(!entity)
+        return;
+    body_t * body = Z_malloc(sizeof(body_t));
+
+    assert(bodies_amount < BODY_ID_MAX && "Entities id are over!");
+
+    bodies_amount++;
+    body->id = body_last_id++;
+    body->entity = entity;
+
+    CIRCLEQ_INSERT_TAIL(&bodies, body, list);
 }
 
 /**
- *  получить регистрационную информацию объекта
+ * @description добавление объекта
  */
-entity_registered_t * entityregisteredinfo_get(const char * name)
+void body_unlink_entity(void * entity)
 {
-    size_t i;
-    for(i = 0; i < entityregs_num; i++)
+    if(!entity)
+        return;
+
+    body_t * body;
+    body_t * found = NULL;
+
+    CIRCLEQ_FOREACH(body, &bodies, list)
     {
-        if(!strncmp(entityregs[i].info->classname, name, ENTITY_CLASSNAME_SIZE))
-            return &entityregs[i];
+        if(body->entity == entity)
+        {
+            found = body;
+            break;
+        }
+    }
+
+    if(!found)
+        return;
+
+    CIRCLEQ_REMOVE(&bodies, found, list);
+    bodies_amount--;
+    Z_free(found);
+}
+
+void entities_handle(void)
+{
+    body_t * body;
+    CIRCLEQ_FOREACH(body, &bodies, list)
+    {
+/* resolve collisions */
+    }
+}
+
+
+body_t * body_find_by_id(size_t ibody)
+{
+    size_t i = 0;
+    body_t * body;
+    CIRCLEQ_FOREACH(body, &bodies, list)
+    {
+        if(body->id == ibody)
+            return body;
     }
     return NULL;
 }
@@ -53,98 +92,19 @@ entity_registered_t * entityregisteredinfo_get(const char * name)
 /**
  * @brief Очистка памяти entity
  */
-static void entity_freemem(entity_t * entity)
+static void body_freemem(body_t * body)
 {
-    const game_exports_entityinfo_t * info = entity->info;
+    sound_play_stop(body->entity, -1);
 
-    VARS_DUMP(entity->vars, entity->info->vars_descr, entity->info->vars_descr_num, "==== Enity \"%s\" free ====", entity->info->classname);
-
-    if(entity->done)
-        entity->done((ENTITY)entity);
-
-    vars_free(entity->vars, info->vars_descr, info->vars_descr_num);
-
+    /*
     size_t i;
     for( i = 0; i < info->models_num; i++)
     {
-        Z_free(entity->models[i].name);
+        Z_free(body->models[i].name);
     }
-    Z_free(entity->models);
-    Z_free(entity->vars);
-    Z_free(entity);
-}
-
-/**
- * указать нового родителя взамен старого
- */
-static void reparent(const entity_t * oldparent, const entity_t * newparent)
-{
-    entity_t * entity;
-    CIRCLEQ_FOREACH(entity, &entities, list)
-    {
-        if(entity->parent == oldparent)
-            entity->parent = (entity_t*)newparent;
-    }
-}
-
-
-static bool entities_in_contact(entity_t * ent1, entity_t * ent2)
-{
-    entity_vars_common_t * ent1_vars = ent1->vars;
-    entity_vars_common_t * ent2_vars = ent2->vars;
-
-    FLOAT ent1_halfbox = ent1->bodybox * 0.5;
-    FLOAT ent2_halfbox = ent2->bodybox * 0.5;
-    return
-            ( ent1_vars->origin[0] - ent1_halfbox <= ent2_vars->origin[0] + ent2_halfbox ) &&
-            ( ent2_vars->origin[0] - ent2_halfbox <= ent1_vars->origin[0] + ent1_halfbox ) &&
-            ( ent1_vars->origin[1] - ent1_halfbox <= ent2_vars->origin[1] + ent2_halfbox ) &&
-            ( ent2_vars->origin[1] - ent2_halfbox <= ent1_vars->origin[1] + ent1_halfbox )
-            ;
-}
-
-/**
- * touchs
- */
-static void P_entity_touchs(entity_t * self)
-{
-    entity_vars_common_t * self_vars = self->vars;
-    if(
-            self->erase ||
-            self->freezed ||
-            !self->spawned ||
-            !self_vars->alive
-    )
-        return;
-
-    entity_t * other;
-
-    for( other = CIRCLEQ_NEXT(self, list); !CIRCLEQ_END(other, &entities); other = CIRCLEQ_NEXT(other, list) )
-    {
-        bool self_touch = (self->touch != NULL);
-        bool other_touch = (other->touch != NULL);
-
-        if( !(self_touch || other_touch) )
-            continue;
-
-        if( !entities_in_contact(self, other) )
-            continue;
-
-        entity_vars_common_t * other_vars = other->vars;
-        if(
-                other->erase ||
-                other->freezed ||
-                !other->spawned ||
-                !other_vars->alive
-        )
-            continue;
-
-        if(self_touch)
-            self->touch((ENTITY)self, (ENTITY)other);
-        if(other_touch)
-            other->touch((ENTITY)other, (ENTITY)self);
-
-    }
+    Z_free(body->models);
+    */
+    Z_free(body);
 }
 
 /**
@@ -178,8 +138,8 @@ static void model_nextframe(float * frame, unsigned int fps, unsigned int startf
 
 /**
  * проигрывание кадров моделей
- */
-static void P_entity_modelplay(entity_t * entity)
+ *
+static void P_entity_modelplay(body_t * entity)
 {
     const game_exports_entityinfo_t * info = entity->info;
     size_t imodel;
@@ -207,7 +167,7 @@ static void P_entity_modelplay(entity_t * entity)
         if(start && fseq != NULL && fseq->firstframef != NULL)
         {
             fseq->firstframef(
-                (ENTITY)entity,
+                (entity_t *)entity,
                 imodel
             );
         }
@@ -216,27 +176,29 @@ static void P_entity_modelplay(entity_t * entity)
         {
             model->player.play_frames_seq = NULL;
             fseq->lastframef(
-                (ENTITY)entity,
+                (entity_t *)entity,
                 imodel
             );
         }
 
     }
 }
+*/
 
 /**
  * передвижение игрока
  */
-static void P_entity_move(entity_t * entity)
+static void P_entity_move(body_t * entity)
 {
+/*
     if(!(entity->flags | ENTITYFLAG_SOLIDWALL))
         return;
-
+*/
     /*
-    vec2_t * orig = &entity->origin;
+    vec2_t * orig = &entity->c.origin;
      */
     /*
-    vec2_t * orig_prev = &entity->origin_prev;
+    vec2_t * orig_prev = &entity->c.origin_prev;
     vec_t halfbox = info->bodybox/2;
     vec_t dist;
      */
@@ -262,66 +224,22 @@ static void P_entity_move(entity_t * entity)
      */
 }
 
-void entities_handle(void)
-{
-    entity_t * entity = CIRCLEQ_FIRST(&entities);
-    while(!CIRCLEQ_END(entity, &entities))
-    {
-
-        entity_vars_common_t * vars = entity->vars;
-        if(entity->erase)
-        {
-            entity_t * erased = entity;
-            /* укажем нового родителя, взамен удаляемого */
-            reparent(erased, erased->parent);
-            entity_model_play_pause_all((ENTITY)erased);
-            entity = CIRCLEQ_NEXT(entity, list);
-            CIRCLEQ_REMOVE(&entities, erased, list);
-            CIRCLEQ_INSERT_TAIL(&entities_erased, erased, list);
-            continue;
-        }
-
-        if(
-                entity->freezed ||
-                !entity->spawned
-        )
-        {
-            entity = CIRCLEQ_NEXT(entity, list);
-            continue;
-        }
-
-        VEC2_COPY(vars->origin_prev, vars->origin);
-        if(entity->think != NULL)
-        {
-            entity->think((ENTITY)entity);
-        }
-
-        P_entity_touchs(entity);
-
-        if(!entity->erase)
-            P_entity_move(entity);
-
-        if(!entity->erase)
-            P_entity_modelplay(entity);
-
-        entity = CIRCLEQ_NEXT(entity, list);
-    }
-}
 
 static void ent_models_render(
     camera_t * cam,
-    entity_t * entity
+    body_t * entity
 )
 {
+/*
     static GLfloat angles[] =
     {
-            0.0f,   /* N */
-            180.0f, /* S */
-            270.0f, /* W */
-            90.0f,  /* E */
+            0.0f,   // * N *
+            180.0f, // * S *
+            270.0f, // * W *
+            90.0f,  // * E *
     };
 
-    entity_vars_common_t * common = entity->vars;
+    entity_common_t * common = entity->entity_;
     vec2_t * pos = &common->origin;
     size_t models_num = entity->info->models_num;
     entity_model_t * models = entity->models;
@@ -336,7 +254,7 @@ static void ent_models_render(
         entity_model_t * model = &models[i];
         if(!model->model)
         {
-            game_console_send("Error: Entity " ENTITY_PRINTF_FORMAT ": no model index #%d, could not render.", ENTITY_PRINTF_VALUE(entity), (int)i);
+            game_cprint("Error: Entity " ENTITY_PRINTF_FORMAT ": no model index #%d, could not render.", ENTITY_PRINTF_VALUE(entity), (int)i);
             continue;
         }
         int frame = VEC_TRUNC(model->player.frame);
@@ -351,32 +269,29 @@ static void ent_models_render(
             frame
         );
     }
+    */
 }
 
 /**
  * рисование объектов на карте
  */
-void entities_render(camera_t * cam)
+void bodies_render(camera_t * cam)
 {
     int cam_sx_half = cam->sx / 2;
     int cam_sy_half = cam->sy / 2;
     int ent_rendered = 0;
 
-    entity_t * entity;
-    CIRCLEQ_FOREACH(entity, &entities, list)
+    body_t * entity;
+    CIRCLEQ_FOREACH(entity, &bodies, list)
     {
-        if(entity->erase) continue;
-        if(entity->freezed) continue;
-        if(!entity->spawned) continue;
 
 
         //int viewbox_half = entity->img->img_sx;
         int viewbox_half = 16;
 
-        entity_vars_common_t * common = entity->vars;
+        entity_common_t * common = entity->entity;
 
         if(
-                entity->allow_draw &&
                 ( cam->origin[0]    - cam_sx_half  <= common->origin[0] + viewbox_half ) &&
                 ( common->origin[0] - viewbox_half <= cam->origin[0]    + cam_sx_half  ) &&
                 ( cam->origin[1]    - cam_sy_half  <= common->origin[1] + viewbox_half ) &&
@@ -388,7 +303,7 @@ void entities_render(camera_t * cam)
         }
     }
 
-    //game_console_send("ent_rendered = %d\n", ent_rendered);
+    //game_cprint("ent_rendered = %d\n", ent_rendered);
 }
 
 /**
@@ -396,123 +311,12 @@ void entities_render(camera_t * cam)
  */
 void entities_erase(void)
 {
-    entity_t * entity;
-    while(!CIRCLEQ_EMPTY(&entities))
+    body_t * entity;
+    while(!CIRCLEQ_EMPTY(&bodies))
     {
-        entity = CIRCLEQ_FIRST(&entities);
-        CIRCLEQ_REMOVE(&entities, entity, list);
-        entity_freemem(entity);
-    }
-    while(!CIRCLEQ_EMPTY(&entities_erased))
-    {
-        entity = CIRCLEQ_FIRST(&entities_erased);
-        CIRCLEQ_REMOVE(&entities_erased, entity, list);
-        entity_freemem(entity);
+        entity = CIRCLEQ_FIRST(&bodies);
+        CIRCLEQ_REMOVE(&bodies, entity, list);
+        body_freemem(entity);
     }
 }
 
-void * entity_build_storage(const char * name, const var_value_t * vars_values, size_t vars_values_num)
-{
-    entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
-    if(!entityinfo_reg)
-    {
-        game_console_send("Error: Build storage unknown entity \"%s\".", name);
-        return NULL;
-    }
-
-    if(vars_values_num == 0)
-        return NULL;
-
-    const game_exports_entityinfo_t * info = entityinfo_reg->info;
-
-    size_t bufsize = var_buffersize_calculate(info->vars_descr, info->vars_descr_num);
-    void * buf = Z_malloc(bufsize);
-    for(size_t i = 0; i < vars_values_num; i++)
-    {
-        const var_value_t * var_value = &vars_values[i];
-
-        const var_descr_t * vd = var_find(info->vars_descr, info->vars_descr_num, var_value->name);
-        if(!vd)
-        {
-            game_console_send("Warning: While entity \"%s\" creation, variable \"%s\" not found.", name, var_value->name);
-            continue;
-        }
-        if(var_value->type != vd->type)
-        {
-            game_console_send("Warning: While entity \"%s\" creation, variable \"%s\" has other type.", name, var_value->name);
-            continue;
-        }
-
-        memcpy(buf + vd->ofs, &var_value->blob, vd->size);
-
-    }
-    return buf;
-}
-
-/**
- * @description добавление объекта
- */
-entity_t * entity_new_(const char * name, entity_t * parent, const var_value_t * vars_values, size_t vars_values_num)
-{
-    size_t i;
-    entity_registered_t * entityinfo_reg = entityregisteredinfo_get(name);
-    if(!entityinfo_reg)
-    {
-        game_console_send("Error: Cannot create unknown entity \"%s\", entity not registered.", name);
-        return NULL;
-    }
-
-    const game_exports_entityinfo_t * info = entityinfo_reg->info;
-
-    entity_t * entity = Z_malloc(sizeof(entity_t));
-
-    assert(entityId_last < ENTITY_ID_MAX && "Entities id are over!");
-    entity->id = entityId_last;
-    entityId_last++;
-    strncpy(entity->classname, name, ENTITY_CLASSNAME_SIZE);
-    entity->flags = 0;
-    entity->bodybox = 0.0f;
-
-    if(info->models_num == 0)
-    {
-        entity->models = NULL;
-    }
-    else
-    {
-        entity->models = Z_malloc(info->models_num * sizeof(entity_model_t));
-        for( i = 0; i < info->models_num; i++)
-        {
-            entity->models[i].name = NULL;
-            entity->models[i].player.frame = 0.0f;
-            entity->models[i].player.fseq = NULL;
-            entity->models[i].player.play_frames_seq = NULL;
-        }
-    }
-
-    entity->info = info;
-
-    entity->vars = Z_malloc(info->vars_size);
-    memset(entity->vars, 0, info->vars_size);
-
-    entity->parent = (entity_t*)parent;
-    entity->cam_entity = entity;
-    entity->erase = false;
-    entity->freezed = false;
-    entity->allow_draw = true;
-
-    CIRCLEQ_INSERT_TAIL(&entities, entity, list);
-
-
-    entity->spawned = false;
-
-    entity_vars_common_t * common = entity->vars;
-    void * storage = entity_build_storage(name, vars_values, vars_values_num);
-    entity_restore((ENTITY)entity, storage);
-
-    entity->spawned = true;
-    common->alive = true;
-
-    Z_free(storage);
-
-    return entity;
-}

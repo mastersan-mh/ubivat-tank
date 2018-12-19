@@ -14,6 +14,8 @@
 #include "client.h"
 #include "g_gamesave.h"
 
+#include "game_progs.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -31,19 +33,21 @@ static char * make_filename(char * filename, int i)
  * запись игрока
  * @return = 0 | -1
  */
-static int g_gamesave_save_player(int fd, entity_t * player)
+static int g_gamesave_save_player(int fd, body_t * player)
 {
+    /*
     write(fd, map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER], strlen(map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER])+1);
 
-    size_t vars_num = player->info->vars_descr_num;
-    const var_descr_t * vars_descr = player->info->vars_descr;
-    void * vars = player->vars;
+    size_t vars_num = ge->vars_descr_num;
+    const var_descr_t * vars_descr = ge->vars_descr;
+    void * vars = player->entity_;
 
     size_t varbufsize = var_buffersize_calculate(vars_descr, vars_num);
     uint32_t vn = vars_num;
     uint32_t vbs = varbufsize;
-
+*/
     /* buffer prepare */
+    /*
     size_t vn_size = sizeof(vn);
     size_t varbufsize_size = sizeof(vbs);
     size_t bufsize = vn_size + varbufsize_size + varbufsize;
@@ -61,8 +65,9 @@ static int g_gamesave_save_player(int fd, entity_t * player)
     write(fd, buf, bufsize);
 
     Z_free(buf);
+    */
     return 0;
-};
+}
 
 /**
  * чтение игрока
@@ -137,8 +142,6 @@ int g_gamesave_save(int isave)
     //strncpy(gamesave->name, name, G_GAMESAVE_NAME_SIZE);
     int fd;
     char filename[16];
-    server_client_t * client;
-    server_player_t * player;
 
     make_filename(filename, isave);
 
@@ -164,6 +167,9 @@ int g_gamesave_save(int isave)
 
     GS_WRITE_V(header);
 
+    /*
+    server_client_t * client;
+    server_player_t * player;
     int clients_num = server_clients_num_get();
     GS_WRITE_U16(clients_num);
     LIST2_FOREACHR(server.clients, client)
@@ -179,7 +185,7 @@ int g_gamesave_save(int isave)
             g_gamesave_save_player(fd, player->entity);
         }
     }
-
+*/
     close(fd);
     return 0;
 };
@@ -217,7 +223,7 @@ int g_gamesave_load_open(int isave, gamesave_load_context_t * ctx)
     Z_free(path);
     if(ctx->fd <= 0)
     {
-        game_console_send("gamesave %d load error", isave);
+        game_cprint("gamesave %d load error", isave);
         return -1;
     }
     return 0;

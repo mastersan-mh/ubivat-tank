@@ -6,14 +6,15 @@
  */
 
 #include "progs.h"
+#include "helpers.h"
 
 #include "ent_exit.h"
 
-ENTITY exit_spawn(ENTITY parent, const char * spawninfo)
+entity_t * exit_spawn(entity_t * parent, const char * spawninfo)
 {
-    ENTITY self = entity_spawn("exit", parent);
+    entity_t * self = entity_init("exit", parent);
 
-    entity_bodybox_set(self, 16.0f);
+    self->c.bodybox = 16.0f;
     entity_model_set(self, 0, ":/exit", 8.0f, 0.0f, 0.0f);
 
     entity_vars_set_all(self, spawninfo);

@@ -92,7 +92,7 @@ static void server_net_io(void)
         err = server_pdu_parse(&sender, buf, buf_len);
         if(err)
         {
-            game_console_send("CLIENT: TX PDU parse error.");
+            game_cprint("CLIENT: TX PDU parse error.");
         }
 
     }

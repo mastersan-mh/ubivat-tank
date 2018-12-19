@@ -80,7 +80,6 @@ void server_storages_free()
     {
         storage = server.storages;
         LIST2_UNLINK(server.storages, storage);
-        storage->info = NULL;
         Z_free(storage->vars);
         Z_free(storage);
     }
@@ -112,8 +111,13 @@ server_player_vars_storage_t * server_storage_create(size_t clientId, size_t pla
 server_client_t * server_client_find_by_addr(const net_addr_t * addr)
 {
     server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
+    size_t i;
+
+    FOREACH_SERVER_CLIENTS(client, i)
     {
+        client = &server.clients[i];
+        if(!client->used)
+            continue;
         if( !memcmp(&client->net_addr.addr, &addr->addr, sizeof(struct sockaddr)) )
             return client;
     }
@@ -128,43 +132,27 @@ void server_client_players_num_set(server_client_t * client, int players_num)
 
 void server_client_delete(server_client_t * client)
 {
-    size_t playerId = 0;
-    server_player_t * player;
-    LIST2_UNLINK(server.clients, client);
-    while(!LIST2_IS_EMPTY(client->players))
-    {
-        player = client->players;
-        server_player_delete(client, player);
-        playerId++;
-    }
-    Z_free(client);
+    client->used = false;
 }
 
 int server_client_spawn(server_client_t * client, int players_num)
 {
     client->players_num = players_num;
-    int playerId = players_num - 1;
-    int player_spawned = 0;
+    int players_spawned = 0;
     for(int i = 0; i < players_num; i++)
     {
-        server_player_t * player = server_player_create();
-        LIST2_PUSH(client->players, player);
+        //size_t iclient = server_client_id_get(client);
 
-        size_t clientId = server_client_id_get(client);
-        server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-
-        char * userinfo = storage ? storage->vars : NULL;
-        entity_t * entity = game_client_player_spawn(userinfo);
+        char * userinfo = NULL;
+        entity_common_t * entity = game_progs_client_player_spawn(userinfo);
         if(!entity)
         {
-            game_console_send("Error: No entity to spawn client.");
+            game_cprint("Error: No entity to spawn client.");
             return -1;
         }
-        player->entity = entity;
-        playerId--;
-        player_spawned++;
+        players_spawned++;
     }
-    client->joined = (player_spawned != 0);
+    client->joined = (players_spawned != 0);
     return client->joined ? 0 : -1;
 }
 
@@ -174,102 +162,63 @@ int server_client_spawn(server_client_t * client, int players_num)
 void server_clients_unspawn(void)
 {
     server_client_t * client;
-    size_t clientId = 0;
-    LIST2_FOREACHR(server.clients, client)
+    size_t iclient;
+
+    FOREACH_SERVER_CLIENTS(client, iclient)
     {
-        server_player_t * player;
+        if(!client->used)
+            continue;
+
         client->joined = false;
-        size_t playerId = client->players_num - 1;
-        while(!LIST2_IS_EMPTY(client->players))
-        {
-            player = client->players;
 
-            server_player_vars_storage_t * storage = server_storage_find(clientId, playerId);
-            server_player_info_store(storage, player);
-            player->entity = NULL;
-            server_player_delete(client, player);
-
-            playerId--;
-        }
-        clientId++;
+        //player->body = NULL;
     }
 }
 
-int server_clients_num_get(void)
+size_t server_clients_num_get(void)
 {
     server_client_t * client;
-    int num;
-    LIST2_FOREACH_I(server.clients, client, num);
+    size_t num;
+    FOREACH_SERVER_CLIENTS(client, num) { client->joined = !(!client->joined);}
     return num;
 }
 
 /**
  * получить id клиента
  */
-size_t server_client_id_get(const server_client_t * client)
+ssize_t server_client_id_get(const server_client_t * client)
 {
-    int clients_num = server_clients_num_get();
-    server_client_t * cl;
-    LIST2_FOREACH(server.clients, cl)
-    {
-        clients_num--;
-        if(cl == client)
-            return clients_num;
-    }
-    assert(0 && "server_client_id_get(): client not found.");
-    return -1;
-}
-
-
-int server_client_players_num_get(const server_client_t * client)
-{
-    server_player_t * player;
-    int num;
-    LIST2_FOREACH_I(client->players, player, num);
-    return num;
+    if(!client)
+        return -1;
+    return (client - server.clients);
 }
 
 /**
  * @brief сохранение информации о entity игрока в хранилище игрока
  */
+/*
 void server_player_info_store(server_player_vars_storage_t * storage, server_player_t * player)
 {
-    entity_t * entity = player->entity;
-    size_t info_vars_num = entity->info->vars_descr_num;
-    const var_descr_t * info_vars = entity->info->vars_descr;
+    entity_common_t * entity = player->entity;
+    size_t info_vars_num = ge->vars_descr_num;
+    const var_descr_t * info_vars = ge->vars_descr;
     if(!storage->vars)
-        storage->vars = Z_malloc(entity->info->vars_size);
+        storage->vars = Z_malloc(ge->vars_size);
     storage->info = player->entity->info;
     char * vars = storage->vars;
     for(size_t i = 0; i < info_vars_num; i++)
     {
         intptr_t ofs = info_vars[i].ofs;
-        memcpy(vars + ofs, entity->vars + ofs, info_vars[i].size);
+        memcpy(vars + ofs, entity->entity_ + ofs, info_vars[i].size);
     }
 }
+    */
 
-server_player_t * server_client_player_get_by_id(const server_client_t * client, int playerId)
+server_client_t * server_client_get(size_t iclient)
 {
-    int players_num = server_client_players_num_get(client);
-    if(playerId < 0 || playerId >= players_num)
+    if(iclient >= CLIENTS_MAX)
         return NULL;
-    server_player_t * player = client->players;
-    playerId = players_num - 1 - playerId;
-    int i;
-    LIST2_LIST_TO_IENT(client->players, player, i, playerId);
-    return player;
-}
-
-server_client_t * server_client_get(int id)
-{
-    int clients_num = server_clients_num_get();
-    if(id < 0 || id >= clients_num)
-        return NULL;
-    server_client_t * client = server.clients;
-    id = clients_num - 1 - id;
-    int i;
-    LIST2_LIST_TO_IENT(server.clients, client, i, id);
-    return client;
+    return &server.clients[iclient];
 }
 
 server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bool main)
@@ -278,40 +227,23 @@ server_client_t * server_client_create(int sock, const net_addr_t * net_addr, bo
     if(!client)
         game_halt("server_client_create(): Can not alloc memory, failed");
 
+    client->used = true;
     client->joined = false;
     client->main = main;
     client->net_addr = *net_addr;
     client->players_num = GAME_CLIENT_PLAYERSNUM_ASSIGN_CLIENT;
-    client->players = NULL;
     client->tx_queue_num = 0;
-    LIST2_PUSH(server.clients, client);
     return client;
 }
 
 void server_clients_delete(void)
 {
+    size_t i;
     server_client_t * client;
-    while(!LIST2_IS_EMPTY(server.clients))
+    FOREACH_SERVER_CLIENTS(client, i)
     {
-        client = server.clients;
         server_client_delete(client);
     }
-}
-
-
-server_player_t * server_player_create()
-{
-    server_player_t * player = Z_malloc(sizeof(server_player_t));
-    if(!player)
-        game_halt("server_player_create(): Can not alloc memory, failed");
-    player->entity = NULL;
-    return player;
-}
-
-void server_player_delete(server_client_t * client, server_player_t * player)
-{
-    LIST2_UNLINK(client->players, player);
-    Z_free(player);
 }
 
 int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len)
@@ -349,7 +281,7 @@ int server_pdu_parse(const net_addr_t * sender, const char * buf, size_t buf_len
             case G_CLIENT_REQ_PLAYER_ACTION:
                 evtype = G_SERVER_EVENT_REMOTE_CLIENT_PLAYER_ACTION;
                 PDU_POP_BUF(&value16, sizeof(value16));
-                evdata.REMOTE_PLAYER_ACTION.playerId = ntohs(value16);
+                evdata.REMOTE_PLAYER_ACTION.iplayer = ntohs(value16);
                 PDU_POP_BUF(evdata.REMOTE_PLAYER_ACTION.action, GAME_ACTION_SIZE);
                 break;
                 /** Привилегированные запросы */
@@ -412,6 +344,10 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
             case G_SERVER_REPLY_CONNECTION_RESULT:
                 value16 = htons(reply->data.CONNECTION_RESULT.accepted ? -1 : 0);
                 PDU_PUSH_BUF(&value16, sizeof(value16));
+                value16 = htons(reply->data.CONNECTION_RESULT.clients_max);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
+                value16 = htons(reply->data.CONNECTION_RESULT.entities_max);
+                PDU_PUSH_BUF(&value16, sizeof(value16));
                 break;
             case G_SERVER_REPLY_CONNECTION_CLOSE:
                 break;
@@ -429,9 +365,8 @@ int server_pdu_client_build(server_client_t * client, char * buf, size_t * buf_l
                 PDU_PUSH_BUF(&value16, sizeof(value16));
                 for(int i = 0; i < player_num; i++)
                 {
-                    PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                    uint32_t entityId = reply->data.PLAYERS_ENTITY_SET.ent[i].entityId;
-                    valueu32 = htonl(entityId);
+                    uint32_t gclient = reply->data.PLAYERS_ENTITY_SET.ent[i].gclient;
+                    valueu32 = htonl(gclient);
                     PDU_PUSH_BUF(&valueu32, sizeof(valueu32));
                 }
                 break;
@@ -481,9 +416,8 @@ int server_pdu_build(const server_reply_t * reply, char * buf, size_t * buf_len,
             PDU_PUSH_BUF(&value16, sizeof(value16));
             for(int i = 0; i < player_num; i++)
             {
-                PDU_PUSH_BUF(reply->data.PLAYERS_ENTITY_SET.ent[i].entityname, GAME_SERVER_EVENT_ENTNAME_SIZE);
-                uint32_t entityId = reply->data.PLAYERS_ENTITY_SET.ent[i].entityId;
-                valueu32 = htonl(entityId);
+                uint32_t gclient = reply->data.PLAYERS_ENTITY_SET.ent[i].gclient;
+                valueu32 = htonl(gclient);
                 PDU_PUSH_BUF(&valueu32, sizeof(valueu32));
             }
             break;
@@ -503,14 +437,14 @@ void server_tx(void)
     static char buf[PDU_BUF_SIZE];
     int err;
     size_t buf_len;
-
+    size_t i;
     server_client_t * client;
-    LIST2_FOREACH(server.clients, client)
+    FOREACH_SERVER_CLIENTS(client, i)
     {
         err = server_pdu_client_build(client, buf, &buf_len, PDU_BUF_SIZE);
         if(err)
         {
-            game_console_send("SERVER: client TX buffer overflow");
+            game_cprint("SERVER: client TX buffer overflow");
             return;
         }
         if(buf_len > 0)
@@ -529,7 +463,7 @@ void server_tx(void)
         server_pdu_build(&tx->reply, buf, &buf_len, PDU_BUF_SIZE);
         if(err)
         {
-            game_console_send("SERVER: TX buffer overflow");
+            game_cprint("SERVER: TX buffer overflow");
             return;
         }
         if(buf_len > 0)

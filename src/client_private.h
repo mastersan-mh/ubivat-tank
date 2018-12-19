@@ -23,16 +23,16 @@ typedef enum
     CLIENT_STATE_DONE
 } client_state_t;
 
-typedef struct client_player_s
+typedef struct
 {
-    struct client_player_s * prev;
-    struct client_player_s * next;
+    bool used;
 
     /* ассоциированный сокет */
     //net_socket_t * ns;
 
-    entity_t * entity;
+    body_t * body;
     camera_t cam;
+    body_t * body_cam;
 
 } client_player_t;
 
@@ -74,7 +74,7 @@ typedef struct
     /* время последнего получения сообщения */
     unsigned long time;
 
-    client_player_t * players;
+    client_player_t players[CLIENT_PLAYERS_MAX];
 
     size_t tx_queue_num;
     client_req_queue_t tx_queue[CLIENT_REQ_QUEUE_SIZE];
@@ -91,9 +91,7 @@ extern void client_disconnect();
 
 extern void client_initcams(void);
 
-extern int client_player_num_get(void);
-
-extern client_player_t * client_player_get(int playerId);
+extern client_player_t * client_player_get(size_t iplayer);
 void client_player_delete(client_player_t * player);
 void client_players_delete(void);
 

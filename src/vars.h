@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "vec.h"
+#include "game.h"
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -125,12 +126,12 @@ void vars_dump_info(const char * info);
 #ifdef VARS_DUMP_ALLOW
 #  define VARS_DUMP(vars, vars_descr, vars_descr_num, title, ...) \
         do { \
-            if(title != NULL) game_console_send(title, ##__VA_ARGS__); \
+            if(title != NULL) game_cprint(title, ##__VA_ARGS__); \
             vars_dump((vars), (vars_descr), (vars_descr_num)); \
         } while (0)
 #  define VARS_INFO_DUMP(info, title, ...) \
         do { \
-            if(title) game_console_send((title), ##__VA_ARGS__); \
+            if(title) game_cprint((title), ##__VA_ARGS__); \
             vars_dump_info((info)); \
         } while (0)
 #else
