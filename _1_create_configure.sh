@@ -32,12 +32,7 @@
 #in: Makefile
 # make
 
-if [ "${FAST}" != "ON" ] ; then
-aclocal &&\
-autoheader &&\
-automake --foreign --add-missing &&\
-autoconf &&\
-./configure
-fi
-
-make 1>log.txt 2>err.txt
+aclocal && \
+autoheader && \
+automake --foreign --add-missing && \
+autoconf

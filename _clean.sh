@@ -24,3 +24,4 @@ ${RM} ./Makefile
 ${RM} ./Makefile.in
 ${RM} ./src/Makefile
 ${RM} ./src/Makefile.in
+${RM} -rf ./_installdir
