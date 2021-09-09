@@ -112,6 +112,7 @@ typedef struct
 typedef struct
 {
 	int menu;
+	int sound_playId;
 } menu_prelevel_ctx_t;
 
 /* MENU_ABORT */

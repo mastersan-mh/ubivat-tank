@@ -14,6 +14,7 @@
 #include <weap.h>
 #include <img.h>
 #include <video.h>
+#include "sound.h"
 #include <_gr2D.h>
 #include <fonts.h>
 
@@ -41,6 +42,14 @@ long dtime;
 double dtimed;
 /*  (s) */
 double dtimed1000;
+
+/* (ms) */
+long menu_dtime;
+/* (ms) */
+double menu_dtimed;
+/*  (s) */
+double menu_dtimed1000;
+
 
 char * game_dir_home;
 char * game_dir_conf;
@@ -182,6 +191,22 @@ void game_init()
 	if(video_init())
 		game_halt("Video init failed");
 
+
+	snd_format_t requested =
+	{
+			//.freq = 11025,
+			.freq = 22050,
+			//.freq = 44100,
+			//.width = 2,
+			.width = 2,
+			.channels = 1
+	};
+
+	sound_init(&requested);
+
+	sound_precache();
+
+
 	if(game_pal_get())
 		game_halt("Error load palette %s.", FILENAME_PALETTE);
 	//чтение изображений
@@ -266,6 +291,8 @@ void game_done()
 	Z_free(game_dir_conf);
 	Z_free(game_dir_saves);
 	input_done();
+	sound_precache_free();
+	sound_done();
 	video_done();
 	//прекратим игру
 	game_abort();
@@ -285,6 +312,22 @@ void game_main()
 	imenu = MENU_MAIN;
 	menu_selector_t imenu_process = imenu;
 
+
+	//sound_play_start(SOUND_FIRE1);
+	//sound_play_start(SOUND_MUSIC1, -1);
+	//SDL_Delay(3000);
+	//sound_play_start(SOUND_START);
+	//sound_play_start(SOUND_MUSIC2);
+/*
+	// выстрелов/мин: 650
+	for(int i = 0; i< 100; i++)
+	{
+		sound_play_start(SOUND_FIRE1, 1);
+		SDL_Delay(92);
+	}
+*/
+
+
 	unsigned long time_prev;
 	unsigned long time_current = system_getTime_realTime_ms();
 	while(!quit)
@@ -294,6 +337,10 @@ void game_main()
 		dtime = time_current - time_prev;
 		dtimed = (double)dtime;
 		dtimed1000 = dtimed/1000.0f;
+
+		menu_dtime = dtime;
+		menu_dtimed = dtimed;
+		menu_dtimed1000 = dtimed1000;
 
 		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
 
@@ -475,8 +522,16 @@ bool game_nextmap()
 	game.ingame     = false;
 	game._win_      = false;
 	//menu_interlevel();
+
 	game.P0->charact.spawned = false;
-	if(game.P1) game.P1->charact.spawned = false;
+	//sound_play_stop(game.P0->soundId_move);
+
+	if(game.P1)
+	{
+		game.P1->charact.spawned = false;
+		//sound_play_stop(game.P1->soundId_move);
+	}
+
 	game.gamemap = game.gamemap->next;
 	if(!game.gamemap)
 	{
@@ -814,6 +869,7 @@ int game_record_load(int isave)
 	strncpy(rec->name, header.name, 15);
 	strncpy(rec->mapfilename, header.mapfilename, 15);
 	rec->flags = header.flags;
+	game.flags = rec->flags;
 
 	//прочитаем карту
 	ret = map_load(rec->mapfilename);

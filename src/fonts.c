@@ -1,12 +1,9 @@
-#include <video.h>
-#include <_gr2D.h>
-#include <fonts.h>
-
-#include <game.h>
-
-#include <math.h>
-
-#include <utf8.h>
+#include "video.h"
+#include "_gr2D.h"
+#include "fonts.h"
+#include "game.h"
+#include "math.h"
+#include "utf8.h"
 
 #include <fttypes.h>
 #include <ftimage.h>
@@ -500,6 +497,13 @@ void font_color_sets(
 	font_color[0] = color->r;
 	font_color[1] = color->g;
 	font_color[2] = color->b;
+}
+
+void font_color_setindex(
+	uint8_t index
+)
+{
+	/*  DUMMY */
 }
 
 

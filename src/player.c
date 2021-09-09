@@ -14,6 +14,8 @@
 #include <fonts.h>
 #include <player.h>
 
+#include "sound.h"
+
 #include <string.h>
 #include <think.h>
 #include <types.h>
@@ -497,6 +499,12 @@ static void player_handle(player_t * player)
 
 	if(player->charact.health<=0)
 	{
+		if(player->soundId_move)
+		{
+			sound_play_stop(player->soundId_move);
+			player->soundId_move = 0;
+		}
+
 		//если игрок мертв
 		if(player->charact.spawned)
 		{
@@ -528,6 +536,10 @@ static void player_handle(player_t * player)
 
 			player->Fbase = player->Fbase + PLAYER_FPS_RUN * dtimed1000;
 			if(player->Fbase < 0 || player->Fbase > 3) player->Fbase = 0;
+			if(!player->soundId_move)
+			{
+				player->soundId_move = sound_play_start(SOUND_PLAYER_TANKMOVE, -1);
+			}
 
 		}
 		else
@@ -535,7 +547,15 @@ static void player_handle(player_t * player)
 			//игрок останавливается
 			player->move.speed -= PLAYER_DECEL * dtime;
 		};
-		if(player->move.speed < 0) player->move.speed = 0;
+		if(player->move.speed < 0)
+		{
+			if(player->soundId_move)
+			{
+				sound_play_stop(player->soundId_move);
+				player->soundId_move = 0;
+			}
+			player->move.speed = 0;
+		}
 		player_move(player, player->move.dir, &player->move.speed);
 
 		speed_s = player->charact.speed / 4;
@@ -613,9 +633,17 @@ static void player_handle(player_t * player)
 						//присоединяем изображение пули
 						switch(player->w.attack)
 						{
-						case 1:bullList->image = IMG_connect("B_BULL"  );break;
-						case 2:bullList->image = IMG_connect("B_ROCKET");break;
-						case 3:bullList->image = IMG_connect("B_MINE"  );break;
+						case 1:
+							bullList->image = IMG_connect("B_BULL"  );
+							sound_play_start(SOUND_WEAPON_ARTILLERY_1, 1);
+							break;
+						case 2:
+							bullList->image = IMG_connect("B_ROCKET");
+							sound_play_start(SOUND_WEAPON_ARTILLERY_2, 1);
+							break;
+						case 3:
+							bullList->image = IMG_connect("B_MINE"  );
+							break;
 						default: bullList->image = NULL;
 						};
 						if(
@@ -745,8 +773,10 @@ static int player_disconnect(player_t ** player)
 		*player = NULL;
 		return 1;
 	}
-	if(playerList == *player) {
+	if(playerList == *player)
+	{
 		playerList = playerList->next;
+		sound_play_stop((*player)->soundId_move);
 		ctrl_AI_done(&((*player)->brain));
 		Z_free(*player);
 		*player = playerList;
@@ -757,6 +787,7 @@ static int player_disconnect(player_t ** player)
 		while(p && p->next != *player) p = p->next;
 		if(!p) return 2;
 		p->next = (*player)->next;
+		sound_play_stop((*player)->soundId_move);
 		ctrl_AI_done(&((*player)->brain));
 		Z_free(*player);
 		*player = p->next;
@@ -791,6 +822,7 @@ void player_disconnect_all()
 	while(playerList)
 	{
 		player = playerList;
+		sound_play_stop(player->soundId_move);
 		playerList = playerList->next;
 		Z_free(player);
 	};
@@ -836,6 +868,7 @@ void player_spawn(player_t * player, spawn_t * spawn)
 	player->move.dir          = 0;
 	player->w.attack          = false;
 	player->w.reloadtime_d    = 0;
+	player->soundId_move      = 0;
 };
 /*
  * появление/восстановление игрока на карте
