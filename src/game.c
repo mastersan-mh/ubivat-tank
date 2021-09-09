@@ -167,12 +167,9 @@ void game_init()
 	game.m_i_lineR    = image_get(M_LINER    );
 	game.m_i_flagRUS  = image_get(F_RUS      );
 	game.m_i_flagUSA  = image_get(F_USA      );
-	game.w_w0         = image_get(W_W0       );
-	game.w_w1         = image_get(W_W1       );
-	game.w_brick      = image_get(W_BRICK    );
-	game.w_water[0]   = image_get(WATER0     );
-	game.w_water[1]   = image_get(WATER1     );
-	game.w_water[2]   = image_get(WATER2     );
+	game.w_water[0]   = image_get(IMG_WATER0     );
+	game.w_water[1]   = image_get(IMG_WATER1     );
+	game.w_water[2]   = image_get(IMG_WATER2     );
 	game.i_health     = image_get(I_HEALTH   );
 	game.i_armor      = image_get(I_ARMOR    );
 	game.i_star       = image_get(I_STAR     );
@@ -665,8 +662,9 @@ static bool game_record_save_player(int fd, player_t * player)
 	case c_p_P0:
 	case c_p_P1:
     {
-        size_t size = strlen(map_class_names[MAP_SPAWN_PLAYER]) + 1;
-        CHECK(write(fd, map_class_names[MAP_SPAWN_PLAYER], size), size);
+        const char * map_class_name = map_class_names[MAPDATA_MOBJ_SPAWN_PLAYER];
+        size_t size = strlen(map_class_name) + 1;
+        CHECK(write(fd, map_class_name, size), size);
         break;
     }
 	default:
@@ -694,17 +692,14 @@ static bool game_record_save_player(int fd, player_t * player)
  */
 static bool game_record_load_player(int fd, player_t * player)
 {
-    mobj_type_t mobj_type = map_file_class_get(fd);
-    if(mobj_type != MAP_SPAWN_PLAYER)
+    mapdata_mobj_type_t mapdata_mobj_type = map_file_class_get(fd);
+    if(mapdata_mobj_type != MAPDATA_MOBJ_SPAWN_PLAYER)
     {
         return false;
     }
     game_savedata_player_t savedata;
     ssize_t c = read(fd, &savedata, sizeof(savedata));
-    if(c != sizeof(savedata))
-    {
-        return false;
-    }
+    if(c != sizeof(savedata))return false;
     player->charact.scores     = savedata.scores;
     player->charact.fragstotal = savedata.fragstotal;
     player->charact.frags      = savedata.frags;
@@ -717,6 +712,7 @@ static bool game_record_load_player(int fd, player_t * player)
     player_class_init(player);
     return true;
 };
+
 /**
  * сохраниние записи
  * @return true| false

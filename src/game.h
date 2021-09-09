@@ -92,9 +92,6 @@ typedef struct
 	item_img_t * i_health;
 	item_img_t * i_armor;
 	item_img_t * i_star;
-	item_img_t * w_w0;
-	item_img_t * w_w1;
-	item_img_t * w_brick;
 	item_img_t * w_water[3];
 	/***********************/
 	item_img_t * m_i_logo;

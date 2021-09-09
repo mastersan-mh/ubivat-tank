@@ -300,99 +300,101 @@ void player_checkcode()
 	}
 	*/
 }
+
+void check_value_int(int * val, int min, int max)
+{
+	if(*val > max) *val = max;
+	else if(*val < min) *val = min;
+}
+
 /*
  * подбирание предметов игроком
  */
 void player_item_get(player_t * player)
 {
-	item_t * item;
+	if(!
+			(
+					(player->charact.health>0) &&
+					((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
+			)
+	)return;
+	// не монстр(монстрюки оружие не подбирают)
+	mobj_t * mobj;
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
+	{
+		if(mobj->type != MOBJ_ITEM) continue;
 
-	if(
-			(player->charact.health>0) &&                                        //игрок живой и
-			((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
-	)
-	{// не монстр(монстрюки оружие не подбирают)
-		item = map.items;
-		while(item)
+		mobj_item_t * item = &mobj->item;
+		if(!item->exist)continue;
+
+		if(
+				(mobj->pos.x - c_i_MDL_box/2 < player->move.pos.x + c_p_MDL_box/2 )&&
+				(player->move.pos.x - c_p_MDL_box/2 <= mobj->pos.x + c_i_MDL_box/2)&&
+				(mobj->pos.y - c_i_MDL_box/2 <= player->move.pos.y + c_p_MDL_box/2)&&
+				(player->move.pos.y - c_p_MDL_box/2 < mobj->pos.y + c_i_MDL_box/2 )&&
+				(mobj->type == MOBJ_ITEM)
+		)
 		{
-			if(item->exist)
+			switch(mobj->item.type)
 			{
-				//если предмет есть
+			case ITEM_HEALTH:
+				if((player->charact.health<player->charact.healthmax)|| item->amount < 0)
+				{
+					item->exist = false;
+					player->charact.health += item->amount;
+					check_value_int(&player->charact.health, 0, player->charact.healthmax);
+				};
+				break;
+			case ITEM_ARMOR:
+				if((player->charact.armor<player->charact.armormax)||(item->amount<0))
+				{
+					item->exist = false;
+					player->charact.armor += item->amount;
+					check_value_int(&player->charact.armor, 0, player->charact.armormax);
+				};
+				break;
+			case ITEM_STAR:
+				if((player->charact.scores<c_score_max)||(item->amount<0))
+				{
+					item->exist = false;
+					player->charact.scores += item->amount;
+					check_value_int(&player->charact.scores, 0, c_score_max);
+				};
+				player_class_init(player);
+				if(5 <= player->charact.scores / c_score_perclass)
+				{
+					if(player->charact.health < player->charact.healthmax)
+						player->charact.health = player->charact.healthmax;
+					if(player->charact.armor < player->charact.armormax)
+						player->charact.armor  = player->charact.armormax;
+				};
+				break;
+			case ITEM_ROCKET:
 				if(
-						(item->orig.x-c_i_MDL_box/2< player->move.pos.x+c_p_MDL_box/2)&&
-						(player->move.pos.x-c_p_MDL_box/2<=item->orig.x+c_i_MDL_box/2)&&
-						(item->orig.y-c_i_MDL_box/2<=player->move.pos.y+c_p_MDL_box/2)&&
-						(player->move.pos.y-c_p_MDL_box/2< item->orig.y+c_i_MDL_box/2)
+						player->w.ammo[1] != PLAYER_WEAP_NOTACCESSIBLE &&
+						(player->w.ammo[1] < wtable[1].ammo || item->amount<0)
+
 				)
 				{
-					switch(item->class)
-					{
-					case MAP_ITEM_HEALTH:
-						if((player->charact.health<player->charact.healthmax)||(item->amount<0))
-						{
-							item->exist = false;
-							if(player->charact.healthmax < player->charact.health + item->amount)
-								player->charact.health = player->charact.healthmax;
-							else
-								player->charact.health += item->amount;
-						};
-						break;
-					case MAP_ITEM_ARMOR:
-						if((player->charact.armor<player->charact.armormax)||(item->amount<0)) {
-							item->exist = false;
-							if(player->charact.armormax<player->charact.armor+item->amount)
-								player->charact.armor = player->charact.armormax;
-							else
-								player->charact.armor+= item->amount;
-							if(player->charact.armor<0) player->charact.armor = 0;
-						};
-						break;
-					case MAP_ITEM_STAR  :
-						if((player->charact.scores<c_score_max)||(item->amount<0))
-						{
-							item->exist = false;
-							if(c_score_max<player->charact.scores+item->amount)
-								player->charact.scores = c_score_max;
-							else
-								player->charact.scores+= item->amount;
-							if(player->charact.scores<0) player->charact.scores = 0;
-						};
-						player_class_init(player);
-						if(5<=player->charact.scores / c_score_perclass)
-						{
-							if(player->charact.health<player->charact.healthmax) player->charact.health = player->charact.healthmax;
-							if(player->charact.armor <player->charact.armormax ) player->charact.armor  = player->charact.armormax ;
-						};
-						break;
-					case MAP_ITEM_ROCKET:
-						if((player->w.ammo[1] != PLAYER_WEAP_NOTACCESSIBLE)&&((player->w.ammo[1]<wtable[1].ammo)||(item->amount<0)))
-						{
-							item->exist = false;
-							if(wtable[1].ammo<player->w.ammo[1]+item->amount)
-								player->w.ammo[1] = wtable[1].ammo;
-							else
-								player->w.ammo[1]+= item->amount;
-							if(player->w.ammo[1]<0) player->w.ammo[1] = 0;
-						};
-						break;
-					case MAP_ITEM_MINE  :
-						if((player->w.ammo[2] != PLAYER_WEAP_NOTACCESSIBLE)&&((player->w.ammo[2]<wtable[2].ammo)||(item->amount<0)))
-						{
-							item->exist = false;
-							if(wtable[2].ammo<player->w.ammo[2]+item->amount)
-								player->w.ammo[2] = wtable[2].ammo;
-							else
-								player->w.ammo[2]+= item->amount;
-							if(player->w.ammo[2]<0) player->w.ammo[2] = 0;
-						};
-						break;
-					default: ;
-					}
-				}
+					item->exist = false;
+					player->w.ammo[1] += item->amount;
+					check_value_int(&player->w.ammo[1], 0, wtable[1].ammo);
+				};
+				break;
+			case ITEM_MINE:
+				if(
+						player->w.ammo[2] != PLAYER_WEAP_NOTACCESSIBLE &&
+						(player->w.ammo[2] < wtable[2].ammo || item->amount < 0)
+				)
+				{
+					item->exist = false;
+					player->w.ammo[2] += item->amount;
+					check_value_int(&player->w.ammo[2], 0, wtable[2].ammo);
+				};
+				break;
 			}
-			item = item->next;
 		}
-	}
+	} //end for
 }
 
 /*
@@ -400,32 +402,36 @@ void player_item_get(player_t * player)
  */
 void player_obj_check(player_t * player)
 {
-	obj_t * obj;
-	if((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
+	if(
+			!((player->charact.status==c_p_P0)||(player->charact.status==c_p_P1))
+	) return;
+
+	mobj_t * mobj;
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		obj = map.objs;
-		while(obj)
+		if(
+				(mobj->pos.x-c_o_MDL_box/2 <= player->move.pos.x + c_p_MDL_box / 2)&&
+				(player->move.pos.x-c_p_MDL_box/2 <= mobj->pos.x + c_o_MDL_box / 2)&&
+				(mobj->pos.y-c_o_MDL_box/2 <= player->move.pos.y + c_p_MDL_box / 2)&&
+				(player->move.pos.y-c_p_MDL_box/2 <= mobj->pos.y + c_o_MDL_box / 2)
+		)
 		{
-			if(
-					(obj->orig.x-c_o_MDL_box/2 <= player->move.pos.x + c_p_MDL_box / 2)&&
-					(player->move.pos.x-c_p_MDL_box/2 <= obj->orig.x + c_o_MDL_box / 2)&&
-					(obj->orig.y-c_o_MDL_box/2 <= player->move.pos.y + c_p_MDL_box / 2)&&
-					(player->move.pos.y-c_p_MDL_box/2 <= obj->orig.y + c_o_MDL_box / 2)
-			)
+			switch (mobj->type)
 			{
-				switch (obj->class)
-				{
-				case MAP_OBJ_EXIT: game._win_ = true;break;
-				case MAP_OBJ_MESS: break;
-				default: ;
-				}
+			case MOBJ_MESSAGE:
 				//отправим сообщение игроку
-				game_message_send(obj->message);
-			};
-		obj = obj->next;
-		};
-	};
-};
+				game_message_send(mobj->mesage.message);
+				break;
+			case MOBJ_EXIT:
+				game._win_ = true;
+				//отправим сообщение игроку
+				game_message_send(mobj->exit.message);
+				break;
+			default: ;
+			}
+		}
+	}
+}
 /*
  * рисование игрока
  */
@@ -830,11 +836,12 @@ void player_disconnect_all()
 /*
  * спавним игрока
  */
-void player_spawn(player_t * player, spawn_t * spawn)
+void player_spawn(player_t * player, mobj_t * mobj)
 {
-	if(-1 < spawn->scores && spawn->scores <= c_score_max) player->charact.scores = spawn->scores;
+	mobj_spawn_t * sp = &mobj->spawn;
+	if(-1 < sp->scores && sp->scores <= c_score_max) player->charact.scores = sp->scores;
 	player_class_init(player);
-	if(-1 < spawn->health && spawn->health <= player->charact.healthmax) player->charact.health = spawn->health;
+	if(-1 < sp->health && sp->health <= player->charact.healthmax) player->charact.health = sp->health;
 	else
 	{
 		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
@@ -852,8 +859,8 @@ void player_spawn(player_t * player, spawn_t * spawn)
 			}
 		}
 	}
-	if(-1 < spawn->armor && spawn->armor <= player->charact.armormax )
-		player->charact.armor = spawn->armor;
+	if(-1 < sp->armor && sp->armor <= player->charact.armormax )
+		player->charact.armor = sp->armor;
 	else
 	{
 		if(player->charact.status == c_p_BOSS || player->charact.status == c_p_ENEMY)
@@ -882,32 +889,28 @@ int player_spawn_player(player_t * player)
 			player->charact.status != c_p_P1
 	) return 1;//игрок является монстром, ошибка спавнинга
 
-	spawn_t * spawn;
 	int count = 0;
-	spawn = map.spawns;
 	//считаем количество спавн-поинтов
-	while(spawn)
+	mobj_t * mobj;
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		if(spawn->class == MAP_SPAWN_PLAYER) count++;
-		spawn = spawn->next;
+		if(mobj->type == MOBJ_SPAWN && mobj->spawn.type == SPAWN_PLAYER) count++;
 	};
 	//выбираем случайным образом
 	count = xrand(count);
 
-	spawn = map.spawns;
-	while(spawn)
+	for(mobj = map.mobjs; mobj; mobj = mobj->next)
 	{
-		if(spawn->class == MAP_SPAWN_PLAYER)
+		if(mobj->type == MOBJ_SPAWN && mobj->spawn.type == SPAWN_PLAYER)
 		{
 			if(count == 0) break;
 			count--;
 		}
-		spawn = spawn->next;
 	};
 
-	player->move.pos.x = spawn->orig.x;
-	player->move.pos.y = spawn->orig.y;
-	player_spawn(player, spawn);
+	player->move.pos.x = mobj->pos.x;
+	player->move.pos.y = mobj->pos.y;
+	player_spawn(player, mobj);
 	return 0;
 }
 
@@ -918,28 +921,27 @@ int player_spawn_player(player_t * player)
  */
 int player_spawn_enemy()
 {
-	spawn_t * spawn;
-	int error = 0;
+	int ret = 0;
 
-	spawn = map.spawns;
-	while(spawn && error != 1)
+	mobj_t * mobj = map.mobjs;
+	while(mobj && ret != 1)
 	{
 		//пока не привысили лимит на игроков
-		if( spawn->class == MAP_SPAWN_ENEMY || spawn->class == MAP_SPAWN_BOSS )
+		if( mobj->type == MOBJ_SPAWN && (mobj->spawn.type == SPAWN_ENEMY || mobj->spawn.type == SPAWN_BOSS ))
 		{
 			//это monster спавн
-			if(spawn->class == MAP_SPAWN_ENEMY) error = player_connect(c_p_ENEMY);
-			if(spawn->class == MAP_SPAWN_BOSS ) error = player_connect(c_p_BOSS );
-			if(error != 1)
+			if(mobj->spawn.type == SPAWN_ENEMY) ret = player_connect(c_p_ENEMY);
+			if(mobj->spawn.type == SPAWN_BOSS) ret = player_connect(c_p_BOSS );
+			if(ret != 1)
 			{
-				playerList->move.pos.x = spawn->orig.x;
-				playerList->move.pos.y = spawn->orig.y;
-				player_spawn(playerList, spawn);
+				playerList->move.pos.x = mobj->pos.x;
+				playerList->move.pos.y = mobj->pos.y;
+				player_spawn(playerList, mobj);
 			}
 		}
-		spawn = spawn->next;
+		mobj = mobj->next;
 	}
-	return error;
+	return ret;
 }
 /*
  * спавним всех игроков и монстров
