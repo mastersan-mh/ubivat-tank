@@ -156,7 +156,8 @@ static void scene_init()
 	//glDisable(GL_DEPTH_TEST);
 	// смешивание
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+
+	//glBlendFunc(GL_ONE, GL_SRC_ALPHA);
 
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_PROJECTION);
@@ -316,7 +317,6 @@ int video_init()
 
 
 	if (SDL_Init(
-//		SDL_INIT_AUDIO |
 		SDL_INIT_VIDEO |
 		SDL_INIT_EVENTS
 	) != 0)

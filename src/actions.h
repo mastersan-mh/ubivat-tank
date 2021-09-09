@@ -21,6 +21,8 @@ typedef enum
 	ACTION_PLAYER2_ATTACK_WEAPON2,
 	ACTION_PLAYER2_ATTACK_WEAPON3,
 	ACTION_CHEAT_WIN,
+	ACTION_SFACTOR,
+	ACTION_DFACTOR,
 	__ACTION_NUM
 }actions_t;
 
@@ -31,6 +33,9 @@ typedef struct
 }action_t;
 
 extern action_t actions[__ACTION_NUM];
+
+void action_sfactor();
+void action_dfactor();
 
 void kp_0();
 void kp_B();

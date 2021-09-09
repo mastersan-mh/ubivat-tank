@@ -110,9 +110,9 @@ void bull_removeall()
 static void bull_draw(camera_t * cam, bull_t * bull)
 {
 	//размер кадра X,Y
-	int mdlbox = bull->image->IMG->sx;
+	int mdlbox = bull->image->img_sx;
 	//количество кадров
-	int Fmax = bull->image->IMG->sy / (mdlbox * 4);
+	int Fmax = bull->image->img_sy / (mdlbox * 4);
 	if
 	(
 			(cam->pos.x-cam->sx/2<=bull->pos.x+(mdlbox >> 1)) && (bull->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&
@@ -204,9 +204,9 @@ void bull_control()
 					//в игрока не попали, продолжение полета
 
 
-					int mdlbox = bull->image->IMG->sx;
+					int mdlbox = bull->image->img_sx;
 					//количество кадров
-					int Fmax = bull->image->IMG->sy / (mdlbox * 4);
+					int Fmax = bull->image->img_sy / (mdlbox * 4);
 					bull->frame = bull->frame + c_bull_FPS * dtimed1000;
 					if(bull->frame < 0 || Fmax<=bull->frame) bull->frame = 0;
 					bull = bull->next;
@@ -239,15 +239,15 @@ void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl)
 	switch(bull->_weap_){                                                 //изображение взрыва
 	case 0:
 		sound_play_start(SOUND_EXPLODE_ARTILLERY, 1);
-		p->image = IMG_connect("E_SMALL");
+		p->image = image_get(E_SMALL);
 		break;
 	case 1:
 		sound_play_start(SOUND_EXPLODE_MISSILE, 1);
-		p->image = IMG_connect("E_BIG");
+		p->image = image_get(E_BIG);
 		break;
 	case 2:
 		sound_play_start(SOUND_EXPLODE_GRENADE, 1);
-		p->image = IMG_connect("E_BIG");
+		p->image = image_get(E_BIG);
 		break;
 	};
 	p->next       = explList;
@@ -303,7 +303,7 @@ static void explode_draw(camera_t * cam, explode_t * explode)
 {
 	int mdlbox;
 
-	mdlbox = explode->image->IMG->sx;
+	mdlbox = explode->image->img_sx;
 	if(
 			(cam->pos.x-cam->sx/2<=explode->pos.x+(mdlbox >> 1)) &&
 			(explode->pos.x-(mdlbox >> 1)<=cam->pos.x+cam->sx/2) &&

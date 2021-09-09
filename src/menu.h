@@ -135,20 +135,6 @@ typedef enum
 	SPACE
 } menu_key_t;
 
-/*
-	switch(menukey)
-	{
-	case NOTHING: break;
-	case UP     : if(__ctx->menu > 0  ) __ctx->menu--;break;
-	case DOWN   : if(__ctx->menu < 8-1) __ctx->menu++;break;
-	case LEFT   :
-	case RIGHT  :
-	case ENTER  :
-	case LEAVE  :
-	case SPACE  :
-	}
-*/
-
 typedef struct
 {
 	void * context;

@@ -36,9 +36,13 @@
 #define VIDEO_SCALEX ((float) ((float)VIDEO_MODE_W / (float)VIDEO_SCREEN_W))
 #define VIDEO_SCALEY ((float) ((float)VIDEO_MODE_H / (float)VIDEO_SCREEN_H))
 
+#define COLOR_ALPHA_OPAQUE 255
+#define COLOR_ALPHA_TRANSPARENT 0
 
+/*
 #define COLOR_ALPHA_OPAQUE 0
 #define COLOR_ALPHA_TRANSPARENT 255
+*/
 
 int video_init();
 void video_done();

@@ -19,6 +19,60 @@
 #define BII_FORMATERR 4
 #define BII_UNKNOWN   5
 
+typedef enum
+{
+	IMG_MENU_LOGO,
+	M_CONBACK,
+	M_I_INTERLV,
+	M_GAME,
+	M_G_NEW_P1,
+	M_G_NEW_P2,
+	M_G_LOAD,
+	M_G_SAVE,
+	M_CASE,
+	M_OPTIONS,
+	M_ABOUT,
+	M_ABORT,
+	M_QUIT,
+	M_CUR_0,
+	M_CUR_1,
+	M_ARROWL,
+	M_ARROWR,
+	M_LINEL,
+	M_LINEM,
+	M_LINER,
+	TANK0,
+	TANK1,
+	TANK2,
+	TANK3,
+	TANK4,
+
+	F_RUS,
+	F_USA,
+	F_WHITE,
+
+	W_W0,
+	W_W1,
+	W_BRICK,
+	WATER0,
+	WATER1,
+	WATER2,
+	I_HEALTH,
+	I_ARMOR,
+	I_STAR,
+	O_EXIT,
+	W_BULL,
+	W_ROCKET,
+	W_MINE,
+	B_BULL,
+	B_ROCKET,
+	B_MINE,
+	E_SMALL,
+	E_BIG,
+	__IMAGE_NUM
+}image_index_t;
+
+
 //рисунок
 typedef struct
 {
@@ -33,31 +87,30 @@ typedef struct
 /*
  * изображение
  */
-typedef struct image_s
+typedef struct
 {
-	struct image_s *next;
-	/* идентификатор рисунка */
-	char * name;
 	//изображение
-	BIIpic_t * IMG;
-	GLuint textures;
-	GLsizei sx;
-	GLsizei sy;
+	GLenum sfactor;
+	GLenum dfactor;
+	int img_sx;
+	int img_sy;
+	GLuint texture;
+	GLsizei texture_sx;
+	GLsizei texture_sy;
 	uint8_t * data;
 } item_img_t;
 
 extern int BII_errno;
 
-GLsizei make_gl_size(int size);
-
 char * IMG_errorGet();
 
 int img_palette_read(const char * filename);
 
-item_img_t * IMG_find(const char * name);
-int IMG_add(const char * path, const char * IMGname);
-void IMG_removeall();
-item_img_t * IMG_connect(const char * IMGname);
+void images_done();
+
+void images_init();
+
+item_img_t * image_get(image_index_t iimage);
 
 
 #endif /* SRC_IMG_H_ */

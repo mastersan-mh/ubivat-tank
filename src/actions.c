@@ -1,5 +1,5 @@
 #include <actions.h>
-#include <game.h>
+#include "game.h"
 #include <input.h>
 
 
@@ -27,7 +27,9 @@ action_t actions[__ACTION_NUM] = {
 		{ player2_attack_weapon1_ON, player2_attack_weapon1_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON1 */
 		{ player2_attack_weapon2_ON, player2_attack_weapon2_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON2 */
 		{ player2_attack_weapon3_ON, player2_attack_weapon3_OFF },  /* ACTION_PLAYER2_ATTACK_WEAPON3 */
-		{ game_action_win, NULL } /* ACTION_CHEAT_WIN */
+		{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
+		{ action_sfactor, NULL},
+		{ action_dfactor, NULL}
 };
 
 typedef struct
@@ -65,19 +67,30 @@ void kp_B()
 	printf("scene.blend = %d\n",scene.blend);
 }
 
-void action_fog()
+int factor_inc(int factor)
 {
+	factor++;
+	return factor % 14;
+}
+
+void action_sfactor()
+{
+	game_video_sfactor = factor_inc(game_video_sfactor);
+	printf("game_video_sfactor = %d\n", game_video_sfactor);
+/*
 	static GLuint fogMode[]= { GL_EXP, GL_EXP2, GL_LINEAR };
 	static int fogfilter = 0;
 	fogfilter+=1;
 	if(fogfilter>3)fogfilter=0;
 	glFogi (GL_FOG_MODE, fogMode[fogfilter]);
 	printf("fogfilter = %d\n",fogfilter);
+*/
 }
 
-void action_kp8()
+void action_dfactor()
 {
-
+	game_video_dfactor = factor_inc(game_video_dfactor);
+	printf("game_video_dfactor = %d\n", game_video_dfactor);
 }
 
 
