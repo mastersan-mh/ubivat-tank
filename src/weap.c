@@ -158,7 +158,7 @@ void bull_control()
 	bull = bullList;
 	while(bull)
 	{
-		s = wtable[bull->_weap_].bullspeed * dtimed1000;
+		s = wtable[bull->_weap_].bullspeed;
 		switch(bull->dir)
 		{
 		case 0: bull->pos.y = bull->pos.y+s;break; //c_p_DIR_up
@@ -207,7 +207,7 @@ void bull_control()
 					int mdlbox = bull->image->img_sx;
 					//количество кадров
 					int Fmax = bull->image->img_sy / (mdlbox * 4);
-					bull->frame = bull->frame + c_bull_FPS * dtimed1000;
+					bull->frame = bull->frame + c_bull_FPS;
 					if(bull->frame < 0 || Fmax<=bull->frame) bull->frame = 0;
 					bull = bull->next;
 				}
@@ -403,7 +403,7 @@ void explode_control()
 		};
 		if(c_explode_Famnt - 1 < explode->frame) explode->frame = c_explode_Famnt-1;
 
-		explode->frame = explode->frame + c_explode_FPS * dtimed1000;
+		explode->frame = explode->frame + c_explode_FPS;
 
 		if(explode->frame > c_explode_Famnt - 1)
 			explode_remove(&explode);

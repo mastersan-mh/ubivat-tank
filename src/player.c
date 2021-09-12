@@ -479,7 +479,7 @@ void player_draw_all(camera_t * cam)
 static void player_move(player_t * player, int dir, coord_t * speed)
 {
 	pos_t * orig = &player->move.pos;
-	coord_t dway = (*speed) * dtimed1000;
+	coord_t dway = (*speed);
 	coord_t halfbox = c_p_MDL_box/2;
 	coord_t dist;
 
@@ -537,10 +537,10 @@ static void player_handle(player_t * player)
 		if(player->move.go)
 		{
 			//игрок едет
-			player->move.speed += PLAYER_ACCEL * dtime;
+			player->move.speed += PLAYER_ACCEL;
 			if(player->charact.speed < player->move.speed) player->move.speed = player->charact.speed;
 
-			player->Fbase = player->Fbase + PLAYER_FPS_RUN * dtimed1000;
+			player->Fbase = player->Fbase + PLAYER_FPS_RUN;
 			if(player->Fbase < 0 || player->Fbase > 3) player->Fbase = 0;
 			if(!player->soundId_move)
 			{
@@ -551,7 +551,7 @@ static void player_handle(player_t * player)
 		else
 		{
 			//игрок останавливается
-			player->move.speed -= PLAYER_DECEL * dtime;
+			player->move.speed -= PLAYER_DECEL;
 		};
 		if(player->move.speed < 0)
 		{
@@ -596,7 +596,10 @@ static void player_handle(player_t * player)
 	if(player->w.attack == 0)
 	{
 		//игрок не атакует
-		if(player->w.reloadtime_d>0) player->w.reloadtime_d -= dtime;//учитываем время на перезарядку
+        if(player->w.reloadtime_d > 0)
+        {
+            player->w.reloadtime_d--;
+        }
 	}
 	else
 	{
@@ -614,7 +617,10 @@ static void player_handle(player_t * player)
 		}
 		else
 		{
-			if(player->w.reloadtime_d>0) player->w.reloadtime_d -= dtime;//учитываем время на перезарядку
+            if(player->w.reloadtime_d > 0)
+            {
+                player->w.reloadtime_d--;
+            }
 			else
 			{
 				if(!player->bull)
@@ -1036,7 +1042,7 @@ void player_class_init(player_t * player)
 		case 0:                                                             //нулевой
 			player->charact.healthmax = 100;                                      //здоровье max
 			player->charact.armormax  = 000;                                      //броня max
-			player->charact.speed = 40/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
+			player->charact.speed = TANK_LEVEL0_SPEED;                                          //максимальная скорость при ходьбе
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
@@ -1045,7 +1051,7 @@ void player_class_init(player_t * player)
 		case 1:
 			player->charact.healthmax = 100;                                      //здоровье max
 			player->charact.armormax  = 050;                                      //броня max
-			player->charact.speed = 50/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
+			player->charact.speed = TANK_LEVEL1_SPEED;                                          //максимальная скорость при ходьбе
 			player->w.ammo[0] = 99;
 			player->w.ammo[1] = PLAYER_WEAP_NOTACCESSIBLE;
 			player->w.ammo[2] = PLAYER_WEAP_NOTACCESSIBLE;
@@ -1054,7 +1060,7 @@ void player_class_init(player_t * player)
 		case 2:
 			player->charact.healthmax = 100;                                      //здоровье max
 			player->charact.armormax  = 100;                                      //броня max
-			player->charact.speed = 60/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
+			player->charact.speed = TANK_LEVEL2_SPEED;                                          //максимальная скорость при ходьбе
 			player->w.ammo[0] = 99;
 			if((player->charact.status==c_p_ENEMY)||(player->charact.status==c_p_BOSS ))
 				player->w.ammo[1] = 99;
@@ -1065,7 +1071,7 @@ void player_class_init(player_t * player)
 		case 3:
 			player->charact.healthmax = 200;                                      //здоровье max
 			player->charact.armormax  = 150;                                      //броня max
-			player->charact.speed = 70/2* SPEEDSCALE;                                          //максимальная скорость при ходьбе
+			player->charact.speed = TANK_LEVEL3_SPEED;                                          //максимальная скорость при ходьбе
 			player->w.ammo[0] = 99;
 			if((player->charact.status==c_p_ENEMY)||(player->charact.status==c_p_BOSS ))
 				player->w.ammo[1] = 99;
@@ -1077,7 +1083,7 @@ void player_class_init(player_t * player)
 		case 4:
 			player->charact.healthmax = 200;                                      //здоровье max
 			player->charact.armormax  = 200;                                      //броня max
-			player->charact.speed = 90/2 * SPEEDSCALE;                                          //максимальная скорость при ходьбе
+			player->charact.speed = TANK_LEVEL4_SPEED;                                          //максимальная скорость при ходьбе
 			player->w.ammo[0] = 99;
 
 			//player->w.ammo[1] = 90;

@@ -1,5 +1,5 @@
-/*
- * plr.h
+/**
+ * @file player.h
  *
  *  Created on: 10 окт. 2016 г.
  *      Author: mastersan
@@ -8,44 +8,28 @@
 #ifndef SRC_PLAYER_H_
 #define SRC_PLAYER_H_
 
+#include "defs.h"
 #include <weap.h>
 #include <map.h>
 #include <types.h>
 
-/*
-	pix/s -> m/s -> km/h
-	16p = 6m
-	10 m/s = 10*8 p/s
-	90 km/h = 90 * 1000/3600 * 8 p/s
+#define SPEEDSCALE ((1.0f/27.0f) / (GAME_TICK_PERIOD))
 
-	km/h * SPEEDSCALE = pix/s
-*/
-/* пикселов на метр */
-#define PIXPM (16.0f/6.0f)
-/* метров на пиксел */
-#define MPPIX (1.0f/PIXPM)
+#define TANK_LEVEL0_SPEED (40.0 * SPEEDSCALE)
+#define TANK_LEVEL1_SPEED (50.0 * SPEEDSCALE)
+#define TANK_LEVEL2_SPEED (60.0 * SPEEDSCALE)
+#define TANK_LEVEL3_SPEED (70.0 * SPEEDSCALE)
+#define TANK_LEVEL4_SPEED (90.0 * SPEEDSCALE)
 
-#define SPEEDSCALE (( PIXPM * 1000.0f)/(3600.0f))
-/* множитель скорости: пикселов/с */
-#define SPEEDSCALE_PIXPS SPEEDSCALE
-/* множитель скорости: пикселов/мс */
-#define SPEEDSCALE_PIXPMS (PIXPM /(1000.f * 1000.f))
-
-#define MPS2_TO_KMPH2 ( (3600.0f * 3600.0f) / 1000.f)
-/* pix/(s^2) */
-#define MPS2_TO_PIXPS2 ( 1.0f / MPPIX)
-/* pix/(ms^2) */
-#define MPS2_TO_PIXPMS2 ( (0.001f * 0.001f) / MPPIX)
 
 //оружие не используется
 #define PLAYER_WEAP_NOTACCESSIBLE (-1)
-//ускорение игрока, м/с^2
-#define PLAYER_ACCEL       (0.05f * MPS2_TO_PIXPS2)
-//#define PLAYER_ACCEL       12
+/* ускорение игрока, м/с^2 */
+#define PLAYER_ACCEL       (7.0 / GAME_TICK_PERIOD)
 /* торможение: м/с^2 */
-#define PLAYER_DECEL       (0.05f * MPS2_TO_PIXPS2)
-//скорость проигрывания кадров: бег
-#define PLAYER_FPS_RUN      20
+#define PLAYER_DECEL       (7.0 / GAME_TICK_PERIOD)
+/* скорость проигрывания кадров */
+#define PLAYER_FPS_RUN      (2.0 / GAME_TICK_PERIOD)
 
 typedef enum
 {
@@ -105,7 +89,7 @@ typedef struct
 	//фрагов на карте
 	long frags;
 	//максимальная скорость при ходьбе
-	long speed;
+	coord_t speed;
 	//ирок на карте
 	bool spawned;
 } Tcharacter;

@@ -1,69 +1,19 @@
 
-#include <inttypes.h>
-#include <system.h>
+#include "system.h"
 
 #include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
 
+static struct system_time system_time;
 
-#include <fontconfig/fontconfig.h>
-
-
-#define TICRATE 1
-
-static unsigned long lasttimereply;
-static unsigned long basetime;
-
-unsigned long system_getTime_realTime()
+void system_time_update(void)
 {
-	struct timeval tv;
-	unsigned long thistimereply;
-
-	gettimeofday(&tv, NULL);
-
-	thistimereply = (tv.tv_sec * TICRATE + (tv.tv_usec * TICRATE) / 1000000);
-
-	/* Fix for time problem */
-	if (!basetime) {
-		basetime = thistimereply;
-		thistimereply = 0;
-	}
-	else
-	{
-		thistimereply -= basetime;
-	}
-	if (thistimereply < lasttimereply)
-		thistimereply = lasttimereply;
-
-	return (lasttimereply = thistimereply);
+    gettimeofday(&system_time.tv, NULL);
+    system_time.usec = system_time.tv.tv_sec * 1000000 + system_time.tv.tv_usec;
+    system_time.msec = system_time.usec / 1000;
+    system_time.sec = system_time.msec / 1000;
 }
 
-/*
- * time in ms
- */
-unsigned long system_getTime_realTime_ms()
+const struct system_time * system_time_get(void)
 {
-	struct timeval tv;
-	unsigned long thistimereply;
-
-	gettimeofday(&tv, NULL);
-
-	thistimereply = (tv.tv_sec * TICRATE * 1000 + (tv.tv_usec * TICRATE) / 1000);
-
-	/* Fix for time problem */
-	if (!basetime)
-	{
-		basetime = thistimereply;
-		thistimereply = 0;
-	}
-	else
-	{
-		thistimereply -= basetime;
-	}
-	if (thistimereply < lasttimereply)
-		thistimereply = lasttimereply;
-
-	return (lasttimereply = thistimereply);
+    return &system_time;
 }
-

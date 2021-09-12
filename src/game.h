@@ -124,16 +124,6 @@ typedef struct
 
 
 extern game_t game;
-extern long dtime;
-extern double dtimed;
-extern double dtimed1000;
-
-/* (ms) */
-extern long menu_dtime;
-/* (ms) */
-extern double menu_dtimed;
-/*  (s) */
-extern double menu_dtimed1000;
 
 extern char * game_dir_conf;
 extern char * game_dir_saves;

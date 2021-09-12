@@ -14,6 +14,7 @@
 #define ATTR_PACKED __attribute__ ((packed))
 
 #include "config.h"
+#include "defs.h"
 #include <fonts.h>
 #include <Z_mem.h>
 
@@ -87,11 +88,11 @@ typedef enum {
 //макс. кол-во очков
 #define c_score_max     2000000000l
 //пуля
-//скорость проигрывания кадров взрыва
-#define c_bull_FPS      8
+/*скорость проигрывания кадров */
+#define c_bull_FPS      (0.8 / GAME_TICK_PERIOD)
 //взрыв
 //скорость проигрывания кадров взрыва
-#define c_explode_FPS   28
+#define c_explode_FPS   (2.8 / GAME_TICK_PERIOD)
 //количество кадров взрыва
 #define c_explode_Famnt 8
 //игрок
@@ -110,9 +111,9 @@ typedef enum {
 //позиция изображения
 #define c_p_MDL_pos     (-8)
 //время на перезарядку, мс
-#define c_p_WEAP_reloadtime 1000
+#define c_p_WEAP_reloadtime (1000 / GAME_TICK_PERIOD)
 //время "думания" бота, мс
-#define c_BOT_time      1500
+#define c_BOT_time      (1500 / GAME_TICK_PERIOD)
 //расстояние с которого бот будет стремиться вести атаку
 #define c_BOT_dist      (c_p_MDL_box*3)
 

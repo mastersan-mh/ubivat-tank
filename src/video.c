@@ -6,6 +6,7 @@
 #include <video.h>
 
 #include "fonts.h"
+#include "system.h"
 
 #include <inttypes.h>
 #include <stdlib.h>
@@ -13,6 +14,14 @@
 
 #define __STRING(x)	#x
 
+struct video
+{
+    uint64_t time_prev;
+    unsigned FPS_count;
+    unsigned FPS;
+};
+
+static struct video video = {};
 
 void checkOpenGLError(const char* stmt, const char* fname, int line)
 {
@@ -409,8 +418,30 @@ void video_screen_draw_begin()
 	SDL_RenderClear(renderer);
 #endif
 }
+
+
+bool conf_show_fps = true;
+
 void video_screen_draw_end()
 {
+
+    const struct system_time * time = system_time_get();
+
+    video.FPS_count++;
+    if(time->msec - video.time_prev > 1000)
+    {
+        video.time_prev = time->msec;
+        video.FPS = video.FPS_count;
+        video.FPS_count = 0;
+    }
+
+    if(conf_show_fps)
+    {
+        font_color_set3i(COLOR_25);
+        video_printf(10, 10, orient_horiz, "FPS = %u", video.FPS);
+    }
+
+
 #if defined(VIDEO_USE_OPENGL)
 	glFlush();
 	SDL_GL_SwapWindow(window);

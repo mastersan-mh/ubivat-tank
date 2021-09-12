@@ -4,7 +4,7 @@
  * by Master San
  */
 
-
+#include "defs.h"
 #include <system.h>
 #include <game.h>
 #include <input.h>
@@ -36,23 +36,17 @@
 //состояние игры
 game_t game;
 
+struct game_internal
+{
+    bool quit;
+    menu_selector_t imenu;
+    menu_selector_t imenu_process;
+};
+
+static struct game_internal gamei = {};
+
 int game_video_dfactor = 7;
 int game_video_sfactor = 6;
-
-/* (ms) */
-long dtime;
-/* (ms) */
-double dtimed;
-/*  (s) */
-double dtimed1000;
-
-/* (ms) */
-long menu_dtime;
-/* (ms) */
-double menu_dtimed;
-/*  (s) */
-double menu_dtimed1000;
-
 
 char * game_dir_home;
 char * game_dir_conf;
@@ -60,6 +54,8 @@ char * game_dir_saves;
 
 
 
+static Uint32 P_tick_cb(Uint32 interval, void *param);
+static void P_tick(void);
 
 static int game_gameTick();
 
@@ -186,7 +182,7 @@ void game_init()
 	wtable[0].ammo       = c_WEAP_indefinit;                            //макс кол-во боеприпасов
 	wtable[0].radius     = 7;                                           //радиус действия
 	wtable[0].range      = -1;                                          //дальность
-	wtable[0].bullspeed  = 75;                                         //скорость пули
+    wtable[0].bullspeed  = 7.5 / GAME_TICK_PERIOD;
 	wtable[0].bullbox    = 2;                                           //bodybox
 	wtable[0].icon       = image_get(W_BULL);     //изображение оружия
 	strcpy(wtable[1].name, "Rocket");                                    //название оружия
@@ -195,7 +191,7 @@ void game_init()
 	wtable[1].ammo       = 50;                                          //макс кол-во боеприпасов
 	wtable[1].radius     = 11;                                          //радиус действия
 	wtable[1].range      = -1;                                          //дальность
-	wtable[1].bullspeed  = 80;                                         //скорость пули
+    wtable[1].bullspeed  = 8.0 / GAME_TICK_PERIOD;
 	wtable[1].bullbox    = 8;                                           //bodybox
 	wtable[1].icon       = image_get(W_ROCKET);     //изображение оружия
 	strcpy(wtable[2].name, "Mine");                                      //название оружия
@@ -204,12 +200,16 @@ void game_init()
 	wtable[2].ammo       = 50;                                          //макс кол-во боеприпасов
 	wtable[2].radius     = 11;                                          //радиус действия
 	wtable[2].range      = 100;                                         //дальность
-	wtable[2].bullspeed  = -80;                                        //скорость пули
+    wtable[2].bullspeed  = -8.0 / GAME_TICK_PERIOD;
 	wtable[2].bullbox    = 8;                                           //bodybox
 	wtable[2].icon       = image_get(W_MINE);     //изображение оружия
 	input_init();
 
 	game_rebind_keys_all();
+
+	uint32_t interval_ms = GAME_TICK_PERIOD;
+	SDL_AddTimer(interval_ms, P_tick_cb, NULL);
+
 }
 
 /*
@@ -232,15 +232,81 @@ void game_done()
 	images_done();
 };
 
+static Uint32 P_tick_cb(Uint32 interval, void *param)
+{
+    P_tick();
+    return interval;
+}
+
+static void P_tick(void)
+{
+    system_time_update();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        if(game.ingame)
+        {
+            switch(event.type)
+            {
+            case SDL_KEYDOWN:
+                input_key_setState(event.key.keysym.scancode, true);
+                break;
+            case SDL_KEYUP:
+                input_key_setState(event.key.keysym.scancode, false);
+                break;
+            }
+
+            //player_checkcode();
+
+        }
+        else
+        {
+            switch(event.type)
+            {
+            case SDL_KEYDOWN:
+                input_key_setState(event.key.keysym.scancode, true);
+                break;
+            case SDL_KEYUP:
+                input_key_setState(event.key.keysym.scancode, false);
+                break;
+            }
+            menu_send_event(&event);
+        }
+
+        switch(event.type)
+        {
+        case SDL_QUIT:gamei.quit = true;break;
+        }
+
+        // handle your event here
+    }
+
+    if(!game.ingame)
+    {
+        gamei.imenu_process = gamei.imenu;
+        gamei.imenu = menu_handle(gamei.imenu_process);
+        switch(gamei.imenu_process)
+        {
+            case MENU_QUIT: gamei.quit = true;break;
+            default: break;
+        }
+    }
+    else
+    {
+        int ret = game_gameTick();
+        if(ret >= 0) gamei.imenu = ret;
+    }
+}
+
+
 /*
  *
  */
 void game_main()
 {
-	bool quit = false;
-	menu_selector_t imenu = MENU_MAIN;
-	imenu = MENU_MAIN;
-	menu_selector_t imenu_process = imenu;
+	gamei.imenu = MENU_MAIN;
+	gamei.imenu_process = gamei.imenu;
 
 
 	//sound_play_start(SOUND_FIRE1);
@@ -258,96 +324,19 @@ void game_main()
 */
 
 
-	unsigned long time_prev;
-	unsigned long time_current = system_getTime_realTime_ms();
-	while(!quit)
+    system_time_update();
+	while(!gamei.quit)
 	{
-		time_prev = time_current;
-		time_current = system_getTime_realTime_ms();
-		dtime = time_current - time_prev;
-		dtimed = (double)dtime;
-		dtimed1000 = dtimed/1000.0f;
-
-		menu_dtime = dtime;
-		menu_dtimed = dtimed;
-		menu_dtimed1000 = dtimed1000;
-
-		//printf("time0 = %ld dtime = %ld\n", time_current, dtime);
-
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			//printf("event.type = %d\n", event.type);
-			if(game.ingame)
-			{
-
-				switch(event.type)
-				{
-				case SDL_KEYDOWN:
-					input_key_setState(event.key.keysym.scancode, true);
-					break;
-				case SDL_KEYUP:
-					input_key_setState(event.key.keysym.scancode, false);
-					break;
-				}
-
-				//player_checkcode();
-
-			}
-			else
-			{
-				switch(event.type)
-				{
-				case SDL_KEYDOWN:
-					input_key_setState(event.key.keysym.scancode, true);
-					break;
-				case SDL_KEYUP:
-					input_key_setState(event.key.keysym.scancode, false);
-					break;
-				}
-				menu_send_event(&event);
-			}
-
-			switch(event.type)
-			{
-			case SDL_QUIT:quit = true;break;
-			}
-
-			// handle your event here
-		}
-		if(quit)break;
 		video_screen_draw_begin();
 
 		if(!game.ingame)
 		{
-			imenu_process = imenu;
-			imenu = menu_handle(imenu_process);
-			switch(imenu_process)
-			{
-			case MENU_QUIT: quit = true;break;
-			default: break;
-			}
-			if(quit)break;
-		}
-		else
-		{
-			int ret = game_gameTick();
-			if(ret >= 0) imenu = ret;
-
-		}
-
-
-
-		if(!game.ingame)
-		{
-			menu_draw(imenu_process);
+			menu_draw(gamei.imenu_process);
 		}
 		else
 		{
 			game_draw();
 		}
-
-
 
 		video_screen_draw_end();
 
