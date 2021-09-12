@@ -579,8 +579,8 @@ int menu_options(void * ctx)
 		case NOTHING: break;
 		case UP     : _menu_dec(MENU_ROWS, &__ctx->menu);break;
 		case DOWN   : _menu_inc(MENU_ROWS, &__ctx->menu);break;
-		case LEFT   : _menu_dec(1, &__ctx->column);break;
-		case RIGHT  : _menu_inc(1, &__ctx->column);break;
+		case LEFT   : _menu_dec(2, &__ctx->column);break;
+		case RIGHT  : _menu_inc(2, &__ctx->column);break;
 		case ENTER  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
 			__ctx->state = MENU_OPTIONS_WAIT_KEY;break;
