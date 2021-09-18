@@ -48,7 +48,7 @@ typedef struct
 	uint8_t  status;
 } ATTR_PACKED game_savedata_player_t;
 
-typedef uint32_t control_t[__ACTION_NUM];
+typedef uint32_t control_t[ACTION____NUM];
 
 //запись иры
 typedef struct

@@ -143,7 +143,7 @@ typedef struct
 	int sy;
 }camera_t;
 
-#define ARRAYSIZE( x ) (sizeof((x))/sizeof(*(x)));
+#define ARRAYSIZE(x) (sizeof((x))/sizeof(*(x)))
 
 extern char * c_strTITLE;
 extern char * c_strCORP;

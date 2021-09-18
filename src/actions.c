@@ -11,7 +11,7 @@
 #include <player.h>
 
 
-action_t actions[__ACTION_NUM] = {
+const struct player_action actions[ACTION____NUM] = {
 		{ game_action_enter_mainmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
 		{ player_moveUp_ON   , player_moveUp_OFF    },      /* ACTION_PLAYER_MOVEL */
 		{ player_moveDown_ON , player_moveDown_OFF  },      /* ACTION_PLAYER_MOVER */

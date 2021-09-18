@@ -137,11 +137,6 @@ void input_key_bind(int __key, actionf_t __press, actionf_t __release)
 
 }
 
-void input_key_bindAction(int __key, action_t __action)
-{
-	input_key_bind(__key, __action.press, __action.release);
-}
-
 /*
  * отвязать функцию от клавиши
  */

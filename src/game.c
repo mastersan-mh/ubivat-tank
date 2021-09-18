@@ -74,13 +74,13 @@ void game_action_win()
 
 void game_rebind_keys_all()
 {
-	input_key_unbind_all();
-	int i;
-	for(i = 0; i < __ACTION_NUM; i++)
-	{
-
-		input_key_bindAction(game.controls[i], actions[i]);
-	}
+    input_key_unbind_all();
+    size_t i;
+    for(i = 0; i < ACTION____NUM; i++)
+    {
+        const struct player_action * action = &actions[i];
+        input_key_bind(game.controls[i], action->press, action->release);
+    }
 }
 
 void game_init()
@@ -262,15 +262,6 @@ static void P_tick(void)
         }
         else
         {
-            switch(event.type)
-            {
-            case SDL_KEYDOWN:
-                input_key_setState(event.key.keysym.scancode, true);
-                break;
-            case SDL_KEYUP:
-                input_key_setState(event.key.keysym.scancode, false);
-                break;
-            }
             menu_send_event(&event);
         }
 

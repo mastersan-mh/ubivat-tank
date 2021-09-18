@@ -72,6 +72,9 @@ void video_printf(
 	...
 );
 
+/*
+ * @param pixels_width    Wide of print field, pixels
+ */
 void video_printf_wide(
 	int x,
 	int y,

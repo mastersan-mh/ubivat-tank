@@ -3,7 +3,7 @@
 
 #include <types.h>
 
-typedef enum
+enum action
 {
 	ACTION_ENTER_MAINMENU,
 	ACTION_PLAYER_MOVE_UP,
@@ -23,16 +23,16 @@ typedef enum
 	ACTION_CHEAT_WIN,
 	ACTION_SFACTOR,
 	ACTION_DFACTOR,
-	__ACTION_NUM
-}actions_t;
+	ACTION____NUM
+};
 
-typedef struct
+struct player_action
 {
 	actionf_t press;
 	actionf_t release;
-}action_t;
+};
 
-extern action_t actions[__ACTION_NUM];
+extern const struct player_action actions[ACTION____NUM];
 
 void action_sfactor();
 void action_dfactor();
