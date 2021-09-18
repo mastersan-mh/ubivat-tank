@@ -4,6 +4,8 @@
  * by Master San
  */
 
+#include "map.h"
+
 #include <video.h>
 #include <game.h>
 #include "img.h"
@@ -670,7 +672,7 @@ void map_list_removeall()
  */
 void map_load_list()
 {
-	printf("Maps list loading: ");
+    game_info("Maps list loading: ");
 
 	FILE *fconf;
 

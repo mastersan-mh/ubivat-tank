@@ -13,6 +13,8 @@
 #include <player.h>
 #include <actions.h>
 
+#include <stdbool.h>
+
 #define GAME_LOGO \
 		"          _____    ______              __     ______ \n"\
 		"||    || |  __ \\  |__  __| ||    ||   /  \\   |__  __|\n"\
@@ -47,8 +49,6 @@ typedef struct
 	int16_t ammo3;
 	uint8_t  status;
 } ATTR_PACKED game_savedata_player_t;
-
-typedef uint32_t control_t[ACTION____NUM];
 
 //запись иры
 typedef struct
@@ -116,7 +116,6 @@ typedef struct
 	item_img_t * m_i_lineR;
 	item_img_t * m_i_flagRUS;
 	item_img_t * m_i_flagUSA;
-	control_t controls;
 	//список записей
 	gamesave_descr_t saveslist[GAME_SAVESNUM];
 	/*******************************************************************/
@@ -140,11 +139,6 @@ void game_main(void);
 
 bool game_nextmap(void);
 
-
-int game_cfg_save(void);
-int game_cfg_new(void);
-int game_cfg_load(void);
-
 void game_rebind_keys_all(void);
 
 int game_pal_get(void);
@@ -159,6 +153,11 @@ void game_message_send(const char * mess);
 
 void game_halt(const char *error, ...)
 	__attribute__ ((noreturn));
+
+void game_error(const char * format, ...);
+void game_warn(const char * format, ...);
+void game_info(const char * format, ...);
+
 void game_console_send(const char *error, ...);
 
 #endif /* SRC_GAME_H_ */

@@ -11,25 +11,40 @@
 #include <player.h>
 
 
-const struct player_action actions[ACTION____NUM] = {
-		{ game_action_enter_mainmenu, NULL }, /* 	ACTION_ENTER_MAINMENU */
-		{ player_moveUp_ON   , player_moveUp_OFF    },      /* ACTION_PLAYER_MOVEL */
-		{ player_moveDown_ON , player_moveDown_OFF  },      /* ACTION_PLAYER_MOVER */
-		{ player_moveLeft_ON , player_moveLeft_OFF  },      /* ACTION_PLAYER_MOVE_LEFT */
-		{ player_moveRight_ON, player_moveRight_OFF },      /* ACTION_PLAYER_MOVE_RIGHT */
-		{ player_attack_weapon1_ON, player_attack_weapon1_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON1 */
-		{ player_attack_weapon2_ON, player_attack_weapon2_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON2 */
-		{ player_attack_weapon3_ON, player_attack_weapon3_OFF }, /* ACTION_PLAYER_ATTACK_WEAPON3 */
-		{ player2_moveUp_ON   , player2_moveUp_OFF }, /* ACTION_PLAYER2_MOVE_UP */
-		{ player2_moveDown_ON , player2_moveDown_OFF }, /* ACTION_PLAYER2_MOVE_DOWN */
-		{ player2_moveLeft_ON , player2_moveLeft_OFF }, /* ACTION_PLAYER2_MOVE_LEFT */
-		{ player2_moveRight_ON, player2_moveRight_OFF }, /* ACTION_PLAYER2_MOVE_RIGHT */
-		{ player2_attack_weapon1_ON, player2_attack_weapon1_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON1 */
-		{ player2_attack_weapon2_ON, player2_attack_weapon2_OFF }, /* ACTION_PLAYER2_ATTACK_WEAPON2 */
-		{ player2_attack_weapon3_ON, player2_attack_weapon3_OFF },  /* ACTION_PLAYER2_ATTACK_WEAPON3 */
-		{ game_action_win, NULL }, /* ACTION_CHEAT_WIN */
-		{ action_sfactor, NULL},
-		{ action_dfactor, NULL}
+const struct eng_game_action actions[] =
+{
+        { "menu_main"  , game_action_enter_mainmenu},
+        { "win"    , game_action_win},
+        { "sfactor", action_sfactor },
+        { "dfactor", action_dfactor },
+        { ACTION_PLAYER_MOVE_UP   , player_moveUp_ON     },
+        { "-move_north"           , player_moveUp_OFF    },
+        { ACTION_PLAYER_MOVE_DOWN , player_moveDown_ON   },
+        { "-move_south"           , player_moveDown_OFF  },
+        { ACTION_PLAYER_MOVE_LEFT , player_moveLeft_ON   },
+        { "-move_west"            , player_moveLeft_OFF  },
+        { ACTION_PLAYER_MOVE_RIGHT, player_moveRight_ON  },
+        { "-move_east"            , player_moveRight_OFF },
+        { ACTION_PLAYER_ATTACK_WEAPON1, player_attack_weapon1_ON  },
+        { "-attack_artillery"         , player_attack_weapon1_OFF },
+        { ACTION_PLAYER_ATTACK_WEAPON2, player_attack_weapon2_ON  },
+        { "-attack_missile"           , player_attack_weapon2_OFF },
+        { ACTION_PLAYER_ATTACK_WEAPON3, player_attack_weapon3_ON  },
+        { "-attack_mine" , player_attack_weapon3_OFF },
+        { ACTION_PLAYER2_MOVE_UP   , player2_moveUp_ON  },
+        { "-p2move_north"          , player2_moveUp_OFF },
+        { ACTION_PLAYER2_MOVE_DOWN , player2_moveDown_ON  },
+        { "-p2move_south"          , player2_moveDown_OFF },
+        { ACTION_PLAYER2_MOVE_LEFT , player2_moveLeft_ON  },
+        { "-p2move_west"           , player2_moveLeft_OFF },
+        { ACTION_PLAYER2_MOVE_RIGHT, player2_moveRight_ON  },
+        { "-p2move_east"           , player2_moveRight_OFF },
+        { ACTION_PLAYER2_ATTACK_WEAPON1, player2_attack_weapon1_ON  },
+        { "-p2attack_artillery"        , player2_attack_weapon1_OFF },
+        { ACTION_PLAYER2_ATTACK_WEAPON2, player2_attack_weapon2_ON  },
+        { "-p2attack_missile"          , player2_attack_weapon2_OFF },
+        { ACTION_PLAYER2_ATTACK_WEAPON3, player2_attack_weapon3_ON  },
+        { "-p2attack_mine"             , player2_attack_weapon3_OFF },
 };
 
 typedef struct
@@ -40,7 +55,7 @@ typedef struct
 
 scene_t scene = {};
 
-void kp_0()
+void kp_0(void)
 {
 	scene.light = !scene.light;
 	if(scene.light)
@@ -51,7 +66,7 @@ void kp_0()
 
 }
 
-void kp_B()
+void kp_B(void)
 {
 	scene.blend= !scene.blend;
 	if(scene.blend)
@@ -73,7 +88,7 @@ static int factor_inc(int factor)
 	return factor % 14;
 }
 
-void action_sfactor()
+void action_sfactor(void)
 {
 	game_video_sfactor = factor_inc(game_video_sfactor);
 	printf("game_video_sfactor = %d\n", game_video_sfactor);
@@ -87,7 +102,7 @@ void action_sfactor()
 */
 }
 
-void action_dfactor()
+void action_dfactor(void)
 {
 	game_video_dfactor = factor_inc(game_video_dfactor);
 	printf("game_video_dfactor = %d\n", game_video_dfactor);

@@ -10,6 +10,7 @@
 #include "types.h"
 #include "video.h"
 #include "sound.h"
+#include "eng_conf.h"
 
 /* MENU_MAIN */
 menu_main_ctx_t menu_main_ctx = {};
@@ -554,7 +555,7 @@ static int menu_custom_new2P(void * ctx)
 static int menu_options(void * ctx)
 {
 	menu_options_ctx_t * __ctx = ctx;
-	static const enum action menuactions[] =
+	static const char * menuactions[] =
 	{
 			ACTION_PLAYER_MOVE_UP,
 			ACTION_PLAYER_MOVE_DOWN,
@@ -571,6 +572,7 @@ static int menu_options(void * ctx)
 			ACTION_PLAYER2_ATTACK_WEAPON2,
 			ACTION_PLAYER2_ATTACK_WEAPON3
 	};
+
 #define MENU_ROWS 7
 	switch(__ctx->state)
 	{
@@ -587,7 +589,7 @@ static int menu_options(void * ctx)
 			__ctx->state = MENU_OPTIONS_WAIT_KEY;break;
 		case LEAVE  :
 			sound_play_start(SOUND_MENU_ENTER, 1);
-			game_cfg_save();
+			eng_conf_save();
 			game_rebind_keys_all();
 			__ctx->state = MENU_OPTIONS_SELECT;
 			return MENU_MAIN;
@@ -605,9 +607,12 @@ static int menu_options(void * ctx)
 		case SDL_SCANCODE_ESCAPE:
 			__ctx->state = MENU_OPTIONS_SELECT;
 			break;
-		default:
-			game.controls[menuactions[__ctx->menu + __ctx->column * MENU_ROWS]] = scancode;
-			__ctx->state = MENU_OPTIONS_SELECT;
+            default:
+            {
+                const char * mact = menuactions[__ctx->menu + __ctx->column * MENU_ROWS];
+                eng_conf_key_bind(scancode, mact);
+                __ctx->state = MENU_OPTIONS_SELECT;
+            }
 		}
 	}
 	return MENU_OPTIONS;
@@ -645,9 +650,9 @@ static void menu_options_draw(const void * ctx)
 
     struct menu_options_key
     {
-        char * name;
-        enum action act_p0;
-        enum action act_p1;
+        const char * name;
+        const char * act_p0;
+        const char * act_p1;
     };
 
     static const struct menu_options_key list[] =
@@ -671,13 +676,16 @@ static void menu_options_draw(const void * ctx)
                 MENU_OPTIONS_DRAW_FORMAT1,
                 ent->name
         );
+        const SDL_Scancode * scancode;
+        scancode = eng_conf_action_key_get(ent->act_p0);
         video_printf(MENU_OPTIONS_DRAW_OFS2, ofs_y, orient_horiz,
                 MENU_OPTIONS_DRAW_FORMAT2,
-                SDL_GetScancodeName(game.controls[ent->act_p0])
+                (scancode == NULL ? "-" : eng_scancode_name_get(*scancode))
         );
+        scancode = eng_conf_action_key_get(ent->act_p1);
         video_printf(MENU_OPTIONS_DRAW_OFS3, ofs_y, orient_horiz,
                 MENU_OPTIONS_DRAW_FORMAT3,
-                SDL_GetScancodeName(game.controls[ent->act_p1])
+                (scancode == NULL ? "-" : eng_scancode_name_get(*scancode))
         );
     }
 }

@@ -24,6 +24,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdbool.h>
 
 
 #ifndef bool
@@ -34,7 +35,7 @@ typedef enum {
 #endif
 
 //директория файлов игры
-#define BASEDIR         UTANKBASEDIR"/base"
+#define BASEDIR         UTANKBASEDIR "/base"
 //директория карт
 #define MAPSDIR        "/maps"
 

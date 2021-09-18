@@ -22,6 +22,10 @@
 
 //#include <fonts.h>
 
+/*
+ * TODO: -Wmissing-prototypes
+ */
+
 int main()
 {
 //	fonts_test();

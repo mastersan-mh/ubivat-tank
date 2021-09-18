@@ -1,38 +1,31 @@
 #ifndef ACTIONS_H
 #define ACTIONS_H
 
-#include <types.h>
+#include "eng_actions.h"
 
-enum action
-{
-	ACTION_ENTER_MAINMENU,
-	ACTION_PLAYER_MOVE_UP,
-	ACTION_PLAYER_MOVE_DOWN,
-	ACTION_PLAYER_MOVE_LEFT,
-	ACTION_PLAYER_MOVE_RIGHT,
-	ACTION_PLAYER_ATTACK_WEAPON1,
-	ACTION_PLAYER_ATTACK_WEAPON2,
-	ACTION_PLAYER_ATTACK_WEAPON3,
-	ACTION_PLAYER2_MOVE_UP,
-	ACTION_PLAYER2_MOVE_DOWN,
-	ACTION_PLAYER2_MOVE_LEFT,
-	ACTION_PLAYER2_MOVE_RIGHT,
-	ACTION_PLAYER2_ATTACK_WEAPON1,
-	ACTION_PLAYER2_ATTACK_WEAPON2,
-	ACTION_PLAYER2_ATTACK_WEAPON3,
-	ACTION_CHEAT_WIN,
-	ACTION_SFACTOR,
-	ACTION_DFACTOR,
-	ACTION____NUM
-};
+#include "types.h"
 
-struct player_action
-{
-	actionf_t press;
-	actionf_t release;
-};
+#define ACTION_ENTER_MAINMENU
+#define ACTION_PLAYER_MOVE_UP                   "+move_north"
+#define ACTION_PLAYER_MOVE_DOWN                 "+move_south"
+#define ACTION_PLAYER_MOVE_LEFT                 "+move_west"
+#define ACTION_PLAYER_MOVE_RIGHT                "+move_east"
+#define ACTION_PLAYER_ATTACK_WEAPON1            "+attack_artillery"
+#define ACTION_PLAYER_ATTACK_WEAPON2            "+attack_missile"
+#define ACTION_PLAYER_ATTACK_WEAPON3            "+attack_mine"
+#define ACTION_PLAYER2_MOVE_UP                  "+p2move_north"
+#define ACTION_PLAYER2_MOVE_DOWN                "+p2move_south"
+#define ACTION_PLAYER2_MOVE_LEFT                "+p2move_west"
+#define ACTION_PLAYER2_MOVE_RIGHT               "+p2move_east"
+#define ACTION_PLAYER2_ATTACK_WEAPON1           "+p2attack_artillery"
+#define ACTION_PLAYER2_ATTACK_WEAPON2           "+p2attack_missile"
+#define ACTION_PLAYER2_ATTACK_WEAPON3           "+p2attack_mine"
+#define ACTION_CHEAT_WIN
+#define ACTION_SFACTOR
+#define ACTION_DFACTOR
+#define ACTION____NUM  18
 
-extern const struct player_action actions[ACTION____NUM];
+extern const struct eng_game_action actions[];
 
 void action_sfactor(void);
 void action_dfactor(void);

@@ -11,6 +11,8 @@
 #include <types.h>
 #include <img.h>
 
+#include <stdbool.h>
+
 //броня0
 #define c_m_w_w0        0x01
 //броня1

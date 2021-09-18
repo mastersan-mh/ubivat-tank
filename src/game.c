@@ -5,6 +5,8 @@
  */
 
 #include "defs.h"
+#include "eng_actions.h"
+#include "eng_conf.h"
 #include <system.h>
 #include <game.h>
 #include <input.h>
@@ -32,6 +34,28 @@
 #include <types.h>
 
 #define CHECK(x, y) do{ if( x!= y) return false; }while(0)
+
+static const struct keybind keybinds_default[] =
+{
+        { SDL_SCANCODE_ESCAPE, "menu_main" },
+        { SDL_SCANCODE_X     , "sfactor"  },
+        { SDL_SCANCODE_C     , "dfactor"  },
+        { SDL_SCANCODE_Z     , "win"       },
+        { SDL_SCANCODE_UP    , ACTION_PLAYER_MOVE_UP   },
+        { SDL_SCANCODE_DOWN  , ACTION_PLAYER_MOVE_DOWN },
+        { SDL_SCANCODE_LEFT  , ACTION_PLAYER_MOVE_LEFT },
+        { SDL_SCANCODE_RIGHT , ACTION_PLAYER_MOVE_RIGHT},
+        { SDL_SCANCODE_SLASH , ACTION_PLAYER_ATTACK_WEAPON1},
+        { SDL_SCANCODE_PERIOD, ACTION_PLAYER_ATTACK_WEAPON2},
+        { SDL_SCANCODE_COMMA , ACTION_PLAYER_ATTACK_WEAPON3},
+        { SDL_SCANCODE_R     , ACTION_PLAYER2_MOVE_UP  },
+        { SDL_SCANCODE_F     , ACTION_PLAYER2_MOVE_DOWN},
+        { SDL_SCANCODE_D     , ACTION_PLAYER2_MOVE_LEFT},
+        { SDL_SCANCODE_G     , ACTION_PLAYER2_MOVE_RIGHT},
+        { SDL_SCANCODE_W     , ACTION_PLAYER2_ATTACK_WEAPON1},
+        { SDL_SCANCODE_Q     , ACTION_PLAYER2_ATTACK_WEAPON2},
+        { SDL_SCANCODE_TAB   , ACTION_PLAYER2_ATTACK_WEAPON3},
+};
 
 //состояние игры
 game_t game;
@@ -62,24 +86,43 @@ static int game_gameTick(void);
 static void game_draw(void);
 
 
-void game_action_enter_mainmenu()
+void game_action_enter_mainmenu(void)
 {
 	game.ingame = false;
 }
 
-void game_action_win()
+void game_action_win(void)
 {
 	game._win_ = true;
 }
 
-void game_rebind_keys_all()
+void game_rebind_keys_all(void)
 {
-    input_key_unbind_all();
+    eng_conf_key_unbindall();
     size_t i;
-    for(i = 0; i < ACTION____NUM; i++)
+
+    for(i = 0; i < ARRAYSIZE(keybinds_default); i++)
     {
-        const struct player_action * action = &actions[i];
-        input_key_bind(game.controls[i], action->press, action->release);
+        const struct keybind * keybind = &keybinds_default[i];
+        eng_conf_key_bind(keybind->key, keybind->action_name);
+    }
+}
+
+static void P_conf_init(void)
+{
+    int res;
+
+    game_info("Config init...");
+    eng_actions_init();
+    eng_conf_init();
+
+    eng_actions_register(actions, ACTION____NUM);
+
+    res = eng_conf_load();
+    if(res)
+    {
+        game_rebind_keys_all();
+        eng_conf_save();
     }
 }
 
@@ -111,13 +154,13 @@ void game_init()
 	game.ingame     = false;
 
 	randomize();
-	printf("%s\n", c_strTITLE);
-	printf("%s\n", c_strCORP);
-	printf(GAME_LOGO);
+    game_info("%s", c_strTITLE);
+    game_info("%s", c_strCORP);
+    game_info(GAME_LOGO);
 	map_init();
 	map_load_list();
 
-	printf("ENTERING GRAPHIC...\n");
+    game_info("ENTERING GRAPHIC...");
 	if(video_init())
 		game_halt("Video init failed");
 
@@ -170,12 +213,10 @@ void game_init()
 	game.i_armor      = image_get(I_ARMOR    );
 	game.i_star       = image_get(I_STAR     );
 
-	//чтение конфига
-	printf("Config init...\n");
-	game_cfg_load();
+	P_conf_init();
 
 	//инициализация оружий
-	printf("Weapons init...\n");
+    game_info("Weapons init...");
 	strcpy(wtable[0].name, "Pulki");                                     //название оружия
 	wtable[0].damage     = 15;                                          //повреждение
 	wtable[0].selfdamage = 7;//0;                                       //повреждение
@@ -203,9 +244,6 @@ void game_init()
     wtable[2].bullspeed  = -8.0 / GAME_TICK_PERIOD;
 	wtable[2].bullbox    = 8;                                           //bodybox
 	wtable[2].icon       = image_get(W_MINE);     //изображение оружия
-	input_init();
-
-	game_rebind_keys_all();
 
 	uint32_t interval_ms = GAME_TICK_PERIOD;
 	SDL_AddTimer(interval_ms, P_tick_cb, NULL);
@@ -220,7 +258,8 @@ void game_done()
 	Z_free(game_dir_home);
 	Z_free(game_dir_conf);
 	Z_free(game_dir_saves);
-	input_done();
+	eng_conf_done();
+    eng_actions_done();
 	sound_precache_free();
 	sound_done();
 	video_done();
@@ -430,7 +469,7 @@ void game_draw()
 /*
  * процедура перехода на следующую карту
  */
-bool game_nextmap()
+bool game_nextmap(void)
 {
 	int ret;
 	//дисконнект всех монстров
@@ -471,104 +510,6 @@ bool game_nextmap()
 	}
 	ret = game_create();
 	return true;
-}
-
-
-/*
- * запись конфига
- */
-int game_cfg_save()
-{
-	int ret = 0;
-	ssize_t count;
-
-    char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-    strcpy(path, game_dir_conf);
-    strcat(path, FILENAME_CONFIG);
-
-    int fd;
-    fd = open(
-            path,
-            O_CREAT | O_WRONLY,
-            S_IRUSR | S_IWUSR
-    );
-    Z_free(path);
-    if(fd < 0)
-	{
-		ret = 1;
-		goto __end;
-	}
-	count = write(fd, game.controls, sizeof(game.controls));
-	if(count != sizeof(game.controls))
-	{
-		ret = 2;
-		goto __end;
-	}
-	__end:
-	switch(ret)
-	{
-		case 0:
-		case 2:
-			close(fd);
-		case 1:;
-	}
-	return ret ? -1 : 0;
-};
-/*
- * новый конфиг
- */
-int game_cfg_new()
-{
-	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
-	game.controls[ACTION_PLAYER_MOVE_UP   ]     = SDL_SCANCODE_UP;
-	game.controls[ACTION_PLAYER_MOVE_DOWN ]     = SDL_SCANCODE_DOWN ;
-	game.controls[ACTION_PLAYER_MOVE_LEFT ]     = SDL_SCANCODE_LEFT ;
-	game.controls[ACTION_PLAYER_MOVE_RIGHT]     = SDL_SCANCODE_RIGHT;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON1] = SDL_SCANCODE_SLASH;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON2] = SDL_SCANCODE_PERIOD;
-	game.controls[ACTION_PLAYER_ATTACK_WEAPON3] = SDL_SCANCODE_COMMA ;
-	game.controls[ACTION_PLAYER2_MOVE_UP   ]     = SDL_SCANCODE_R;
-	game.controls[ACTION_PLAYER2_MOVE_DOWN ]     = SDL_SCANCODE_F;
-	game.controls[ACTION_PLAYER2_MOVE_LEFT ]     = SDL_SCANCODE_D;
-	game.controls[ACTION_PLAYER2_MOVE_RIGHT]     = SDL_SCANCODE_G;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON1] = SDL_SCANCODE_W;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON2] = SDL_SCANCODE_Q;
-	game.controls[ACTION_PLAYER2_ATTACK_WEAPON3] = SDL_SCANCODE_TAB;
-	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
-	return game_cfg_save();
-}
-/********чтение конфига********/
-int game_cfg_load()
-{
-	int ret = 0;
-	int fd;
-	ssize_t count;
-
-	char * path = Z_malloc(strlen(game_dir_conf) + strlen(FILENAME_CONFIG) + 1);
-	strcpy(path, game_dir_conf);
-	strcat(path, FILENAME_CONFIG);
-	fd = open(path, O_RDONLY);
-	Z_free(path);
-	if(fd < 0) return game_cfg_new();
-	count = read(fd, game.controls, sizeof(game.controls));
-	if(count != sizeof(game.controls))
-	{
-		ret = 2;
-		goto end;
-	}
-	end:
-	switch(ret)
-	{
-	case 0:
-	case 2:
-		close(fd);
-	case 1:;
-	}
-	game.controls[ACTION_ENTER_MAINMENU   ]     = SDL_SCANCODE_ESCAPE;
-	game.controls[ACTION_CHEAT_WIN] = SDL_SCANCODE_Z;
-	game.controls[ACTION_SFACTOR] = SDL_SCANCODE_X;
-	game.controls[ACTION_DFACTOR] = SDL_SCANCODE_C;
-	return ret ? -1 : 0;
 }
 
 /*
@@ -946,6 +887,51 @@ void game_halt(const char * error, ...)
 		fprintf(stdout, "%s\n", errmsg);
 	}
 	exit(1);
+}
+
+void game_error(const char * format, ...)
+{
+    static char errmsg[MAX_MESSAGE_SIZE];
+    va_list argptr;
+    va_start(argptr, format);
+#ifdef HAVE_VSNPRINTF
+    vsnprintf(errmsg, MAX_MESSAGE_SIZE, format, argptr);
+#else
+    vsprintf(errmsg, format, argptr);
+#endif
+    va_end(argptr);
+
+    fprintf(stdout, "Error: %s\n", errmsg);
+}
+
+void game_warn(const char * format, ...)
+{
+    static char errmsg[MAX_MESSAGE_SIZE];
+    va_list argptr;
+    va_start(argptr, format);
+#ifdef HAVE_VSNPRINTF
+    vsnprintf(errmsg, MAX_MESSAGE_SIZE, format, argptr);
+#else
+    vsprintf(errmsg, format, argptr);
+#endif
+    va_end(argptr);
+
+    fprintf(stdout, "Warning: %s\n", errmsg);
+}
+
+void game_info(const char * format, ...)
+{
+    static char errmsg[MAX_MESSAGE_SIZE];
+    va_list argptr;
+    va_start(argptr, format);
+#ifdef HAVE_VSNPRINTF
+    vsnprintf(errmsg, MAX_MESSAGE_SIZE, format, argptr);
+#else
+    vsprintf(errmsg, format, argptr);
+#endif
+    va_end(argptr);
+
+    fprintf(stdout, "%s\n", errmsg);
 }
 
 void game_console_send(const char *error, ...)
