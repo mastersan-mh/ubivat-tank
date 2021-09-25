@@ -67,7 +67,7 @@ void kp_B()
 	printf("scene.blend = %d\n",scene.blend);
 }
 
-int factor_inc(int factor)
+static int factor_inc(int factor)
 {
 	factor++;
 	return factor % 14;

@@ -57,9 +57,9 @@ char * game_dir_saves;
 static Uint32 P_tick_cb(Uint32 interval, void *param);
 static void P_tick(void);
 
-static int game_gameTick();
+static int game_gameTick(void);
 
-static void game_draw();
+static void game_draw(void);
 
 
 void game_action_enter_mainmenu()

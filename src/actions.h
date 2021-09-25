@@ -34,21 +34,21 @@ struct player_action
 
 extern const struct player_action actions[ACTION____NUM];
 
-void action_sfactor();
-void action_dfactor();
+void action_sfactor(void);
+void action_dfactor(void);
 
-void kp_0();
-void kp_B();
+void kp_0(void);
+void kp_B(void);
 
-void action_zoom_in();
-void action_zoom_out();
-void action_tilt_in();
-void action_tilt_out();
-void action_spin_in();
-void action_spin_out();
-void action_twinkle();
-void action_fog();
-void action_switch_obj();
+void action_zoom_in(void);
+void action_zoom_out(void);
+void action_tilt_in(void);
+void action_tilt_out(void);
+void action_spin_in(void);
+void action_spin_out(void);
+void action_twinkle(void);
+void action_fog(void);
+void action_switch_obj(void);
 
 
 

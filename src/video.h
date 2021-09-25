@@ -44,12 +44,12 @@
 #define COLOR_ALPHA_TRANSPARENT 255
 */
 
-int video_init();
-void video_done();
+int video_init(void);
+void video_done(void);
 
-void video_screen_draw_begin();
-void video_screen_draw_end();
-void video_delay();
+void video_screen_draw_begin(void);
+void video_screen_draw_end(void);
+void video_delay(void);
 
 void video_viewport_set(
 	int x,
@@ -58,7 +58,7 @@ void video_viewport_set(
 	int sy
 );
 
-void video_draw();
+void video_draw(void);
 
 void checkOpenGLError(const char* stmt, const char* fname, int line);
 

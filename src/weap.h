@@ -89,15 +89,15 @@ extern weapon_info_t wtable[];
 extern bull_t * bullList;
 extern explode_t * explList;
 
-void bull_add();
+void bull_add(void);
 void bull_remove(bull_t ** bull);
-void bull_removeall();
-void bull_control();
+void bull_removeall(void);
+void bull_control(void);
 void bull_draw_all(camera_t * cam);
 void explode_add(bull_t * bull, coord_t Xexpl, coord_t Yexpl);
 void explode_remove(explode_t ** explode);
-void explode_removeall();
-void explode_control();
+void explode_removeall(void);
+void explode_control(void);
 void explode_draw_all(camera_t * cam);
 
 #endif /* SRC_WEAP_H_ */

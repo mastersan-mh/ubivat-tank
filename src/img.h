@@ -102,13 +102,13 @@ typedef struct
 
 extern int BII_errno;
 
-char * IMG_errorGet();
+char * IMG_errorGet(void);
 
 int img_palette_read(const char * filename);
 
-void images_done();
+void images_done(void);
 
-void images_init();
+void images_init(void);
 
 item_img_t * image_get(image_index_t iimage);
 

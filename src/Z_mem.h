@@ -58,6 +58,6 @@ void Z_Z_free(void * __ptr _ZMEM_ARGS2_DECL);
 
 
 
-void Z_freeMemory();
+void Z_freeMemory(void);
 
 #endif /* SRC_Z_MEM_H_ */

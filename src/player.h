@@ -118,50 +118,50 @@ typedef struct player_s
 
 extern player_t * playerList;
 
-void player_moveUp_ON();
-void player_moveUp_OFF();
-void player_moveDown_ON();
-void player_moveDown_OFF();
-void player_moveLeft_ON();
-void player_moveLeft_OFF();
-void player_moveRight_ON();
-void player_moveRight_OFF();
-void player_attack_weapon1_ON();
-void player_attack_weapon1_OFF();
-void player_attack_weapon2_ON();
-void player_attack_weapon2_OFF();
-void player_attack_weapon3_ON();
-void player_attack_weapon3_OFF();
+void player_moveUp_ON(void);
+void player_moveUp_OFF(void);
+void player_moveDown_ON(void);
+void player_moveDown_OFF(void);
+void player_moveLeft_ON(void);
+void player_moveLeft_OFF(void);
+void player_moveRight_ON(void);
+void player_moveRight_OFF(void);
+void player_attack_weapon1_ON(void);
+void player_attack_weapon1_OFF(void);
+void player_attack_weapon2_ON(void);
+void player_attack_weapon2_OFF(void);
+void player_attack_weapon3_ON(void);
+void player_attack_weapon3_OFF(void);
 
-void player2_moveUp_ON();
-void player2_moveUp_OFF();
-void player2_moveDown_ON();
-void player2_moveDown_OFF();
-void player2_moveLeft_ON();
-void player2_moveLeft_OFF();
-void player2_moveRight_ON();
-void player2_moveRight_OFF();
-void player2_attack_weapon1_ON();
-void player2_attack_weapon1_OFF();
-void player2_attack_weapon2_ON();
-void player2_attack_weapon2_OFF();
-void player2_attack_weapon3_ON();
-void player2_attack_weapon3_OFF();
+void player2_moveUp_ON(void);
+void player2_moveUp_OFF(void);
+void player2_moveDown_ON(void);
+void player2_moveDown_OFF(void);
+void player2_moveLeft_ON(void);
+void player2_moveLeft_OFF(void);
+void player2_moveRight_ON(void);
+void player2_moveRight_OFF(void);
+void player2_attack_weapon1_ON(void);
+void player2_attack_weapon1_OFF(void);
+void player2_attack_weapon2_ON(void);
+void player2_attack_weapon2_OFF(void);
+void player2_attack_weapon3_ON(void);
+void player2_attack_weapon3_OFF(void);
 
 
-void player_checkcode();
+void player_checkcode(void);
 void player_item_get(player_t * player);
 void player_obj_check(player_t * player);
 void player_draw_all(camera_t * cam);
 
 player_t * player_find(int status);
 int  player_connect(int status);
-void player_disconnect_monsters();
-void player_disconnect_all();
+void player_disconnect_monsters(void);
+void player_disconnect_all(void);
 void player_spawn(player_t * player, mobj_t * spawn);
 int player_spawn_player(player_t * player);
-int player_spawn_enemy();
-void player_spawn_all();
+int player_spawn_enemy(void);
+void player_spawn_all(void);
 
 void player_class_init(player_t * player);
 
@@ -169,7 +169,7 @@ void player_draw_status(camera_t * cam, player_t * player);
 
 void player_getdamage(player_t * player, explode_t * explode, bool self, float radius);
 
-void players_control();
+void players_control(void);
 
 
 #endif /* SRC_PLAYER_H_ */

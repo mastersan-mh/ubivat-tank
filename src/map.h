@@ -218,9 +218,9 @@ extern map_t map;
 
 extern maplist_t * mapList;
 
-int map_error_get();
+int map_error_get(void);
 
-void map_init();
+void map_init(void);
 
 void map_clip_find(
 		pos_t * orig,
@@ -242,11 +242,11 @@ bool map_mobj_is_item(mobj_t * mobj);
 
 extern mapdata_mobj_type_t map_file_class_get(int fd);
 int map_load(const char * mapname);
-void map_clear();
+void map_clear(void);
 void map_draw(camera_t * cam);
 void map_list_add(const char * map,const char * name);
-void map_list_removeall();
-void map_load_list();
+void map_list_removeall(void);
+void map_load_list(void);
 
 
 #endif /* SRC_MAP_H_ */

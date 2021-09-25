@@ -5,7 +5,8 @@ ACLOCAL_AMFLAGS = -I m4
 bin_PROGRAMS = ubivat-tank
 SUBDIRS =
 
-ubivat_tank_CFLAGS = -std=c11 -Wall -D_GNU_SOURCE \
+ubivat_tank_CFLAGS = -std=c11 -Wall -Wmissing-prototypes \
+-D_GNU_SOURCE \
 -I/usr/include/freetype2 \
 -I/usr/include/freetype2/freetype
 

@@ -43,10 +43,10 @@ enum text_orient_e
 	orient_vert
 };
 
-void fonts_test();
+void fonts_test(void);
 
-void fonts_init();
-void fonts_done();
+void fonts_init(void);
+void fonts_done(void);
 
 
 extern void font_color_set3i(

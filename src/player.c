@@ -301,7 +301,7 @@ void player_checkcode()
 	*/
 }
 
-void check_value_int(int * val, int min, int max)
+static void check_value_int(int * val, int min, int max)
 {
 	if(*val > max) *val = max;
 	else if(*val < min) *val = min;

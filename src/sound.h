@@ -50,14 +50,14 @@ typedef struct snd_format_s
 } snd_format_t;
 
 extern void sound_init(const snd_format_t * requested);
-extern void sound_done();
+extern void sound_done(void);
 
-extern void sound_precache();
-extern void sound_precache_free();
+extern void sound_precache(void);
+extern void sound_precache_free(void);
 
 extern int sound_play_start(sound_index_t sound_index, int loops);
 extern void sound_play_pause(int playId, bool pause);
 extern void sound_play_stop(int playId);
-extern void sound_play_stop_all();
+extern void sound_play_stop_all(void);
 
 #endif /* SRC_SOUND_H_ */

@@ -41,7 +41,7 @@ pairs->pairs = tmp;
 }
 
 
-pairs_t * pairs_init()
+static pairs_t * pairs_init(void)
 {
 	pairs_t * pairs = calloc(1, sizeof(* pairs));
 	pairs->size = 32;
@@ -49,8 +49,7 @@ pairs_t * pairs_init()
 	return pairs;
 }
 
-
-int pair_bsearch(
+static int pair_bsearch(
 	size_t * index,
 	const void * key,
 	const void * base,
@@ -85,14 +84,14 @@ int pair_bsearch(
 	return 0;
 }
 
-int compare(const void * key, const void * data)
+static int compare(const void * key, const void * data)
 {
 	const pair_t * __key = key;
 	pair_t * const * __data = data;
 	return __key->key - (*__data)->key;
 }
 
-int pairs_insert(pairs_t * pairs, int key, void * val, size_t size)
+static int pairs_insert(pairs_t * pairs, int key, void * val, size_t size)
 {
 	int i;
 	if(pairs->amount + 1 > pairs->size) _pairs_mem_extend(pairs);
@@ -118,7 +117,7 @@ int pairs_insert(pairs_t * pairs, int key, void * val, size_t size)
 }
 
 
-void * pairs_get(pairs_t * pairs, int key)
+static void * pairs_get(pairs_t * pairs, int key)
 {
 	size_t index;
 	pair_t ent;
@@ -525,7 +524,9 @@ static void __video_print_char(
 	character_t * character;
 	character = (character_t *)pairs_get(charpairs, 'A');
 	if(!character)
-		game_abort("gr2Don_setchar(): no character 'A'");
+	{
+		game_halt("gr2Don_setchar(): no character 'A'");
+	}
 	int www = character->size_x;
 	int hhh = character->size_y;
 

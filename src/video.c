@@ -129,7 +129,7 @@ sdl_pixelformat_list[__SDL_PIXELFORMAT_AMOUNT] =
 		{SDL_PIXELFORMAT_NV21, "SDL_PIXELFORMAT_NV21"},      /**< Planar mode: Y + V/U interleaved  (2 planes) */
 };
 
-char * SDL_PF_to_name(uint32_t value)
+static char * SDL_PF_to_name(uint32_t value)
 {
 	struct sdl_pixelformat_ent_s * sp;
 	for(int i = 0; i < __SDL_PIXELFORMAT_AMOUNT; i++)

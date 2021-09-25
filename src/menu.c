@@ -77,12 +77,12 @@ static buffer_key_t buffer[KEYBUFFER_SIZE];
 static int buffer_start = 0;
 static int buffer_end   = 0;
 
-bool buffer_isEmpty()
+static bool buffer_isEmpty(void)
 {
 	return buffer_start == buffer_end;
 }
 
-buffer_key_t buffer_dequeue_nowait()
+static buffer_key_t buffer_dequeue_nowait(void)
 {
 	if(buffer_start == buffer_end) return SDL_SCANCODE_UNKNOWN;
 	buffer_key_t key = buffer[buffer_start];
@@ -121,9 +121,7 @@ void menu_send_event(SDL_Event * event)
 //event->type
 }
 
-
-
-menu_key_t menu_key_get(void)
+static menu_key_t menu_key_get(void)
 {
 	if(buffer_isEmpty())return NOTHING;
 	buffer_key_t key = buffer_dequeue_nowait();
@@ -150,7 +148,7 @@ static void menu_draw_conback(void)
 /*
  * главное меню
  */
-int menu_main(void * ctx)
+static int menu_main(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -215,7 +213,7 @@ static void menu_main_draw(const void * ctx)
 /*
  * меню "ИГРА"
  */
-int menu_game(void * ctx)
+static int menu_game(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -255,7 +253,8 @@ static void menu_game_draw(const void * ctx)
 	gr2D_setimage0(120,30+23*2       ,game.m_i_g_load  );
 	gr2D_setimage0( 97,30+23* __ctx->menu, game.m_i_cur_0);
 };
-int menu_game_new1P(void * ctx)
+
+static int menu_game_new1P(void * ctx)
 {
 	int ret;
 	if(game.created) return MENU_MAIN;
@@ -271,7 +270,7 @@ int menu_game_new1P(void * ctx)
 	return MENU_PRELEVEL;
 }
 
-int menu_game_new2P(void * ctx)
+static int menu_game_new2P(void * ctx)
 {
 	int ret;
 	if(game.created) return MENU_MAIN;
@@ -291,7 +290,7 @@ int menu_game_new2P(void * ctx)
 /*
  * меню "ЗАГРУЗКА"
  */
-int menu_game_load(void * ctx)
+static int menu_game_load(void * ctx)
 {
 	menu_game_load_ctx_t * __ctx = ctx;
 	int ret;
@@ -334,6 +333,7 @@ int menu_game_load(void * ctx)
 	return MENU_GAME_LOAD;
 
 }
+
 static void menu_game_load_draw(const void * ctx)
 {
 	const menu_game_load_ctx_t * __ctx = ctx;
@@ -363,7 +363,8 @@ static void menu_game_load_draw(const void * ctx)
 	};
 	gr2D_setimage0(97, 30 + 15 * __ctx->menu + 2, game.m_i_cur_1);
 }
-int menu_game_save(void * ctx)
+
+static int menu_game_save(void * ctx)
 {
 	menu_game_save_ctx_t * __ctx = ctx;
 	size_t l;
@@ -467,7 +468,7 @@ static void menu_game_save_draw(const void * ctx)
 /*
  * меню "ВЫБОР"
  */
-int menu_custom(void * ctx)
+static int menu_custom(void * ctx)
 {
 	static menu_selector_t menus[] =
 	{
@@ -520,7 +521,7 @@ static void menu_custom_draw(const void * ctx)
 	video_printf(133, 41+23*0, orient_horiz, game.custommap->name);
 }
 
-int menu_custom_new1P(void * ctx)
+static int menu_custom_new1P(void * ctx)
 {
 	int ret;
 	if(game.created) return MENU_MAIN;
@@ -535,7 +536,7 @@ int menu_custom_new1P(void * ctx)
 	return MENU_PRELEVEL;
 }
 
-int menu_custom_new2P(void * ctx)
+static int menu_custom_new2P(void * ctx)
 {
 	int ret;
 	if(game.created) return MENU_MAIN;
@@ -550,7 +551,7 @@ int menu_custom_new2P(void * ctx)
 	return MENU_PRELEVEL;
 }
 
-int menu_options(void * ctx)
+static int menu_options(void * ctx)
 {
 	menu_options_ctx_t * __ctx = ctx;
 	static const enum action menuactions[] =
@@ -681,12 +682,10 @@ static void menu_options_draw(const void * ctx)
     }
 }
 
-
-
 /*
  * меню "О ИГРЕ"
  */
-int menu_about(void * ctx)
+static int menu_about(void * ctx)
 {
 	if(menu_key_get() == LEAVE)
 	{
@@ -719,7 +718,7 @@ static void menu_about_draw(const void * ctx)
 /*
  * информация об уровне
  */
-int menu_prelevel(void * ctx)
+static int menu_prelevel(void * ctx)
 {
 
 	menu_prelevel_ctx_t * __ctx = ctx;
@@ -759,7 +758,7 @@ static void menu_prelevel_draw(const void * ctx)
 /*
  * заставка между уровнями
  */
-int menu_interlevel(void * ctx)
+static int menu_interlevel(void * ctx)
 {
 	switch(menu_key_get())
 	{
@@ -819,15 +818,11 @@ static void menu_interlevel_draw(const void * ctx)
 	}
 }
 
-int menu_abort(void * ctx)
+static int menu_abort(void * ctx)
 {
 	game_abort();
 	return MENU_MAIN;
 }
-
-
-
-
 
 menu_t menus[MENU_NUM] =
 {

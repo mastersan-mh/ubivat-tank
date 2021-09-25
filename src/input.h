@@ -29,12 +29,12 @@ typedef struct
 }
 game_keyHash_t;
 
-void input_init();
-void input_done();
+void input_init(void);
+void input_done(void);
 void input_key_setState(int __key, bool __state);
 void input_key_bind(int __key, actionf_t __press, actionf_t __release);
 void input_key_unbind(int __key);
-void input_key_unbind_all();
+void input_key_unbind_all(void);
 
 
 #endif // INPUT_H

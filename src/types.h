@@ -118,7 +118,7 @@ typedef enum {
 #define c_BOT_dist      (c_p_MDL_box*3)
 
 typedef float coord_t;
-typedef void (*actionf_t)();
+typedef void (*actionf_t)(void);
 
 //координаты
 typedef struct
@@ -155,7 +155,7 @@ bool checkchar(char chr);
 
 float sqrf(float v);
 
-void randomize();
+void randomize(void);
 int xrand(int hi);
 
 char * str_addch(char * s0, char ch);

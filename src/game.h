@@ -131,28 +131,28 @@ extern char * game_dir_saves;
 extern int game_video_dfactor;
 extern int game_video_sfactor;
 
-void game_action_enter_mainmenu();
-void game_action_win();
+void game_action_enter_mainmenu(void);
+void game_action_win(void);
 
-void game_init();
-void game_done();
-void game_main();
+void game_init(void);
+void game_done(void);
+void game_main(void);
 
-bool game_nextmap();
+bool game_nextmap(void);
 
 
-int game_cfg_save();
-int game_cfg_new();
-int game_cfg_load();
+int game_cfg_save(void);
+int game_cfg_new(void);
+int game_cfg_load(void);
 
-void game_rebind_keys_all();
+void game_rebind_keys_all(void);
 
-int game_pal_get();
-void game_record_getsaves();
+int game_pal_get(void);
+void game_record_getsaves(void);
 bool game_record_save(int isave);
 int game_record_load(int isave);
-int game_create();
-void game_abort();
+int game_create(void);
+void game_abort(void);
 void game_msg_error  (int error);
 
 void game_message_send(const char * mess);

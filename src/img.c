@@ -507,25 +507,6 @@ static void __cache_free()
 	}
 }
 
-/*
- * открытие файлов с рисунками меню
- */
-int image_create_from_bitmap(
-	void * bitmap,
-	int sx,
-	int sy,
-	image_index_t iimage
-)
-{
-	int ret = __create_from_bitmap(
-		bitmap,
-		sx,
-		sy,
-		iimage
-	);
-	return ret;
-}
-
 void images_init()
 {
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);

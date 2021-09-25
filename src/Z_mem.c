@@ -241,7 +241,7 @@ char * Z_Z_strndup(const char * __str, size_t __size _ZMEM_ARGS2_DECL)
 /**
  * очистка всей выделенной памяти
  */
-void Z_freeMemory()
+void Z_freeMemory(void)
 {
 	Z_block_t * block;
 	while(Z_block)
