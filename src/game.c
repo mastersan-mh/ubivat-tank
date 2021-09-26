@@ -774,7 +774,12 @@ int game_create()
         game.P0cam.sx    = cam_sx;
         game.P0cam.sy    = cam_sy - statusbar_h;//184
         res = player_connect(c_p_P0);
-        if(res) return res;
+        if(
+                !(res == 0 || res == 2)
+        )
+        {
+            return res;
+        }
 	}
 	else
 	{
@@ -790,10 +795,22 @@ int game_create()
         game.P1cam.y     = 0;
         game.P1cam.sx    = cam_sx/2 - 1;
         game.P1cam.sy    = cam_sy - statusbar_h;
+
         res = player_connect(c_p_P0);
-        if(res) return res;
+        if(
+                !(res == 0 || res == 2)
+        )
+        {
+            return res;
+        }
+
         res = player_connect(c_p_P1);
-        if(res) return res;
+        if(
+                !(res == 0 || res == 2)
+        )
+        {
+            return res;
+        }
 	};
 	//спавним всех игроков и монстров
 	player_spawn_all();

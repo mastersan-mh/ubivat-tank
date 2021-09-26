@@ -522,8 +522,14 @@ int map_load(const char * mapname)
 		mapdata_mobj_type_t mapdata_mobj_type;
 		map_data_mobj_t data;
 		int ret = map_load_mobj(fd, &mapdata_mobj_type, &data);
-		if(ret) break;
-		if(mapdata_mobj_type == MAPDATA_MOBJ_SPAWN_PLAYER) player_spawn_exist = true;
+        if(ret)
+        {
+            break;
+        }
+        if(mapdata_mobj_type == MAPDATA_MOBJ_SPAWN_PLAYER)
+        {
+            player_spawn_exist = true;
+        }
 
 		i++;
 		if (

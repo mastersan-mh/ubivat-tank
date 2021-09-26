@@ -543,9 +543,13 @@ void sound_precache_free()
 
 void sound_init(const snd_format_t * requested)
 {
+    int res;
+    res = SDL_Init(SDL_INIT_AUDIO |SDL_INIT_TIMER);
 
-	if (SDL_Init(SDL_INIT_AUDIO) != 0)
-		game_halt("audio init failed");
+    if(res != 0)
+    {
+        game_halt("audio init failed");
+    }
 
 	/* Open the audio device */
 	SDL_AudioSpec wantspec, obtainspec;
