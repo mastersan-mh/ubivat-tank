@@ -163,7 +163,7 @@ static void map_mobj_add(mapdata_mobj_type_t mapdata_mobj_type, map_data_mobj_t 
 		mobj->item.exist = true;
 		break;
 	case MAPDATA_MOBJ_OBJ_EXIT:
-		mobj->type = MOBJ_MESSAGE;
+		mobj->type = MOBJ_EXIT;
 		mobj->pos.x = data->pos.x;
 		mobj->pos.y = data->pos.y;
 		mobj->img = image_get(O_EXIT);
@@ -575,9 +575,13 @@ void map_draw(camera_t * cam)
 		{
 			bool draw;
 			if(mobj->type == MOBJ_ITEM)
+			{
 				draw = mobj->item.exist;
-			else
-				draw = false;
+			}
+            else
+            {
+                draw = true;
+            }
 			if(draw)
 			{
 				gr2D_setimage0(
