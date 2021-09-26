@@ -85,6 +85,7 @@ typedef struct
 
 	//игрок победил
 	bool _win_;
+	unsigned long win_timer;
 
 	maplist_t * gamemap;
 	maplist_t * custommap;

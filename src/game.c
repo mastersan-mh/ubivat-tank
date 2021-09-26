@@ -93,7 +93,11 @@ void game_action_enter_mainmenu(void)
 
 void game_action_win(void)
 {
-	game._win_ = true;
+    if(!game._win_)
+    {
+        game._win_ = true;
+        game.win_timer = 3 * 100;
+    }
 }
 
 void game_rebind_keys_all(void)
@@ -382,8 +386,21 @@ int game_gameTick()
 	bull_control();
 	explode_control();
 
+    bool win = false;
+    if(game._win_)
+    {
+        if(game.win_timer == 0)
+        {
+            win = true;
+        }
+        else
+        {
+            game.win_timer--;
+        }
+    }
+
 	if(
-			game._win_ &&                                           //победа
+			win &&                                           //победа
 			(game.P0->charact.health > 0) &&                        //оба игрока должны быть живы
 			(!game.P1 || (game.P1 && game.P1->charact.health > 0))  //
 	)
@@ -403,6 +420,19 @@ int game_gameTick()
 	return MENU_MAIN;
 }
 
+static void P_draw_win_timer(void)
+{
+    if(!game._win_)
+    {
+        return;
+    }
+
+    static char str[32];
+
+    sprintf(str, "%lu", (game.win_timer / 100) + 1);
+    game_message_send(str);
+
+}
 
 static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 {
@@ -430,6 +460,7 @@ static void game_draw_cam(player_t * player, camera_t * cam, bool playframe)
 	player_draw_all(cam);
 	explode_draw_all(cam);
 	bull_draw_all(cam);
+	P_draw_win_timer();
 
 	video_viewport_set(
 		0.0f,

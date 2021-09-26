@@ -422,11 +422,16 @@ void player_obj_check(player_t * player)
 				//отправим сообщение игроку
 				game_message_send(mobj->mesage.message);
 				break;
-			case MOBJ_EXIT:
-				game._win_ = true;
-				//отправим сообщение игроку
-				game_message_send(mobj->exit.message);
-				break;
+                case MOBJ_EXIT:
+                {
+                    if(!game._win_)
+                    {
+                        game._win_ = true;
+                        game.win_timer = 100 * 3;
+                    }
+                    game_message_send(mobj->exit.message);
+                    break;
+                }
 			default: ;
 			}
 		}
@@ -524,7 +529,14 @@ static void player_handle(player_t * player)
 			if(0<player->w.ammo[1]) player->w.ammo[1] = 0;
 			if(0<player->w.ammo[2]) player->w.ammo[2] = 0;
 		};
-		if(player->charact.status == c_p_BOSS) game._win_ = true;
+        if(player->charact.status == c_p_BOSS)
+        {
+            if(!game._win_)
+            {
+                game._win_ = true;
+                game.win_timer = 100 * 3;
+            }
+        }
 	}
 	else
 	{
