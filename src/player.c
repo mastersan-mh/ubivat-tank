@@ -20,6 +20,53 @@
 #include <think.h>
 #include <types.h>
 
+float x = 0.0;
+float y = 0.6;
+float z = -1.4;
+float angle = 0.0;
+
+#include "video.h"
+
+void orig_x_inc(void)
+{
+    x = x + 0.1;
+}
+
+void orig_x_dec(void)
+{
+    x = x - 0.1;
+}
+
+void orig_y_inc(void)
+{
+    y = y + 0.1;
+}
+
+void orig_y_dec(void)
+{
+    y = y - 0.1;
+}
+
+void orig_z_inc(void)
+{
+    z = z + 0.1;
+}
+
+void orig_z_dec(void)
+{
+    z = z - 0.1;
+}
+
+void orig_ang_inc(void)
+{
+    angle = angle + 0.1;
+}
+
+void orig_ang_dec(void)
+{
+    angle = angle - 0.1;
+}
+
 player_t * playerList = NULL;
 
 int player_spawn_player(player_t * player);

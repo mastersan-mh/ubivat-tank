@@ -171,14 +171,22 @@ static void scene_init()
 	glShadeModel(GL_SMOOTH);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluPerspective(45.0f, (float) VIDEO_MODE_W / (float) VIDEO_MODE_H, 0.1f, 100.0f); // настраиваем трехмерную перспективу
+	gluPerspective(90.0f, 1, 0.1f, 100.0f); // настраиваем трехмерную перспективу
 
+	glRotatef(-30.0, 1, 0, 0);
+
+    glTranslatef(
+            0.0f,
+            0.6f,
+            -1.4f
+    );
 
 	Width = VIDEO_MODE_W;
 	Height = VIDEO_MODE_H;
 	gluOrtho2D(0.0, Width, Height, 0.0);
 
 	glMatrixMode(GL_MODELVIEW); // переходим в трехмерный режим
+    glLoadIdentity();
 
 
 	GL_CHECK(glEnable(GL_SCISSOR_TEST));
@@ -410,6 +418,10 @@ void video_done()
 	SDL_Quit();
 }
 
+extern float x;
+extern float y;
+extern float z;
+
 void video_screen_draw_begin()
 {
 #if defined(VIDEO_USE_OPENGL)
@@ -417,6 +429,30 @@ void video_screen_draw_begin()
 #elif defined(VIDEO_USE_SDL2)
 	SDL_RenderClear(renderer);
 #endif
+
+
+    GL_CHECK(glMatrixMode(GL_PROJECTION));
+    GL_CHECK(glLoadIdentity());
+    GL_CHECK(gluPerspective(90.0f, 1, 0.1f, 100.0f));
+
+    GL_CHECK(glRotatef(-30.0f, 1.0f, 0.0f, 0.0f));
+
+    GL_CHECK(glTranslatef(
+                x,
+                y,
+                z
+                ));
+
+    double Width = 640;
+    double Height = 480;
+
+    //GL_CHECK(glFrustum(0.0, Width, Height, 0.0, 1.0, 10.0));
+    //GL_CHECK(gluOrtho2D(0.0, Width, Height, 0.0));
+    GL_CHECK(glOrtho(0.0, Width, Height, 0.0, -1.0, 1.0));
+
+    GL_CHECK(glMatrixMode(GL_MODELVIEW));
+    GL_CHECK(glLoadIdentity());
+
 }
 
 

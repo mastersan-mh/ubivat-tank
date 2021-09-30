@@ -118,6 +118,15 @@ typedef struct player_s
 
 extern player_t * playerList;
 
+void orig_x_inc(void);
+void orig_x_dec(void);
+void orig_y_inc(void);
+void orig_y_dec(void);
+void orig_z_inc(void);
+void orig_z_dec(void);
+void orig_ang_inc(void);
+void orig_ang_dec(void);
+
 void player_moveUp_ON(void);
 void player_moveUp_OFF(void);
 void player_moveDown_ON(void);

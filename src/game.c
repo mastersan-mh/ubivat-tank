@@ -35,12 +35,24 @@
 
 #define CHECK(x, y) do{ if( x!= y) return false; }while(0)
 
-static const struct keybind keybinds_default[] =
+static const struct keybind keybinds_permanent[] =
 {
         { SDL_SCANCODE_ESCAPE, "menu_main" },
         { SDL_SCANCODE_X     , "sfactor"  },
         { SDL_SCANCODE_C     , "dfactor"  },
         { SDL_SCANCODE_Z     , "win"       },
+        { SDL_SCANCODE_U     , "cam_x_inc" },
+        { SDL_SCANCODE_J     , "cam_x_dec" },
+        { SDL_SCANCODE_I     , "cam_y_inc" },
+        { SDL_SCANCODE_K     , "cam_y_dec" },
+        { SDL_SCANCODE_O     , "cam_z_inc" },
+        { SDL_SCANCODE_L     , "cam_z_dec" },
+        { SDL_SCANCODE_Y     , "obj_ang_inc" },
+        { SDL_SCANCODE_H     , "obj_ang_dec" },
+};
+
+static const struct keybind keybinds_default[] =
+{
         { SDL_SCANCODE_UP    , ACTION_PLAYER_MOVE_UP   },
         { SDL_SCANCODE_DOWN  , ACTION_PLAYER_MOVE_DOWN },
         { SDL_SCANCODE_LEFT  , ACTION_PLAYER_MOVE_LEFT },
@@ -102,9 +114,7 @@ void game_action_win(void)
 
 void game_rebind_keys_all(void)
 {
-    eng_conf_key_unbindall();
     size_t i;
-
     for(i = 0; i < ARRAYSIZE(keybinds_default); i++)
     {
         const struct keybind * keybind = &keybinds_default[i];
@@ -121,6 +131,15 @@ static void P_conf_init(void)
     eng_conf_init();
 
     eng_actions_register(actions, ACTION____NUM);
+
+    eng_conf_key_unbindall();
+    size_t i;
+
+    for(i = 0; i < ARRAYSIZE(keybinds_permanent); i++)
+    {
+        const struct keybind * keybind = &keybinds_permanent[i];
+        eng_conf_key_bind(keybind->key, keybind->action_name);
+    }
 
     res = eng_conf_load();
     if(res)
@@ -362,6 +381,9 @@ void game_main()
 	while(!gamei.quit)
 	{
 		video_screen_draw_begin();
+
+
+		gr2D_setimage3(0, 0, game.i_health);
 
 		if(!game.ingame)
 		{

@@ -23,7 +23,7 @@
 #define ACTION_CHEAT_WIN
 #define ACTION_SFACTOR
 #define ACTION_DFACTOR
-#define ACTION____NUM  18
+#define ACTION____NUM  (18 + 4 * 2)
 
 extern const struct eng_game_action actions[];
 

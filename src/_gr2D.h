@@ -15,6 +15,13 @@ void gr2D_setimage0(
 	int out_y,
 	item_img_t * image
 	);
+
+void gr2D_setimage3(
+    int out_x,
+    int out_y,
+    item_img_t * image
+);
+
 void gr2D_setimage1(
 	int out_x,
 	int out_y,
